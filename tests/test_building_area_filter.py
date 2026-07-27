@@ -1,5 +1,7 @@
 """Unit tests for area + filter helpers in scripts/_building_utils.py."""
 import pytest
+
+pytest.importorskip("shapely")  # keep collection safe without the [geo] extra
 from shapely.geometry import Polygon
 
 pytestmark = pytest.mark.geo

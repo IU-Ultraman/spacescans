@@ -21,6 +21,10 @@ from unittest.mock import patch
 import pandas as pd
 import pytest
 
+# fara_linkage require()s the [rda] extra (reads .Rda), so gate these on it —
+# base / geo / hdf4 jobs don't install pyreadr.
+pytestmark = pytest.mark.rda
+
 from spacescans.models.config import (
     BufferConfig,
     DatasetConfig,

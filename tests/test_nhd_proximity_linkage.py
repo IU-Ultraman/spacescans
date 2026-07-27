@@ -18,12 +18,19 @@ import math
 import numpy as np
 import pytest
 
+# nhd_proximity_linkage calls require("geo") at import time, so importing it
+# needs the [geo] stack. Skip cleanly when it's absent (base / rda / hdf4 CI
+# jobs collect every module) instead of erroring at collection.
+pytest.importorskip("geopandas")
+
 from spacescans.linkage.nhd_proximity_linkage import (
     _GRID_DEG,
     _compute_tile_count,
     _global_tile_index,
     _snap_to_grid,
 )
+
+pytestmark = pytest.mark.geo
 
 
 @pytest.mark.parametrize(
