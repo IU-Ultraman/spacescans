@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from spacescans.io.readers import read_table
 from spacescans.io.writers import write_table
-from spacescans.linkage.helpers import apply_transforms, build_episode_periods, load_patients, load_weights
+from spacescans.linkage.helpers import apply_transforms, build_episode_periods, load_patients, load_weights, resolve_output_grouping
 from spacescans.models.config import DatasetConfig
 from spacescans.models.protocols import AggregationEngine
 from spacescans.models.specs import JoinSpec, TemporalAggSpec, WeightedAggSpec
@@ -44,10 +44,19 @@ def run_yearly_areal(config: DatasetConfig, engine: AggregationEngine) -> Path:
             how="left",
         ),
     )
+    # Dispatch on TimeConfig.output_grouping: "patient" keeps the v1
+    # per-PATID collapse; "episode" preserves the synthetic per-row
+    # `geoid` (== episode_id when upstream supplies one).
+    grouping = resolve_output_grouping(config)
+    if grouping == "patient":
+        group_by_keys = ["PATID"]
+    else:  # "episode"
+        group_by_keys = ["PATID", "geoid"]
+
     result = engine.temporal_aggregate(
         episode_exp,
         TemporalAggSpec(
-            group_by="PATID",
+            group_by=group_by_keys,
             period_col="period_id",
             value_cols=config.exposure.value_cols,
             weight_col="overlap_days",

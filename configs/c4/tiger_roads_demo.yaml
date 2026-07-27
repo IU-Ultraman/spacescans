@@ -21,6 +21,7 @@ time:
   years: [2013, 2014, 2015, 2016, 2017, 2018, 2019]
   temporal_resolution: yearly
   temporal_mode: yearly
+  output_grouping: episode   # Sprint 5: per-episode rows; PATID may repeat with distinct geoid
 
 engine:
   backend: duckdb

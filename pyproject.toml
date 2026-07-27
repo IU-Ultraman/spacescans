@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "spacescans-pipeline"
-version = "0.1.0"
+version = "0.2.0"
 description = "Config-driven environmental exposure linkage pipeline (C3 boundary/grid weights + C4 patient TWA)"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -28,6 +28,7 @@ dependencies = [
     "numpy",
     "duckdb >= 0.9",
     "pyarrow",
+    "mercantile >= 1.2",
 ]
 
 [project.optional-dependencies]
@@ -45,6 +46,7 @@ all = [
     "rasterio >= 1.3",
     "shapely >= 2.0",
     "exactextract >= 0.2",
+    "mercantile >= 1.2",
     "pyreadr",
     "pyhdf",
     "xarray",
@@ -83,7 +85,7 @@ spacescans = [
 ]
 
 [tool.pytest.ini_options]
-pythonpath = ["src"]
+pythonpath = ["src", "scripts"]
 testpaths = ["tests"]
 addopts = "--import-mode=importlib"
 markers = [

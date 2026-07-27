@@ -39,7 +39,14 @@ _BUFFER_M = 15000  # padding around tile when reading GDB
 _FLOW_PREFIX = {460, 336, 558}       # Stream/River, Canal/Ditch, Artificial Path
 _WATER_PREFIX = {390, 436, 466, 493}  # Lake/Pond, Reservoir, Swamp/Marsh, Estuary
 _AREA_PREFIX = {312, 493, 460}       # Bay/Inlet, Estuary, areal Stream/River
-_LINE_PREFIX = {566}                 # Coastline
+# "coast" = Coastline (FType 566). It DOES exist in NHDPlus HR, but in the
+# NHDFlowline layers — the original code looked in NHDLine, where there are no
+# 566 features, so coast matched nothing (99999 everywhere) or, via the old v1
+# FCODE-relax fallback, arbitrary NHDLine lines (garbage inland). Point coast at
+# the flowline layers instead. (Distance is identical to the NHDArea SeaOcean
+# 445 polygon edge, since 566 IS that shoreline, but the lines are far lighter
+# to read per tile than the giant ocean polygon.)
+_COAST_PREFIX = {566}                # Coastline (in NHDFlowline)
 
 _CATEGORIES = ("flow", "water", "area", "coast")
 
@@ -131,21 +138,42 @@ def _category_layers(avail: list[str]) -> dict[str, list[str]]:
     flow = [l for l in ["NetworkNHDFlowline", "NonNetworkNHDFlowline", "NHDFlowline"] if l in avail]
     water = ["NHDWaterbody"] if "NHDWaterbody" in avail else []
     area = ["NHDArea"] if "NHDArea" in avail else []
-    coast = ["NHDLine"] if "NHDLine" in avail else []
+    # coast = Coastline (566), which lives in the NHDFlowline layers (same
+    # source as flow, filtered to FCode 566) — NOT NHDLine.
+    coast = flow
     return {"flow": flow, "water": water, "area": area, "coast": coast}
 
 
 def _category_target(cat: str) -> str:
+    # flow and coast are both NHDFlowline lines; water/area are polygons.
     return "line" if cat in ("flow", "coast") else "area"
 
 
 def _category_prefix(cat: str) -> set[int]:
     return {"flow": _FLOW_PREFIX, "water": _WATER_PREFIX,
-            "area": _AREA_PREFIX, "coast": _LINE_PREFIX}[cat]
+            "area": _AREA_PREFIX, "coast": _COAST_PREFIX}[cat]
 
 
-def _cache_path(cache_dir: Path, tile_id: int, cat: str) -> Path:
-    return cache_dir / f"tile_{tile_id:05d}_{cat}.parquet"
+def _snap_to_grid(v: float, grid_deg: float = _GRID_DEG) -> float:
+    """Floor a coordinate to the global lattice origin (a multiple of grid_deg)."""
+    return float(np.floor(v / grid_deg) * grid_deg)
+
+
+def _global_tile_index(sw_lon: float, sw_lat: float,
+                       grid_deg: float = _GRID_DEG) -> tuple[int, int]:
+    """Global 0.5° lattice index (gx, gy) of a tile, from its SW corner.
+
+    Cohort-independent: a given patch of ground always yields the same
+    (gx, gy), so the feature cache is safe to share across cohorts. The
+    pre-fix key was a cohort-relative ``tile_id`` (index into a per-cohort
+    bbox grid), which made the same filename mean different geography per
+    cohort and served one cohort's cached tiles to another.
+    """
+    return int(round(sw_lon / grid_deg)), int(round(sw_lat / grid_deg))
+
+
+def _cache_path(cache_dir: Path, gx: int, gy: int, cat: str) -> Path:
+    return cache_dir / f"tile_gx{gx}_gy{gy}_{cat}.parquet"
 
 
 def _load_or_compute_tile_category(
@@ -170,8 +198,11 @@ def _load_or_compute_tile_category(
         g = _read_layer_bbox(gdb_path, ln, bbox, keep_prefix, target)
         if g is not None:
             parts.append(g)
-    if not parts:
-        # Relax FCODE filter (matches v1 fallback)
+    if not parts and cat != "coast":
+        # Relax FCODE filter (matches v1 fallback). Skip for `coast`: a tile
+        # with no Coastline (566) features must stay empty (→ NaN → 99999),
+        # not fall back to arbitrary NHDLine features, which would hand inland
+        # points a spurious "coastline" distance.
         for ln in layers:
             g = _read_layer_bbox(gdb_path, ln, bbox, None, target)
             if g is not None:
@@ -200,6 +231,23 @@ def _load_or_compute_tile_category(
             pass
 
     return result
+
+
+def _compute_tile_count(extent_deg: float, grid_deg: float = _GRID_DEG) -> int:
+    """Number of tiles needed to cover a 1-D extent at ``grid_deg`` resolution.
+
+    Always returns >= 1 — for cohorts spanning less than one grid cell
+    (e.g. a single county), ``np.arange(xmin, xmax + grid_deg*0.5, grid_deg)``
+    used to return a single boundary value and ``xs[:-1]`` was empty, so
+    no tiles were created. Every patient ended up with NaN tile_id and
+    ``astype(int)`` then crashed. Locking the invariant here is a
+    regression unit-level guard for the d076d4a fix.
+
+    Non-finite extents (empty cohort → NaN bbox) collapse to 1 tile.
+    """
+    if not np.isfinite(extent_deg):
+        return 1
+    return max(1, int(np.ceil(extent_deg / grid_deg)))
 
 
 def _nearest_dist(pts_m: gpd.GeoDataFrame, features_m: gpd.GeoDataFrame | None) -> np.ndarray:
@@ -251,12 +299,27 @@ def run_nhd_proximity(config: DatasetConfig, engine: AggregationEngine) -> Path:
         raise ValueError(f"No expected NHD layers found in {gdb_path}")
     print(f"[nhd_proximity] layers per category: { {k: v for k, v in cat_layers.items()} }", flush=True)
 
-    # 2) Build tile grid covering patient bbox (fixed 0.5° lat/lon)
+    # 2) Build tile grid covering patient bbox (fixed 0.5° lat/lon).
+    # Always emit at least 1 tile per axis — for cohorts spanning <0.5°
+    # (e.g. a single county) np.arange would return a single boundary and
+    # xs[:-1] would be empty, leaving every patient unassigned and the
+    # subsequent astype(int) crashing on NaN tile_id.
     xmin, ymin, xmax, ymax = pts_ll.total_bounds
-    xs = np.arange(xmin, xmax + _GRID_DEG * 0.5, _GRID_DEG)
-    ys = np.arange(ymin, ymax + _GRID_DEG * 0.5, _GRID_DEG)
+    # Snap the grid origin to the GLOBAL 0.5° lattice so a patch of ground
+    # always lands in the same tile regardless of the cohort's bbox — this is
+    # what makes the feature cache safely cohort-independent (it is keyed by
+    # the tile's global index, see _global_tile_index / _cache_path).
+    if np.isfinite(xmin):
+        x0 = _snap_to_grid(xmin)
+        y0 = _snap_to_grid(ymin)
+        nx = _compute_tile_count(xmax - x0)
+        ny = _compute_tile_count(ymax - y0)
+    else:  # empty cohort → NaN bounds
+        x0, y0, nx, ny = 0.0, 0.0, 1, 1
+    xs = x0 + _GRID_DEG * np.arange(nx)
+    ys = y0 + _GRID_DEG * np.arange(ny)
     tiles = [(i, box(x, y, x + _GRID_DEG, y + _GRID_DEG))
-             for i, (x, y) in enumerate((xx, yy) for xx in xs[:-1] for yy in ys[:-1])]
+             for i, (x, y) in enumerate((xx, yy) for xx in xs for yy in ys)]
     grid_gdf = gpd.GeoDataFrame(
         {"tile_id": [t[0] for t in tiles]},
         geometry=[t[1] for t in tiles],
@@ -297,9 +360,12 @@ def run_nhd_proximity(config: DatasetConfig, engine: AggregationEngine) -> Path:
         sel = np.where(pts_ll["tile_id"].values == tid)[0]
         bbox = _tile_bbox_ll(tile_geom)
         pts_chunk = pts_m.iloc[sel]
+        # Geographic cache key from the tile's SW corner (global lattice) —
+        # NOT the cohort-relative tid, which collided across cohorts.
+        gx, gy = _global_tile_index(tile_geom.bounds[0], tile_geom.bounds[1])
 
         for cat in _CATEGORIES:
-            cache_path = _cache_path(cache_dir, tid, cat) if cache_dir else None
+            cache_path = _cache_path(cache_dir, gx, gy, cat) if cache_dir else None
             was_hit = bool(cache_path and cache_path.exists())
 
             t = time.perf_counter()

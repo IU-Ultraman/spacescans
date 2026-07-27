@@ -55,6 +55,7 @@ class DurationWeightedSpec(BaseModel):
     start_col: str = "start_date"
     end_col: str = "end_date"
     missing_policy: MissingPolicy = MissingPolicy.SKIP
+    group_by_episode: bool = False  # if True, GROUP BY patient_id_col, geoid_col
 
 
 class SimpleAggSpec(BaseModel):

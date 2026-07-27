@@ -1,0 +1,17 @@
+name: bg_fl_leon_demo
+linkage_pattern: boundary_overlap_fast
+geometry_type: polygon
+source:
+  file:
+  - data_full/BG_FL/C3/tiger2010_bg10_states/tl_2010_12_bg10/tl_2010_12_bg10.shp
+  join_col: GEOID10
+buffer:
+  patient_file: data_full/demo_patients_leon_buildings_10k.parquet
+  patient_adapter: demo_conus
+  buffer_m: 270
+  raster_res_m: 25
+engine:
+  backend: duckdb
+output:
+  path: output/python_v2/270m/BG_FL/C3/buffer270mBG25m_leon_10k.parquet
+  format: parquet

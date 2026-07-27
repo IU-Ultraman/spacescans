@@ -65,6 +65,7 @@ def get_prep(name: str) -> Callable:
 # Base modules: always loaded.
 _BASE_MODULES = [
     "spacescans.linkage.yearly_areal_linkage",
+    "spacescans.linkage.yearly_areal_bg_vintage_linkage",
     "spacescans.linkage.static_areal_linkage",
     "spacescans.linkage.cbp_fallback_linkage",
     "spacescans.linkage.faqsd_linkage",

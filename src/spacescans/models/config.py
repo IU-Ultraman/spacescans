@@ -27,6 +27,7 @@ class LinkagePattern(str, Enum):
     TIGER_PROXIMITY = "tiger_proximity"
     NHD_PROXIMITY = "nhd_proximity"
     BOUNDARY_OVERLAP_FAST = "boundary_overlap_fast"
+    YEARLY_AREAL_BG_VINTAGE = "yearly_areal_bg_vintage"
 
 
 class GeometryType(str, Enum):
@@ -75,7 +76,7 @@ class BufferConfig(BaseModel):
 class ExposureConfig(BaseModel):
     file: str | list[str]
     key: str | None = None
-    join_col: str
+    join_col: str | None = None  # optional: vintage-dispatch patterns use join_col_{2010,2020} instead
     value_cols: list[str]
     year_col: str | None = None
     date_col: str | None = None
@@ -84,6 +85,10 @@ class ExposureConfig(BaseModel):
     fill_na: dict[str, float] | None = None  # post-aggregation fillna per column
     zbp_file: str | None = None  # CBP fallback: linked ZBP output path
     label_file: str | None = None  # FARA: column selection CSV path
+    # --- BG vintage dispatch (yearly_areal_bg_vintage pattern) ---
+    vintage_col: str | None = None      # column with 2010/2020 vintage flag
+    join_col_2010: str | None = None    # exposure column to join to source (2010 BG weights)
+    join_col_2020: str | None = None    # exposure column to join to source_2020 (2020 BG weights)
 
 
 class TimeConfig(BaseModel):
@@ -92,6 +97,7 @@ class TimeConfig(BaseModel):
     end_date: str | None = None
     temporal_resolution: str = "yearly"
     temporal_mode: str = "yearly"
+    output_grouping: str = "patient"  # "patient" | "episode"
 
 
 class EngineConfig(BaseModel):
@@ -177,6 +183,7 @@ class DatasetConfig(BaseModel):
     geometry_type: GeometryType
 
     source: SourceConfig
+    source_2020: SourceConfig | None = None  # 2nd weight source for BG vintage dispatch (yearly_areal_bg_vintage)
     buffer: BufferConfig
     exposure: ExposureConfig | None = None
     time: TimeConfig | None = None

@@ -1,0 +1,138 @@
+/**** AlphaEarth Satellite Embedding export for Florida, 2017–2025
+ * Clean production version: minimal print/getInfo calls.
+ ****/
+
+// -----------------------------------------------------------------------------
+// 0. User settings
+// -----------------------------------------------------------------------------
+
+var dataset = ee.ImageCollection('GOOGLE/SATELLITE_EMBEDDING/V1/ANNUAL');
+
+// Run in smaller batches if needed, e.g. [2017], [2018, 2019], etc.
+var years = [2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025];
+
+var driveFolder = 'GEE_Embeddings_Florida_v21_dataset_v11_2017_2025';
+
+var exportCrs = 'EPSG:5070';
+var exportScale = 10;
+var tileDeg = 5;
+
+// -----------------------------------------------------------------------------
+// 1. Florida boundary
+// -----------------------------------------------------------------------------
+
+var florida = ee.FeatureCollection('TIGER/2018/States')
+  .filter(ee.Filter.eq('NAME', 'Florida'))
+  .geometry();
+
+var floridaBounds = florida.bounds();
+
+Map.centerObject(florida, 6);
+Map.addLayer(florida, {}, 'Florida boundary');
+
+// -----------------------------------------------------------------------------
+// 2. Create 5-degree export tile grid over Florida
+// -----------------------------------------------------------------------------
+
+var lonLat = ee.Image.pixelLonLat();
+
+var tileX = lonLat.select('longitude')
+  .divide(tileDeg)
+  .floor()
+  .toInt()
+  .rename('tile_x');
+
+var tileY = lonLat.select('latitude')
+  .divide(tileDeg)
+  .floor()
+  .toInt()
+  .rename('tile_y');
+
+var gridImage = tileX.add(1000).multiply(10000)
+  .add(tileY.add(1000))
+  .toInt()
+  .rename('tile_id');
+
+var tiles = gridImage.reduceToVectors({
+  geometry: floridaBounds,
+  geometryType: 'polygon',
+  reducer: ee.Reducer.countEvery(),
+  scale: 5000,
+  maxPixels: 1e13
+});
+
+// Preserve the tile ID while clipping tile geometry to Florida bounds.
+tiles = tiles.map(function(f) {
+  return ee.Feature(f).setGeometry(
+    f.geometry().intersection(floridaBounds, ee.ErrorMargin(1))
+  );
+});
+
+Map.addLayer(tiles, {}, 'Export tiles');
+
+// Bring the tile list and tile IDs client-side once.
+// This is needed because Export.image.toDrive tasks must be created client-side.
+var tileList = tiles.toList(tiles.size());
+var nTiles = tiles.size().getInfo();
+
+// -----------------------------------------------------------------------------
+// 3. Band selection
+// -----------------------------------------------------------------------------
+
+var embeddingBands = ee.List.sequence(0, 63).map(function(i) {
+  i = ee.Number(i);
+  return ee.String('A').cat(i.format('%02d'));
+});
+
+// -----------------------------------------------------------------------------
+// 4. Export function
+// -----------------------------------------------------------------------------
+
+function exportYear(year) {
+  var start = ee.Date.fromYMD(year, 1, 1);
+  var end = start.advance(1, 'year');
+
+  var yearlyCollection = dataset
+    .filterDate(start, end)
+    .filterBounds(floridaBounds);
+
+  // Use all spatial tiles/images for the year.
+  // Do not use .first().
+  var image = yearlyCollection
+    .mosaic()
+    .select(embeddingBands)
+    .clip(florida);
+
+  for (var i = 0; i < nTiles; i++) {
+    var tile = ee.Feature(tileList.get(i));
+    var geom = tile.geometry();
+
+    var tileId = tile.get('label').getInfo();
+
+    var exportName =
+      'embedding_' +
+      year +
+      '_v21_dataset_v11_tile_' +
+      tileId;
+
+    Export.image.toDrive({
+      image: image.clip(geom),
+      description: exportName,
+      folder: driveFolder,
+      fileNamePrefix: exportName,
+      region: geom,
+      scale: exportScale,
+      crs: exportCrs,
+      maxPixels: 1e13,
+      fileFormat: 'GeoTIFF'
+    });
+  }
+}
+
+// -----------------------------------------------------------------------------
+// 5. Create export tasks
+// -----------------------------------------------------------------------------
+
+years.forEach(function(year) {
+  exportYear(year);
+});

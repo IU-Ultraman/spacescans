@@ -23,5 +23,5 @@ def require(extra: str, *modules: str) -> None:
         raise MissingExtraError(
             f"This feature needs `pip install 'spacescans-pipeline[{extra}]'`.\n"
             f"  Missing module(s): {', '.join(missing)}\n"
-            f"  See: https://github.com/IU-Ultraman/spacescans#optional-extras"
+            f"  See: https://github.com/xuguang-ai/spacescans-project#optional-extras"
         )

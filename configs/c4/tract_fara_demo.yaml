@@ -23,6 +23,7 @@ time:
   years: [2013, 2014, 2015, 2016, 2017, 2018, 2019]
   temporal_resolution: yearly
   temporal_mode: yearly
+  output_grouping: patient   # Sprint 11 Phase A: explicit v1-default; web runner injects 'episode'
 
 engine:
   backend: duckdb

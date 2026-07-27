@@ -16,7 +16,11 @@ import pandas as pd
 
 from spacescans.io.readers import read_table
 from spacescans.io.writers import write_table
-from spacescans.linkage.helpers import load_patients, load_weights
+from spacescans.linkage.helpers import (
+    load_patients,
+    load_weights,
+    resolve_output_grouping,
+)
 from spacescans.models.config import DatasetConfig
 from spacescans.models.protocols import AggregationEngine
 from spacescans.pipeline.registry import register_pattern
@@ -138,14 +142,24 @@ def compute_patient_temporal_weighted_sql(
     years_count: int,
     patid_col: str = "PATID",
     overlap_prefix: str = "t1p",
+    group_cols: list[str] | None = None,
 ) -> pd.DataFrame:
-    """Replicate the legacy per-variable temporal weighting plus SQL PATID aggregation."""
+    """Replicate the legacy per-variable temporal weighting plus SQL PATID aggregation.
+
+    ``group_cols`` (default ``[patid_col]``) controls the final GROUP BY. The
+    Sprint 11 Phase A episode-grouping branch passes ``[patid_col, "geoid"]``
+    so the SQL aggregation collapses per (PATID, geoid) rather than per PATID
+    only — preserving one row per episode in the output.
+    """
     value_cols = list(value_cols)
+    if group_cols is None:
+        group_cols = [patid_col]
     dat5 = dat5.copy()
     dat5f = None
     con = sqlite3.connect(":memory:")
 
     try:
+        group_select = ", ".join(group_cols)
         for var in value_cols:
             var_1 = pd.to_numeric(dat5[f"{var}_1"], errors="coerce")
             t1_sum = dat5[f"{overlap_prefix}1"] * var_1
@@ -169,16 +183,20 @@ def compute_patient_temporal_weighted_sql(
             dat5[var] = t1_sum / t1_n
 
             dat5.to_sql("dat5", con, index=False, if_exists="replace")
-            query = f"SELECT {patid_col}, SUM({var}_sum)/SUM({var}_n) AS {var} FROM dat5 GROUP BY {patid_col};"
+            query = (
+                f"SELECT {group_select}, "
+                f"SUM({var}_sum)/SUM({var}_n) AS {var} "
+                f"FROM dat5 GROUP BY {group_select};"
+            )
             result = pd.read_sql(query, con)
 
             if dat5f is None:
                 dat5f = result
             else:
-                dat5f = dat5f.merge(result, on=patid_col, how="left")
+                dat5f = dat5f.merge(result, on=group_cols, how="left")
 
         if dat5f is None:
-            return pd.DataFrame(columns=[patid_col])
+            return pd.DataFrame(columns=list(group_cols))
         return dat5f
     finally:
         con.close()
@@ -249,7 +267,16 @@ def _apply_fara_recode(dat: pd.DataFrame) -> pd.DataFrame:
 
 @register_pattern("fara_tract")
 def run_fara_tract(config: DatasetConfig, engine: AggregationEngine) -> Path:
-    """FARA tract linkage with recode flags — matches v1 exactly."""
+    """FARA tract linkage with recode flags — matches v1 exactly.
+
+    Sprint 11 Phase A: dispatches on ``time.output_grouping``. The default
+    ``patient`` branch is byte-identical to the pre-Sprint-11 v1 behavior
+    (single PATID groupby). The ``episode`` branch groups by ``(PATID,
+    geoid)`` so the FARA C4 output carries one row per episode, mirroring
+    the precomputed_areal / precomputed_static / yearly_areal Phase A
+    contracts and enabling spacescans-web's episode-level result join.
+    """
+    grouping = resolve_output_grouping(config)
     vsehr_rh = load_patients(config)
     buffer_df = read_table(config.source.file)
     fara_raw = read_table(config.exposure.file, key=config.exposure.key)
@@ -283,8 +310,12 @@ def run_fara_tract(config: DatasetConfig, engine: AggregationEngine) -> Path:
         exposure_year_col="year",
     )
     dat5 = dat3.merge(dat4, on="id", how="outer")
+    group_cols = ["PATID", "geoid"] if grouping == "episode" else ["PATID"]
     dat5f = compute_patient_temporal_weighted_sql(
-        dat5, value_cols=rate_vars, years_count=len(years),
+        dat5,
+        value_cols=rate_vars,
+        years_count=len(years),
+        group_cols=group_cols,
     )
 
     # Recode binary flags
@@ -292,6 +323,6 @@ def run_fara_tract(config: DatasetConfig, engine: AggregationEngine) -> Path:
 
     # Select final columns from label CSV + fillna(0)
     varlist = label_csv["var"].tolist()
-    result = dat5f[["PATID"] + varlist].copy().fillna(0)
+    result = dat5f[group_cols + varlist].copy().fillna(0)
 
     return write_table(result, config.output.path)

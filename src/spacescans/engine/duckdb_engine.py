@@ -141,6 +141,13 @@ class DuckDBEngine:
                 _weighted_avg_expr(col, "days", spec.missing_policy, col)
             )
 
+        if spec.group_by_episode:
+            select_cols = f"s.{spec.patient_id_col}, s.{spec.geoid_col}"
+            group_by_cols = f"s.{spec.patient_id_col}, s.{spec.geoid_col}"
+        else:
+            select_cols = f"s.{spec.patient_id_col}"
+            group_by_cols = f"s.{spec.patient_id_col}"
+
         sql = f"""
             WITH stays AS (
                 SELECT
@@ -150,10 +157,10 @@ class DuckDBEngine:
                 FROM _ep p
                 WHERE DATEDIFF('day', p.{spec.start_col}, p.{spec.end_col}) + 1 > 0
             )
-            SELECT s.{spec.patient_id_col}, {', '.join(value_selects)}
+            SELECT {select_cols}, {', '.join(value_selects)}
             FROM stays s
             LEFT JOIN _vals v ON s.{spec.geoid_col} = v.{spec.geoid_col}
-            GROUP BY s.{spec.patient_id_col}
+            GROUP BY {group_by_cols}
         """
         result = self._conn.execute(sql).fetchdf()
         self._conn.unregister("_vals")

@@ -60,6 +60,10 @@ def _adapt_demo_conus(df: pd.DataFrame) -> pd.DataFrame:
     """Map demo_patients_conus_fast_*.rds columns to pipeline's expected format.
 
     Source columns: pid, startDate, endDate, longitude, latitude, bg_geoid (12-digit str)
+    Optional column: episode_id (int) — when supplied (e.g. by spacescans-web's
+    csv_to_parquet) the adapter uses it as the synthetic per-row geoid,
+    enabling per-episode output grouping downstream. Fallback is
+    range(len(df)) for legacy callers (R / CLI users).
     Target columns: PATID, start, end, long, lat, geoid (int)
     """
     df = df.rename(columns={
@@ -69,10 +73,13 @@ def _adapt_demo_conus(df: pd.DataFrame) -> pd.DataFrame:
         "longitude": "long",
         "latitude": "lat",
     })
-    # geoid must be unique per patient — pipeline (esp. grid_weights validation)
-    # assumes 1:1 patient↔geoid; using factorize(bg_geoid) collides multiple
-    # patients in the same block group onto the same geoid.
-    df["geoid"] = range(len(df))
+    if "episode_id" in df.columns:
+        df["geoid"] = df["episode_id"].astype(int)
+    else:
+        # geoid must be unique per patient — pipeline (esp. grid_weights
+        # validation) assumes 1:1 patient↔geoid; using factorize(bg_geoid)
+        # would collide multiple patients in the same block group.
+        df["geoid"] = range(len(df))
     return df[["PATID", "start", "end", "long", "lat", "geoid"]].copy()
 
 
@@ -99,6 +106,40 @@ def load_weights(path: str, *, key: str | None = None, weight_col: str = "weight
     if weight_col not in df.columns and "value" in df.columns:
         df = df.rename(columns={"value": weight_col})
     return df
+
+
+def resolve_output_grouping(config) -> str:
+    """Return the validated output_grouping literal.
+
+    Raises ValueError when config.time is None or when output_grouping
+    holds an unsupported value. Used by linkage patterns that branch
+    per-episode vs per-patient — centralizes the four-way dispatch
+    predicate previously duplicated across precomputed_areal,
+    yearly_areal, static_areal, and yearly_areal_bg_vintage.
+
+    Note — "episode" mode currently depends on the ``demo_conus``
+    adapter's ``geoid = episode_id`` convention introduced in Sprint 2
+    (see ``_adapt_demo_conus`` above). Downstream linkage patterns
+    group by ``["PATID", "geoid"]`` to materialize per-episode rows,
+    which is only equivalent to per-episode output because the adapter
+    assigns each row a synthetic unique geoid. For a future non-demo
+    workload where ``geoid`` is a real block-group identifier shared
+    across episodes, ``episode`` mode would collapse to
+    per-(patient, geoid) and lose true episode resolution. Switching
+    that contract will require introducing a dedicated ``episode_id``
+    join key across patterns.
+    """
+    if config.time is None:
+        raise ValueError(
+            "linkage pattern requires a time block with output_grouping"
+        )
+    grouping = config.time.output_grouping
+    if grouping not in ("patient", "episode"):
+        raise ValueError(
+            f"unsupported output_grouping: {grouping!r} "
+            "(expected 'patient' or 'episode')"
+        )
+    return grouping
 
 
 def apply_transforms(df: pd.DataFrame, transforms: list, target: str = "exposure") -> pd.DataFrame:

@@ -54,7 +54,7 @@ def cmd_quickstart(args) -> int:
             except Exception as e:
                 import platform, traceback
                 print(f"\n✗ Quickstart failed: {e}", file=sys.stderr)
-                print("\nPlease report at https://github.com/IU-Ultraman/spacescans/issues with:", file=sys.stderr)
+                print("\nPlease report at https://github.com/xuguang-ai/spacescans-project/issues with:", file=sys.stderr)
                 print(f"  Python: {sys.version.split()[0]}", file=sys.stderr)
                 print(f"  Platform: {platform.system()} {platform.release()} {platform.machine()}", file=sys.stderr)
                 try:

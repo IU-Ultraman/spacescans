@@ -15,7 +15,13 @@ import pandas as pd
 from spacescans.engine.duckdb_engine import DuckDBEngine
 from spacescans.io.readers import read_table
 from spacescans.io.writers import write_table
-from spacescans.linkage.helpers import apply_transforms, build_episode_periods, load_patients, load_weights
+from spacescans.linkage.helpers import (
+    apply_transforms,
+    build_episode_periods,
+    load_patients,
+    load_weights,
+    resolve_output_grouping,
+)
 from spacescans.models.config import DatasetConfig
 from spacescans.models.protocols import AggregationEngine
 from spacescans.models.specs import JoinSpec, TemporalAggSpec, WeightedAggSpec
@@ -53,6 +59,12 @@ def run_cbp_fallback(config: DatasetConfig, engine: AggregationEngine) -> Path:
     # --- County CBP for patients without ZBP ---
     value_cols = config.exposure.value_cols
     year_col = config.exposure.year_col or "year"
+    # Honor output_grouping like yearly_areal/fara (Sprint 11): "patient"
+    # keeps the v1 per-PATID collapse; "episode" preserves the synthetic
+    # per-row `geoid`, so BOTH the county-CBP and ZBP-valid halves emit one
+    # row per (patient, episode) and stay consistent with the rest of C4.
+    grouping = resolve_output_grouping(config)
+    group_by_keys = ["PATID", "geoid"] if grouping == "episode" else ["PATID"]
     episodes = build_episode_periods(patients_cbp, years=config.time.years)
 
     joined = engine.join(
@@ -71,7 +83,7 @@ def run_cbp_fallback(config: DatasetConfig, engine: AggregationEngine) -> Path:
     )
     cbp_result = engine.temporal_aggregate(
         episode_exp,
-        TemporalAggSpec(group_by="PATID", period_col="period_id", value_cols=value_cols, weight_col="overlap_days"),
+        TemporalAggSpec(group_by=group_by_keys, period_col="period_id", value_cols=value_cols, weight_col="overlap_days"),
     )
 
     # --- ZBP-valid patients: strip zbp_ prefix ---
@@ -81,8 +93,9 @@ def run_cbp_fallback(config: DatasetConfig, engine: AggregationEngine) -> Path:
         for c in zbp_valid.columns
     ]
     zbp_valid["PATID"] = zbp_valid["PATID"].astype(str)
-    # Keep only PATID + the same value columns
-    keep_cols = ["PATID"] + [c for c in value_cols if c in zbp_valid.columns]
+    # Keep the grouping keys (PATID [+ geoid] in episode mode) + value cols.
+    # In episode mode geoid survives the zbp_ prefix round-trip above.
+    keep_cols = group_by_keys + [c for c in value_cols if c in zbp_valid.columns]
     zbp_valid = zbp_valid[keep_cols]
 
     # Concat

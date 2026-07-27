@@ -3,7 +3,7 @@ import pytest
 
 def test_can_import_top_level():
     import spacescans
-    assert spacescans.__version__ == "0.1.0"
+    assert spacescans.__version__ == "0.2.0"
 
 
 def test_pipeline_re_exported():

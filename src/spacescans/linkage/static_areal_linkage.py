@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from spacescans.io.readers import read_table
 from spacescans.io.writers import write_table
-from spacescans.linkage.helpers import apply_transforms, load_patients, load_weights, prepare_episodes
+from spacescans.linkage.helpers import apply_transforms, load_patients, load_weights, prepare_episodes, resolve_output_grouping
 from spacescans.models.config import DatasetConfig
 from spacescans.models.protocols import AggregationEngine
 from spacescans.models.specs import DurationWeightedSpec, JoinSpec, WeightedAggSpec
@@ -41,9 +41,16 @@ def run_static_areal(config: DatasetConfig, engine: AggregationEngine) -> Path:
         ),
     )
     episodes = prepare_episodes(patients)
+
+    grouping = resolve_output_grouping(config)
+    group_by_episode = grouping == "episode"
+
     result = engine.duration_weighted(
         geoid_values,
         episodes,
-        DurationWeightedSpec(value_cols=config.exposure.value_cols),
+        DurationWeightedSpec(
+            value_cols=config.exposure.value_cols,
+            group_by_episode=group_by_episode,
+        ),
     )
     return write_table(result, config.output.path)

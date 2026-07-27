@@ -18,12 +18,14 @@ exposure:                            # C4: read C3 output via nhd plugin
     - dist_area_m
     - dist_coast_m
     - dist_blue_m
-  fill_na:                           # v1: fill NaN coast with 99999 after patient TWA
-    dist_coast_m: 99999.0
+  # No fill_na for dist_coast: inland addresses (no coastline within range) stay
+  # NaN so downstream treats them as missing, not as a real ~100 km distance.
+  # (v1 filled 99999 here — dropped on purpose so state means / maps exclude them.)
 
 time:
   temporal_resolution: static
   temporal_mode: static
+  output_grouping: patient        # Sprint 7 A2: lock v1 CLI default explicitly (spec L74-77 [B3]; web overrides to episode at render time)
 
 engine:
   backend: duckdb

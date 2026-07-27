@@ -7,7 +7,12 @@ require("geo", "geopandas", "rasterio", "shapely", "exactextract")
 from pathlib import Path
 from spacescans.io.readers import read_table
 from spacescans.io.writers import write_table
-from spacescans.linkage.helpers import apply_transforms, load_patients, prepare_episodes
+from spacescans.linkage.helpers import (
+    apply_transforms,
+    load_patients,
+    prepare_episodes,
+    resolve_output_grouping,
+)
 from spacescans.models.config import DatasetConfig
 from spacescans.models.protocols import AggregationEngine
 from spacescans.models.specs import DateRangeJoinSpec, JoinSpec, TemporalAggSpec, WeightedAggSpec
@@ -68,13 +73,21 @@ def run_gridded(config: DatasetConfig, engine: AggregationEngine) -> Path:
     # Period identifier for temporal aggregation
     period_col = date_col if is_daily else start_col
     aw_cols = [f"{c}_aw" for c in config.exposure.value_cols]
+    grouping = resolve_output_grouping(config)
+    group_by_keys = ["PATID"] if grouping == "patient" else ["PATID", "geoid"]
     result = engine.temporal_aggregate(
         matched,
         TemporalAggSpec(
-            group_by="PATID",
+            group_by=group_by_keys,
             period_col=period_col,
             value_cols=aw_cols,
             weight_col="overlap_days",
         ),
     )
+    # Drop the internal '_aw' suffix on the final output — the intermediate
+    # area-weighted aggregation is a pipeline-internal detail; downstream
+    # consumers (web _merge, R analysis) reference the user-facing value
+    # column names (e.g. 'value' for VNL, 'uvddc' for TEMIS).
+    rename_map = {aw: orig for aw, orig in zip(aw_cols, config.exposure.value_cols)}
+    result = result.rename(columns=rename_map)
     return write_table(result, config.output.path)

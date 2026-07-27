@@ -23,9 +23,8 @@ from pathlib import Path
 
 import pandas as pd
 
-from spacescans.io.readers import read_table
 from spacescans.io.writers import write_table
-from spacescans.linkage.helpers import load_patients
+from spacescans.linkage.helpers import load_patients, resolve_output_grouping
 from spacescans.pipeline.registry import get_reader, register_pattern
 
 
@@ -73,11 +72,18 @@ def run_precomputed_static(config, engine) -> Path:
     exposure["geoid"] = exposure["geoid"].astype("int64")
     joined = vsehr.merge(exposure, on="geoid", how="left")
 
-    # Duration-weighted average per patient across episodes
+    # Duration-weighted average per patient (or per patient-episode).
+    # Dispatch on TimeConfig.output_grouping — mirrors the SQL-clause edit in
+    # precomputed_areal_linkage.py but expressed as a pandas groupby because
+    # this pattern has no temporal dimension.
+    grouping = resolve_output_grouping(config)
+    group_keys = ["PATID"] if grouping == "patient" else ["PATID", "geoid"]
+
     records = []
-    for patid, grp in joined.groupby("PATID"):
+    for key, grp in joined.groupby(group_keys):
+        key_tuple = key if isinstance(key, tuple) else (key,)
         weights = grp["overlap_days"].values.astype(float)
-        row: dict = {"PATID": patid}
+        row: dict = dict(zip(group_keys, key_tuple))
         for col in value_cols:
             if col in grp.columns:
                 row[col] = _wtd_mean(grp[col].values, weights)
@@ -85,7 +91,7 @@ def run_precomputed_static(config, engine) -> Path:
                 row[col] = float("nan")
         records.append(row)
 
-    result = pd.DataFrame(records) if records else pd.DataFrame(columns=["PATID"] + value_cols)
+    result = pd.DataFrame(records) if records else pd.DataFrame(columns=[*group_keys, *value_cols])
 
     # Apply post-aggregation fill_na (e.g. dist_coast_m → 99999 for NHD)
     if config.exposure and config.exposure.fill_na:

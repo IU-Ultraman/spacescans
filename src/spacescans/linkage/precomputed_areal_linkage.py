@@ -23,7 +23,7 @@ import pandas as pd
 
 from spacescans.io.readers import read_table
 from spacescans.io.writers import write_table
-from spacescans.linkage.helpers import load_patients
+from spacescans.linkage.helpers import load_patients, resolve_output_grouping
 from spacescans.pipeline.registry import get_reader, register_pattern
 
 
@@ -111,11 +111,23 @@ def run_precomputed_areal(config, engine) -> Path:
                 f"THEN overlap_days ELSE 0 END), 0) AS {col}"
             )
 
+        # Duration-weighted average per patient (or per patient-episode).
+        # Dispatch on TimeConfig.output_grouping — mirrors the conditional in
+        # yearly_areal_linkage.py:47-58 but expressed as an SQL clause edit
+        # because this pattern bypasses the engine.temporal_aggregate path.
+        grouping = resolve_output_grouping(config)
+        if grouping == "patient":
+            select_keys = "PATID"
+            group_keys = "PATID"
+        else:  # "episode" — helper already rejected other values
+            select_keys = "PATID, geoid"
+            group_keys = "PATID, geoid"
+
         result = pd.read_sql(
             f"""
-            SELECT PATID, {', '.join(twa_selects)}
+            SELECT {select_keys}, {', '.join(twa_selects)}
             FROM patient_year
-            GROUP BY PATID
+            GROUP BY {group_keys}
             """,
             con,
         )
