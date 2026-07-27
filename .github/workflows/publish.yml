@@ -1,7 +1,9 @@
 name: publish
+# Manual-only to avoid accidental PyPI releases: pushing a `v*` tag no longer
+# auto-publishes. Trigger deliberately from the Actions tab (Run workflow) when
+# a release is actually intended.
 on:
-  push:
-    tags: ['v*']
+  workflow_dispatch:
 
 jobs:
   build-and-publish:
