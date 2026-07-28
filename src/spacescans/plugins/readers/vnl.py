@@ -58,17 +58,32 @@ def _parse_window_from_name(path: str) -> tuple[pd.Timestamp, pd.Timestamp]:
 def _read_cells_at(raster_path: str, cell_ids_1based: np.ndarray) -> np.ndarray:
     """Read raster values at given 1-based cell IDs (matches R's terra indexing).
 
-    R: r[ids] uses 1-based row-major (C-order). Python rasterio reads a 2D
-    array; we flatten with order='C' and use (id - 1) as the flat index.
+    R: r[ids] uses 1-based row-major (C-order), so cell (id - 1) sits at
+    row = (id-1) // width, col = (id-1) % width.
+
+    Reads only the bounding window of the requested cells instead of the
+    whole raster: a full annual VNL global GeoTIFF is ~11.6 GB decompressed
+    (86401 x 33601 float32), which OOM-kills small containers, while even a
+    CONUS-wide cohort's cell window is a few hundred MB.
     """
     import rasterio
-    with rasterio.open(raster_path) as src:
-        arr = src.read(1).ravel(order="C")
-    # Filter to valid range [1, ncell]
-    n = arr.size
-    valid = (cell_ids_1based >= 1) & (cell_ids_1based <= n)
+    from rasterio.windows import Window
+
     out = np.full(cell_ids_1based.size, np.nan, dtype=np.float64)
-    out[valid] = arr[cell_ids_1based[valid] - 1].astype(np.float64)
+    with rasterio.open(raster_path) as src:
+        w, h = src.width, src.height
+        n = w * h
+        valid = (cell_ids_1based >= 1) & (cell_ids_1based <= n)
+        if not valid.any():
+            return out
+        flat0 = cell_ids_1based[valid] - 1  # 0-based flat indices
+        rows = flat0 // w
+        cols = flat0 % w
+        r0, r1 = int(rows.min()), int(rows.max())
+        c0, c1 = int(cols.min()), int(cols.max())
+        window = Window(c0, r0, c1 - c0 + 1, r1 - r0 + 1)
+        arr = src.read(1, window=window)
+        out[valid] = arr[rows - r0, cols - c0].astype(np.float64)
     return out
 
 

@@ -92,6 +92,51 @@ def _read_hdf4_band0(hdf_path: str) -> np.ndarray:
     return data
 
 
+def _load_converted_feature(
+    conv_dir: Path,
+    feat: str,
+    keep_ids: np.ndarray,
+    start_date,
+    end_date,
+) -> pd.DataFrame | None:
+    """Fast path: read pre-converted parquet (see spacescans.tools.temis_convert)
+    instead of thousands of daily HDF4 files.
+
+    Returns None — meaning "fall back to the HDF4 path" — unless the converted
+    data provably covers the request: every year in range has a parquet, and
+    every keep_id lies inside the converted bounding box recorded in the
+    manifest. A cohort cell outside the converted bbox must NOT silently come
+    back empty.
+    """
+    import json
+
+    manifest_path = conv_dir / "manifest.json"
+    if not manifest_path.exists():
+        return None
+    try:
+        manifest = json.loads(manifest_path.read_text())
+        from spacescans.tools.temis_convert import bbox_cell_ids
+        covered = bbox_cell_ids(tuple(manifest["bbox"]))
+    except Exception:
+        return None
+    if not np.isin(keep_ids, covered).all():
+        return None
+
+    years = range(start_date.year, end_date.year + 1)
+    paths = [conv_dir / f"{feat}_{y}.parquet" for y in years]
+    if not all(p.exists() for p in paths):
+        return None
+
+    frames = [pd.read_parquet(p) for p in paths]
+    df = pd.concat(frames, ignore_index=True)
+    df = df[df["grid_id"].isin(keep_ids)]
+    d = pd.to_datetime(df["date"]).dt.date
+    df = df[(d >= start_date) & (d <= end_date)]
+    print(f"[temis/{feat}] converted fast path: {len(df):,} rows "
+          f"from {len(paths)} parquet(s)", flush=True)
+    return df[["grid_id", "value", "date"]].reset_index(drop=True)
+
+
 def _process_one_file(hdf_path: str, keep_ids: np.ndarray) -> pd.DataFrame:
     """Read one HDF file and return selected grid cells as a DataFrame."""
     data = _read_hdf4_band0(hdf_path)
@@ -155,27 +200,37 @@ class TemisExposureSource:
         if not features:
             features = _ALL_FEATURES
 
+        # Converted-parquet fast path (spacescans.tools.temis_convert output,
+        # by convention a `converted/` sibling of the raw/ dir).
+        conv_dir = uv_root.parent / "converted"
+
         per_feature: dict[str, pd.DataFrame] = {}
         for feat in features:
-            feat_dir = str(uv_root / feat)
-            if not os.path.isdir(feat_dir):
+            feat_df = _load_converted_feature(
+                conv_dir, feat, keep_ids, start_date, end_date
+            )
+            if feat_df is None:
+                feat_dir = str(uv_root / feat)
+                if not os.path.isdir(feat_dir):
+                    continue
+
+                files = _list_hdf_files(feat_dir, start_date, end_date)
+                if not files:
+                    continue
+
+                frames = []
+                total = len(files)
+                for idx, fp in enumerate(files, start=1):
+                    if idx % 100 == 0 or idx == total:
+                        print(f"[temis/{feat}] {idx}/{total} {os.path.basename(fp)}")
+                    frames.append(_process_one_file(fp, keep_ids))
+
+                if not frames:
+                    continue
+                feat_df = pd.concat(frames, ignore_index=True)
+
+            if feat_df.empty:
                 continue
-
-            files = _list_hdf_files(feat_dir, start_date, end_date)
-            if not files:
-                continue
-
-            frames = []
-            total = len(files)
-            for idx, fp in enumerate(files, start=1):
-                if idx % 100 == 0 or idx == total:
-                    print(f"[temis/{feat}] {idx}/{total} {os.path.basename(fp)}")
-                frames.append(_process_one_file(fp, keep_ids))
-
-            if not frames:
-                continue
-
-            feat_df = pd.concat(frames, ignore_index=True)
             feat_df = feat_df.rename(columns={"value": feat})
             per_feature[feat] = feat_df[["grid_id", "date", feat]]
 
