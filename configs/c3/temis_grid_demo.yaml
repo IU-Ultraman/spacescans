@@ -3,7 +3,7 @@ linkage_pattern: grid_weights        # C3: extract raster-buffer coverage weight
 geometry_type: raster                # C3 only: input data geometry
 
 source:                              # C3: TEMIS template raster (defines global pixel grid)
-  file: output/python/270m/TEMIS/C3/temis_template.tif
+  file: TEMIS/C3/temis_template.tif
 
 buffer:
   patient_file: demo_patients_conus_fast_100000.parquet  # 100k CONUS demo
