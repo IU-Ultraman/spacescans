@@ -92,6 +92,29 @@ def _read_hdf4_band0(hdf_path: str) -> np.ndarray:
     return data
 
 
+def _ensure_converted(uv_root: Path, conv_dir: Path) -> None:
+    """Auto-convert the HDF4 archive to parquet on first use (one-time, ~2 min
+    for the full 4-feature × 7-year archive).
+
+    Runs only when no manifest exists yet and raw feature dirs are present.
+    Conversion is idempotent (existing parquet files are skipped; writes go
+    through tmp+rename), so a concurrent second run at worst duplicates some
+    work. Failure is non-fatal — the caller falls back to the HDF4 path.
+    """
+    if (conv_dir / "manifest.json").exists():
+        return
+    if not any((uv_root / f).is_dir() for f in _ALL_FEATURES):
+        return
+    try:
+        from spacescans.tools.temis_convert import convert
+        print("[temis] no converted archive found — one-time HDF4 → parquet "
+              "conversion (subsequent runs read parquet in seconds)", flush=True)
+        convert(uv_root, conv_dir)
+    except Exception as exc:  # pragma: no cover - defensive
+        print(f"[temis] auto-conversion failed ({exc}); "
+              "falling back to HDF4 reads", flush=True)
+
+
 def _load_converted_feature(
     conv_dir: Path,
     feat: str,
@@ -201,8 +224,11 @@ class TemisExposureSource:
             features = _ALL_FEATURES
 
         # Converted-parquet fast path (spacescans.tools.temis_convert output,
-        # by convention a `converted/` sibling of the raw/ dir).
+        # by convention a `converted/` sibling of the raw/ dir). Converted
+        # automatically on first use; the manual CLI remains for
+        # pre-provisioning.
         conv_dir = uv_root.parent / "converted"
+        _ensure_converted(uv_root, conv_dir)
 
         per_feature: dict[str, pd.DataFrame] = {}
         for feat in features:

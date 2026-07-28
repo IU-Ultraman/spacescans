@@ -136,6 +136,31 @@ def test_temis_fastpath_refuses_uncovered_cells(fake_temis, tmp_path):
     assert _load_converted_feature(out, "uvief", keep_ids, start, end) is None
 
 
+def test_temis_auto_converts_on_first_use(fake_temis, tmp_path):
+    from spacescans.plugins.readers.temis import _ensure_converted
+
+    conv = tmp_path / "converted"
+    assert not conv.exists()
+    _ensure_converted(fake_temis, conv)
+    assert (conv / "manifest.json").exists()
+    assert (conv / "uvief_2013.parquet").exists()
+
+    # second call is a no-op (manifest present)
+    mtime = (conv / "manifest.json").stat().st_mtime
+    _ensure_converted(fake_temis, conv)
+    assert (conv / "manifest.json").stat().st_mtime == mtime
+
+
+def test_temis_auto_convert_noop_without_raw_dirs(tmp_path):
+    from spacescans.plugins.readers.temis import _ensure_converted
+
+    empty_raw = tmp_path / "raw"
+    empty_raw.mkdir()
+    conv = tmp_path / "converted"
+    _ensure_converted(empty_raw, conv)
+    assert not conv.exists()
+
+
 def test_temis_fastpath_refuses_missing_year(fake_temis, tmp_path):
     from spacescans.plugins.readers.temis import _load_converted_feature
     from spacescans.tools.temis_convert import CONUS_BBOX, bbox_cell_ids, convert
