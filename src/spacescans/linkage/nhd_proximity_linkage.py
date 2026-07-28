@@ -190,6 +190,16 @@ def _load_or_compute_tile_category(
         except Exception:
             pass  # corrupt cache, fall through
 
+    # Computing a tile needs the GDB. Guard explicitly: _read_layer_bbox
+    # swallows read errors, so a missing GDB would otherwise yield an EMPTY
+    # tile — silently wrong distances — instead of a diagnosable failure.
+    if not Path(gdb_path).exists():
+        raise FileNotFoundError(
+            f"NHD tile cache miss ({cache_path.name if cache_path else bbox}) "
+            f"and no NHDPlus GDB at {gdb_path}. Extract the full nhd_features "
+            "cache archive, or provide the raw GDB for on-demand tiling."
+        )
+
     target = _category_target(cat)
     keep_prefix = _category_prefix(cat)
 
@@ -291,12 +301,24 @@ def run_nhd_proximity(config: DatasetConfig, engine: AggregationEngine) -> Path:
         cache_dir.mkdir(parents=True, exist_ok=True)
         print(f"[nhd_proximity] feature cache: {cache_dir}", flush=True)
 
-    # 1) Detect available NHD layers
-    import pyogrio
-    avail = [row[0] for row in pyogrio.list_layers(str(gdb_path))]
-    cat_layers = _category_layers(avail)
-    if not any(cat_layers.values()):
-        raise ValueError(f"No expected NHD layers found in {gdb_path}")
+    # 1) Detect available NHD layers. When the GDB is absent (cache-only
+    #    deployment: the distributed nhd_features archive is extracted and
+    #    every tile hits), assume the canonical NHDPlus HR layer names — the
+    #    layer list is only consulted on a cache MISS, which then raises a
+    #    clear FileNotFoundError instead of silently returning no features.
+    if gdb_path.exists():
+        import pyogrio
+        avail = [row[0] for row in pyogrio.list_layers(str(gdb_path))]
+        cat_layers = _category_layers(avail)
+        if not any(cat_layers.values()):
+            raise ValueError(f"No expected NHD layers found in {gdb_path}")
+    else:
+        cat_layers = _category_layers(
+            ["NetworkNHDFlowline", "NonNetworkNHDFlowline",
+             "NHDWaterbody", "NHDArea"]
+        )
+        print(f"[nhd_proximity] GDB absent at {gdb_path} — "
+              "serving from the tile cache only", flush=True)
     print(f"[nhd_proximity] layers per category: { {k: v for k, v in cat_layers.items()} }", flush=True)
 
     # 2) Build tile grid covering patient bbox (fixed 0.5° lat/lon).

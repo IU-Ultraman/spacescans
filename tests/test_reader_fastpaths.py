@@ -161,6 +161,40 @@ def test_temis_auto_convert_noop_without_raw_dirs(tmp_path):
     assert not conv.exists()
 
 
+def test_nhd_cache_hit_works_without_gdb(tmp_path):
+    import geopandas as gpd
+    from shapely.geometry import Point
+
+    from spacescans.linkage.nhd_proximity_linkage import (
+        _CRS_M,
+        _load_or_compute_tile_category,
+    )
+
+    cache = tmp_path / "tile_gx-200_gy80_water.parquet"
+    cached = gpd.GeoDataFrame(geometry=gpd.GeoSeries([Point(0, 0)], crs=_CRS_M))
+    cached.to_parquet(cache)
+
+    got = _load_or_compute_tile_category(
+        tmp_path / "no_such.gdb", (-100.5, 40.0, -99.5, 41.0),
+        ["NHDWaterbody"], "water", cache,
+    )
+    assert got is not None and len(got) == 1
+
+
+def test_nhd_cache_miss_without_gdb_raises(tmp_path):
+    import pytest as _pytest
+
+    from spacescans.linkage.nhd_proximity_linkage import (
+        _load_or_compute_tile_category,
+    )
+
+    with _pytest.raises(FileNotFoundError, match="nhd_features cache archive"):
+        _load_or_compute_tile_category(
+            tmp_path / "no_such.gdb", (-100.5, 40.0, -99.5, 41.0),
+            ["NHDWaterbody"], "water", tmp_path / "tile_gx-200_gy80_water.parquet",
+        )
+
+
 def test_temis_fastpath_refuses_missing_year(fake_temis, tmp_path):
     from spacescans.plugins.readers.temis import _load_converted_feature
     from spacescans.tools.temis_convert import CONUS_BBOX, bbox_cell_ids, convert
