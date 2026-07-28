@@ -3,11 +3,11 @@ linkage_pattern: nhd_proximity       # C3-equivalent: per-geoid distance to NHD 
 geometry_type: line                  # NHD has both line + polygon features
 
 source:                              # C3: NHDPlus_H National GDB (61 GB)
-  file: data_full/NHD/C4/NHDPlus_H_National_Release_2_GDB.gdb
+  file: NHD/C4/NHDPlus_H_National_Release_2_GDB.gdb
   road_cache_dir: cache/C3/nhd_features  # reuse field for per-tile feature cache (cohort-independent)
 
 buffer:
-  patient_file: data_full/demo_patients_conus_fast_100000.parquet
+  patient_file: demo_patients_conus_fast_100000.parquet
   patient_adapter: demo_conus
 
 engine:

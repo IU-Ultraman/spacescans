@@ -3,11 +3,11 @@ linkage_pattern: boundary_overlap_fast  # C3: per-tile bulk rasterize (4-7x fast
 geometry_type: polygon               # C3 only: describes input data geometry
 
 source:                              # C3: nationwide US ZCTA5 shapefile (~33k ZCTAs)
-  file: data_full/ZCTA5/C3/tl_2010_us_zcta510/tl_2010_us_zcta510.shp
+  file: ZCTA5/C3/tl_2010_us_zcta510/tl_2010_us_zcta510.shp
   join_col: ZCTA5CE10
 
 buffer:
-  patient_file: data_full/demo_patients_conus_fast_100000.parquet  # C3+C4: 100k demo patients across CONUS
+  patient_file: demo_patients_conus_fast_100000.parquet  # C3+C4: 100k demo patients across CONUS
   patient_adapter: demo_conus        # C3+C4: maps pid→PATID, longitude→long, bg_geoid→geoid, etc.
   buffer_m: 270                      # C3 only: buffer radius in meters
   raster_res_m: 25                   # C3 only: rasterization resolution

@@ -7,17 +7,17 @@ source:                              # C4: C3-produced TRACT weight table (demo)
   join_col: GEOID10
 
 buffer:
-  patient_file: data_full/demo_patients_conus_fast_100000.parquet
+  patient_file: demo_patients_conus_fast_100000.parquet
   patient_adapter: demo_conus
   buffer_m: 270
 
 exposure:                            # C4: nationwide FARA 2010-2019 (interpolated)
-  file: data_full/FARA/C4/fara_nationwide_2010_2019_interpolated.Rda
+  file: FARA/C4/fara_nationwide_2010_2019_interpolated.Rda
   key: fara1019
   join_col: Fips
   value_cols: []
   year_col: year
-  label_file: data_full/FARA/C4/varnameCountRemoved.csv
+  label_file: FARA/C4/varnameCountRemoved.csv
 
 time:
   years: [2013, 2014, 2015, 2016, 2017, 2018, 2019]

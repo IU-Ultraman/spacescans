@@ -1,7 +1,7 @@
 """Unit-level regression lock for the d076d4a tile-count fix.
 
 The end-to-end integration test for nhd_proximity requires the 61 GB
-NHDPlus HR GDB and a fully provisioned data_full tree, so a math
+NHDPlus HR GDB and a fully provisioned exposure-data root, so a math
 regression in the bbox->tile-count step would otherwise only be caught
 by that heavyweight gate. These tests pin the invariant directly:
 ``_compute_tile_count`` must always return >= 1, including for

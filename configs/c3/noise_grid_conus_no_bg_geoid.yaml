@@ -1,0 +1,18 @@
+name: noise_grid_conus_no_bg_geoid
+linkage_pattern: grid_weights
+geometry_type: raster
+
+source:
+  file: Noise/C3/CONUS_L50dBA_sumDay_exi.tif
+
+buffer:
+  patient_file: conus_patients_100k_no_bg_geoid.csv
+  patient_adapter: demo_conus
+  buffer_m: 270
+
+engine:
+  backend: duckdb
+
+output:
+  path: output/python_v2/270m/Noise/C3/buffer270m_noise_weights_conus_no_bg_geoid.parquet
+  format: parquet

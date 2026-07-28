@@ -3,10 +3,10 @@ linkage_pattern: grid_weights        # C3: extract raster-buffer coverage weight
 geometry_type: raster                # C3 only: input data geometry
 
 source:                              # C3: 2013 VNL global raster (11 GB)
-  file: data_full/VNL/C3/VNL_v21_npp_2013_global_vcmcfg_c202205302300.average_masked.dat.tif
+  file: VNL/C3/VNL_v21_npp_2013_global_vcmcfg_c202205302300.average_masked.dat.tif
 
 buffer:
-  patient_file: data_full/demo_patients_conus_fast_100000.parquet  # 100k CONUS demo
+  patient_file: demo_patients_conus_fast_100000.parquet  # 100k CONUS demo
   patient_adapter: demo_conus
   buffer_m: 270
 

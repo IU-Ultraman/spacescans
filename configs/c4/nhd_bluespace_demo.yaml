@@ -3,10 +3,10 @@ linkage_pattern: precomputed_static  # C4: episode-duration-weighted TWA over ge
 geometry_type: line
 
 source:                              # Required by schema; not used spatially
-  file: data_full/NHD/C4/NHDPlus_H_National_Release_2_GDB.gdb
+  file: NHD/C4/NHDPlus_H_National_Release_2_GDB.gdb
 
 buffer:
-  patient_file: data_full/demo_patients_conus_fast_100000.parquet
+  patient_file: demo_patients_conus_fast_100000.parquet
   patient_adapter: demo_conus
 
 exposure:                            # C4: read C3 output via nhd plugin

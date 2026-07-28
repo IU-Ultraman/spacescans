@@ -3,11 +3,11 @@ linkage_pattern: boundary_overlap_fast  # C3: per-tile bulk rasterize (4-7x fast
 geometry_type: polygon               # C3 only: describes input data geometry
 
 source:                              # C3: nationwide US county shapefile (3,200 counties)
-  file: data_full/County_FL/C3/tl_2010_us_county10/tl_2010_us_county10.shp
+  file: County/C3/tl_2010_us_county10/tl_2010_us_county10.shp
   join_col: GEOID10
 
 buffer:
-  patient_file: data_full/demo_patients_conus_fast_100000.parquet  # C3+C4: 100k demo patients across CONUS (converted from rds)
+  patient_file: demo_patients_conus_fast_100000.parquet  # C3+C4: 100k demo patients across CONUS (converted from rds)
   patient_adapter: demo_conus        # C3+C4: maps pid→PATID, longitude→long, bg_geoid→geoid, etc.
   buffer_m: 270                      # C3 only: buffer radius in meters
   raster_res_m: 25                   # C3 only: rasterization resolution

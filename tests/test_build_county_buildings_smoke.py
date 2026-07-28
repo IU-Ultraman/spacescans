@@ -83,7 +83,7 @@ def test_stage1_smoke(tmp_path):
     tiles_dir = tmp_path / "tiles"
     tiles_dir.mkdir()
 
-    boundary = Path("/Users/xai/Desktop/spacescans-project/data_full/County_FL/C3/tl_2010_us_county10/tl_2010_us_county10.shp")
+    boundary = Path("/Users/xai/Desktop/spacescans-all/spacescans-web/pipeline-data/County/C3/tl_2010_us_county10/tl_2010_us_county10.shp")
     if not boundary.exists():
         pytest.skip("FL county shapefile not present locally")
 
@@ -125,7 +125,7 @@ def test_stage1_reproducible(tmp_path):
     tiles_dir = tmp_path / "tiles"
     tiles_dir.mkdir()
 
-    boundary = Path("/Users/xai/Desktop/spacescans-project/data_full/County_FL/C3/tl_2010_us_county10/tl_2010_us_county10.shp")
+    boundary = Path("/Users/xai/Desktop/spacescans-all/spacescans-web/pipeline-data/County/C3/tl_2010_us_county10/tl_2010_us_county10.shp")
     if not boundary.exists():
         pytest.skip("FL county shapefile not present locally")
 

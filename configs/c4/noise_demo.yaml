@@ -7,12 +7,12 @@ source:                              # C4: C3-produced Noise weight table (demo)
   join_col: grid_id
 
 buffer:
-  patient_file: data_full/demo_patients_conus_fast_100000.parquet  # 100k CONUS demo
+  patient_file: demo_patients_conus_fast_100000.parquet  # 100k CONUS demo
   patient_adapter: demo_conus
   buffer_m: 270
 
 exposure:                            # C4: 3 noise TIFs (sibling-resolved from primary file's dir)
-  file: data/Noise/C3/CONUS_L50dBA_sumDay_exi.tif
+  file: Noise/C3/CONUS_L50dBA_sumDay_exi.tif
   join_col: grid_id
   value_cols:
     - l50dba_exi

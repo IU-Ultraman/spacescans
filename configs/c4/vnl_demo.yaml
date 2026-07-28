@@ -6,12 +6,12 @@ source:                              # C4: C3-produced weight table (demo)
   file: output/python_v2/270m/VNL/C3/buffer270m_vnl_weights_demo100k.parquet
 
 buffer:
-  patient_file: data_full/demo_patients_conus_fast_100000.parquet
+  patient_file: demo_patients_conus_fast_100000.parquet
   patient_adapter: demo_conus
   buffer_m: 270
 
 exposure:                            # C4: 9 annual VNL .tif (filtered to 2013-2019 by reader)
-  file: data_full/VNL/C3
+  file: VNL/C3
   join_col: grid_id
   value_cols: [value]
   start_col: start_date

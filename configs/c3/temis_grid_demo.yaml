@@ -6,7 +6,7 @@ source:                              # C3: TEMIS template raster (defines global
   file: output/python/270m/TEMIS/C3/temis_template.tif
 
 buffer:
-  patient_file: data_full/demo_patients_conus_fast_100000.parquet  # 100k CONUS demo
+  patient_file: demo_patients_conus_fast_100000.parquet  # 100k CONUS demo
   patient_adapter: demo_conus
   buffer_m: 270
 

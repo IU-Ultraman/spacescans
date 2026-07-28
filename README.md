@@ -55,7 +55,7 @@ pip install "spacescans-pipeline[geo] @ git+https://github.com/IU-Ultraman/space
 | --- | --- | --- |
 | (base) | `yearly_areal`, `static_areal`, `cbp_fallback`, `faqsd`, `precomputed_areal`, `precomputed_static` | pandas + duckdb only |
 | `[geo]` | `boundary_overlap_fast`, `grid_weights`, `gridded`, `*_proximity` | geopandas / rasterio / shapely / exactextract |
-| `[rda]` | any reader for `.Rda` files (BG_NDI / BG_WI / CBP / FARA / UCR) | pyreadr |
+| `[rda]` | any reader for `.Rda` files (NDI / Walkability / CBP-ZBP / FARA / UCR) | pyreadr |
 | `[hdf4]` | TEMIS reader | system HDF4 library |
 | `[nc]` | ACAG multi-pollutant reader | xarray / netCDF4 |
 | `[all]` | everything above | — |
@@ -95,8 +95,8 @@ Pure table operations (DuckDB/pandas) over the C3 weight tables. Patterns differ
 
 | Pattern | Time | Spatial | What it does | Typical data |
 | --- | --- | --- | --- | --- |
-| `yearly_areal` | Yearly | Area-weighted | Boundary area weights + residence-days per geoid → yearly time × area weighted mean | BG_NDI, UCR, ZBP |
-| `static_areal` | Static | Area-weighted | Single static value, area-weighted by residence days | BG_WI (walkability), Noise |
+| `yearly_areal` | Yearly | Area-weighted | Boundary area weights + residence-days per geoid → yearly time × area weighted mean | NDI, UCR, ZBP |
+| `static_areal` | Static | Area-weighted | Single static value, area-weighted by residence days | Walkability, Noise |
 | `cbp_fallback` | Yearly | Area-weighted | Like `yearly_areal`, but ZBP (ZIP-level) first, falling back to county CBP | County/ZCTA5 business patterns |
 | `faqsd` | Daily | Area-weighted | Daily air quality (O₃/PM2.5); episode × daily values with day-level overlap | TRACT FAQSD |
 | `precomputed_areal` | Yearly | Precomputed | Already a `geoid × year` table; time-weighted by residence days | TIGER road distance |

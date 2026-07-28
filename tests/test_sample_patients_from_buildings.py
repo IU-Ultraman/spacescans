@@ -45,7 +45,7 @@ def test_stage2_smoke(tmp_path):
     fixture = tmp_path / "buildings_fixture.parquet"
     _make_fixture_buildings(fixture, n=1000)
 
-    bg_shp = Path("/Users/xai/Desktop/spacescans-project/data_full/BG_FL/C3/tiger2010_bg10_states/tl_2010_12_bg10/tl_2010_12_bg10.shp")
+    bg_shp = Path("/Users/xai/Desktop/spacescans-all/spacescans-web/pipeline-data/BG/C3/tiger2010_bg10_states/tl_2010_12_bg10/tl_2010_12_bg10.shp")
     if not bg_shp.exists():
         pytest.skip("FL BG shapefile not present locally")
 
@@ -81,7 +81,7 @@ def test_stage2_reproducibility(tmp_path):
     fixture = tmp_path / "buildings_fixture.parquet"
     _make_fixture_buildings(fixture, n=1000)
 
-    bg_shp = Path("/Users/xai/Desktop/spacescans-project/data_full/BG_FL/C3/tiger2010_bg10_states/tl_2010_12_bg10/tl_2010_12_bg10.shp")
+    bg_shp = Path("/Users/xai/Desktop/spacescans-all/spacescans-web/pipeline-data/BG/C3/tiger2010_bg10_states/tl_2010_12_bg10/tl_2010_12_bg10.shp")
     if not bg_shp.exists():
         pytest.skip("FL BG shapefile not present locally")
 
@@ -103,7 +103,7 @@ def test_stage2_rejects_wrong_county(tmp_path):
     fixture = tmp_path / "buildings_fixture.parquet"
     _make_fixture_buildings(fixture, n=1000)
 
-    bg_shp = Path("/Users/xai/Desktop/spacescans-project/data_full/BG_FL/C3/tiger2010_bg10_states/tl_2010_12_bg10/tl_2010_12_bg10.shp")
+    bg_shp = Path("/Users/xai/Desktop/spacescans-all/spacescans-web/pipeline-data/BG/C3/tiger2010_bg10_states/tl_2010_12_bg10/tl_2010_12_bg10.shp")
     if not bg_shp.exists():
         pytest.skip("FL BG shapefile not present locally")
 

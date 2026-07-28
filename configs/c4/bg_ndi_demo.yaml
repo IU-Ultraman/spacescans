@@ -15,7 +15,7 @@ source_2020:
   join_col: GEOID
 
 buffer:
-  patient_file: data_full/demo_patients_conus_fast_100000.parquet
+  patient_file: demo_patients_conus_fast_100000.parquet
   patient_adapter: demo_conus
   buffer_m: 270
 
@@ -24,7 +24,7 @@ buffer:
 # and the bg_vintage column (int: 2010 or 2020) drives the join dispatch.
 # Join key = index_year (NOT acs_end_year — per collaborator's spec).
 exposure:
-  file: data_full/BG_NDI/C4/ndi_bg_acs5_2008_2012_to_2020_2024_nationwide_summaryfile_xgboost.rds
+  file: NDI/C4/ndi_bg_acs5_2008_2012_to_2020_2024_nationwide_summaryfile_xgboost.rds
   vintage_col: bg_vintage
   join_col_2010: bg_fips_2010
   join_col_2020: bg_fips_2020

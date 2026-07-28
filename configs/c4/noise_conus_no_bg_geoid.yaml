@@ -1,0 +1,34 @@
+name: noise_270m_conus_no_bg_geoid
+linkage_pattern: static_areal
+geometry_type: raster
+
+source:
+  file: output/python_v2/270m/Noise/C3/buffer270m_noise_weights_conus_no_bg_geoid.parquet
+  join_col: grid_id
+
+buffer:
+  patient_file: conus_patients_100k_no_bg_geoid.csv
+  patient_adapter: demo_conus
+  buffer_m: 270
+
+exposure:
+  file: Noise/C3/CONUS_L50dBA_sumDay_exi.tif
+  join_col: grid_id
+  value_cols:
+    - l50dba_exi
+    - l50dba_imp
+    - l50dba_nat
+
+time:
+  temporal_resolution: static
+  temporal_mode: static
+
+engine:
+  backend: duckdb
+
+plugin: noise
+
+output:
+  path: output/python_v2/270m/Noise/C4/noise_270m_conus_no_bg_geoid.parquet
+  format: parquet
+  label_path: output/python_v2/270m/Noise/C4/label_noise_270m_conus_no_bg_geoid.parquet

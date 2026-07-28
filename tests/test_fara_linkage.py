@@ -56,7 +56,7 @@ _LABEL_VARS = ["LILATracts_1And10", "LATracts1", "HUNVFlag"]
 # Plus every rate_var referenced downstream gets a numeric column so the SQL
 # layer doesn't choke; we keep them constant so the temporal-weighted average
 # is deterministic.
-# Real FARA column ordering from data_full/FARA/C4/fara_nationwide_2010_2019_interpolated.Rda
+# Real FARA column ordering from FARA/C4/fara_nationwide_2010_2019_interpolated.Rda
 # (84 columns total). The run_fara_tract iloc selection is r_cols=3-16,18,32-36,37-85
 # (python 0-based: 2-15, 17, 31-35, 36-84), so the slot mapping is rigid —
 # the mock frame must replicate the exact column order or the iloc will

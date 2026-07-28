@@ -3,12 +3,12 @@ linkage_pattern: tiger_proximity     # C3-equivalent: per-(geoid, year) road dis
 geometry_type: line                  # C3 only: input data geometry
 
 source:                              # C3: TIGER zip directory + county boundary
-  file: data_full/TIGER/C4           # contains tiger{year}_roads/tl_{year}_{cnty}_roads.zip
-  county_file: data_full/County_FL/C3/tl_2010_us_county10/tl_2010_us_county10.shp
+  file: TIGER/C4           # contains tiger{year}_roads/tl_{year}_{cnty}_roads.zip
+  county_file: County/C3/tl_2010_us_county10/tl_2010_us_county10.shp
   road_cache_dir: cache/C3/tiger_roads_filtered  # cohort-independent: caches S1100/S1200 per (county, year)
 
 buffer:
-  patient_file: data_full/demo_patients_conus_fast_100000.parquet  # 100k CONUS demo
+  patient_file: demo_patients_conus_fast_100000.parquet  # 100k CONUS demo
   patient_adapter: demo_conus
 
 time:

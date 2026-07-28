@@ -7,63 +7,63 @@ source:
   # 50 states + DC, excluding territories (PR/VI/GU/AS/MP).
   # Download via: bash scripts/download_bg_2020_shapefiles.sh
   file:
-  - data_full/BG_FL/C3/tiger2024_bg_states/tl_2024_01_bg/tl_2024_01_bg.shp
-  - data_full/BG_FL/C3/tiger2024_bg_states/tl_2024_02_bg/tl_2024_02_bg.shp
-  - data_full/BG_FL/C3/tiger2024_bg_states/tl_2024_04_bg/tl_2024_04_bg.shp
-  - data_full/BG_FL/C3/tiger2024_bg_states/tl_2024_05_bg/tl_2024_05_bg.shp
-  - data_full/BG_FL/C3/tiger2024_bg_states/tl_2024_06_bg/tl_2024_06_bg.shp
-  - data_full/BG_FL/C3/tiger2024_bg_states/tl_2024_08_bg/tl_2024_08_bg.shp
-  - data_full/BG_FL/C3/tiger2024_bg_states/tl_2024_09_bg/tl_2024_09_bg.shp
-  - data_full/BG_FL/C3/tiger2024_bg_states/tl_2024_10_bg/tl_2024_10_bg.shp
-  - data_full/BG_FL/C3/tiger2024_bg_states/tl_2024_11_bg/tl_2024_11_bg.shp
-  - data_full/BG_FL/C3/tiger2024_bg_states/tl_2024_12_bg/tl_2024_12_bg.shp
-  - data_full/BG_FL/C3/tiger2024_bg_states/tl_2024_13_bg/tl_2024_13_bg.shp
-  - data_full/BG_FL/C3/tiger2024_bg_states/tl_2024_15_bg/tl_2024_15_bg.shp
-  - data_full/BG_FL/C3/tiger2024_bg_states/tl_2024_16_bg/tl_2024_16_bg.shp
-  - data_full/BG_FL/C3/tiger2024_bg_states/tl_2024_17_bg/tl_2024_17_bg.shp
-  - data_full/BG_FL/C3/tiger2024_bg_states/tl_2024_18_bg/tl_2024_18_bg.shp
-  - data_full/BG_FL/C3/tiger2024_bg_states/tl_2024_19_bg/tl_2024_19_bg.shp
-  - data_full/BG_FL/C3/tiger2024_bg_states/tl_2024_20_bg/tl_2024_20_bg.shp
-  - data_full/BG_FL/C3/tiger2024_bg_states/tl_2024_21_bg/tl_2024_21_bg.shp
-  - data_full/BG_FL/C3/tiger2024_bg_states/tl_2024_22_bg/tl_2024_22_bg.shp
-  - data_full/BG_FL/C3/tiger2024_bg_states/tl_2024_23_bg/tl_2024_23_bg.shp
-  - data_full/BG_FL/C3/tiger2024_bg_states/tl_2024_24_bg/tl_2024_24_bg.shp
-  - data_full/BG_FL/C3/tiger2024_bg_states/tl_2024_25_bg/tl_2024_25_bg.shp
-  - data_full/BG_FL/C3/tiger2024_bg_states/tl_2024_26_bg/tl_2024_26_bg.shp
-  - data_full/BG_FL/C3/tiger2024_bg_states/tl_2024_27_bg/tl_2024_27_bg.shp
-  - data_full/BG_FL/C3/tiger2024_bg_states/tl_2024_28_bg/tl_2024_28_bg.shp
-  - data_full/BG_FL/C3/tiger2024_bg_states/tl_2024_29_bg/tl_2024_29_bg.shp
-  - data_full/BG_FL/C3/tiger2024_bg_states/tl_2024_30_bg/tl_2024_30_bg.shp
-  - data_full/BG_FL/C3/tiger2024_bg_states/tl_2024_31_bg/tl_2024_31_bg.shp
-  - data_full/BG_FL/C3/tiger2024_bg_states/tl_2024_32_bg/tl_2024_32_bg.shp
-  - data_full/BG_FL/C3/tiger2024_bg_states/tl_2024_33_bg/tl_2024_33_bg.shp
-  - data_full/BG_FL/C3/tiger2024_bg_states/tl_2024_34_bg/tl_2024_34_bg.shp
-  - data_full/BG_FL/C3/tiger2024_bg_states/tl_2024_35_bg/tl_2024_35_bg.shp
-  - data_full/BG_FL/C3/tiger2024_bg_states/tl_2024_36_bg/tl_2024_36_bg.shp
-  - data_full/BG_FL/C3/tiger2024_bg_states/tl_2024_37_bg/tl_2024_37_bg.shp
-  - data_full/BG_FL/C3/tiger2024_bg_states/tl_2024_38_bg/tl_2024_38_bg.shp
-  - data_full/BG_FL/C3/tiger2024_bg_states/tl_2024_39_bg/tl_2024_39_bg.shp
-  - data_full/BG_FL/C3/tiger2024_bg_states/tl_2024_40_bg/tl_2024_40_bg.shp
-  - data_full/BG_FL/C3/tiger2024_bg_states/tl_2024_41_bg/tl_2024_41_bg.shp
-  - data_full/BG_FL/C3/tiger2024_bg_states/tl_2024_42_bg/tl_2024_42_bg.shp
-  - data_full/BG_FL/C3/tiger2024_bg_states/tl_2024_44_bg/tl_2024_44_bg.shp
-  - data_full/BG_FL/C3/tiger2024_bg_states/tl_2024_45_bg/tl_2024_45_bg.shp
-  - data_full/BG_FL/C3/tiger2024_bg_states/tl_2024_46_bg/tl_2024_46_bg.shp
-  - data_full/BG_FL/C3/tiger2024_bg_states/tl_2024_47_bg/tl_2024_47_bg.shp
-  - data_full/BG_FL/C3/tiger2024_bg_states/tl_2024_48_bg/tl_2024_48_bg.shp
-  - data_full/BG_FL/C3/tiger2024_bg_states/tl_2024_49_bg/tl_2024_49_bg.shp
-  - data_full/BG_FL/C3/tiger2024_bg_states/tl_2024_50_bg/tl_2024_50_bg.shp
-  - data_full/BG_FL/C3/tiger2024_bg_states/tl_2024_51_bg/tl_2024_51_bg.shp
-  - data_full/BG_FL/C3/tiger2024_bg_states/tl_2024_53_bg/tl_2024_53_bg.shp
-  - data_full/BG_FL/C3/tiger2024_bg_states/tl_2024_54_bg/tl_2024_54_bg.shp
-  - data_full/BG_FL/C3/tiger2024_bg_states/tl_2024_55_bg/tl_2024_55_bg.shp
-  - data_full/BG_FL/C3/tiger2024_bg_states/tl_2024_56_bg/tl_2024_56_bg.shp
+  - BG/C3/tiger2024_bg_states/tl_2024_01_bg/tl_2024_01_bg.shp
+  - BG/C3/tiger2024_bg_states/tl_2024_02_bg/tl_2024_02_bg.shp
+  - BG/C3/tiger2024_bg_states/tl_2024_04_bg/tl_2024_04_bg.shp
+  - BG/C3/tiger2024_bg_states/tl_2024_05_bg/tl_2024_05_bg.shp
+  - BG/C3/tiger2024_bg_states/tl_2024_06_bg/tl_2024_06_bg.shp
+  - BG/C3/tiger2024_bg_states/tl_2024_08_bg/tl_2024_08_bg.shp
+  - BG/C3/tiger2024_bg_states/tl_2024_09_bg/tl_2024_09_bg.shp
+  - BG/C3/tiger2024_bg_states/tl_2024_10_bg/tl_2024_10_bg.shp
+  - BG/C3/tiger2024_bg_states/tl_2024_11_bg/tl_2024_11_bg.shp
+  - BG/C3/tiger2024_bg_states/tl_2024_12_bg/tl_2024_12_bg.shp
+  - BG/C3/tiger2024_bg_states/tl_2024_13_bg/tl_2024_13_bg.shp
+  - BG/C3/tiger2024_bg_states/tl_2024_15_bg/tl_2024_15_bg.shp
+  - BG/C3/tiger2024_bg_states/tl_2024_16_bg/tl_2024_16_bg.shp
+  - BG/C3/tiger2024_bg_states/tl_2024_17_bg/tl_2024_17_bg.shp
+  - BG/C3/tiger2024_bg_states/tl_2024_18_bg/tl_2024_18_bg.shp
+  - BG/C3/tiger2024_bg_states/tl_2024_19_bg/tl_2024_19_bg.shp
+  - BG/C3/tiger2024_bg_states/tl_2024_20_bg/tl_2024_20_bg.shp
+  - BG/C3/tiger2024_bg_states/tl_2024_21_bg/tl_2024_21_bg.shp
+  - BG/C3/tiger2024_bg_states/tl_2024_22_bg/tl_2024_22_bg.shp
+  - BG/C3/tiger2024_bg_states/tl_2024_23_bg/tl_2024_23_bg.shp
+  - BG/C3/tiger2024_bg_states/tl_2024_24_bg/tl_2024_24_bg.shp
+  - BG/C3/tiger2024_bg_states/tl_2024_25_bg/tl_2024_25_bg.shp
+  - BG/C3/tiger2024_bg_states/tl_2024_26_bg/tl_2024_26_bg.shp
+  - BG/C3/tiger2024_bg_states/tl_2024_27_bg/tl_2024_27_bg.shp
+  - BG/C3/tiger2024_bg_states/tl_2024_28_bg/tl_2024_28_bg.shp
+  - BG/C3/tiger2024_bg_states/tl_2024_29_bg/tl_2024_29_bg.shp
+  - BG/C3/tiger2024_bg_states/tl_2024_30_bg/tl_2024_30_bg.shp
+  - BG/C3/tiger2024_bg_states/tl_2024_31_bg/tl_2024_31_bg.shp
+  - BG/C3/tiger2024_bg_states/tl_2024_32_bg/tl_2024_32_bg.shp
+  - BG/C3/tiger2024_bg_states/tl_2024_33_bg/tl_2024_33_bg.shp
+  - BG/C3/tiger2024_bg_states/tl_2024_34_bg/tl_2024_34_bg.shp
+  - BG/C3/tiger2024_bg_states/tl_2024_35_bg/tl_2024_35_bg.shp
+  - BG/C3/tiger2024_bg_states/tl_2024_36_bg/tl_2024_36_bg.shp
+  - BG/C3/tiger2024_bg_states/tl_2024_37_bg/tl_2024_37_bg.shp
+  - BG/C3/tiger2024_bg_states/tl_2024_38_bg/tl_2024_38_bg.shp
+  - BG/C3/tiger2024_bg_states/tl_2024_39_bg/tl_2024_39_bg.shp
+  - BG/C3/tiger2024_bg_states/tl_2024_40_bg/tl_2024_40_bg.shp
+  - BG/C3/tiger2024_bg_states/tl_2024_41_bg/tl_2024_41_bg.shp
+  - BG/C3/tiger2024_bg_states/tl_2024_42_bg/tl_2024_42_bg.shp
+  - BG/C3/tiger2024_bg_states/tl_2024_44_bg/tl_2024_44_bg.shp
+  - BG/C3/tiger2024_bg_states/tl_2024_45_bg/tl_2024_45_bg.shp
+  - BG/C3/tiger2024_bg_states/tl_2024_46_bg/tl_2024_46_bg.shp
+  - BG/C3/tiger2024_bg_states/tl_2024_47_bg/tl_2024_47_bg.shp
+  - BG/C3/tiger2024_bg_states/tl_2024_48_bg/tl_2024_48_bg.shp
+  - BG/C3/tiger2024_bg_states/tl_2024_49_bg/tl_2024_49_bg.shp
+  - BG/C3/tiger2024_bg_states/tl_2024_50_bg/tl_2024_50_bg.shp
+  - BG/C3/tiger2024_bg_states/tl_2024_51_bg/tl_2024_51_bg.shp
+  - BG/C3/tiger2024_bg_states/tl_2024_53_bg/tl_2024_53_bg.shp
+  - BG/C3/tiger2024_bg_states/tl_2024_54_bg/tl_2024_54_bg.shp
+  - BG/C3/tiger2024_bg_states/tl_2024_55_bg/tl_2024_55_bg.shp
+  - BG/C3/tiger2024_bg_states/tl_2024_56_bg/tl_2024_56_bg.shp
   # TIGER/Line 2022+ BG schema uses 'GEOID' (12-char string) for the 2020-vintage BG
   # identifier (vs 'GEOID10' in 2010 vintage). Verify with: ogrinfo -so <shp> | grep GEOID
   # If your shapefile uses 'GEOID20' instead, change this line.
   join_col: GEOID
 buffer:
-  patient_file: data_full/demo_patients_conus_fast_100000.parquet
+  patient_file: demo_patients_conus_fast_100000.parquet
   patient_adapter: demo_conus
   buffer_m: 270
   raster_res_m: 25

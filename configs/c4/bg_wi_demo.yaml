@@ -7,12 +7,12 @@ source:                              # C4: C3-produced BG weight table (demo)
   join_col: GEOID10
 
 buffer:
-  patient_file: data_full/demo_patients_conus_fast_100000.parquet
+  patient_file: demo_patients_conus_fast_100000.parquet
   patient_adapter: demo_conus
   buffer_m: 270
 
 exposure:                            # C4: EPA Walkability Index 2016-2021
-  file: data_full/BG_WI/C4/epawalkind_nationwide_2016_2021.Rda
+  file: Walkability/C4/epawalkind_nationwide_2016_2021.Rda
   key: wi
   join_col: GEOID10
   value_cols:

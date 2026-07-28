@@ -7,12 +7,12 @@ source:                              # C4: C3-produced county weight table (demo
   join_col: GEOID10
 
 buffer:
-  patient_file: data_full/demo_patients_conus_fast_100000.parquet
+  patient_file: demo_patients_conus_fast_100000.parquet
   patient_adapter: demo_conus
   buffer_m: 270
 
 exposure:                            # C4: nationwide county CBP data
-  file: data/CBP/C4/cbp_nationwide_0519.Rda
+  file: Community_Organization_Density/C4/cbp_nationwide_0519.Rda
   join_col: fips
   value_cols:
     - r_religious

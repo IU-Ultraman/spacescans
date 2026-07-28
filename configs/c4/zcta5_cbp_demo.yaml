@@ -7,12 +7,12 @@ source:                              # C4: C3-produced ZCTA5 weight table (demo)
   join_col: ZCTA5CE10
 
 buffer:
-  patient_file: data_full/demo_patients_conus_fast_100000.parquet
+  patient_file: demo_patients_conus_fast_100000.parquet
   patient_adapter: demo_conus
   buffer_m: 270
 
 exposure:                            # C4: nationwide ZBP data
-  file: data/CBP/C4/zbp_nationwide_0521.Rda
+  file: Community_Organization_Density/C4/zbp_nationwide_0521.Rda
   join_col: zip
   value_cols:
     - r_religious
