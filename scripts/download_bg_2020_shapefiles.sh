@@ -7,7 +7,7 @@
 # year >= 2020 use 2020 Census BG boundaries; earlier periods use 2010 BGs and
 # are handled by the existing configs/c3/bg_us_demo.yaml).
 #
-# Run from the project root:
+# Run from the exposure-data root:
 #   bash scripts/download_bg_2020_shapefiles.sh
 #
 # Coverage : 50 states + DC (51 entries; territories PR/VI/GU/AS/MP excluded
@@ -20,7 +20,7 @@ set -euo pipefail
 
 YEAR=2024
 TIGER_BASE="https://www2.census.gov/geo/tiger/TIGER${YEAR}/BG"
-LOCAL_BASE="data_full/BG_FL/C3/tiger${YEAR}_bg_states"
+LOCAL_BASE="BG/C3/tiger${YEAR}_bg_states"
 
 # 50 states + DC (FIPS codes 03/07/14/43/52 are reserved/unused)
 STATES=(
@@ -29,10 +29,10 @@ STATES=(
     49 50 51 53 54 55 56
 )
 
-# Sanity: must run from project root
-if [ ! -d "data_full" ]; then
-    echo "ERROR: 'data_full/' not found in $(pwd)." >&2
-    echo "       Run this script from the project root." >&2
+# Sanity: must run from the exposure-data root (the dir holding BG/, Noise/, …)
+if [ ! -d "BG" ]; then
+    echo "ERROR: 'BG/' not found in $(pwd)." >&2
+    echo "       Run this script from the exposure-data root." >&2
     exit 1
 fi
 
