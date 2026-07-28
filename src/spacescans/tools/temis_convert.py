@@ -109,6 +109,11 @@ def convert(raw_dir: Path, out_dir: Path,
         "cell_count": int(idx.size),
         "files": written,
         "created_at": pd.Timestamp.now("UTC").isoformat(),
+        # TEMIS terms: use requires credits and informing the team; there is
+        # no explicit redistribution grant — regenerate locally, don't ship.
+        "credit": "Data © KNMI/ESA — TEMIS UV (https://www.temis.nl/); "
+                  "doi.org/10.21944/temis-uv-oper-v2",
+        "redistribution": "not granted by TEMIS terms; generate per deployment",
     }
     with open(out_dir / MANIFEST, "w") as f:
         json.dump(manifest, f, indent=2)
