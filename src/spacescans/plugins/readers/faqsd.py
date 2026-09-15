@@ -44,12 +44,20 @@ _O3_FILENAMES = [
     "2013_ozone_daily_8hour_maximum.txt",
     "2014_ozone_daily_8hour_maximum.txt",
     "2015_ozone_daily_8hour_maximum.txt",
+    "2016_ozone_daily_8hour_maximum.txt",
+    "2017_ozone_daily_8hour_maximum.txt",
+    "2018_ozone_daily_8hour_maximum.txt",
+    "2019_ozone_daily_8hour_maximum.txt",
 ]
 
 _PM25_FILENAMES = [
     "2013_pm25_daily_average.txt",
     "2014_pm25_daily_average.txt",
     "2015_pm25_daily_average.txt",
+    "2016_pm25_daily_average.txt",
+    "2017_pm25_daily_average.txt",
+    "2018_pm25_daily_average.txt",
+    "2019_pm25_daily_average.txt",
 ]
 
 
