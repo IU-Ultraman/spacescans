@@ -296,8 +296,19 @@ class FAQSDExposureSource:
             # The web runner hands over its per-task C3 parquet here; the
             # old .pkl-or-csv branch would have read a parquet as CSV.
             from spacescans.io.readers import read_table
-            return read_table(src)
-        return pd.read_pickle(str(_find_weights(repo_root)))
+            weights = read_table(src)
+        else:
+            weights = pd.read_pickle(str(_find_weights(repo_root)))
+        # The v1 pkl carried GEOID10 as int64; the web C3 parquet carries it
+        # as the shapefile's string. The text files' fips is coerced to a
+        # number below, and both the isin() prefilter and the SQL join
+        # compare it to GEOID10 — a str/int mismatch silently matches
+        # nothing and the run "succeeds" with an empty table.
+        weights = weights.copy()
+        weights["GEOID10"] = pd.to_numeric(weights["GEOID10"], errors="coerce")
+        weights = weights.dropna(subset=["GEOID10"])
+        weights["GEOID10"] = weights["GEOID10"].astype("int64")
+        return weights
 
 
 def _find_weights(repo_root: Path) -> Path:

@@ -36,7 +36,9 @@ def _faqsd_dir(tmp_path: Path) -> Path:
 def _weights_parquet(tmp_path: Path) -> Path:
     p = tmp_path / "c3_tract_us.parquet"
     # web C3 output shape: geoid = episode id, GEOID10 = tract, value = area weight
-    pd.DataFrame({"geoid": [0, 1], "GEOID10": [FIPS, FIPS], "value": [1.0, 1.0]}).to_parquet(p, index=False)
+    # GEOID10 as the STRING the web C3 step emits (from the shapefile), not
+    # the int64 the v1 pkl carried — the reader must reconcile the two.
+    pd.DataFrame({"geoid": [0, 1], "GEOID10": [str(FIPS), str(FIPS)], "value": [1.0, 1.0]}).to_parquet(p, index=False)
     return p
 
 
@@ -78,4 +80,5 @@ def test_parquet_weights_are_read_as_parquet(tmp_path: Path) -> None:
     r = _reader(tmp_path, "episode")
     w = r._load_weights(tmp_path)
     assert set(w.columns) == {"geoid", "GEOID10", "value"}
+    assert w["GEOID10"].dtype == "int64"        # string in the parquet, int after loading
     assert w["GEOID10"].iloc[0] == FIPS

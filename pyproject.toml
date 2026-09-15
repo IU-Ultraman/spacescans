@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "spacescans-pipeline"
-version = "0.2.4"
+version = "0.2.5"
 description = "Config-driven environmental exposure linkage pipeline (C3 boundary/grid weights + C4 patient TWA)"
 readme = "README.md"
 requires-python = ">=3.10"
