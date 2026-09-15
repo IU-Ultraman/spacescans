@@ -24,6 +24,8 @@ from __future__ import annotations
 
 import os
 import sqlite3
+
+from spacescans.linkage.helpers import resolve_output_grouping
 from pathlib import Path
 
 import pandas as pd
@@ -230,7 +232,7 @@ class FAQSDExposureSource:
             pd.read_sql(
                 """
                 SELECT
-                    v.PATID, v.start, v.end,
+                    v.PATID, v.geoid, v.start, v.end,
                     b.GEOID10 AS fips,
                     b.value   AS aw
                 FROM vsehr_rh AS v
@@ -245,6 +247,7 @@ class FAQSDExposureSource:
                 """
                 SELECT
                     d.PATID,
+                    d.geoid,
                     f.date,
                     SUM(d.aw * f.o3)
                         / NULLIF(SUM(CASE WHEN f.o3   IS NOT NULL THEN d.aw ELSE 0 END), 0) AS o3_aw,
@@ -254,26 +257,33 @@ class FAQSDExposureSource:
                 JOIN faqsd AS f
                   ON d.fips = f.fips
                  AND date(f.date) BETWEEN date(d.start) AND date(d.end)
-                GROUP BY d.PATID, f.date
+                GROUP BY d.PATID, d.geoid, f.date
                 """,
                 con,
             ).to_sql("daily_aw", con, index=False, if_exists="replace")
 
-            # Simple average across all days per patient
+            # Simple average across all days per patient — or per
+            # (patient, episode) under output_grouping="episode", the contract
+            # every other linkage pattern honours so spacescans-web can join
+            # results back onto its per-row episode_id.
+            time_cfg = getattr(self.config, "time", None)
+            grouping = resolve_output_grouping(self.config) if time_cfg is not None else "patient"
+            keys = ["PATID"] if grouping == "patient" else ["PATID", "geoid"]
+            key_sql = ", ".join(keys)
             result = pd.read_sql(
-                """
-                SELECT PATID,
+                f"""
+                SELECT {key_sql},
                        AVG(o3_aw)   AS o3,
                        AVG(pm25_aw) AS pm25
                 FROM daily_aw
-                GROUP BY PATID
+                GROUP BY {key_sql}
                 """,
                 con,
             )
         finally:
             con.close()
 
-        return result[["PATID", "o3", "pm25"]]
+        return result[keys + ["o3", "pm25"]]
 
     # ------------------------------------------------------------------
     # Internal helpers
@@ -283,7 +293,10 @@ class FAQSDExposureSource:
         # Prefer configured source file, fall back to candidates
         src = Path(self.config.source.file)
         if src.exists():
-            return pd.read_pickle(str(src)) if src.suffix == ".pkl" else pd.read_csv(str(src))
+            # The web runner hands over its per-task C3 parquet here; the
+            # old .pkl-or-csv branch would have read a parquet as CSV.
+            from spacescans.io.readers import read_table
+            return read_table(src)
         return pd.read_pickle(str(_find_weights(repo_root)))
 
 

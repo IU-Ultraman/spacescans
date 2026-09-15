@@ -18,7 +18,7 @@ import pandas as pd
 
 from spacescans.io.readers import read_table
 from spacescans.io.writers import write_table
-from spacescans.linkage.helpers import load_patients, load_weights
+from spacescans.linkage.helpers import load_patients, load_weights, resolve_output_grouping
 from spacescans.models.config import DatasetConfig
 from spacescans.models.protocols import AggregationEngine
 from spacescans.models.specs import DateRangeJoinSpec, JoinSpec, TemporalAggSpec, WeightedAggSpec
@@ -37,6 +37,11 @@ def run_acag_multi(config: DatasetConfig, engine: AggregationEngine) -> Path:
 
     acag_root = Path(config.exposure.file)  # e.g. data/ACAG/C4/xNorthAmerica
     years = config.time.years if config.time else list(range(2013, 2020))
+    # Same dispatch as gridded_linkage: "episode" keeps one row per
+    # (PATID, geoid) so spacescans-web can join results back onto its
+    # per-row episode_id; "patient" (the v1/CLI default) collapses to PATID.
+    grouping = resolve_output_grouping(config) if config.time is not None else "patient"
+    group_by_keys = ["PATID"] if grouping == "patient" else ["PATID", "geoid"]
 
     results = {}
     for poll in _POLLUTANTS:
@@ -93,7 +98,7 @@ def run_acag_multi(config: DatasetConfig, engine: AggregationEngine) -> Path:
         patient_twa = engine.temporal_aggregate(
             matched,
             TemporalAggSpec(
-                group_by="PATID",
+                group_by=group_by_keys,
                 period_col="start_date",
                 value_cols=["value_aw"],
                 weight_col="overlap_days",
@@ -101,16 +106,16 @@ def run_acag_multi(config: DatasetConfig, engine: AggregationEngine) -> Path:
         )
         patient_twa = patient_twa.rename(columns={"value_aw": poll})
         patient_twa["PATID"] = patient_twa["PATID"].astype(str)
-        results[poll] = patient_twa[["PATID", poll]]
+        results[poll] = patient_twa[group_by_keys + [poll]]
         print(f"  Done: {poll} ({len(patient_twa)} patients)", flush=True)
 
     if not results:
-        return write_table(pd.DataFrame(columns=["PATID"]), config.output.path)
+        return write_table(pd.DataFrame(columns=group_by_keys), config.output.path)
 
     # Merge all pollutants on PATID (outer join)
     acag = None
     for poll, df in results.items():
-        acag = df if acag is None else acag.merge(df, on="PATID", how="outer")
+        acag = df if acag is None else acag.merge(df, on=group_by_keys, how="outer")
 
     # Derive _nbm columns: base - biomass
     for base in _BASE_MAP:

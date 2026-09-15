@@ -49,9 +49,23 @@ def _process_nc_file(filepath: str, keep_ids: list[int]) -> pd.DataFrame:
         data_vars = [v for v in ds.data_vars if v not in coord_names]
         if not data_vars:
             return pd.DataFrame(columns=["grid_id", "value", "start_date", "end_date"])
-        arr = ds[data_vars[0]].values
+        da = ds[data_vars[0]]
+        # The C3 weights come from exactextract over a north-up template
+        # (row 0 = north), numbered row-major from the top-left cell. ACAG
+        # ships (lat, lon) with lat ascending — row 0 is the *southern* edge —
+        # so without this flip every value lands mirrored north↔south, with
+        # no error to show for it. Transpose first if a file ever comes
+        # (lon, lat), then flip when the latitude axis ascends.
+        if tuple(da.dims[-2:]) == ("lon", "lat"):
+            da = da.transpose(*da.dims[:-2], "lat", "lon")
+        arr = da.values
         while arr.ndim > 2:
             arr = arr[0]
+        lat_name = next((c for c in ("lat", "latitude") if c in ds.variables), None)
+        if lat_name is not None:
+            lat = ds[lat_name].values
+            if len(lat) > 1 and lat[0] < lat[-1]:
+                arr = arr[::-1, :]
 
     n_rows, n_cols = arr.shape
     n_cells = n_rows * n_cols
