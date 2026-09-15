@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import os
 import sqlite3
+import warnings
 
 from spacescans.linkage.helpers import resolve_output_grouping
 from pathlib import Path
@@ -195,11 +196,6 @@ class FAQSDExposureSource:
         if not pm25_files:
             raise FileNotFoundError(f"No FAQSD PM2.5 text files found in {data_dir}")
 
-        o3 = pd.concat([_read_o3(f).loc[lambda d: d["fips"].isin(tract_list)] for f in o3_files],
-                       ignore_index=True)
-        pm25 = pd.concat([_read_pm25(f).loc[lambda d: d["fips"].isin(tract_list)] for f in pm25_files],
-                         ignore_index=True)
-
         # Prepare patients
         vsehr = patients[["PATID", "geoid", "start", "end"]].copy()
         vsehr["PATID"] = vsehr["PATID"].astype(str)
@@ -207,6 +203,40 @@ class FAQSDExposureSource:
         vsehr["start"] = pd.to_datetime(vsehr["start"]).dt.strftime("%Y-%m-%d")
         vsehr["end"] = pd.to_datetime(vsehr["end"]).dt.strftime("%Y-%m-%d")
         vsehr = vsehr.dropna(subset=["geoid"])
+
+        # Refuse to link against years the cohort never touches. The daily
+        # join below matches nothing in that case and the run "succeeds"
+        # with an empty table — which is how a missing download once passed
+        # an end-to-end test. Say which years are on disk and which the
+        # cohort needs instead.
+        years_on_disk = sorted(
+            {int(Path(f).name[:4]) for f in o3_files} & {int(Path(f).name[:4]) for f in pm25_files}
+        )
+        y0 = int(pd.to_datetime(vsehr["start"]).dt.year.min())
+        y1 = int(pd.to_datetime(vsehr["end"]).dt.year.max())
+        needed = list(range(y0, y1 + 1))
+        if not any(y in years_on_disk for y in needed):
+            raise FileNotFoundError(
+                f"FAQSD: no yearly file overlaps the cohort. Cohort spans {y0}-{y1}; "
+                f"files present for {years_on_disk or 'no years'} in {data_dir}"
+            )
+        missing_years = [y for y in needed if y not in years_on_disk]
+        if missing_years:
+            warnings.warn(
+                f"FAQSD: cohort years {missing_years} have no file in {data_dir}; "
+                "episodes falling entirely in those years will be unlinked"
+            )
+
+        o3 = pd.concat([_read_o3(f).loc[lambda d: d["fips"].isin(tract_list)] for f in o3_files],
+                       ignore_index=True)
+        pm25 = pd.concat([_read_pm25(f).loc[lambda d: d["fips"].isin(tract_list)] for f in pm25_files],
+                         ignore_index=True)
+        if o3.empty or pm25.empty:
+            raise ValueError(
+                "FAQSD: no rows left after restricting to the cohort's tracts — "
+                f"{len(tract_list)} tract ids from the weights table matched nothing in the "
+                "text files (check that GEOID10 and the files' FIPS agree)"
+            )
 
         con = sqlite3.connect(":memory:")
         try:

@@ -82,3 +82,30 @@ def test_parquet_weights_are_read_as_parquet(tmp_path: Path) -> None:
     assert set(w.columns) == {"geoid", "GEOID10", "value"}
     assert w["GEOID10"].dtype == "int64"        # string in the parquet, int after loading
     assert w["GEOID10"].iloc[0] == FIPS
+
+
+def test_refuses_when_no_file_year_overlaps_cohort(tmp_path: Path) -> None:
+    """The exact failure that once slipped through: files for 2013 only, a
+    cohort in 2017. The join matches nothing; the reader must say so."""
+    r = _reader(tmp_path, "episode")
+    patients_2017 = pd.DataFrame({"PATID": ["P1"], "geoid": [0],
+                                  "start": ["2017-01-01"], "end": ["2017-06-30"]})
+    with pytest.raises(FileNotFoundError, match=r"2017-2017.*files present for \[2013\]"):
+        r.compute_patient_exposure(patients_2017)
+
+
+def test_warns_when_some_cohort_years_are_missing(tmp_path: Path) -> None:
+    r = _reader(tmp_path, "episode")
+    spans_two_years = pd.DataFrame({"PATID": ["P1"], "geoid": [0],
+                                    "start": ["2013-01-01"], "end": ["2014-01-10"]})
+    with pytest.warns(UserWarning, match=r"cohort years \[2014\] have no file"):
+        out = r.compute_patient_exposure(spans_two_years)
+    assert len(out) == 1          # the 2013 days still link
+
+
+def test_refuses_when_tracts_match_nothing(tmp_path: Path) -> None:
+    r = _reader(tmp_path, "episode")
+    pd.DataFrame({"geoid": [0, 1], "GEOID10": ["99999999999", "99999999999"], "value": [1.0, 1.0]}).to_parquet(
+        Path(r.config.source.file), index=False)
+    with pytest.raises(ValueError, match="matched nothing"):
+        r.compute_patient_exposure(_patients())
