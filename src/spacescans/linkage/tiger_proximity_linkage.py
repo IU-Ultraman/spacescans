@@ -8,6 +8,16 @@ Caching: per-(state, county, year) filtered roads → parquet on disk. The cache
 is cohort-independent — any future cohort that touches the same county/year
 gets a 100% hit on this step. Heavy lifting (sjoin_nearest with patients) is
 cohort-specific and not cached.
+
+Search: the distance returned is to the nearest road in the whole network, not
+among the roads of the counties that happen to contain cohort points. Roads
+are read per county, so each point's search starts from every county within
+_SEARCH_RADIUS_M of it; a point whose nearest road lies beyond that radius is
+searched again over every county within that distance, which cannot miss a
+closer road. The result for one address therefore does not depend on which
+other addresses are in the cohort. (Up to v0.2.6 the search pooled only the
+counties containing cohort points, so an address in a county without a
+primary road was measured to a road elsewhere in the cohort's counties.)
 """
 from __future__ import annotations
 
@@ -30,6 +40,19 @@ from spacescans.pipeline.registry import register_pattern
 
 _CRS_METRIC = 5070  # NAD83 / Conus Albers (meters)
 _MTFCC_KEEP = ("S1100", "S1200")
+_SEARCH_RADIUS_M = 25_000.0     # first-pass search radius around each point
+_MAX_SEARCH_RADIUS_M = 3_000_000.0  # give up (NaN) beyond this: no road anywhere near
+# 2010 county codes whose TIGER road files are published under a new code from a
+# given year on: Shannon County, SD became Oglala Lakota County (46102) in 2015.
+_RENAMED_COUNTIES = {("46", "113"): (2015, ("46", "102"))}
+
+
+def _road_county(statefp: str, countyfp: str, year: int) -> tuple[str, str]:
+    """The (state, county) code under which `year`'s road file is published."""
+    renamed = _RENAMED_COUNTIES.get((statefp, countyfp))
+    if renamed is not None and year >= renamed[0]:
+        return renamed[1]
+    return statefp, countyfp
 
 
 def _filtered_roads_path(cache_dir: Path, statefp: str, countyfp: str, year: int) -> Path:
@@ -83,8 +106,61 @@ def _nearest_dist(pts_m: gpd.GeoDataFrame, roads_m: gpd.GeoDataFrame) -> np.ndar
         how="left",
         distance_col="_dist",
     )
-    joined = joined[~joined.index.duplicated(keep="first")]
-    return joined["_dist"].values.astype(float)
+    # ties return several rows per point; take the distance per point by position
+    per_point = joined["_dist"].astype(float).groupby(level=0).min()
+    return per_point.reindex(range(len(pts_m))).to_numpy()
+
+
+def _nearest_dist_exact(
+    pts_m: gpd.GeoDataFrame,
+    counties_m: gpd.GeoDataFrame,
+    mtfcc: str,
+    load_county: "callable",
+) -> np.ndarray:
+    """Distance from each point to the nearest `mtfcc` road anywhere, in metres.
+
+    A point is resolved once its nearest road among the loaded counties is no
+    farther than its search radius and every county intersecting a disk of
+    that radius is loaded: a closer road would lie inside the disk, hence in a
+    loaded county. Unresolved points get the found distance as their new
+    radius (resolved on the next pass), or, if nothing was found, four times
+    the radius. `load_county(state, county)` returns that county's roads in
+    the metric CRS (possibly empty) and caches them across calls and classes.
+    """
+    n = len(pts_m)
+    dist = np.full(n, np.nan)
+    radius = np.full(n, _SEARCH_RADIUS_M)
+    todo = np.arange(n)
+    loaded: set[tuple[str, str]] = set()
+    while len(todo):
+        # 1 % margin: shapely's buffer polygon is inscribed in the true circle
+        disks = gpd.GeoDataFrame(
+            {"_pt": todo},
+            geometry=pts_m.geometry.iloc[todo].buffer(radius[todo] * 1.01, resolution=16).values,
+            crs=pts_m.crs,
+        )
+        hit = gpd.sjoin(disks, counties_m[["STATEFP10", "COUNTYFP10", "geometry"]],
+                        how="inner", predicate="intersects")
+        for sc in hit[["STATEFP10", "COUNTYFP10"]].drop_duplicates().itertuples(index=False):
+            key = (sc[0], sc[1])
+            if key not in loaded:
+                load_county(*key)
+                loaded.add(key)
+        pool = [r for k in loaded for r in [load_county(*k)] if r is not None and len(r)]
+        roads = (gpd.GeoDataFrame(pd.concat(pool, ignore_index=True), crs=pool[0].crs)
+                 if pool else None)
+        if roads is not None:
+            roads = roads[roads["MTFCC"] == mtfcc]
+        d = _nearest_dist(pts_m.iloc[todo], roads)
+        found = np.isfinite(d)
+        done = found & (d <= radius[todo])
+        dist[todo[done]] = d[done]
+        grow = ~done
+        nxt = todo[grow]
+        radius[nxt] = np.where(found[grow], d[grow], radius[nxt] * 4.0)
+        give_up = radius[nxt] > _MAX_SEARCH_RADIUS_M
+        todo = nxt[~give_up]
+    return dist
 
 
 @register_pattern("tiger_proximity")
@@ -103,31 +179,20 @@ def run_tiger_proximity(config: DatasetConfig, engine: AggregationEngine) -> Pat
     )
     pts_m = pts.to_crs(_CRS_METRIC)
 
-    # 1) Determine which counties contain patients (one-time spatial join)
+    # 1) County polygons: the search region is built from them (see module docstring)
     t = time.perf_counter()
     if not config.source.county_file:
         raise ValueError(
             "tiger_proximity requires `source.county_file` (path to a county boundary "
-            "shapefile) to determine which counties contain patients. Set it in the YAML, "
+            "shapefile) to locate the counties around each patient. Set it in the YAML, "
             "e.g. source.county_file: ${SPACESCANS_DATA_DIR}/County/tl_2010_us_county10.shp"
         )
-    counties = read_vector(config.source.county_file).to_crs("EPSG:4326")
-    pt_county = gpd.sjoin(
-        pts[["geoid", "geometry"]],
-        counties[["STATEFP10", "COUNTYFP10", "geometry"]],
-        how="left",
-        predicate="within",
-    )
-    pt_county = pt_county.dropna(subset=["STATEFP10", "COUNTYFP10"])
-    unique_counties = pt_county[["STATEFP10", "COUNTYFP10"]].drop_duplicates().values.tolist()
-    print(
-        f"[tiger_proximity] {len(patients)} patients across "
-        f"{len(unique_counties)} unique counties",
-        flush=True,
-    )
+    counties_m = read_vector(config.source.county_file).to_crs(_CRS_METRIC)
+    print(f"[tiger_proximity] {len(patients)} patients; {len(counties_m)} counties available",
+          flush=True)
     t_county_resolve = time.perf_counter() - t
 
-    # 2) For each year, gather per-county roads (cache-aware) + sjoin_nearest
+    # 2) For each year, search outward from every point over per-county roads (cache-aware)
     raw_dir = Path(config.source.file)
     cache_dir = Path(config.source.road_cache_dir) if config.source.road_cache_dir else None
     if cache_dir is not None:
@@ -141,34 +206,36 @@ def run_tiger_proximity(config: DatasetConfig, engine: AggregationEngine) -> Pat
     cache_misses = 0
 
     records = []
-    for year_idx, y in enumerate(years):
+    for y in years:
         t_year = time.perf_counter()
-        county_roads = []
-        for statefp, countyfp in unique_counties:
-            t = time.perf_counter()
-            cache_path = _filtered_roads_path(cache_dir, statefp, countyfp, y) if cache_dir else None
-            was_hit = bool(cache_path and cache_path.exists())
-            roads = _get_county_roads(statefp, countyfp, y, raw_dir, cache_dir)
-            timings["load_filter"] += time.perf_counter() - t
-            if was_hit:
+        year_roads: dict[tuple[str, str], gpd.GeoDataFrame | None] = {}
+
+        def load_county(statefp: str, countyfp: str, _y=y, _store=year_roads):
+            nonlocal cache_hits, cache_misses
+            if (statefp, countyfp) in _store:
+                return _store[(statefp, countyfp)]
+            t0 = time.perf_counter()
+            st, co = _road_county(statefp, countyfp, _y)
+            cache_path = _filtered_roads_path(cache_dir, st, co, _y) if cache_dir else None
+            if cache_path is not None and cache_path.exists():
                 cache_hits += 1
             else:
                 cache_misses += 1
-            if roads is not None and len(roads) > 0:
-                county_roads.append(roads)
-
-        if not county_roads:
-            print(f"[tiger_proximity] year {y}: no roads found, skipping", flush=True)
-            continue
+            roads = _get_county_roads(st, co, _y, raw_dir, cache_dir)
+            roads = roads.to_crs(_CRS_METRIC) if roads is not None and len(roads) else None
+            _store[(statefp, countyfp)] = roads
+            timings["load_filter"] += time.perf_counter() - t0
+            return roads
 
         t = time.perf_counter()
-        roads_y = gpd.GeoDataFrame(pd.concat(county_roads, ignore_index=True), crs=county_roads[0].crs)
-        roads_m = roads_y.to_crs(_CRS_METRIC)
-        primary = roads_m[roads_m["MTFCC"] == "S1100"]
-        secondary = roads_m[roads_m["MTFCC"] == "S1200"]
-        d_pri = _nearest_dist(pts_m, primary)
-        d_sec = _nearest_dist(pts_m, secondary)
+        d_pri = _nearest_dist_exact(pts_m, counties_m, "S1100", load_county)
+        d_sec = _nearest_dist_exact(pts_m, counties_m, "S1200", load_county)
         timings["sjoin_nearest"] += time.perf_counter() - t
+
+        n_loaded = sum(1 for r in year_roads.values() if r is not None)
+        if n_loaded == 0:
+            print(f"[tiger_proximity] year {y}: no roads found, skipping", flush=True)
+            continue
 
         records.append(pd.DataFrame({
             "geoid": patients[config.buffer.geoid_col].values,
@@ -178,7 +245,7 @@ def run_tiger_proximity(config: DatasetConfig, engine: AggregationEngine) -> Pat
         }))
         print(
             f"[tiger_proximity] year {y} done in {(time.perf_counter() - t_year)/60:.2f}m  "
-            f"(roads pri={len(primary)}, sec={len(secondary)})",
+            f"({len(year_roads)} counties searched, {n_loaded} with roads)",
             flush=True,
         )
 
