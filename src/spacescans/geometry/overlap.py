@@ -385,8 +385,15 @@ def compute_overlap_weights_fast(
     sindex_p = boundaries.sindex
     sindex_b = buffers.sindex
 
-    # Patient bbox defines tile extent
+    # Patient bbox defines tile extent; the grid itself is anchored to a global lattice
+    # (multiples of the tile size in the projected CRS), so every raster cell sits at
+    # the same place whatever the cohort. Up to v0.2.6 the grid started at the cohort's
+    # bounding box, which moved cell edges between cohorts: the same residence got
+    # weights differing by up to ~0.03 depending on who else was linked.
+    tile_size_m = max(1, round(tile_size_m / raster_res_m)) * raster_res_m
     xmin, ymin, xmax, ymax = buffers.total_bounds
+    xmin = float(np.floor(xmin / tile_size_m) * tile_size_m)
+    ymin = float(np.floor(ymin / tile_size_m) * tile_size_m)
     pad = _NEIGHBOR_PAD_M  # pad polygons by buffer radius
 
     # Build tile grid in projected CRS units (meters)
@@ -428,6 +435,9 @@ def compute_overlap_weights_fast(
         height = max(1, round((tymax - tymin) / raster_res_m))
         transform = rasterio.transform.from_origin(txmin, tymax, raster_res_m, raster_res_m)
         shapes = []
+        # Burn in a fixed order (by the boundary key): a cell on a shared edge goes to
+        # the last polygon burned, so the order must not depend on the index layout.
+        poly_idxs = sorted(poly_idxs, key=lambda i: str(boundaries[boundary_key_col].iloc[i]))
         for pi in poly_idxs:
             g = boundaries.geometry.iloc[pi]
             if g is None or g.is_empty:
