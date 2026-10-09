@@ -2,9 +2,15 @@
 
 Matches v1 C4_Linkage_COUNTY_CBP.py:
 1. Load linked ZBP output (zbp.pkl)
-2. Patients where zbp_r_civic is NaN → run county-level yearly_areal
-3. Patients where zbp_r_bowling is not NaN → use ZBP values (strip zbp_ prefix)
-4. Concat both groups → 1000 patients
+2. Units where zbp_r_civic is NaN → run county-level yearly_areal
+3. All other units → use ZBP values (strip zbp_ prefix)
+4. Concat both groups → one row per unit
+
+The unit is the patient under patient grouping (v1) and the (patient, episode)
+under episode grouping. Up to v0.2.6 the split was always made per patient, so
+in episode mode a patient with one ZBP-less episode sent every episode to the
+county branch while the ZBP-valid ones were also kept: those episodes came out
+twice with different values. The two branches are now exact complements.
 """
 from __future__ import annotations
 
@@ -48,23 +54,34 @@ def run_cbp_fallback(config: DatasetConfig, engine: AggregationEngine) -> Path:
             columns={c: f"zbp_{c}" for c in linked_zbp.columns if c != "PATID"}
         )
 
-    # Split patients: those missing ZBP (zbp_r_civic is NaN) get county CBP
-    zbp_missing_col = "zbp_r_civic"
-    zbp_valid_col = "zbp_r_bowling"
-    missing_pats = linked_zbp.loc[linked_zbp[zbp_missing_col].isna(), "PATID"].unique()
-
-    patients["PATID"] = patients["PATID"].astype(str)
-    patients_cbp = patients[patients["PATID"].isin(missing_pats)].copy()
-
-    # --- County CBP for patients without ZBP ---
-    value_cols = config.exposure.value_cols
-    year_col = config.exposure.year_col or "year"
     # Honor output_grouping like yearly_areal/fara (Sprint 11): "patient"
     # keeps the v1 per-PATID collapse; "episode" preserves the synthetic
     # per-row `geoid`, so BOTH the county-CBP and ZBP-valid halves emit one
     # row per (patient, episode) and stay consistent with the rest of C4.
     grouping = resolve_output_grouping(config)
     group_by_keys = ["PATID", "geoid"] if grouping == "episode" else ["PATID"]
+
+    # Split units: those missing ZBP (zbp_r_civic is NaN) get county CBP; the
+    # rest keep ZBP. The unit follows the grouping, so the halves never overlap.
+    zbp_missing_col = "zbp_r_civic"
+    missing = linked_zbp[zbp_missing_col].isna()
+    patients["PATID"] = patients["PATID"].astype(str)
+    if grouping == "episode":
+        geo = "zbp_geoid" if "zbp_geoid" in linked_zbp.columns else "geoid"
+        missing_keys = set(zip(linked_zbp.loc[missing, "PATID"],
+                               linked_zbp.loc[missing, geo].astype("int64")))
+        in_missing = [
+            (p, int(g)) in missing_keys
+            for p, g in zip(patients["PATID"], patients[config.buffer.geoid_col])
+        ]
+        patients_cbp = patients[in_missing].copy()
+    else:
+        missing_pats = linked_zbp.loc[missing, "PATID"].unique()
+        patients_cbp = patients[patients["PATID"].isin(missing_pats)].copy()
+
+    # --- County CBP for units without ZBP ---
+    value_cols = config.exposure.value_cols
+    year_col = config.exposure.year_col or "year"
     episodes = build_episode_periods(patients_cbp, years=config.time.years)
 
     joined = engine.join(
@@ -86,8 +103,8 @@ def run_cbp_fallback(config: DatasetConfig, engine: AggregationEngine) -> Path:
         TemporalAggSpec(group_by=group_by_keys, period_col="period_id", value_cols=value_cols, weight_col="overlap_days"),
     )
 
-    # --- ZBP-valid patients: strip zbp_ prefix ---
-    zbp_valid = linked_zbp[linked_zbp[zbp_valid_col].notna()].copy()
+    # --- ZBP-valid units (the complement of the missing ones): strip zbp_ prefix ---
+    zbp_valid = linked_zbp[~missing].copy()
     zbp_valid.columns = [
         c.replace("zbp_", "") if c.startswith("zbp_") else c
         for c in zbp_valid.columns

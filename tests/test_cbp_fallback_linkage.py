@@ -142,3 +142,49 @@ def test_cbp_fallback_groups_by_patid_geoid_when_episode(tmp_path):
 def test_cbp_fallback_rejects_unknown_output_grouping(tmp_path):
     with pytest.raises(ValueError, match="output_grouping"):
         _run(tmp_path, "rubbish")
+
+
+def test_cbp_fallback_episode_mode_splits_per_episode_not_per_patient(tmp_path):
+    """A patient with one ZBP-less episode and one ZBP-valid episode.
+
+    Before v0.2.7 the split was per patient: both episodes went to the county
+    branch and the valid one was also kept from ZBP, so it came out twice with
+    different values. Now only the ZBP-less episode falls back.
+    """
+    from spacescans.linkage import cbp_fallback_linkage as mod
+
+    linked = pd.DataFrame({
+        "PATID": ["mix", "mix"], "geoid": [10, 11],
+        "r_civic": [float("nan"), 4.0], "r_bowling": [float("nan"), 2.0],
+    })
+    seen = {}
+
+    def fake_episodes(pats, years):
+        seen["fallback"] = sorted(zip(pats["PATID"], pats["geoid"]))
+        return pd.DataFrame({"PATID": pats["PATID"], "geoid": pats["geoid"],
+                             "period_id": 2017, "overlap_days": 365})
+
+    fake_engine = MagicMock()
+    fake_engine.join.return_value = pd.DataFrame()
+    fake_engine.weighted_aggregate.return_value = pd.DataFrame(
+        {"geoid": [10], "year": [2017.0], "r_civic": [9.0], "r_bowling": [9.0]})
+    fake_engine.temporal_aggregate.return_value = pd.DataFrame(
+        {"PATID": ["mix"], "geoid": [10], "r_civic": [9.0], "r_bowling": [9.0]})
+    out = {}
+    with patch.object(mod, "load_patients", return_value=pd.DataFrame({
+        "PATID": ["mix", "mix"], "geoid": [10, 11],
+        "start": ["2017-01-01", "2017-07-01"], "end": ["2017-06-30", "2017-12-31"],
+    })), \
+         patch.object(mod, "load_weights", return_value=pd.DataFrame()), \
+         patch.object(mod, "read_table", side_effect=lambda path, **kw: linked.copy()
+                      if str(path) == "zbp_linked.parquet" else pd.DataFrame()), \
+         patch.object(mod, "apply_transforms", side_effect=lambda df, *a, **kw: df), \
+         patch.object(mod, "build_episode_periods", side_effect=fake_episodes), \
+         patch.object(mod, "write_table", side_effect=lambda df, path: out.setdefault("r", df)):
+        mod.run_cbp_fallback(_make_config(tmp_path, "episode"), fake_engine)
+
+    assert seen["fallback"] == [("mix", 10)]
+    result = out["r"]
+    assert result.groupby(["PATID", "geoid"]).size().max() == 1
+    assert sorted(result["geoid"].tolist()) == [10, 11]
+    assert result.set_index("geoid").loc[11, "r_civic"] == 4.0
