@@ -247,3 +247,29 @@ def test_fara_groups_by_patid_geoid_when_episode(tmp_path):
 def test_fara_rejects_unknown_output_grouping(tmp_path):
     with pytest.raises(ValueError, match="unsupported output_grouping"):
         _run(tmp_path, output_grouping="foo")
+
+
+def test_fara_leaves_units_without_fara_data_missing(tmp_path):
+    """An episode whose buffer covers only a tract absent from FARA (a
+    water-only tract, say) must come out missing, not as 0 = 'not low-income,
+    not low-access'. Up to v0.2.6 a final fillna(0) did the latter."""
+    from spacescans.linkage import fara_linkage as mod
+
+    class _ReadWithUncoveredTract(_FakeReadTable):
+        def __call__(self, path, *, key=None):
+            out = super().__call__(path, key=key)
+            if key != "fara1019":
+                out = out.copy()
+                out.loc[out["geoid"] == 30, "GEOID10"] = 99   # no FARA row for Fips 99
+            return out
+
+    cfg = _make_demo_config(tmp_path, output_grouping="episode")
+    with patch.object(mod, "read_table", side_effect=_ReadWithUncoveredTract()), \
+         patch.object(mod, "load_patients", return_value=_patient_frame()):
+        mod.run_fara_tract(cfg, engine=None)
+    df = pd.read_parquet(cfg.output.path)
+    uncovered = df[df["geoid"] == 30]
+    covered = df[df["geoid"] != 30]
+    assert len(uncovered) >= 1
+    assert uncovered[_LABEL_VARS].isna().all().all(), uncovered
+    assert covered[_LABEL_VARS].notna().all().all()

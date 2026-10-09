@@ -321,8 +321,11 @@ def run_fara_tract(config: DatasetConfig, engine: AggregationEngine) -> Path:
     # Recode binary flags
     dat5f = _apply_fara_recode(dat5f)
 
-    # Select final columns from label CSV + fillna(0)
+    # Select final columns from label CSV. The original R pipeline ended with
+    # fillna(0), which reported a unit with no FARA data (an address in a
+    # water-only tract, say) as not low-income and not low-access. Up to v0.2.6
+    # this port did the same; missing now stays missing, as in every other source.
     varlist = label_csv["var"].tolist()
-    result = dat5f[group_cols + varlist].copy().fillna(0)
+    result = dat5f[group_cols + varlist].copy()
 
     return write_table(result, config.output.path)
