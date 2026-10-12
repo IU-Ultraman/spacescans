@@ -19,7 +19,7 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parent))
 
 import golden_compare as gc  # noqa: E402
-from web_goldens import CASES, CASE_BY_NAME, LARGE_BYTES  # noqa: E402
+from web_goldens import CASES, LARGE_BYTES  # noqa: E402
 
 ENV_DIR = HERE.parent / "env"
 
