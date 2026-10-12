@@ -1,0 +1,33 @@
+name: acag_270m_demo_task_b500_r25
+linkage_pattern: acag_multi
+geometry_type: raster
+source:
+  file: /app/data/tasks/tier2-golden-render/combos/acag__acag__b500_r25/output/c3_acag.parquet
+buffer:
+  patient_file: /app/data/tasks/tier2-golden-render/combos/acag__acag__b500_r25/input.parquet
+  patient_adapter: demo_conus
+  buffer_m: 500
+exposure:
+  file: ACAG/C4/xNorthAmerica
+  join_col: grid_id
+  value_cols:
+  - value
+  start_col: start_date
+  end_col: end_date
+time:
+  years:
+  - 2013
+  - 2014
+  - 2015
+  - 2016
+  - 2017
+  - 2018
+  - 2019
+  temporal_resolution: biweekly
+  temporal_mode: yearly
+  output_grouping: episode
+engine:
+  backend: duckdb
+output:
+  path: /app/data/tasks/tier2-golden-render/combos/acag__acag__b500_r25/output/c4_acag.parquet
+  format: parquet

@@ -1,0 +1,68 @@
+{
+  "name": "bg_ndi_wi",
+  "experiment": "bg_ndi_wi",
+  "variables": [
+    "ndi",
+    "walkability"
+  ],
+  "task_dir": "/app/data/tasks/tier2-golden-bg_ndi_wi",
+  "command": "cd /app && /opt/conda/bin/python -m app.experiments.bg_ndi_wi run /app/data/tasks/tier2-golden-bg_ndi_wi --variables ndi,walkability",
+  "env_overrides": {
+    "C3_CACHE_DIR": "/app/data/tasks/tier2-golden-bg_ndi_wi/golden_c3_cache"
+  },
+  "cache": "cold: private empty cache",
+  "note": "",
+  "attempts": [
+    {
+      "attempt": 1,
+      "waited_s": 0.0,
+      "started_utc": "2026-10-12T20:48:53+00:00",
+      "rc": 0,
+      "wall_s": 90.976,
+      "lock_refused": false
+    }
+  ],
+  "rc": 0,
+  "wall_s": 90.976,
+  "started_utc": "2026-10-12T20:48:53+00:00",
+  "ended_utc": "2026-10-12T20:50:24+00:00",
+  "started_eastern": "2026-10-12T16:48:53-04:00",
+  "ended_eastern": "2026-10-12T16:50:24-04:00",
+  "result_exists": true,
+  "success": true,
+  "fan_in": {
+    "fan_in": [
+      "bg_ndi_wi"
+    ]
+  },
+  "log_span": {
+    "first_ts": "2026-10-12T20:48:54.053239+00:00",
+    "last_ts": "2026-10-12T20:50:24.199238+00:00",
+    "steps": {
+      "c3_bg": {
+        "spawn_ts": "2026-10-12T20:48:54.053239+00:00",
+        "exit_ts": "2026-10-12T20:49:33.379079+00:00",
+        "rc": 0,
+        "seconds": 39.326
+      },
+      "c3_bg_2020": {
+        "spawn_ts": "2026-10-12T20:49:33.539500+00:00",
+        "exit_ts": "2026-10-12T20:50:17.172612+00:00",
+        "rc": 0,
+        "seconds": 43.633
+      },
+      "c4_ndi": {
+        "spawn_ts": "2026-10-12T20:50:17.178991+00:00",
+        "exit_ts": "2026-10-12T20:50:23.192932+00:00",
+        "rc": 0,
+        "seconds": 6.014
+      },
+      "c4_wi": {
+        "spawn_ts": "2026-10-12T20:50:23.202084+00:00",
+        "exit_ts": "2026-10-12T20:50:24.199238+00:00",
+        "rc": 0,
+        "seconds": 0.997
+      }
+    }
+  }
+}

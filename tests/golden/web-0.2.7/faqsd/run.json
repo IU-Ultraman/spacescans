@@ -1,0 +1,55 @@
+{
+  "name": "faqsd",
+  "experiment": "faqsd",
+  "variables": [
+    "faqsd"
+  ],
+  "task_dir": "/app/data/tasks/tier2-golden-faqsd",
+  "command": "cd /app && /opt/conda/bin/python -m app.experiments.faqsd run /app/data/tasks/tier2-golden-faqsd --variables faqsd",
+  "env_overrides": {
+    "C3_CACHE_DIR": "/app/data/tasks/tier2-golden-faqsd/golden_c3_cache"
+  },
+  "cache": "cold: private empty cache",
+  "note": "",
+  "attempts": [
+    {
+      "attempt": 1,
+      "waited_s": 0.0,
+      "started_utc": "2026-10-12T20:50:34+00:00",
+      "rc": 0,
+      "wall_s": 246.357,
+      "lock_refused": false
+    }
+  ],
+  "rc": 0,
+  "wall_s": 246.357,
+  "started_utc": "2026-10-12T20:50:34+00:00",
+  "ended_utc": "2026-10-12T20:54:41+00:00",
+  "started_eastern": "2026-10-12T16:50:34-04:00",
+  "ended_eastern": "2026-10-12T16:54:41-04:00",
+  "result_exists": true,
+  "success": true,
+  "fan_in": {
+    "fan_in": [
+      "faqsd"
+    ]
+  },
+  "log_span": {
+    "first_ts": "2026-10-12T20:50:35.352388+00:00",
+    "last_ts": "2026-10-12T20:54:40.953600+00:00",
+    "steps": {
+      "c3_tract_us": {
+        "spawn_ts": "2026-10-12T20:50:35.352388+00:00",
+        "exit_ts": "2026-10-12T20:51:02.497698+00:00",
+        "rc": 0,
+        "seconds": 27.145
+      },
+      "c4_tract_faqsd": {
+        "spawn_ts": "2026-10-12T20:51:02.504816+00:00",
+        "exit_ts": "2026-10-12T20:54:40.953600+00:00",
+        "rc": 0,
+        "seconds": 218.449
+      }
+    }
+  }
+}

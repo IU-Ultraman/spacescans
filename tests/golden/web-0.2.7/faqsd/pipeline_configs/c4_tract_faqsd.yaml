@@ -1,0 +1,33 @@
+name: tract_faqsd_demo_task_en-faqsd
+linkage_pattern: faqsd_daily_areal
+geometry_type: polygon
+source:
+  file: /app/data/tasks/tier2-golden-faqsd/output/c3_tract_us.parquet
+  join_col: GEOID10
+buffer:
+  patient_file: /app/data/tasks/tier2-golden-faqsd/input.parquet
+  patient_adapter: demo_conus
+  buffer_m: 270
+exposure:
+  file: FAQSD/C4
+  value_cols:
+  - o3
+  - pm25
+time:
+  years:
+  - 2013
+  - 2014
+  - 2015
+  - 2016
+  - 2017
+  - 2018
+  - 2019
+  temporal_resolution: daily
+  temporal_mode: yearly
+  output_grouping: episode
+engine:
+  backend: duckdb
+plugin: faqsd
+output:
+  path: /app/data/tasks/tier2-golden-faqsd/output/c4_tract_faqsd.parquet
+  format: parquet

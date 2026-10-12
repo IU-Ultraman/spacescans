@@ -1,0 +1,34 @@
+name: vnl_demo_task_b500_r25
+linkage_pattern: gridded
+geometry_type: raster
+source:
+  file: /app/data/tasks/tier2-golden-render/combos/vnl__vnl__b500_r25/output/c3_vnl.parquet
+buffer:
+  patient_file: /app/data/tasks/tier2-golden-render/combos/vnl__vnl__b500_r25/input.parquet
+  patient_adapter: demo_conus
+  buffer_m: 500
+exposure:
+  file: VNL/C3
+  join_col: grid_id
+  value_cols:
+  - value
+  start_col: start_date
+  end_col: end_date
+time:
+  years:
+  - 2013
+  - 2014
+  - 2015
+  - 2016
+  - 2017
+  - 2018
+  - 2019
+  temporal_resolution: yearly
+  temporal_mode: yearly
+  output_grouping: episode
+engine:
+  backend: duckdb
+plugin: vnl
+output:
+  path: /app/data/tasks/tier2-golden-render/combos/vnl__vnl__b500_r25/output/c4_vnl.parquet
+  format: parquet

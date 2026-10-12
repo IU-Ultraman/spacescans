@@ -1,0 +1,22 @@
+{
+  "experiments": {
+    "temis": {
+      "status": "running",
+      "progress": 1.0,
+      "current_step": null,
+      "steps": [
+        "c3_temis",
+        "c4_temis"
+      ],
+      "pid": 4318,
+      "message": "Completed 2 pipeline steps"
+    }
+  },
+  "steps": [
+    "c3_temis",
+    "c4_temis"
+  ],
+  "current_step": null,
+  "total_steps": 2,
+  "progress": 1.0
+}

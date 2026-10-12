@@ -1,0 +1,16 @@
+{"ts": "2026-10-12T20:43:22.990930+00:00", "level": "info", "source": "runner", "msg": "spawning c3_noise: /opt/conda/bin/python /opt/conda/bin/spacescans run --data-dir /project /app/data/tasks/tier2-golden-noise/pipeline_configs/c3_noise.yaml"}
+{"ts": "2026-10-12T20:43:23.456970+00:00", "level": "info", "source": "c3_noise", "msg": "[grid_weights] processing 1001 buffers \u00d7 raster=CONUS_L50dBA_sumDay_exi.tif in 1 chunks of 5000"}
+{"ts": "2026-10-12T20:43:24.237608+00:00", "level": "info", "source": "c3_noise", "msg": "[grid_weights]   1001/1001 (100.0%)  elapsed= 0.01m  rate=1281.3/s  ETA= 0.00m"}
+{"ts": "2026-10-12T20:43:24.237788+00:00", "level": "info", "source": "c3_noise", "msg": "[grid_weights] === SUMMARY (main loop + concat) ==="}
+{"ts": "2026-10-12T20:43:24.237831+00:00", "level": "info", "source": "c3_noise", "msg": "[grid_weights]   exact_extract    0.01m ( 98.3%)"}
+{"ts": "2026-10-12T20:43:24.237861+00:00", "level": "info", "source": "c3_noise", "msg": "[grid_weights]   postprocess      0.00m (  0.8%)"}
+{"ts": "2026-10-12T20:43:24.237885+00:00", "level": "info", "source": "c3_noise", "msg": "[grid_weights]   raster_open      0.00m (  0.7%)"}
+{"ts": "2026-10-12T20:43:24.237906+00:00", "level": "info", "source": "c3_noise", "msg": "[grid_weights]   loop_other       0.00m (  0.1%)"}
+{"ts": "2026-10-12T20:43:24.237927+00:00", "level": "info", "source": "c3_noise", "msg": "[grid_weights]   pd.concat        0.00m (  0.0%)"}
+{"ts": "2026-10-12T20:43:24.237947+00:00", "level": "info", "source": "c3_noise", "msg": "[grid_weights]   total            0.01m"}
+{"ts": "2026-10-12T20:43:24.243775+00:00", "level": "info", "source": "c3_noise", "msg": "Output: /app/data/tasks/tier2-golden-noise/output/c3_noise.parquet"}
+{"ts": "2026-10-12T20:43:24.338914+00:00", "level": "info", "source": "runner", "msg": "step c3_noise exit code 0"}
+{"ts": "2026-10-12T20:43:24.339553+00:00", "level": "info", "source": "c3_noise", "msg": "cache write: 12269dbe__BG_NOISE__b270m.parquet"}
+{"ts": "2026-10-12T20:43:24.341892+00:00", "level": "info", "source": "runner", "msg": "spawning c4_noise: /opt/conda/bin/python /opt/conda/bin/spacescans run --data-dir /project /app/data/tasks/tier2-golden-noise/pipeline_configs/c4_noise.yaml"}
+{"ts": "2026-10-12T20:43:28.433192+00:00", "level": "info", "source": "c4_noise", "msg": "Output: /app/data/tasks/tier2-golden-noise/output/c4_noise.parquet"}
+{"ts": "2026-10-12T20:43:28.506794+00:00", "level": "info", "source": "runner", "msg": "step c4_noise exit code 0"}

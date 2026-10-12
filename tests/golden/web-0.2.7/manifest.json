@@ -1,0 +1,3264 @@
+{
+  "schema": 1,
+  "generated_utc": "2026-10-12T21:11:02+00:00",
+  "generator": "tests/golden/tools/web_goldens.py (run, then collect)",
+  "stage": {
+    "started_utc": "2026-10-12T20:43:22+00:00",
+    "ended_utc": "2026-10-12T21:10:47+00:00",
+    "container": "spacescans-web-backend-1",
+    "failures": [],
+    "custom_library_cleared": "/app/data/custom_exposomes/user-9997"
+  },
+  "environment": {
+    "image": {
+      "frozen_image": {
+        "tag": "spacescans-web-backend:frozen-2026-10-12",
+        "id": "sha256:94b192a9fce12b4ef1c18e1a81a82ccf84e364bb397737f8108d068f7b9fa810",
+        "repo_digests": [
+          "spacescans-web-backend@sha256:94b192a9fce12b4ef1c18e1a81a82ccf84e364bb397737f8108d068f7b9fa810"
+        ],
+        "created_utc": "2026-10-12T20:32:16.454278886Z",
+        "comment": "tier2 P0 freeze of the running backend (web 3991c3b, pipeline v0.2.7)",
+        "size_bytes": 661833847,
+        "architecture": "arm64",
+        "os": "linux",
+        "rootfs_layers": 20,
+        "top_layer": "sha256:ea4f93e25a60d2984c0290ab56c392e7cd654ec69302f47bc2ba26068954c7cf",
+        "cmd": [
+          "python",
+          "-m",
+          "uvicorn",
+          "app.main:app",
+          "--host",
+          "0.0.0.0",
+          "--port",
+          "8000"
+        ],
+        "entrypoint": [
+          "/usr/local/bin/_entrypoint.sh"
+        ],
+        "working_dir": "/app",
+        "user": "mambauser",
+        "env_keys": [
+          "GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN",
+          "SPACESCANS_DATA_DIR",
+          "SPACESCANS_CONFIG_TEMPLATES_DIR",
+          "SPACESCANS_PIPELINE_PYTHON",
+          "SPACESCANS_PIPELINE_CLI",
+          "SECRET_KEY",
+          "CODESPACE_NAME",
+          "PATH",
+          "LANG",
+          "LC_ALL",
+          "ENV_NAME",
+          "MAMBA_ROOT_PREFIX",
+          "MAMBA_EXE",
+          "MAMBA_USER",
+          "MAMBA_USER_ID",
+          "MAMBA_USER_GID"
+        ],
+        "made_with": "docker commit -m 'tier2 P0 freeze of the running backend (web 3991c3b, pipeline v0.2.7)' spacescans-web-backend-1 spacescans-web-backend:frozen-2026-10-12",
+        "frozen_at_eastern": "2026-10-12T16:32:16-04:00"
+      },
+      "source_image": {
+        "tag": "spacescans-web-backend:latest",
+        "id": "sha256:8b219bc1b06776ca076fda1532fe329bb5e752ad16655b9cfe0bf54e8b5abac9",
+        "repo_digests": [
+          "spacescans-web-backend@sha256:8b219bc1b06776ca076fda1532fe329bb5e752ad16655b9cfe0bf54e8b5abac9"
+        ],
+        "created_utc": "2026-10-09T20:58:27.307876137Z",
+        "rootfs_layers": 19
+      },
+      "container": {
+        "name": "spacescans-web-backend-1",
+        "id": "bbb70ec855f4f86821e4bedddc3f45ac31742fa995bd19a1e7a00de4925530ea",
+        "image": "sha256:8b219bc1b06776ca076fda1532fe329bb5e752ad16655b9cfe0bf54e8b5abac9",
+        "started_utc": "2026-10-09T20:58:45.986327924Z",
+        "mounts": [
+          {
+            "type": "volume",
+            "source": "spacescans-web_backend-data",
+            "destination": "/app/data",
+            "rw": true
+          },
+          {
+            "type": "bind",
+            "source": "/Users/xai/Desktop/spacescans-all/spacescans-web/configs",
+            "destination": "/configs",
+            "rw": false
+          },
+          {
+            "type": "bind",
+            "source": "/Users/xai/Desktop/spacescans-all/spacescans-web/pipeline-data",
+            "destination": "/project",
+            "rw": true
+          }
+        ]
+      },
+      "docker_server_version": "29.2.1"
+    },
+    "web_commit": "3991c3bc26ff2d198cad250a3820cc97fb851a13",
+    "spacescans.__version__": "0.2.7",
+    "spacescans_commit": "a31370fbee79874ec29c32b8fc732bb83ec28d6c",
+    "python": "3.12.13",
+    "packages": {
+      "numpy": "2.5.1",
+      "pandas": "3.0.5",
+      "pyarrow": "26.0.0",
+      "duckdb": "1.5.6",
+      "shapely": "2.2.0",
+      "geopandas": "1.2.0",
+      "pyproj": "3.8.0",
+      "rasterio": "1.5.0",
+      "exactextract": "0.3.0",
+      "pyogrio": "0.13.0",
+      "fiona": null,
+      "pydantic": "2.10.3",
+      "pyyaml": "6.0.3",
+      "netCDF4": "1.7.4",
+      "xarray": "2026.9.0",
+      "pyhdf": "0.11.7",
+      "pyreadr": "0.5.7",
+      "scipy": null,
+      "fastapi": "0.115.6",
+      "uvicorn": "0.34.0",
+      "jsonschema": "4.26.0",
+      "h5netcdf": null
+    },
+    "native": {
+      "rasterio.__gdal_version__": "3.12.3",
+      "rasterio.proj": "9.7.1",
+      "rasterio.geos": "3.14.1",
+      "shapely.geos_version": "3.14.1",
+      "shapely.geos_capi_version_string": "3.14.1-CAPI-1.20.5",
+      "pyproj.proj_version_str": "9.8.1",
+      "pyproj.datadir": "/opt/conda/lib/python3.12/site-packages/pyproj/proj_dir/share/proj",
+      "pyogrio.__gdal_version_string__": "3.12.4",
+      "pyogrio.__gdal_geos_version__": "(3, 14, 1)",
+      "exactextract.__version__": "0.3.0",
+      "duckdb.__version__": "1.5.6",
+      "duckdb threads": 14,
+      "duckdb memory_limit": "18.7 GiB",
+      "pyarrow.cpp_build_info.version": "26.0.0"
+    },
+    "cpu_count": 14,
+    "meminfo": "MemTotal:       24571496 kB"
+  },
+  "cohort": {
+    "path": "inputs/synth_1k.csv",
+    "source": "/Users/xai/Desktop/spacescans-all/spacescans-paper/results/data/cohorts/synth_1k.csv",
+    "sha256": "af69d74b507fd47f43eca2f8cbbbe87e1373a0ea434c520d08d8b13059545c4a",
+    "episodes": 1001,
+    "patients": 510
+  },
+  "params": {
+    "buffer_m": 270,
+    "raster_res_m": 25,
+    "buffer_shape": "circle",
+    "config_base": {
+      "experiment": "auto",
+      "version": 1,
+      "input_file": "input.csv"
+    }
+  },
+  "sort_rule": "rows sorted by int(episode_id), ties broken by the remaining columns' raw text from left to right; header and column order unchanged; each row's original text kept byte for byte",
+  "large_file_threshold_bytes": 20971520,
+  "runs": {
+    "noise": {
+      "experiment": "noise",
+      "variables": [
+        "noise"
+      ],
+      "success": true,
+      "rc": 0,
+      "wall_s": 6.046,
+      "started_eastern": "2026-10-12T16:43:22-04:00",
+      "ended_eastern": "2026-10-12T16:43:28-04:00",
+      "cache": "cold: private empty cache",
+      "note": null,
+      "input_csv_is_cohort": true,
+      "steps": {
+        "c3_noise": {
+          "seconds": 1.348,
+          "rc": 0
+        },
+        "c4_noise": {
+          "seconds": 4.165,
+          "rc": 0
+        }
+      },
+      "results": {
+        "result_noise": {
+          "as_written_sha256": "d768fbe3610cdbf906ee95b1b4824604cc912b112c34726183cdf2e0059c9667",
+          "sorted_sha256": "8703896255ffdf3256f0294ac67910d225504e84bb131a1fcdf5198dcada91fe",
+          "already_sorted": false,
+          "rows": 1001,
+          "columns": [
+            "pid",
+            "episode_id",
+            "l50dba_exi",
+            "l50dba_imp",
+            "l50dba_nat"
+          ]
+        }
+      },
+      "c3_cache_entries": [
+        {
+          "key": "12269dbe__BG_NOISE__b270m",
+          "sha256": "bd9091a58b6d8144c75040d8320ee917a0492d83cc41c45015ec2e6b03e1555f",
+          "bytes": 137870,
+          "identical_to_output": [
+            "c3_noise.parquet"
+          ]
+        }
+      ],
+      "large_files": [],
+      "custom_library_files": null,
+      "files": [
+        {
+          "path": "c3_cache/12269dbe__BG_NOISE__b270m.meta.json",
+          "bytes": 264,
+          "sha256": "e70022212477ca47bb8ba5c98fc5c6bbf494fe876da95a66495252fd8c775644"
+        },
+        {
+          "path": "config.json",
+          "bytes": 151,
+          "sha256": "3395fae682ce30c0ea8517d7a66480d70306134f37f499e84531074110a92036"
+        },
+        {
+          "path": "input.parquet",
+          "bytes": 44277,
+          "sha256": "12269dbefdeb6151638c711e86757ef9ebf60c3a850ea26d3e13608122808c12",
+          "rows": 1001,
+          "columns": [
+            "pid:large_string",
+            "startDate:timestamp[us]",
+            "endDate:timestamp[us]",
+            "longitude:double",
+            "latitude:double",
+            "episode_id:int64"
+          ]
+        },
+        {
+          "path": "logs.jsonl",
+          "bytes": 2528,
+          "sha256": "cf9c0702925674aeed2797c0e02086227c592479dd15e8bba522c9224aa4bbeb"
+        },
+        {
+          "path": "output/c3_noise.parquet",
+          "bytes": 137870,
+          "sha256": "bd9091a58b6d8144c75040d8320ee917a0492d83cc41c45015ec2e6b03e1555f",
+          "rows": 8098,
+          "columns": [
+            "geoid:int64",
+            "grid_id:int64",
+            "weight:double"
+          ]
+        },
+        {
+          "path": "output/c4_noise.parquet",
+          "bytes": 39651,
+          "sha256": "bb8e6e109f380b2b31e4412807ef1eca36c72f6bf58720784e058ce75bd03474",
+          "rows": 1001,
+          "columns": [
+            "PATID:large_string",
+            "geoid:int64",
+            "l50dba_exi:double",
+            "l50dba_imp:double",
+            "l50dba_nat:double"
+          ]
+        },
+        {
+          "path": "output/feature_dictionary.csv",
+          "bytes": 530,
+          "sha256": "6f13b4c65c3bd517aeeffc29186606770233299f6f24940c0aaff3db87b1c3a9",
+          "rows": 3,
+          "columns": [
+            "feature_name",
+            "short_description",
+            "detailed_description"
+          ]
+        },
+        {
+          "path": "output/result.csv",
+          "bytes": 106760,
+          "sha256": "06ec8f2d5f3aa99fe046ba3b4aabac5b1ad9223bafce065853fb203c3c2c157f",
+          "rows": 1001,
+          "columns": [
+            "pid",
+            "startDate",
+            "endDate",
+            "longitude",
+            "latitude",
+            "l50dba_exi",
+            "l50dba_imp",
+            "l50dba_nat"
+          ]
+        },
+        {
+          "path": "output/result_noise.as_written.csv",
+          "bytes": 67581,
+          "sha256": "d768fbe3610cdbf906ee95b1b4824604cc912b112c34726183cdf2e0059c9667",
+          "rows": 1001,
+          "columns": [
+            "pid",
+            "episode_id",
+            "l50dba_exi",
+            "l50dba_imp",
+            "l50dba_nat"
+          ]
+        },
+        {
+          "path": "output/result_noise.sorted.csv",
+          "bytes": 67581,
+          "sha256": "8703896255ffdf3256f0294ac67910d225504e84bb131a1fcdf5198dcada91fe",
+          "rows": 1001,
+          "columns": [
+            "pid",
+            "episode_id",
+            "l50dba_exi",
+            "l50dba_imp",
+            "l50dba_nat"
+          ]
+        },
+        {
+          "path": "pipeline_configs/c3_noise.yaml",
+          "bytes": 379,
+          "sha256": "64ead9d177b057b59658eb6bd8246213819af6c4342f7fe06db6e9868f364b6f"
+        },
+        {
+          "path": "pipeline_configs/c4_noise.yaml",
+          "bytes": 735,
+          "sha256": "22aa68f4401694a3c330a8bb2bf59b7b99c6627ff21330ed2c33fe0f8b2fb029"
+        },
+        {
+          "path": "run.json",
+          "bytes": 1434,
+          "sha256": "e16203f86f989f30c342d2a6ce4e68c6ebd2bd7d70b173f6fa762bd6245f4eea"
+        },
+        {
+          "path": "runner.stderr.txt",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "runner.stdout.txt",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "status.json",
+          "bytes": 367,
+          "sha256": "a23ba96468bffbfc24667a5b924f641088615daa510b048970f72ffcfc0a99b5"
+        }
+      ],
+      "remote_task_dir": "/app/data/tasks/tier2-golden-noise"
+    },
+    "temis": {
+      "experiment": "temis",
+      "variables": [
+        "temis"
+      ],
+      "success": true,
+      "rc": 0,
+      "wall_s": 9.476,
+      "started_eastern": "2026-10-12T16:43:29-04:00",
+      "ended_eastern": "2026-10-12T16:43:40-04:00",
+      "cache": "cold: private empty cache",
+      "note": null,
+      "input_csv_is_cohort": true,
+      "steps": {
+        "c3_temis": {
+          "seconds": 1.131,
+          "rc": 0
+        },
+        "c4_temis": {
+          "seconds": 7.766,
+          "rc": 0
+        }
+      },
+      "results": {
+        "result_temis": {
+          "as_written_sha256": "f3fee495a03d7457ffa8d26217cbec153df27221ffba69a21bc18f814aa78f6c",
+          "sorted_sha256": "740df2232fc3816bbc7164cb7f4fe1a1362069847360aef39380389c0f701d8e",
+          "already_sorted": false,
+          "rows": 1001,
+          "columns": [
+            "pid",
+            "episode_id",
+            "uvddc",
+            "uvdec",
+            "uvdvc",
+            "uvief"
+          ]
+        }
+      },
+      "c3_cache_entries": [
+        {
+          "key": "12269dbe__BG_TEMIS__b270m",
+          "sha256": "422d0b7b0540a67902e3057857d70ad3b1c13449e26de1ff633d39d70879e548",
+          "bytes": 12871,
+          "identical_to_output": [
+            "c3_temis.parquet"
+          ]
+        }
+      ],
+      "large_files": [],
+      "custom_library_files": null,
+      "files": [
+        {
+          "path": "c3_cache/12269dbe__BG_TEMIS__b270m.meta.json",
+          "bytes": 263,
+          "sha256": "c521c2cf4cdb822a7200fa4a1195bde862971b9a4e02d88a7dbdca3404bdb2d5"
+        },
+        {
+          "path": "config.json",
+          "bytes": 151,
+          "sha256": "0eddab3c87d7892791180f5c4c7c12b72cd7acbc6bbd376c8e7e4819434e9178"
+        },
+        {
+          "path": "input.parquet",
+          "bytes": 44277,
+          "sha256": "12269dbefdeb6151638c711e86757ef9ebf60c3a850ea26d3e13608122808c12",
+          "rows": 1001,
+          "columns": [
+            "pid:large_string",
+            "startDate:timestamp[us]",
+            "endDate:timestamp[us]",
+            "longitude:double",
+            "latitude:double",
+            "episode_id:int64"
+          ]
+        },
+        {
+          "path": "logs.jsonl",
+          "bytes": 3159,
+          "sha256": "38b664d0c7c64c882206dc5232913333092531870396db3cd1eb56b3137c69d5"
+        },
+        {
+          "path": "output/c3_temis.parquet",
+          "bytes": 12871,
+          "sha256": "422d0b7b0540a67902e3057857d70ad3b1c13449e26de1ff633d39d70879e548",
+          "rows": 1058,
+          "columns": [
+            "geoid:int64",
+            "grid_id:int64",
+            "weight:double"
+          ]
+        },
+        {
+          "path": "output/c4_temis.parquet",
+          "bytes": 49526,
+          "sha256": "170624bab2accd1b39aa90125f13e830df378c7850fd784f3e7640330440dc4f",
+          "rows": 1001,
+          "columns": [
+            "PATID:large_string",
+            "geoid:int64",
+            "uvddc:double",
+            "uvdec:double",
+            "uvdvc:double",
+            "uvief:double"
+          ]
+        },
+        {
+          "path": "output/feature_dictionary.csv",
+          "bytes": 337,
+          "sha256": "72ee25e1bd808f5371c8fb2d74d68dfcf835a8d4de0a8a37bb65a6645b5f766c",
+          "rows": 4,
+          "columns": [
+            "feature_name",
+            "short_description",
+            "detailed_description"
+          ]
+        },
+        {
+          "path": "output/result.csv",
+          "bytes": 125517,
+          "sha256": "a0b4d1a7a40237d6428ddbc32038e0114a8c1d1bad03b00a6a10ea0144a370aa",
+          "rows": 1001,
+          "columns": [
+            "pid",
+            "startDate",
+            "endDate",
+            "longitude",
+            "latitude",
+            "uvddc",
+            "uvdec",
+            "uvdvc",
+            "uvief"
+          ]
+        },
+        {
+          "path": "output/result_temis.as_written.csv",
+          "bytes": 86338,
+          "sha256": "f3fee495a03d7457ffa8d26217cbec153df27221ffba69a21bc18f814aa78f6c",
+          "rows": 1001,
+          "columns": [
+            "pid",
+            "episode_id",
+            "uvddc",
+            "uvdec",
+            "uvdvc",
+            "uvief"
+          ]
+        },
+        {
+          "path": "output/result_temis.sorted.csv",
+          "bytes": 86338,
+          "sha256": "740df2232fc3816bbc7164cb7f4fe1a1362069847360aef39380389c0f701d8e",
+          "rows": 1001,
+          "columns": [
+            "pid",
+            "episode_id",
+            "uvddc",
+            "uvdec",
+            "uvdvc",
+            "uvief"
+          ]
+        },
+        {
+          "path": "pipeline_configs/c3_temis.yaml",
+          "bytes": 583,
+          "sha256": "6546c34aba6fc45174b02439ec635fbacff325bb462bad8ecb1d6d897f54da01"
+        },
+        {
+          "path": "pipeline_configs/c4_temis.yaml",
+          "bytes": 769,
+          "sha256": "85c88ebcefb17a0a04c4bf7beca4b709fda6c64f42892590ef5f7cdb32f58d52"
+        },
+        {
+          "path": "run.json",
+          "bytes": 1434,
+          "sha256": "4235457bbb994a32e92a00e38f74570ac6a517264e015bc0a7cada6542ffde70"
+        },
+        {
+          "path": "runner.stderr.txt",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "runner.stdout.txt",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "status.json",
+          "bytes": 367,
+          "sha256": "c9232241d122ad7f019d87402373dc5c25147148d6b2a1f369cf1df2d07c5470"
+        }
+      ],
+      "remote_task_dir": "/app/data/tasks/tier2-golden-temis"
+    },
+    "vnl": {
+      "experiment": "vnl",
+      "variables": [
+        "vnl"
+      ],
+      "success": true,
+      "rc": 0,
+      "wall_s": 12.501,
+      "started_eastern": "2026-10-12T16:43:41-04:00",
+      "ended_eastern": "2026-10-12T16:44:01-04:00",
+      "cache": "cold: private empty cache",
+      "note": null,
+      "input_csv_is_cohort": true,
+      "steps": {
+        "c3_vnl": {
+          "seconds": 2.536,
+          "rc": 0
+        },
+        "c4_vnl": {
+          "seconds": 9.298,
+          "rc": 0
+        }
+      },
+      "results": {
+        "result_vnl": {
+          "as_written_sha256": "bf490c40771e9969b8f049e9686f5e1e56a3faede4a7e1e1ab0e6e30cd914279",
+          "sorted_sha256": "7528ca78cc435418b2fd41220889bf9a246744b314215e61187b1c1b0c74855f",
+          "already_sorted": false,
+          "rows": 1001,
+          "columns": [
+            "pid",
+            "episode_id",
+            "value"
+          ]
+        }
+      },
+      "c3_cache_entries": [
+        {
+          "key": "12269dbe__BG_VNL1__b270m",
+          "sha256": "bd167857ac2e43f2a7c6a7d73378d96c68258b11db0e8b7e678d723806c9d045",
+          "bytes": 90389,
+          "identical_to_output": [
+            "c3_vnl.parquet"
+          ]
+        }
+      ],
+      "large_files": [],
+      "custom_library_files": null,
+      "files": [
+        {
+          "path": "c3_cache/12269dbe__BG_VNL1__b270m.meta.json",
+          "bytes": 262,
+          "sha256": "c7a2a1a419fd3c7c57ece76efa240101e166df5cce7edb8bfd2ef4cc9d03175c"
+        },
+        {
+          "path": "config.json",
+          "bytes": 149,
+          "sha256": "e27c3fbba0d21bfb76ea3e62817d4a4ffa26f4e995d30afb8cd2f718f158fdce"
+        },
+        {
+          "path": "input.parquet",
+          "bytes": 44277,
+          "sha256": "12269dbefdeb6151638c711e86757ef9ebf60c3a850ea26d3e13608122808c12",
+          "rows": 1001,
+          "columns": [
+            "pid:large_string",
+            "startDate:timestamp[us]",
+            "endDate:timestamp[us]",
+            "longitude:double",
+            "latitude:double",
+            "episode_id:int64"
+          ]
+        },
+        {
+          "path": "logs.jsonl",
+          "bytes": 3842,
+          "sha256": "dba3258a68a6da978466046cc35729f2503667353d6c26c673821a1481a49402"
+        },
+        {
+          "path": "output/c3_vnl.parquet",
+          "bytes": 90389,
+          "sha256": "bd167857ac2e43f2a7c6a7d73378d96c68258b11db0e8b7e678d723806c9d045",
+          "rows": 4958,
+          "columns": [
+            "geoid:int64",
+            "grid_id:int64",
+            "weight:double"
+          ]
+        },
+        {
+          "path": "output/c4_vnl.parquet",
+          "bytes": 18735,
+          "sha256": "4785d10d9cfad94d6a9710294656e8edefd7747f76875da6997a92fec31fa860",
+          "rows": 1001,
+          "columns": [
+            "PATID:large_string",
+            "geoid:int64",
+            "value:double"
+          ]
+        },
+        {
+          "path": "output/feature_dictionary.csv",
+          "bytes": 167,
+          "sha256": "7389c330fd1516f403edf3bf4b92d76ff836ab80cf35ffe1b4ad5f4a510544f3",
+          "rows": 1,
+          "columns": [
+            "feature_name",
+            "short_description",
+            "detailed_description"
+          ]
+        },
+        {
+          "path": "output/result.csv",
+          "bytes": 68330,
+          "sha256": "ce3625669d34ee9203afef7e660423f6fbef4f5f667dc7faf6ec21c1a69b5910",
+          "rows": 1001,
+          "columns": [
+            "pid",
+            "startDate",
+            "endDate",
+            "longitude",
+            "latitude",
+            "value"
+          ]
+        },
+        {
+          "path": "output/result_vnl.as_written.csv",
+          "bytes": 29151,
+          "sha256": "bf490c40771e9969b8f049e9686f5e1e56a3faede4a7e1e1ab0e6e30cd914279",
+          "rows": 1001,
+          "columns": [
+            "pid",
+            "episode_id",
+            "value"
+          ]
+        },
+        {
+          "path": "output/result_vnl.sorted.csv",
+          "bytes": 29151,
+          "sha256": "7528ca78cc435418b2fd41220889bf9a246744b314215e61187b1c1b0c74855f",
+          "rows": 1001,
+          "columns": [
+            "pid",
+            "episode_id",
+            "value"
+          ]
+        },
+        {
+          "path": "pipeline_configs/c3_vnl.yaml",
+          "bytes": 429,
+          "sha256": "f58a3061e79d3be99ff5e5eaa5c647898421fc34ed837a6a6e3d3db139c9edd7"
+        },
+        {
+          "path": "pipeline_configs/c4_vnl.yaml",
+          "bytes": 663,
+          "sha256": "c14058ea925b28c0ce30a5f89b8507bf30f5ceda9229bd7971e3d780b03e0bcf"
+        },
+        {
+          "path": "run.json",
+          "bytes": 1414,
+          "sha256": "fde093001acff59c0a7c7e76f8282aee17fccee8e040be9656c22b5fa494503d"
+        },
+        {
+          "path": "runner.stderr.txt",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "runner.stdout.txt",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "status.json",
+          "bytes": 357,
+          "sha256": "0ec021fc824d32cb7ee8fb318d10b4c828be42f74f7fc21b940a7c296bf0b821"
+        }
+      ],
+      "remote_task_dir": "/app/data/tasks/tier2-golden-vnl"
+    },
+    "nhd_bluespace": {
+      "experiment": "nhd_bluespace",
+      "variables": [
+        "nhd_bluespace"
+      ],
+      "success": true,
+      "rc": 0,
+      "wall_s": 65.728,
+      "started_eastern": "2026-10-12T16:44:03-04:00",
+      "ended_eastern": "2026-10-12T16:45:09-04:00",
+      "cache": "cold: private empty cache",
+      "note": null,
+      "input_csv_is_cohort": true,
+      "steps": {
+        "c3_nhd_bluespace": {
+          "seconds": 64.246,
+          "rc": 0
+        },
+        "c4_nhd_bluespace": {
+          "seconds": 0.808,
+          "rc": 0
+        }
+      },
+      "results": {
+        "result_nhd_bluespace": {
+          "as_written_sha256": "404657677e80cd3eaf766148b4ac142476f38aff4c39bde7e938312f61e1da8f",
+          "sorted_sha256": "404657677e80cd3eaf766148b4ac142476f38aff4c39bde7e938312f61e1da8f",
+          "already_sorted": true,
+          "rows": 1001,
+          "columns": [
+            "pid",
+            "episode_id",
+            "dist_flow_m",
+            "dist_water_m",
+            "dist_area_m",
+            "dist_coast_m",
+            "dist_blue_m"
+          ]
+        }
+      },
+      "c3_cache_entries": [
+        {
+          "key": "12269dbe__BG_NHD__b270m",
+          "sha256": "811a309358f54943c4e68fd9c2ebd7e4259c2c4face81b519fd1f75d70adeac7",
+          "bytes": 48188,
+          "identical_to_output": [
+            "c3_nhd_bluespace.parquet"
+          ]
+        }
+      ],
+      "large_files": [],
+      "custom_library_files": null,
+      "files": [
+        {
+          "path": "c3_cache/12269dbe__BG_NHD__b270m.meta.json",
+          "bytes": 262,
+          "sha256": "3df0ede39d82ba9041f473b57c74b7014d01bb62f4126b98d3bbcb5b54a3fc2f"
+        },
+        {
+          "path": "config.json",
+          "bytes": 159,
+          "sha256": "bf016978b2bf74ff312d04c6db5bf56cbae4d070fcdd276adbce649ae0437689"
+        },
+        {
+          "path": "input.parquet",
+          "bytes": 44277,
+          "sha256": "12269dbefdeb6151638c711e86757ef9ebf60c3a850ea26d3e13608122808c12",
+          "rows": 1001,
+          "columns": [
+            "pid:large_string",
+            "startDate:timestamp[us]",
+            "endDate:timestamp[us]",
+            "longitude:double",
+            "latitude:double",
+            "episode_id:int64"
+          ]
+        },
+        {
+          "path": "logs.jsonl",
+          "bytes": 6363,
+          "sha256": "4d0a79b963c48f73aab97134c4f73a4a74e06e00d09bc0631c7027cbc0788fef"
+        },
+        {
+          "path": "output/c3_nhd_bluespace.parquet",
+          "bytes": 48188,
+          "sha256": "811a309358f54943c4e68fd9c2ebd7e4259c2c4face81b519fd1f75d70adeac7",
+          "rows": 1001,
+          "columns": [
+            "geoid:int64",
+            "dist_flow_m:double",
+            "dist_water_m:double",
+            "dist_area_m:double",
+            "dist_coast_m:double",
+            "dist_blue_m:double"
+          ]
+        },
+        {
+          "path": "output/c4_nhd_bluespace.parquet",
+          "bytes": 51903,
+          "sha256": "f098c85241a8c2025605e9e0bbcc5bfed516154f4e930bf419b83e27a2ec377d",
+          "rows": 1001,
+          "columns": [
+            "PATID:large_string",
+            "geoid:int64",
+            "dist_flow_m:double",
+            "dist_water_m:double",
+            "dist_area_m:double",
+            "dist_coast_m:double",
+            "dist_blue_m:double"
+          ]
+        },
+        {
+          "path": "output/feature_dictionary.csv",
+          "bytes": 557,
+          "sha256": "12d0c3960774f0f5fbdc8a0b87fcd36df77cfb0e97b5f13094f27678160af7be",
+          "rows": 5,
+          "columns": [
+            "feature_name",
+            "short_description",
+            "detailed_description"
+          ]
+        },
+        {
+          "path": "output/result.csv",
+          "bytes": 129553,
+          "sha256": "48310fb7b25823798daaa394bd8baae283f032e16cac65c1f7b1e47ffd5ab8c2",
+          "rows": 1001,
+          "columns": [
+            "pid",
+            "startDate",
+            "endDate",
+            "longitude",
+            "latitude",
+            "dist_flow_m",
+            "dist_water_m",
+            "dist_area_m",
+            "dist_coast_m",
+            "dist_blue_m"
+          ]
+        },
+        {
+          "path": "output/result_nhd_bluespace.as_written.csv",
+          "bytes": 90374,
+          "sha256": "404657677e80cd3eaf766148b4ac142476f38aff4c39bde7e938312f61e1da8f",
+          "rows": 1001,
+          "columns": [
+            "pid",
+            "episode_id",
+            "dist_flow_m",
+            "dist_water_m",
+            "dist_area_m",
+            "dist_coast_m",
+            "dist_blue_m"
+          ]
+        },
+        {
+          "path": "output/result_nhd_bluespace.sorted.csv",
+          "bytes": 90374,
+          "sha256": "404657677e80cd3eaf766148b4ac142476f38aff4c39bde7e938312f61e1da8f",
+          "rows": 1001,
+          "columns": [
+            "pid",
+            "episode_id",
+            "dist_flow_m",
+            "dist_water_m",
+            "dist_area_m",
+            "dist_coast_m",
+            "dist_blue_m"
+          ]
+        },
+        {
+          "path": "pipeline_configs/c3_nhd_bluespace.yaml",
+          "bytes": 442,
+          "sha256": "f21d1da46bdf8e30ca4e9c913edfc216b27c00bf3325111404cbb2a53739ae01"
+        },
+        {
+          "path": "pipeline_configs/c4_nhd_bluespace.yaml",
+          "bytes": 793,
+          "sha256": "cf6b6da058714e9e08038a41fc768aa235a8b7230e9a74cc43d17a7375e64db1"
+        },
+        {
+          "path": "run.json",
+          "bytes": 1525,
+          "sha256": "223706c84345760e417595e262ba1472bdfe503d814671a87a84499ea1473221"
+        },
+        {
+          "path": "runner.stderr.txt",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "runner.stdout.txt",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "status.json",
+          "bytes": 407,
+          "sha256": "9d1f2d7ca95852c89d52923a6aebe0c7c88eedc10e0dca3ab2a1b8ed0b041e07"
+        }
+      ],
+      "remote_task_dir": "/app/data/tasks/tier2-golden-nhd_bluespace"
+    },
+    "tiger_proximity": {
+      "experiment": "tiger_proximity",
+      "variables": [
+        "tiger_proximity"
+      ],
+      "success": true,
+      "rc": 0,
+      "wall_s": 128.732,
+      "started_eastern": "2026-10-12T16:45:10-04:00",
+      "ended_eastern": "2026-10-12T16:47:19-04:00",
+      "cache": "cold: private empty cache",
+      "note": null,
+      "input_csv_is_cohort": true,
+      "steps": {
+        "c3_tiger_roads": {
+          "seconds": 127.374,
+          "rc": 0
+        },
+        "c4_tiger_roads": {
+          "seconds": 0.707,
+          "rc": 0
+        }
+      },
+      "results": {
+        "result_tiger_proximity": {
+          "as_written_sha256": "f4aca7d5e493abd38bb9f9f81305d3483df4f0d2b7295ce6deceea761800e05e",
+          "sorted_sha256": "f4aca7d5e493abd38bb9f9f81305d3483df4f0d2b7295ce6deceea761800e05e",
+          "already_sorted": true,
+          "rows": 1001,
+          "columns": [
+            "pid",
+            "episode_id",
+            "dist_pri",
+            "dist_sec",
+            "dist_prisec"
+          ]
+        }
+      },
+      "c3_cache_entries": [
+        {
+          "key": "12269dbe__BG_TIGER2__b270m",
+          "sha256": "5dab172270e684086eaf5bdb2ba257098d790fcac6609626575f3a201e9eeee1",
+          "bytes": 78973,
+          "identical_to_output": [
+            "c3_tiger_roads.parquet"
+          ]
+        }
+      ],
+      "large_files": [],
+      "custom_library_files": null,
+      "files": [
+        {
+          "path": "c3_cache/12269dbe__BG_TIGER2__b270m.meta.json",
+          "bytes": 266,
+          "sha256": "a1855b72bb9b6de48123a315e30fa1101dfc9c08d12bce0424c156404111b1da"
+        },
+        {
+          "path": "config.json",
+          "bytes": 161,
+          "sha256": "989050a3c6ee997d55ee4884f8b67c8dc5f9c44112710459dbcf185812df269d"
+        },
+        {
+          "path": "input.parquet",
+          "bytes": 44277,
+          "sha256": "12269dbefdeb6151638c711e86757ef9ebf60c3a850ea26d3e13608122808c12",
+          "rows": 1001,
+          "columns": [
+            "pid:large_string",
+            "startDate:timestamp[us]",
+            "endDate:timestamp[us]",
+            "longitude:double",
+            "latitude:double",
+            "episode_id:int64"
+          ]
+        },
+        {
+          "path": "logs.jsonl",
+          "bytes": 4094,
+          "sha256": "e52c491470efcb8d9a7a96b83ccf6b4db01af103b5b39894a54fccfeab939b8c"
+        },
+        {
+          "path": "output/c3_tiger_roads.parquet",
+          "bytes": 78973,
+          "sha256": "5dab172270e684086eaf5bdb2ba257098d790fcac6609626575f3a201e9eeee1",
+          "rows": 7007,
+          "columns": [
+            "geoid:int64",
+            "year:int64",
+            "dist_pri:double",
+            "dist_sec:double",
+            "dist_prisec:double"
+          ]
+        },
+        {
+          "path": "output/c4_tiger_roads.parquet",
+          "bytes": 39747,
+          "sha256": "2afbf3fd54fbb6f2cec04b2bbc9bba2f2d9af3b5d82fda55648c4b2f2fa52ec1",
+          "rows": 1001,
+          "columns": [
+            "PATID:large_string",
+            "geoid:int64",
+            "dist_pri:double",
+            "dist_sec:double",
+            "dist_prisec:double"
+          ]
+        },
+        {
+          "path": "output/feature_dictionary.csv",
+          "bytes": 377,
+          "sha256": "c78ec94dc9057358ca3f1cec7c0e6107d95f67053783505ca5342fd2264ded4b",
+          "rows": 3,
+          "columns": [
+            "feature_name",
+            "short_description",
+            "detailed_description"
+          ]
+        },
+        {
+          "path": "output/result.csv",
+          "bytes": 107211,
+          "sha256": "3cdbb4157ae9da2695358c3ab471222fbd1b3b895e31d1d3b27ed09e6a1ef87d",
+          "rows": 1001,
+          "columns": [
+            "pid",
+            "startDate",
+            "endDate",
+            "longitude",
+            "latitude",
+            "dist_pri",
+            "dist_sec",
+            "dist_prisec"
+          ]
+        },
+        {
+          "path": "output/result_tiger_proximity.as_written.csv",
+          "bytes": 68032,
+          "sha256": "f4aca7d5e493abd38bb9f9f81305d3483df4f0d2b7295ce6deceea761800e05e",
+          "rows": 1001,
+          "columns": [
+            "pid",
+            "episode_id",
+            "dist_pri",
+            "dist_sec",
+            "dist_prisec"
+          ]
+        },
+        {
+          "path": "output/result_tiger_proximity.sorted.csv",
+          "bytes": 68032,
+          "sha256": "f4aca7d5e493abd38bb9f9f81305d3483df4f0d2b7295ce6deceea761800e05e",
+          "rows": 1001,
+          "columns": [
+            "pid",
+            "episode_id",
+            "dist_pri",
+            "dist_sec",
+            "dist_prisec"
+          ]
+        },
+        {
+          "path": "pipeline_configs/c3_tiger_roads.yaml",
+          "bytes": 655,
+          "sha256": "beab8bcd7dcb0fab1fdf90086c7a7bd51370c1c5160bf9a8c8d63323ea8ca5a8"
+        },
+        {
+          "path": "pipeline_configs/c4_tiger_roads.yaml",
+          "bytes": 809,
+          "sha256": "e6541f7ac836db762408587d33a4bd14b2acaa1e930d146c7df639ddbc9e0111"
+        },
+        {
+          "path": "run.json",
+          "bytes": 1542,
+          "sha256": "9ae91b97691d2f28486cec42249b34db209b33c2165a3e6d5fd03eae75b5471b"
+        },
+        {
+          "path": "runner.stderr.txt",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "runner.stdout.txt",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "status.json",
+          "bytes": 401,
+          "sha256": "ca77717032cb177d4d52fa419ea7de04c8bdea5e2a53299f1e5d2dd892f8e4e7"
+        }
+      ],
+      "remote_task_dir": "/app/data/tasks/tier2-golden-tiger_proximity"
+    },
+    "fara_tract": {
+      "experiment": "fara_tract",
+      "variables": [
+        "fara_tract"
+      ],
+      "success": true,
+      "rc": 0,
+      "wall_s": 43.452,
+      "started_eastern": "2026-10-12T16:47:20-04:00",
+      "ended_eastern": "2026-10-12T16:48:04-04:00",
+      "cache": "cold: private empty cache",
+      "note": null,
+      "input_csv_is_cohort": true,
+      "steps": {
+        "c3_tract_us": {
+          "seconds": 27.849,
+          "rc": 0
+        },
+        "c4_tract_fara": {
+          "seconds": 14.339,
+          "rc": 0
+        }
+      },
+      "results": {
+        "result_fara_tract": {
+          "as_written_sha256": "25be1201fbe697132ad52b947bf0d09f22d302a47958f14e5395505e2e6db986",
+          "sorted_sha256": "25be1201fbe697132ad52b947bf0d09f22d302a47958f14e5395505e2e6db986",
+          "already_sorted": true,
+          "rows": 1001,
+          "columns": [
+            "pid",
+            "episode_id",
+            "LILATracts_1And10",
+            "LATracts1",
+            "HUNVFlag",
+            "LowIncomeTracts"
+          ]
+        }
+      },
+      "c3_cache_entries": [
+        {
+          "key": "12269dbe__TRACT_FARA__b270m__r25m",
+          "sha256": "726ab88386d52adba069452929277b40dfe8435e5c9fee7b894e847533e0dbce",
+          "bytes": 31457,
+          "identical_to_output": [
+            "c3_tract_us.parquet"
+          ]
+        }
+      ],
+      "large_files": [],
+      "custom_library_files": null,
+      "files": [
+        {
+          "path": "c3_cache/12269dbe__TRACT_FARA__b270m__r25m.meta.json",
+          "bytes": 266,
+          "sha256": "2e1ffe9cde2c678f58e76eaa5bd5fbd15eddf15192172ce635c6b6d53fa15a78"
+        },
+        {
+          "path": "config.json",
+          "bytes": 156,
+          "sha256": "1ba69878aad064d641a3dc73fb3596ae6c6a11b91edc1a72ee1f0497dae62a9e"
+        },
+        {
+          "path": "input.parquet",
+          "bytes": 44277,
+          "sha256": "12269dbefdeb6151638c711e86757ef9ebf60c3a850ea26d3e13608122808c12",
+          "rows": 1001,
+          "columns": [
+            "pid:large_string",
+            "startDate:timestamp[us]",
+            "endDate:timestamp[us]",
+            "longitude:double",
+            "latitude:double",
+            "episode_id:int64"
+          ]
+        },
+        {
+          "path": "logs.jsonl",
+          "bytes": 58379,
+          "sha256": "4d57b969f5a56a06a946ffcd4c426b234ee69beeab78973cbbb6bcae853bbb31"
+        },
+        {
+          "path": "output/c3_tract_us.parquet",
+          "bytes": 31457,
+          "sha256": "726ab88386d52adba069452929277b40dfe8435e5c9fee7b894e847533e0dbce",
+          "rows": 1650,
+          "columns": [
+            "geoid:int64",
+            "GEOID10:large_string",
+            "value:double"
+          ]
+        },
+        {
+          "path": "output/c4_tract_fara.parquet",
+          "bytes": 209259,
+          "sha256": "3219656e696561f65b9356ecb030b0b8441ad46780e1bbb93bd3e36cbdcdd5dd",
+          "rows": 1001,
+          "columns": [
+            "PATID:large_string",
+            "geoid:int64",
+            "LAPOP1_10share:double",
+            "LALOWI1_10share:double",
+            "LAHUNV1_10share:double",
+            "LAKIDS1_10share:double",
+            "LASENIORS1_10share:double",
+            "LILATracts_1And10:double",
+            "LA1and10:double",
+            "LILATracts_halfAnd10:double",
+            "LILATracts_1And20:double",
+            "LAhalfand10:double",
+            "LA1and20:double",
+            "LATracts_half:double",
+            "LATracts1:double",
+            "LATracts10:double",
+            "LATracts20:double",
+            "LATractsVehicle_20:double",
+            "HUNVFlag:double",
+            "GroupQuartersFlag:double",
+            "PCTGQTRS:double",
+            "LowIncomeTracts:double",
+            "lapophalfshare:double",
+            "lalowihalfshare:double",
+            "lakidshalfshare:double",
+            "laseniorshalfshare:double",
+            "lahunvhalfshare:double",
+            "lapop1share:double",
+            "lalowi1share:double",
+            "lakids1share:double",
+            "laseniors1share:double",
+            "lahunv1share:double",
+            "lapop10share:double",
+            "lalowi10share:double",
+            "lakids10share:double",
+            "laseniors10share:double",
+            "lahunv10share:double",
+            "lapop20share:double",
+            "lalowi20share:double",
+            "lakids20share:double",
+            "laseniors20share:double",
+            "lahunv20share:double",
+            "LAPOP05_10share:double",
+            "LAPOP1_20share:double",
+            "LALOWI05_10share:double",
+            "LALOWI1_20share:double"
+          ]
+        },
+        {
+          "path": "output/feature_dictionary.csv",
+          "bytes": 693,
+          "sha256": "ffdda5631b77065315261dc0dfee9d08e0ffe2bf27ba29690c16238c4dc93024",
+          "rows": 4,
+          "columns": [
+            "feature_name",
+            "short_description",
+            "detailed_description"
+          ]
+        },
+        {
+          "path": "output/result.csv",
+          "bytes": 70687,
+          "sha256": "12e32f04f86eb750be7a848b82f3f00a3f066860fdf1ef645405c09752d789ff",
+          "rows": 1001,
+          "columns": [
+            "pid",
+            "startDate",
+            "endDate",
+            "longitude",
+            "latitude",
+            "LILATracts_1And10",
+            "LATracts1",
+            "HUNVFlag",
+            "LowIncomeTracts"
+          ]
+        },
+        {
+          "path": "output/result_fara_tract.as_written.csv",
+          "bytes": 31508,
+          "sha256": "25be1201fbe697132ad52b947bf0d09f22d302a47958f14e5395505e2e6db986",
+          "rows": 1001,
+          "columns": [
+            "pid",
+            "episode_id",
+            "LILATracts_1And10",
+            "LATracts1",
+            "HUNVFlag",
+            "LowIncomeTracts"
+          ]
+        },
+        {
+          "path": "output/result_fara_tract.sorted.csv",
+          "bytes": 31508,
+          "sha256": "25be1201fbe697132ad52b947bf0d09f22d302a47958f14e5395505e2e6db986",
+          "rows": 1001,
+          "columns": [
+            "pid",
+            "episode_id",
+            "LILATracts_1And10",
+            "LATracts1",
+            "HUNVFlag",
+            "LowIncomeTracts"
+          ]
+        },
+        {
+          "path": "pipeline_configs/c3_tract_us.yaml",
+          "bytes": 3207,
+          "sha256": "95ea0e77999b5fbed821ebb1fc727ee6b889189e1fca0bddff289abd4c800858"
+        },
+        {
+          "path": "pipeline_configs/c4_tract_fara.yaml",
+          "bytes": 860,
+          "sha256": "9dc4232d48ac73b19718a613828ef346447e3509fc06186428396ccc681c7b4f"
+        },
+        {
+          "path": "run.json",
+          "bytes": 1491,
+          "sha256": "30061004896fabc0d94cda28387026ab1ca30edc71922a29818b701fb89d4a1c"
+        },
+        {
+          "path": "runner.stderr.txt",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "runner.stdout.txt",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "status.json",
+          "bytes": 388,
+          "sha256": "559443bd8ee8a955ec6110f6a27f586d6ddead018de6bc82c57d3b8c9486527f"
+        }
+      ],
+      "remote_task_dir": "/app/data/tasks/tier2-golden-fara_tract"
+    },
+    "zcta5_cbp": {
+      "experiment": "zcta5_cbp",
+      "variables": [
+        "cbp_zcta5"
+      ],
+      "success": true,
+      "rc": 0,
+      "wall_s": 47.08,
+      "started_eastern": "2026-10-12T16:48:05-04:00",
+      "ended_eastern": "2026-10-12T16:48:52-04:00",
+      "cache": "cold: private empty cache",
+      "note": null,
+      "input_csv_is_cohort": true,
+      "steps": {
+        "c3_zcta5": {
+          "seconds": 27.776,
+          "rc": 0
+        },
+        "c3_county": {
+          "seconds": 16.614,
+          "rc": 0
+        },
+        "c4_zcta5_cbp": {
+          "seconds": 1.215,
+          "rc": 0
+        },
+        "c4_county_cbp": {
+          "seconds": 0.733,
+          "rc": 0
+        }
+      },
+      "results": {
+        "result_zcta5_cbp": {
+          "as_written_sha256": "785c96a1f0ba0476492f26231c434199691164cd2b830972afce936c376ff389",
+          "sorted_sha256": "560e01d2122c2312c475039e0e02c9eb64403a7fc8ff359497e6776a2c5fac1c",
+          "already_sorted": false,
+          "rows": 1001,
+          "columns": [
+            "pid",
+            "episode_id",
+            "r_religious",
+            "r_civic",
+            "r_business",
+            "r_political",
+            "r_professional",
+            "r_labor",
+            "r_bowling",
+            "r_recreational",
+            "r_golf",
+            "r_sports"
+          ]
+        }
+      },
+      "c3_cache_entries": [
+        {
+          "key": "12269dbe__COUNTY__b270m__r25m",
+          "sha256": "701c9f8718dec607764f7f43de0b8d8b59bde18864b07bc755fdd3008333767b",
+          "bytes": 12136,
+          "identical_to_output": [
+            "c3_county.parquet"
+          ]
+        },
+        {
+          "key": "12269dbe__ZCTA5__b270m__r25m",
+          "sha256": "0eb794a55cde7425bebcfebf2b2f82c9f947fd0e336168a86ecc0c93f53f94dd",
+          "bytes": 19299,
+          "identical_to_output": [
+            "c3_zcta5.parquet"
+          ]
+        }
+      ],
+      "large_files": [],
+      "custom_library_files": null,
+      "files": [
+        {
+          "path": "c3_cache/12269dbe__COUNTY__b270m__r25m.meta.json",
+          "bytes": 284,
+          "sha256": "b2f577d4bb7d28e4f930bff6a06d67a72f82f17403faecc115d781f9cd273a81"
+        },
+        {
+          "path": "c3_cache/12269dbe__ZCTA5__b270m__r25m.meta.json",
+          "bytes": 283,
+          "sha256": "4ccc96cbd0cc7dd8da0a8f4f2402b4860eb74303346c24cdee28432f08f8540c"
+        },
+        {
+          "path": "config.json",
+          "bytes": 155,
+          "sha256": "7a703651cc80609be11e63b5f5589df33d51d5626c4b9523ff679d9df57d3187"
+        },
+        {
+          "path": "input.parquet",
+          "bytes": 44277,
+          "sha256": "12269dbefdeb6151638c711e86757ef9ebf60c3a850ea26d3e13608122808c12",
+          "rows": 1001,
+          "columns": [
+            "pid:large_string",
+            "startDate:timestamp[us]",
+            "endDate:timestamp[us]",
+            "longitude:double",
+            "latitude:double",
+            "episode_id:int64"
+          ]
+        },
+        {
+          "path": "logs.jsonl",
+          "bytes": 6382,
+          "sha256": "cd0267961b06074da16fc315c4f202208ac89f62699474f30fc375d03cb873c1"
+        },
+        {
+          "path": "output/c3_county.parquet",
+          "bytes": 12136,
+          "sha256": "701c9f8718dec607764f7f43de0b8d8b59bde18864b07bc755fdd3008333767b",
+          "rows": 1046,
+          "columns": [
+            "geoid:int64",
+            "GEOID10:large_string",
+            "value:double"
+          ]
+        },
+        {
+          "path": "output/c3_zcta5.parquet",
+          "bytes": 19299,
+          "sha256": "0eb794a55cde7425bebcfebf2b2f82c9f947fd0e336168a86ecc0c93f53f94dd",
+          "rows": 1210,
+          "columns": [
+            "geoid:int64",
+            "ZCTA5CE10:large_string",
+            "value:double"
+          ]
+        },
+        {
+          "path": "output/c4_county_cbp.parquet",
+          "bytes": 63341,
+          "sha256": "833446b0a7e331a88d5c5b38e46c163622369f44e31371ad23980ac9103a9b37",
+          "rows": 1001,
+          "columns": [
+            "PATID:large_string",
+            "geoid:int64",
+            "r_religious:double",
+            "r_civic:double",
+            "r_business:double",
+            "r_political:double",
+            "r_professional:double",
+            "r_labor:double",
+            "r_bowling:double",
+            "r_recreational:double",
+            "r_golf:double",
+            "r_sports:double"
+          ]
+        },
+        {
+          "path": "output/c4_zcta5_cbp.parquet",
+          "bytes": 58626,
+          "sha256": "be0125af66b510c112bc96e67cc890d3d9fe95b5e125b782dc904762c66fbedc",
+          "rows": 1001,
+          "columns": [
+            "PATID:large_string",
+            "geoid:int64",
+            "r_religious:double",
+            "r_civic:double",
+            "r_business:double",
+            "r_political:double",
+            "r_professional:double",
+            "r_labor:double",
+            "r_bowling:double",
+            "r_recreational:double",
+            "r_golf:double",
+            "r_sports:double"
+          ]
+        },
+        {
+          "path": "output/feature_dictionary.csv",
+          "bytes": 1195,
+          "sha256": "0c74f66323959fc9627ec64b0f0f7a3531371729ea58df11b3c4a454c14ab66c",
+          "rows": 10,
+          "columns": [
+            "feature_name",
+            "short_description",
+            "detailed_description"
+          ]
+        },
+        {
+          "path": "output/result.csv",
+          "bytes": 164614,
+          "sha256": "03ea3eee6a18aec49494963e70af146bd677fc57c4f67a97a5b76b825c2db6e2",
+          "rows": 1001,
+          "columns": [
+            "pid",
+            "startDate",
+            "endDate",
+            "longitude",
+            "latitude",
+            "r_religious",
+            "r_civic",
+            "r_business",
+            "r_political",
+            "r_professional",
+            "r_labor",
+            "r_bowling",
+            "r_recreational",
+            "r_golf",
+            "r_sports"
+          ]
+        },
+        {
+          "path": "output/result_zcta5_cbp.as_written.csv",
+          "bytes": 125435,
+          "sha256": "785c96a1f0ba0476492f26231c434199691164cd2b830972afce936c376ff389",
+          "rows": 1001,
+          "columns": [
+            "pid",
+            "episode_id",
+            "r_religious",
+            "r_civic",
+            "r_business",
+            "r_political",
+            "r_professional",
+            "r_labor",
+            "r_bowling",
+            "r_recreational",
+            "r_golf",
+            "r_sports"
+          ]
+        },
+        {
+          "path": "output/result_zcta5_cbp.sorted.csv",
+          "bytes": 125435,
+          "sha256": "560e01d2122c2312c475039e0e02c9eb64403a7fc8ff359497e6776a2c5fac1c",
+          "rows": 1001,
+          "columns": [
+            "pid",
+            "episode_id",
+            "r_religious",
+            "r_civic",
+            "r_business",
+            "r_political",
+            "r_professional",
+            "r_labor",
+            "r_bowling",
+            "r_recreational",
+            "r_golf",
+            "r_sports"
+          ]
+        },
+        {
+          "path": "pipeline_configs/c3_county.yaml",
+          "bytes": 453,
+          "sha256": "54151a15d4611e5f9db9edb5516542f1abfb1c5925bd1e42d154ca13a1896a0c"
+        },
+        {
+          "path": "pipeline_configs/c3_zcta5.yaml",
+          "bytes": 450,
+          "sha256": "e7f2e011090f4ab58fb4e6d1223c9568f3ba301c4222eeb16a69172c8388326f"
+        },
+        {
+          "path": "pipeline_configs/c4_county_cbp.yaml",
+          "bytes": 1154,
+          "sha256": "bfe26d5c9b3ce32cb48202ad11195d83a7872e9abe710b2b5d4e5e1babadeed3"
+        },
+        {
+          "path": "pipeline_configs/c4_zcta5_cbp.yaml",
+          "bytes": 1071,
+          "sha256": "dfa73502d29e283befdbdccae247eaee2c3726f1860ace4b30e26210d495c220"
+        },
+        {
+          "path": "run.json",
+          "bytes": 1846,
+          "sha256": "f580319050e586b3e93ef82591da0b9e3af3d92e52cb40858a1d3fc7b0897038"
+        },
+        {
+          "path": "runner.stderr.txt",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "runner.stdout.txt",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "status.json",
+          "bytes": 463,
+          "sha256": "725f7d54b5aada09ba24f12c578154a1706abd5c5d36f24f4a20fab4734bfa26"
+        }
+      ],
+      "remote_task_dir": "/app/data/tasks/tier2-golden-zcta5_cbp"
+    },
+    "bg_ndi_wi": {
+      "experiment": "bg_ndi_wi",
+      "variables": [
+        "ndi",
+        "walkability"
+      ],
+      "success": true,
+      "rc": 0,
+      "wall_s": 90.976,
+      "started_eastern": "2026-10-12T16:48:53-04:00",
+      "ended_eastern": "2026-10-12T16:50:24-04:00",
+      "cache": "cold: private empty cache",
+      "note": null,
+      "input_csv_is_cohort": true,
+      "steps": {
+        "c3_bg": {
+          "seconds": 39.326,
+          "rc": 0
+        },
+        "c3_bg_2020": {
+          "seconds": 43.633,
+          "rc": 0
+        },
+        "c4_ndi": {
+          "seconds": 6.014,
+          "rc": 0
+        },
+        "c4_wi": {
+          "seconds": 0.997,
+          "rc": 0
+        }
+      },
+      "results": {
+        "result_bg_ndi_wi": {
+          "as_written_sha256": "1b0b8b6babb9d436a0acfbc417404579b4c65aed3f43fa23433f8faa22ff6129",
+          "sorted_sha256": "1b0b8b6babb9d436a0acfbc417404579b4c65aed3f43fa23433f8faa22ff6129",
+          "already_sorted": true,
+          "rows": 1001,
+          "columns": [
+            "pid",
+            "episode_id",
+            "ndi",
+            "NatWalkInd"
+          ]
+        }
+      },
+      "c3_cache_entries": [
+        {
+          "key": "12269dbe__BG2020__b270m__r25m",
+          "sha256": "260f14c4128dad3fb49b15361c346684d93bfa7e68f27be5aaf25ef101f37e01",
+          "bytes": 41127,
+          "identical_to_output": [
+            "c3_bg_2020.parquet"
+          ]
+        },
+        {
+          "key": "12269dbe__BG__b270m__r25m",
+          "sha256": "532905c38491676f4cc79793f7fd183f38f7d79e96441f132104665e5bc4c484",
+          "bytes": 40760,
+          "identical_to_output": [
+            "c3_bg.parquet"
+          ]
+        }
+      ],
+      "large_files": [],
+      "custom_library_files": null,
+      "files": [
+        {
+          "path": "c3_cache/12269dbe__BG2020__b270m__r25m.meta.json",
+          "bytes": 280,
+          "sha256": "bccd7829eb3835897772f17865b8ed1cc13c9e75b9b93b94ac3da50697547d7d"
+        },
+        {
+          "path": "c3_cache/12269dbe__BG__b270m__r25m.meta.json",
+          "bytes": 280,
+          "sha256": "47d1dd57e6e0ccd279f4080b27b061dd5b243fb17e6dae586d254969ff32e163"
+        },
+        {
+          "path": "config.json",
+          "bytes": 164,
+          "sha256": "4327bad7fcb1fbd0c2be948868247ca123add380bca8c53b89b6acf132b8563f"
+        },
+        {
+          "path": "input.parquet",
+          "bytes": 44277,
+          "sha256": "12269dbefdeb6151638c711e86757ef9ebf60c3a850ea26d3e13608122808c12",
+          "rows": 1001,
+          "columns": [
+            "pid:large_string",
+            "startDate:timestamp[us]",
+            "endDate:timestamp[us]",
+            "longitude:double",
+            "latitude:double",
+            "episode_id:int64"
+          ]
+        },
+        {
+          "path": "logs.jsonl",
+          "bytes": 6272,
+          "sha256": "253a1aa175484db7a4ea32edfe2631a2b554d0091eb9aca5754d45868b152c58"
+        },
+        {
+          "path": "output/c3_bg.parquet",
+          "bytes": 40760,
+          "sha256": "532905c38491676f4cc79793f7fd183f38f7d79e96441f132104665e5bc4c484",
+          "rows": 2094,
+          "columns": [
+            "geoid:int64",
+            "GEOID10:large_string",
+            "value:double"
+          ]
+        },
+        {
+          "path": "output/c3_bg_2020.parquet",
+          "bytes": 41127,
+          "sha256": "260f14c4128dad3fb49b15361c346684d93bfa7e68f27be5aaf25ef101f37e01",
+          "rows": 2097,
+          "columns": [
+            "geoid:int64",
+            "GEOID:large_string",
+            "value:double"
+          ]
+        },
+        {
+          "path": "output/c4_ndi.parquet",
+          "bytes": 19965,
+          "sha256": "5d52c10a38de91432461fefbaf341f6101ba4dc4fcff1a64c300ee7856109f8d",
+          "rows": 1001,
+          "columns": [
+            "PATID:large_string",
+            "geoid:int64",
+            "ndi:double"
+          ]
+        },
+        {
+          "path": "output/c4_wi.parquet",
+          "bytes": 16777,
+          "sha256": "70d63c7a5e4753ff5148989a34410cf490a1b0ffb8a52736110e958e92838461",
+          "rows": 1001,
+          "columns": [
+            "PATID:large_string",
+            "geoid:int64",
+            "NatWalkInd:double"
+          ]
+        },
+        {
+          "path": "output/feature_dictionary.csv",
+          "bytes": 288,
+          "sha256": "1c5d4616e997b5dc562e14fe044845056610ea6cfba1940544f8324e7c85838f",
+          "rows": 2,
+          "columns": [
+            "feature_name",
+            "short_description",
+            "detailed_description"
+          ]
+        },
+        {
+          "path": "output/result.csv",
+          "bytes": 84103,
+          "sha256": "60d584f2d9c4e182f17fe81eaa71136811fa96d197a0552ced977ba5776019bd",
+          "rows": 1001,
+          "columns": [
+            "pid",
+            "startDate",
+            "endDate",
+            "longitude",
+            "latitude",
+            "ndi",
+            "NatWalkInd"
+          ]
+        },
+        {
+          "path": "output/result_bg_ndi_wi.as_written.csv",
+          "bytes": 44924,
+          "sha256": "1b0b8b6babb9d436a0acfbc417404579b4c65aed3f43fa23433f8faa22ff6129",
+          "rows": 1001,
+          "columns": [
+            "pid",
+            "episode_id",
+            "ndi",
+            "NatWalkInd"
+          ]
+        },
+        {
+          "path": "output/result_bg_ndi_wi.sorted.csv",
+          "bytes": 44924,
+          "sha256": "1b0b8b6babb9d436a0acfbc417404579b4c65aed3f43fa23433f8faa22ff6129",
+          "rows": 1001,
+          "columns": [
+            "pid",
+            "episode_id",
+            "ndi",
+            "NatWalkInd"
+          ]
+        },
+        {
+          "path": "pipeline_configs/c3_bg.yaml",
+          "bytes": 3859,
+          "sha256": "ed4bda57d9a973f6a6c478bca6e3144eaae428a462e76356c1df4a2bfe9b1436"
+        },
+        {
+          "path": "pipeline_configs/c3_bg_2020.yaml",
+          "bytes": 3561,
+          "sha256": "68e8966a2d0250aa41102873557b83c56283d6896e5acfb6436e46daa435e1d3"
+        },
+        {
+          "path": "pipeline_configs/c4_ndi.yaml",
+          "bytes": 925,
+          "sha256": "3feaf037619b93a820fb9f1a3d18da59e2f4286839b3d3f5f995b4bc49e6e652"
+        },
+        {
+          "path": "pipeline_configs/c4_wi.yaml",
+          "bytes": 824,
+          "sha256": "2a81c9f8551c6f78729b5dc23e6464061a43165c06831dedaa787561fc244b09"
+        },
+        {
+          "path": "run.json",
+          "bytes": 1851,
+          "sha256": "1d1cb5d2640e913f0e01b4ddc2f4838b5fa702a522073eb6b69fb2caf6170d0a"
+        },
+        {
+          "path": "runner.stderr.txt",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "runner.stdout.txt",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "status.json",
+          "bytes": 431,
+          "sha256": "9372a0895c302f1484daba26bd86a318e122a0a65d7113cc6ec157fa1ebb205d"
+        }
+      ],
+      "remote_task_dir": "/app/data/tasks/tier2-golden-bg_ndi_wi"
+    },
+    "bg_ndi_wi_rev": {
+      "experiment": "bg_ndi_wi",
+      "variables": [
+        "walkability",
+        "ndi"
+      ],
+      "success": true,
+      "rc": 0,
+      "wall_s": 7.35,
+      "started_eastern": "2026-10-12T16:50:26-04:00",
+      "ended_eastern": "2026-10-12T16:50:33-04:00",
+      "cache": "warm: reuses bg_ndi_wi's private cache",
+      "note": "request order walkability,ndi (as runtime.py passes it); warm: reuses bg_ndi_wi's private C3 cache, so both C3 steps are cache hits and render no YAML",
+      "input_csv_is_cohort": true,
+      "steps": {
+        "c3_bg": {
+          "cache_hit": "cache hit: 12269dbe__BG__b270m__r25m \u2014 skipping pipeline run"
+        },
+        "c3_bg_2020": {
+          "cache_hit": "cache hit: 12269dbe__BG2020__b270m__r25m \u2014 skipping pipeline run"
+        },
+        "c4_ndi": {
+          "seconds": 5.545,
+          "rc": 0
+        },
+        "c4_wi": {
+          "seconds": 1.089,
+          "rc": 0
+        }
+      },
+      "results": {
+        "result_bg_ndi_wi": {
+          "as_written_sha256": "3852778b1c6db059b96d23eae1854697b142d3a00bfc5a73a1c1097b4ea37901",
+          "sorted_sha256": "3852778b1c6db059b96d23eae1854697b142d3a00bfc5a73a1c1097b4ea37901",
+          "already_sorted": true,
+          "rows": 1001,
+          "columns": [
+            "pid",
+            "episode_id",
+            "NatWalkInd",
+            "ndi"
+          ]
+        }
+      },
+      "c3_cache_entries": [],
+      "large_files": [],
+      "custom_library_files": null,
+      "files": [
+        {
+          "path": "config.json",
+          "bytes": 164,
+          "sha256": "c1cc138eae77821b3f8ca45003fd351c445566acf18b0a74e491779218bca1e2"
+        },
+        {
+          "path": "input.parquet",
+          "bytes": 44277,
+          "sha256": "12269dbefdeb6151638c711e86757ef9ebf60c3a850ea26d3e13608122808c12",
+          "rows": 1001,
+          "columns": [
+            "pid:large_string",
+            "startDate:timestamp[us]",
+            "endDate:timestamp[us]",
+            "longitude:double",
+            "latitude:double",
+            "episode_id:int64"
+          ]
+        },
+        {
+          "path": "logs.jsonl",
+          "bytes": 1370,
+          "sha256": "b7f49becf84704a5d9d48e23971fd26d9b08237676f156ff03b56efe2a79919e"
+        },
+        {
+          "path": "output/c3_bg.parquet",
+          "bytes": 40760,
+          "sha256": "532905c38491676f4cc79793f7fd183f38f7d79e96441f132104665e5bc4c484",
+          "rows": 2094,
+          "columns": [
+            "geoid:int64",
+            "GEOID10:large_string",
+            "value:double"
+          ]
+        },
+        {
+          "path": "output/c3_bg_2020.parquet",
+          "bytes": 41127,
+          "sha256": "260f14c4128dad3fb49b15361c346684d93bfa7e68f27be5aaf25ef101f37e01",
+          "rows": 2097,
+          "columns": [
+            "geoid:int64",
+            "GEOID:large_string",
+            "value:double"
+          ]
+        },
+        {
+          "path": "output/c4_ndi.parquet",
+          "bytes": 19974,
+          "sha256": "45b309b22768d13dbd35523fdf23716199e232d55f902d03728e0e22faa5f372",
+          "rows": 1001,
+          "columns": [
+            "PATID:large_string",
+            "geoid:int64",
+            "ndi:double"
+          ]
+        },
+        {
+          "path": "output/c4_wi.parquet",
+          "bytes": 16824,
+          "sha256": "3cdb59152df428d259e8ce2af7f956645c012b46eece7bced601e0ca37a2306c",
+          "rows": 1001,
+          "columns": [
+            "PATID:large_string",
+            "geoid:int64",
+            "NatWalkInd:double"
+          ]
+        },
+        {
+          "path": "output/feature_dictionary.csv",
+          "bytes": 288,
+          "sha256": "a2a8caa590d507c7bc027289580b30bb49bf62d0fb5c60d3e96307379e8607e1",
+          "rows": 2,
+          "columns": [
+            "feature_name",
+            "short_description",
+            "detailed_description"
+          ]
+        },
+        {
+          "path": "output/result.csv",
+          "bytes": 84089,
+          "sha256": "b8ea5a384567c19e8943472fe85a7052e45d4b0aa941b5d8404cb7dd0b29ce31",
+          "rows": 1001,
+          "columns": [
+            "pid",
+            "startDate",
+            "endDate",
+            "longitude",
+            "latitude",
+            "NatWalkInd",
+            "ndi"
+          ]
+        },
+        {
+          "path": "output/result_bg_ndi_wi.as_written.csv",
+          "bytes": 44910,
+          "sha256": "3852778b1c6db059b96d23eae1854697b142d3a00bfc5a73a1c1097b4ea37901",
+          "rows": 1001,
+          "columns": [
+            "pid",
+            "episode_id",
+            "NatWalkInd",
+            "ndi"
+          ]
+        },
+        {
+          "path": "output/result_bg_ndi_wi.sorted.csv",
+          "bytes": 44910,
+          "sha256": "3852778b1c6db059b96d23eae1854697b142d3a00bfc5a73a1c1097b4ea37901",
+          "rows": 1001,
+          "columns": [
+            "pid",
+            "episode_id",
+            "NatWalkInd",
+            "ndi"
+          ]
+        },
+        {
+          "path": "pipeline_configs/c4_ndi.yaml",
+          "bytes": 941,
+          "sha256": "8ca175daea7da8c621496f9faff47325e75e594726ae38ed3d809bb704d9aca5"
+        },
+        {
+          "path": "pipeline_configs/c4_wi.yaml",
+          "bytes": 836,
+          "sha256": "b3200415a8c2c6a3aaa9b765331c21ca20b55f7cdc007d3803d9f1b4c0c0317a"
+        },
+        {
+          "path": "run.json",
+          "bytes": 1896,
+          "sha256": "e8aa59b33385cdabcbd7a638a171f1465ca9cf5d233aec14a486ebd3749ed278"
+        },
+        {
+          "path": "runner.stderr.txt",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "runner.stdout.txt",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "status.json",
+          "bytes": 431,
+          "sha256": "07005fe860d8493807cb9d213797765799535e49c92a5ac68cd3c303af7be9ad"
+        }
+      ],
+      "remote_task_dir": "/app/data/tasks/tier2-golden-bg_ndi_wi_rev"
+    },
+    "faqsd": {
+      "experiment": "faqsd",
+      "variables": [
+        "faqsd"
+      ],
+      "success": true,
+      "rc": 0,
+      "wall_s": 246.357,
+      "started_eastern": "2026-10-12T16:50:34-04:00",
+      "ended_eastern": "2026-10-12T16:54:41-04:00",
+      "cache": "cold: private empty cache",
+      "note": null,
+      "input_csv_is_cohort": true,
+      "steps": {
+        "c3_tract_us": {
+          "seconds": 27.145,
+          "rc": 0
+        },
+        "c4_tract_faqsd": {
+          "seconds": 218.449,
+          "rc": 0
+        }
+      },
+      "results": {
+        "result_faqsd": {
+          "as_written_sha256": "00f1401d336a1cd73e6df5821f5c6e077de559cd14f9f8bf20ee32e1cb9f8e4a",
+          "sorted_sha256": "00f1401d336a1cd73e6df5821f5c6e077de559cd14f9f8bf20ee32e1cb9f8e4a",
+          "already_sorted": true,
+          "rows": 1001,
+          "columns": [
+            "pid",
+            "episode_id",
+            "faqsd_o3",
+            "faqsd_pm25"
+          ]
+        }
+      },
+      "c3_cache_entries": [
+        {
+          "key": "12269dbe__TRACT_FARA__b270m__r25m",
+          "sha256": "726ab88386d52adba069452929277b40dfe8435e5c9fee7b894e847533e0dbce",
+          "bytes": 31457,
+          "identical_to_output": [
+            "c3_tract_us.parquet"
+          ]
+        }
+      ],
+      "large_files": [],
+      "custom_library_files": null,
+      "files": [
+        {
+          "path": "c3_cache/12269dbe__TRACT_FARA__b270m__r25m.meta.json",
+          "bytes": 266,
+          "sha256": "3270b12e866d6438fddb3edb2fff165477e695959639f9140cd35d2637c312ce"
+        },
+        {
+          "path": "config.json",
+          "bytes": 151,
+          "sha256": "ab1cb7b2bfd15584ec78628c3f98ff94f465ce197e8766cfeff93b4beda301d6"
+        },
+        {
+          "path": "input.parquet",
+          "bytes": 44277,
+          "sha256": "12269dbefdeb6151638c711e86757ef9ebf60c3a850ea26d3e13608122808c12",
+          "rows": 1001,
+          "columns": [
+            "pid:large_string",
+            "startDate:timestamp[us]",
+            "endDate:timestamp[us]",
+            "longitude:double",
+            "latitude:double",
+            "episode_id:int64"
+          ]
+        },
+        {
+          "path": "logs.jsonl",
+          "bytes": 3235,
+          "sha256": "88373989f6da5d9de43ba7a1c53dc914628d3604269a701b706621660ffe74c9"
+        },
+        {
+          "path": "output/c3_tract_us.parquet",
+          "bytes": 31457,
+          "sha256": "726ab88386d52adba069452929277b40dfe8435e5c9fee7b894e847533e0dbce",
+          "rows": 1650,
+          "columns": [
+            "geoid:int64",
+            "GEOID10:large_string",
+            "value:double"
+          ]
+        },
+        {
+          "path": "output/c4_tract_faqsd.parquet",
+          "bytes": 29898,
+          "sha256": "0cf6549a26267a0f77e9dd724fdac4581235ea681ca6e0a619aa09f194381104",
+          "rows": 1001,
+          "columns": [
+            "PATID:large_string",
+            "geoid:int64",
+            "faqsd_o3:double",
+            "faqsd_pm25:double"
+          ]
+        },
+        {
+          "path": "output/feature_dictionary.csv",
+          "bytes": 398,
+          "sha256": "7c4c141abbd6822cfeab4a53e12cc64621a85d9ff5aa8fc4425c67f71993a4c7",
+          "rows": 2,
+          "columns": [
+            "feature_name",
+            "short_description",
+            "detailed_description"
+          ]
+        },
+        {
+          "path": "output/result.csv",
+          "bytes": 88077,
+          "sha256": "deafc33f05a526d69d0949c4df81641c9e6763ca701c0512ae1856fff8e067bd",
+          "rows": 1001,
+          "columns": [
+            "pid",
+            "startDate",
+            "endDate",
+            "longitude",
+            "latitude",
+            "faqsd_o3",
+            "faqsd_pm25"
+          ]
+        },
+        {
+          "path": "output/result_faqsd.as_written.csv",
+          "bytes": 48898,
+          "sha256": "00f1401d336a1cd73e6df5821f5c6e077de559cd14f9f8bf20ee32e1cb9f8e4a",
+          "rows": 1001,
+          "columns": [
+            "pid",
+            "episode_id",
+            "faqsd_o3",
+            "faqsd_pm25"
+          ]
+        },
+        {
+          "path": "output/result_faqsd.sorted.csv",
+          "bytes": 48898,
+          "sha256": "00f1401d336a1cd73e6df5821f5c6e077de559cd14f9f8bf20ee32e1cb9f8e4a",
+          "rows": 1001,
+          "columns": [
+            "pid",
+            "episode_id",
+            "faqsd_o3",
+            "faqsd_pm25"
+          ]
+        },
+        {
+          "path": "pipeline_configs/c3_tract_us.yaml",
+          "bytes": 3197,
+          "sha256": "704528165d90bf74bc686c2fe9b897aec98ec65309e9068d669b4b8f7bc0e16d"
+        },
+        {
+          "path": "pipeline_configs/c4_tract_faqsd.yaml",
+          "bytes": 666,
+          "sha256": "b6c5fd45ba52853dd32f19e9a1d34b43222ef626cb7214a4f27c02de631ce260"
+        },
+        {
+          "path": "run.json",
+          "bytes": 1450,
+          "sha256": "ec4f582aa6eceeddbb0877875e0fb6ac9e33935a40501eb2e8d1c09216479d58"
+        },
+        {
+          "path": "runner.stderr.txt",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "runner.stdout.txt",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "status.json",
+          "bytes": 385,
+          "sha256": "aef90576208d8694a31abd313e8a3357c277a85dee0933666a7b0115dee69ce3"
+        }
+      ],
+      "remote_task_dir": "/app/data/tasks/tier2-golden-faqsd"
+    },
+    "custom_raster": {
+      "experiment": "custom",
+      "variables": [
+        "custom_714c9715"
+      ],
+      "success": true,
+      "rc": 0,
+      "wall_s": 2.666,
+      "started_eastern": "2026-10-12T16:54:43-04:00",
+      "ended_eastern": "2026-10-12T16:54:46-04:00",
+      "cache": "cold: private empty cache",
+      "note": "the catalog noise GeoTIFF registered with app.custom_exposomes.create_raster",
+      "input_csv_is_cohort": true,
+      "steps": {
+        "c3_customgrid_3940345e": {
+          "seconds": 1.392,
+          "rc": 0
+        },
+        "c4_custom_714c9715": {
+          "seconds": 0.534,
+          "rc": 0
+        }
+      },
+      "results": {
+        "result_custom": {
+          "as_written_sha256": "86255ba33c034f8200abebe378dc2b77ddeb99122b76732d66ff623aa2a64216",
+          "sorted_sha256": "34e3542bf8649a4ae761c58677ba899fe863c25ddc9dad2510eddb1b41086a53",
+          "already_sorted": false,
+          "rows": 1001,
+          "columns": [
+            "pid",
+            "episode_id",
+            "l50dba_exi"
+          ]
+        }
+      },
+      "c3_cache_entries": [
+        {
+          "key": "12269dbe__CUSTOMGRID_3940345e__b270m",
+          "sha256": "bd9091a58b6d8144c75040d8320ee917a0492d83cc41c45015ec2e6b03e1555f",
+          "bytes": 137870,
+          "identical_to_output": [
+            "c3_customgrid_3940345e.parquet"
+          ]
+        }
+      ],
+      "large_files": [],
+      "custom_library_files": [
+        {
+          "path": "manifest.json",
+          "bytes": 1882,
+          "sha256": "89fcaaec194da96d15cdca195828483220cbebb360bb63669c5eb2c2642ab2d7"
+        },
+        {
+          "path": "rasters/static.tif",
+          "bytes": 431945796,
+          "sha256": "1d1a0c7be9872665be254201f61c082bc430a4a476d98dadac1726ca1fad816b"
+        }
+      ],
+      "files": [
+        {
+          "path": "c3_cache/12269dbe__CUSTOMGRID_3940345e__b270m.meta.json",
+          "bytes": 275,
+          "sha256": "067f78d81b310c9db492da9d38b27f06aa8fd56c0cd8360d7056a17c24e80abc"
+        },
+        {
+          "path": "config.json",
+          "bytes": 1796,
+          "sha256": "a9a10b13ebd0a5371436deb7ace336ff30381f756d42e215b5a1b3182cd4ac64"
+        },
+        {
+          "path": "custom_definition.json",
+          "bytes": 1883,
+          "sha256": "548a69775c49e99387de4958de366c62739a45f29c1d5a18be3c3ea92a361c4a"
+        },
+        {
+          "path": "custom_library_files.json",
+          "bytes": 289,
+          "sha256": "abaea55270cabbafd8f86848b0d6fe2d2af368bccc2e14f1d16d37f185e93ae0"
+        },
+        {
+          "path": "input.parquet",
+          "bytes": 44277,
+          "sha256": "12269dbefdeb6151638c711e86757ef9ebf60c3a850ea26d3e13608122808c12",
+          "rows": 1001,
+          "columns": [
+            "pid:large_string",
+            "startDate:timestamp[us]",
+            "endDate:timestamp[us]",
+            "longitude:double",
+            "latitude:double",
+            "episode_id:int64"
+          ]
+        },
+        {
+          "path": "logs.jsonl",
+          "bytes": 3165,
+          "sha256": "ae4a2dfc240130bb4c3d4a60b898108b279106d318eb22ae2ea3d075e940cd47"
+        },
+        {
+          "path": "output/c3_customgrid_3940345e.parquet",
+          "bytes": 137870,
+          "sha256": "bd9091a58b6d8144c75040d8320ee917a0492d83cc41c45015ec2e6b03e1555f",
+          "rows": 8098,
+          "columns": [
+            "geoid:int64",
+            "grid_id:int64",
+            "weight:double"
+          ]
+        },
+        {
+          "path": "output/c4_custom_714c9715.parquet",
+          "bytes": 20050,
+          "sha256": "7458acfe4365fda51fb1f414b60e79b63692397c2705e9de737360e4b9fe9b3c",
+          "rows": 1001,
+          "columns": [
+            "PATID:large_string",
+            "geoid:int64",
+            "l50dba_exi:double"
+          ]
+        },
+        {
+          "path": "output/feature_dictionary.csv",
+          "bytes": 176,
+          "sha256": "87e68db1b5b1ebe20e028ce4ad23990cabfb39f599fe88eef1a8db152a7d334c",
+          "rows": 1,
+          "columns": [
+            "feature_name",
+            "short_description",
+            "detailed_description"
+          ]
+        },
+        {
+          "path": "output/result.csv",
+          "bytes": 70207,
+          "sha256": "c04c9c6566821b1f538411e66ae70500e2ec2b691880986b18a35dea868c6f84",
+          "rows": 1001,
+          "columns": [
+            "pid",
+            "startDate",
+            "endDate",
+            "longitude",
+            "latitude",
+            "l50dba_exi"
+          ]
+        },
+        {
+          "path": "output/result_custom.as_written.csv",
+          "bytes": 31028,
+          "sha256": "86255ba33c034f8200abebe378dc2b77ddeb99122b76732d66ff623aa2a64216",
+          "rows": 1001,
+          "columns": [
+            "pid",
+            "episode_id",
+            "l50dba_exi"
+          ]
+        },
+        {
+          "path": "output/result_custom.sorted.csv",
+          "bytes": 31028,
+          "sha256": "34e3542bf8649a4ae761c58677ba899fe863c25ddc9dad2510eddb1b41086a53",
+          "rows": 1001,
+          "columns": [
+            "pid",
+            "episode_id",
+            "l50dba_exi"
+          ]
+        },
+        {
+          "path": "output/values_custom_714c9715.parquet",
+          "bytes": 110294,
+          "sha256": "71504ef5c33b70982caa609207339d6d710da8da21b1af9dc4ddb84c3c148581",
+          "rows": 8047,
+          "columns": [
+            "grid_id:int64",
+            "l50dba_exi:double"
+          ]
+        },
+        {
+          "path": "pipeline_configs/c3_customgrid_3940345e.yaml",
+          "bytes": 486,
+          "sha256": "3ccf4968fec1b20838912a0013bec4185d6c26d6d9f94d43808520f267061f92"
+        },
+        {
+          "path": "pipeline_configs/c4_custom_714c9715.yaml",
+          "bytes": 774,
+          "sha256": "61f0cebe0bf454bf22edc24c17579ed34f6514d3aee46f5bc221f940cc1fbcbd"
+        },
+        {
+          "path": "run.json",
+          "bytes": 1589,
+          "sha256": "886336bf472c8464c39984ebe3cf353ebdad5f0664804b0c1d7443713de03c36"
+        },
+        {
+          "path": "runner.stderr.txt",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "runner.stdout.txt",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "status.json",
+          "bytes": 416,
+          "sha256": "9859342245d06fa62b9fb03d30250779fa9367d3a62983a5fb4d45fb11882e70"
+        }
+      ],
+      "remote_task_dir": "/app/data/tasks/tier2-golden-custom_raster"
+    },
+    "custom_bg_csv": {
+      "experiment": "custom",
+      "variables": [
+        "custom_18180893"
+      ],
+      "success": true,
+      "rc": 0,
+      "wall_s": 39.587,
+      "started_eastern": "2026-10-12T16:54:48-04:00",
+      "ended_eastern": "2026-10-12T16:55:28-04:00",
+      "cache": "cold: private empty cache",
+      "note": "walkability 2016 by 2010 BG written to CSV and registered with app.custom_exposomes.create",
+      "input_csv_is_cohort": true,
+      "steps": {
+        "c3_bg": {
+          "seconds": 37.029,
+          "rc": 0
+        },
+        "c4_custom_18180893": {
+          "seconds": 1.722,
+          "rc": 0
+        }
+      },
+      "results": {
+        "result_custom": {
+          "as_written_sha256": "0eafbbc59f3c0d3cbf3bce5855303fa84e0f62e3611af6190d3913be75771ad4",
+          "sorted_sha256": "31fe282b3fea6f52d06e64b9b665205cf5d24c15d36ffafa107e1ca43b84bb6d",
+          "already_sorted": false,
+          "rows": 1001,
+          "columns": [
+            "pid",
+            "episode_id",
+            "NatWalkInd"
+          ]
+        }
+      },
+      "c3_cache_entries": [
+        {
+          "key": "12269dbe__BG__b270m__r25m",
+          "sha256": "532905c38491676f4cc79793f7fd183f38f7d79e96441f132104665e5bc4c484",
+          "bytes": 40760,
+          "identical_to_output": [
+            "c3_bg.parquet"
+          ]
+        }
+      ],
+      "large_files": [],
+      "custom_library_files": [
+        {
+          "path": "manifest.json",
+          "bytes": 1098,
+          "sha256": "910e1753609578d8ea2530ca9d2872394ebcb44d0fea139781f1e371b21ef805"
+        },
+        {
+          "path": "values.csv",
+          "bytes": 4129912,
+          "sha256": "488875c9e30d8f946143510b684276bec63cf7a23200a27754886e76c9fc679f"
+        }
+      ],
+      "files": [
+        {
+          "path": "c3_cache/12269dbe__BG__b270m__r25m.meta.json",
+          "bytes": 258,
+          "sha256": "b69c073ec6136b21a033bdfc34150b14c4254b44df92ca3d257db4a307e6ab09"
+        },
+        {
+          "path": "config.json",
+          "bytes": 1218,
+          "sha256": "771194e0992c354a7a988aff9cf605eeeeda9c09ba5f138fb7edb63742562fb8"
+        },
+        {
+          "path": "custom_definition.json",
+          "bytes": 1099,
+          "sha256": "05f6a7271acf1cff96e64a5284f4fc98c223352c3a50c55b8dc731ae1459b32f"
+        },
+        {
+          "path": "custom_library_files.json",
+          "bytes": 279,
+          "sha256": "c45889882d28bfac518fc3b702da278ea7a62cfeb6175ba9dd2264eb08105052"
+        },
+        {
+          "path": "input.parquet",
+          "bytes": 44277,
+          "sha256": "12269dbefdeb6151638c711e86757ef9ebf60c3a850ea26d3e13608122808c12",
+          "rows": 1001,
+          "columns": [
+            "pid:large_string",
+            "startDate:timestamp[us]",
+            "endDate:timestamp[us]",
+            "longitude:double",
+            "latitude:double",
+            "episode_id:int64"
+          ]
+        },
+        {
+          "path": "logs.jsonl",
+          "bytes": 3322,
+          "sha256": "a2adf3e285f59780616a3355e4d183c925e6ecbc7fed2c11c853835e109bd819"
+        },
+        {
+          "path": "output/c3_bg.parquet",
+          "bytes": 40760,
+          "sha256": "532905c38491676f4cc79793f7fd183f38f7d79e96441f132104665e5bc4c484",
+          "rows": 2094,
+          "columns": [
+            "geoid:int64",
+            "GEOID10:large_string",
+            "value:double"
+          ]
+        },
+        {
+          "path": "output/c4_custom_18180893.parquet",
+          "bytes": 16796,
+          "sha256": "993fa04f38623d2868ffc7a5ad3ccf6c49d13fc69ea00a3edb4e2a12db4d1f1d",
+          "rows": 1001,
+          "columns": [
+            "PATID:large_string",
+            "geoid:int64",
+            "NatWalkInd:double"
+          ]
+        },
+        {
+          "path": "output/feature_dictionary.csv",
+          "bytes": 159,
+          "sha256": "cfe03e88eca751c3c657b23511d251df699f0de73e52a1de4a92ade309365cf9",
+          "rows": 1,
+          "columns": [
+            "feature_name",
+            "short_description",
+            "detailed_description"
+          ]
+        },
+        {
+          "path": "output/result.csv",
+          "bytes": 64620,
+          "sha256": "a5994001999f9ff5b0bd9eb47d865459cca511c00b33742ef95c9633956200e8",
+          "rows": 1001,
+          "columns": [
+            "pid",
+            "startDate",
+            "endDate",
+            "longitude",
+            "latitude",
+            "NatWalkInd"
+          ]
+        },
+        {
+          "path": "output/result_custom.as_written.csv",
+          "bytes": 25441,
+          "sha256": "0eafbbc59f3c0d3cbf3bce5855303fa84e0f62e3611af6190d3913be75771ad4",
+          "rows": 1001,
+          "columns": [
+            "pid",
+            "episode_id",
+            "NatWalkInd"
+          ]
+        },
+        {
+          "path": "output/result_custom.sorted.csv",
+          "bytes": 25441,
+          "sha256": "31fe282b3fea6f52d06e64b9b665205cf5d24c15d36ffafa107e1ca43b84bb6d",
+          "rows": 1001,
+          "columns": [
+            "pid",
+            "episode_id",
+            "NatWalkInd"
+          ]
+        },
+        {
+          "path": "pipeline_configs/c3_bg.yaml",
+          "bytes": 3900,
+          "sha256": "119c61e67c5ce8eb1fb7996aee3985896be7632de304a701ffffa0a885d40a2b"
+        },
+        {
+          "path": "pipeline_configs/c4_custom_18180893.yaml",
+          "bytes": 733,
+          "sha256": "c78760d5cba49cd35aa0f8ef8fd84971c6d50a2bf44d80683f4c18f84dee07e6"
+        },
+        {
+          "path": "run.json",
+          "bytes": 1589,
+          "sha256": "e4ba1c0b2bffe6540ea155f83d4223f17a8effdf6d904f08602921c712c95ffe"
+        },
+        {
+          "path": "runner.stderr.txt",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "runner.stdout.txt",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "status.json",
+          "bytes": 382,
+          "sha256": "747e48f78cfcbe91e6b5d03a16be98dda1b973f4fdfdb49d2111c53d7e47cc86"
+        },
+        {
+          "path": "upload/values.csv",
+          "bytes": 4129912,
+          "sha256": "488875c9e30d8f946143510b684276bec63cf7a23200a27754886e76c9fc679f",
+          "rows": 220653,
+          "columns": [
+            "GEOID10",
+            "NatWalkInd"
+          ]
+        }
+      ],
+      "remote_task_dir": "/app/data/tasks/tier2-golden-custom_bg_csv"
+    },
+    "acag": {
+      "experiment": "acag",
+      "variables": [
+        "acag"
+      ],
+      "success": true,
+      "rc": 0,
+      "wall_s": 915.255,
+      "started_eastern": "2026-10-12T16:55:29-04:00",
+      "ended_eastern": "2026-10-12T17:10:45-04:00",
+      "cache": "cold: private empty cache",
+      "note": null,
+      "input_csv_is_cohort": true,
+      "steps": {
+        "c3_acag": {
+          "seconds": 1.64,
+          "rc": 0
+        },
+        "c4_acag": {
+          "seconds": 912.574,
+          "rc": 0
+        }
+      },
+      "results": {
+        "result_acag": {
+          "as_written_sha256": "3ac0420b731ad86aeef3259431e07a68d2ede09fe9fdd8173001090b9894a55a",
+          "sorted_sha256": "3ac0420b731ad86aeef3259431e07a68d2ede09fe9fdd8173001090b9894a55a",
+          "already_sorted": true,
+          "rows": 995,
+          "columns": [
+            "pid",
+            "episode_id",
+            "pm25",
+            "bc",
+            "dust",
+            "nh4",
+            "no3",
+            "om",
+            "so4",
+            "ss",
+            "pm25_bm",
+            "bc_bm",
+            "dust_bm",
+            "nh4_bm",
+            "no3_bm",
+            "om_bm",
+            "so4_bm",
+            "ss_bm",
+            "pm25_nbm",
+            "bc_nbm",
+            "dust_nbm",
+            "nh4_nbm",
+            "no3_nbm",
+            "om_nbm",
+            "so4_nbm",
+            "ss_nbm"
+          ]
+        }
+      },
+      "c3_cache_entries": [
+        {
+          "key": "12269dbe__BG_ACAG__b270m",
+          "sha256": "2628dc885d8c228c5fb8d9a7b8c875980f7ce3670ba3501c7376f70fa8cc6de8",
+          "bytes": 45522,
+          "identical_to_output": [
+            "c3_acag.parquet"
+          ]
+        }
+      ],
+      "large_files": [],
+      "custom_library_files": null,
+      "files": [
+        {
+          "path": "c3_cache/12269dbe__BG_ACAG__b270m.meta.json",
+          "bytes": 262,
+          "sha256": "ff09b952314124767bfac0f58fc7337244537193627ff083251bd5928fa3982c"
+        },
+        {
+          "path": "config.json",
+          "bytes": 150,
+          "sha256": "4bfbfe90777fd70685de20328bf4f08440012e1cd3bd0e6c9684f0fbb6f5ec29"
+        },
+        {
+          "path": "input.parquet",
+          "bytes": 44277,
+          "sha256": "12269dbefdeb6151638c711e86757ef9ebf60c3a850ea26d3e13608122808c12",
+          "rows": 1001,
+          "columns": [
+            "pid:large_string",
+            "startDate:timestamp[us]",
+            "endDate:timestamp[us]",
+            "longitude:double",
+            "latitude:double",
+            "episode_id:int64"
+          ]
+        },
+        {
+          "path": "logs.jsonl",
+          "bytes": 6927,
+          "sha256": "acea5522ec825fa3e8d0c7ff5f1864de64f40437bb93843cf3b3b6a5023fd6da"
+        },
+        {
+          "path": "output/c3_acag.parquet",
+          "bytes": 45522,
+          "sha256": "2628dc885d8c228c5fb8d9a7b8c875980f7ce3670ba3501c7376f70fa8cc6de8",
+          "rows": 2396,
+          "columns": [
+            "geoid:int64",
+            "grid_id:int64",
+            "weight:double"
+          ]
+        },
+        {
+          "path": "output/c4_acag.parquet",
+          "bytes": 224931,
+          "sha256": "c01a4519bb61f324aa20a73d3d5b2764610fa2b5cf048bec87b32f0f0ed00442",
+          "rows": 995,
+          "columns": [
+            "PATID:large_string",
+            "geoid:int64",
+            "pm25:double",
+            "bc:double",
+            "dust:double",
+            "nh4:double",
+            "no3:double",
+            "om:double",
+            "so4:double",
+            "ss:double",
+            "pm25_bm:double",
+            "bc_bm:double",
+            "dust_bm:double",
+            "nh4_bm:double",
+            "no3_bm:double",
+            "om_bm:double",
+            "so4_bm:double",
+            "ss_bm:double",
+            "pm25_nbm:double",
+            "bc_nbm:double",
+            "dust_nbm:double",
+            "nh4_nbm:double",
+            "no3_nbm:double",
+            "om_nbm:double",
+            "so4_nbm:double",
+            "ss_nbm:double"
+          ]
+        },
+        {
+          "path": "output/feature_dictionary.csv",
+          "bytes": 3265,
+          "sha256": "abb6cac393771c599047250e3914d6188054de71ca15a7335ed545a2ead3b55a",
+          "rows": 24,
+          "columns": [
+            "feature_name",
+            "short_description",
+            "detailed_description"
+          ]
+        },
+        {
+          "path": "output/result.csv",
+          "bytes": 482868,
+          "sha256": "24b1ece36606d4847d64702e1c82dc39f26bc7f010a43384906c5f5cf23b643e",
+          "rows": 1001,
+          "columns": [
+            "pid",
+            "startDate",
+            "endDate",
+            "longitude",
+            "latitude",
+            "pm25",
+            "bc",
+            "dust",
+            "nh4",
+            "no3",
+            "om",
+            "so4",
+            "ss",
+            "pm25_bm",
+            "bc_bm",
+            "dust_bm",
+            "nh4_bm",
+            "no3_bm",
+            "om_bm",
+            "so4_bm",
+            "ss_bm",
+            "pm25_nbm",
+            "bc_nbm",
+            "dust_nbm",
+            "nh4_nbm",
+            "no3_nbm",
+            "om_nbm",
+            "so4_nbm",
+            "ss_nbm"
+          ]
+        },
+        {
+          "path": "output/result_acag.as_written.csv",
+          "bytes": 443469,
+          "sha256": "3ac0420b731ad86aeef3259431e07a68d2ede09fe9fdd8173001090b9894a55a",
+          "rows": 995,
+          "columns": [
+            "pid",
+            "episode_id",
+            "pm25",
+            "bc",
+            "dust",
+            "nh4",
+            "no3",
+            "om",
+            "so4",
+            "ss",
+            "pm25_bm",
+            "bc_bm",
+            "dust_bm",
+            "nh4_bm",
+            "no3_bm",
+            "om_bm",
+            "so4_bm",
+            "ss_bm",
+            "pm25_nbm",
+            "bc_nbm",
+            "dust_nbm",
+            "nh4_nbm",
+            "no3_nbm",
+            "om_nbm",
+            "so4_nbm",
+            "ss_nbm"
+          ]
+        },
+        {
+          "path": "output/result_acag.sorted.csv",
+          "bytes": 443469,
+          "sha256": "3ac0420b731ad86aeef3259431e07a68d2ede09fe9fdd8173001090b9894a55a",
+          "rows": 995,
+          "columns": [
+            "pid",
+            "episode_id",
+            "pm25",
+            "bc",
+            "dust",
+            "nh4",
+            "no3",
+            "om",
+            "so4",
+            "ss",
+            "pm25_bm",
+            "bc_bm",
+            "dust_bm",
+            "nh4_bm",
+            "no3_bm",
+            "om_bm",
+            "so4_bm",
+            "ss_bm",
+            "pm25_nbm",
+            "bc_nbm",
+            "dust_nbm",
+            "nh4_nbm",
+            "no3_nbm",
+            "om_nbm",
+            "so4_nbm",
+            "ss_nbm"
+          ]
+        },
+        {
+          "path": "pipeline_configs/c3_acag.yaml",
+          "bytes": 384,
+          "sha256": "6f9639497a7e9812226b40c86d14bae5880bb382c2f1f82b389d9a658ba4d205"
+        },
+        {
+          "path": "pipeline_configs/c4_acag.yaml",
+          "bytes": 682,
+          "sha256": "3506ed59e0c4e1c5d0132bc7a511199ae127b2bf20737d0ed774ce74afab4fa2"
+        },
+        {
+          "path": "run.json",
+          "bytes": 1428,
+          "sha256": "a4c804e104b9a1802e8ae1758ae757b020329ad6dbeeab4dfad94f726e28dd1e"
+        },
+        {
+          "path": "runner.stderr.txt",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "runner.stdout.txt",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "status.json",
+          "bytes": 362,
+          "sha256": "81cd52c393c172bb05167f2f34ba2f7e351a72c3937a21422239133870b2637c"
+        }
+      ],
+      "remote_task_dir": "/app/data/tasks/tier2-golden-acag"
+    },
+    "fanin_all": {
+      "experiment": null,
+      "variables": [
+        "ndi",
+        "walkability",
+        "cbp_zcta5",
+        "tiger_proximity",
+        "nhd_bluespace",
+        "noise",
+        "vnl",
+        "temis",
+        "fara_tract",
+        "acag",
+        "faqsd",
+        "custom_714c9715"
+      ],
+      "success": true,
+      "rc": null,
+      "wall_s": null,
+      "started_eastern": null,
+      "ended_eastern": null,
+      "cache": null,
+      "note": "not a runner: app.experiments._merge.fan_in over the partials of the runs listed in sources, in the order app.variable_registry.variables_by_experiment gives (the dispatcher's order)",
+      "input_csv_is_cohort": true,
+      "steps": {},
+      "results": {},
+      "c3_cache_entries": [],
+      "large_files": [],
+      "custom_library_files": null,
+      "files": [
+        {
+          "path": "config.json",
+          "bytes": 1923,
+          "sha256": "72ac94548a7ee02612e51fd344c314516196a55debb29ba9be869b9a90a51d29"
+        },
+        {
+          "path": "output/feature_dictionary.csv",
+          "bytes": 7339,
+          "sha256": "addee337bc58818c1de3c647454f1319b14e5455e702fb029f8ce3fd78482aec",
+          "rows": 58,
+          "columns": [
+            "feature_name",
+            "short_description",
+            "detailed_description"
+          ]
+        },
+        {
+          "path": "output/result.csv",
+          "bytes": 976958,
+          "sha256": "0aa96751fa2a88ab46ee0a4ddd9d51af65200911b6791e4cc448ae685aa21c6d",
+          "rows": 1001,
+          "columns": [
+            "pid",
+            "startDate",
+            "endDate",
+            "longitude",
+            "latitude",
+            "ndi",
+            "NatWalkInd",
+            "r_religious",
+            "r_civic",
+            "r_business",
+            "r_political",
+            "r_professional",
+            "r_labor",
+            "r_bowling",
+            "r_recreational",
+            "r_golf",
+            "r_sports",
+            "dist_pri",
+            "dist_sec",
+            "dist_prisec",
+            "dist_flow_m",
+            "dist_water_m",
+            "dist_area_m",
+            "dist_coast_m",
+            "dist_blue_m",
+            "l50dba_exi",
+            "l50dba_imp",
+            "l50dba_nat",
+            "value",
+            "uvddc",
+            "uvdec",
+            "uvdvc",
+            "uvief",
+            "LILATracts_1And10",
+            "LATracts1",
+            "HUNVFlag",
+            "LowIncomeTracts",
+            "pm25",
+            "bc",
+            "dust",
+            "nh4",
+            "no3",
+            "om",
+            "so4",
+            "ss",
+            "pm25_bm",
+            "bc_bm",
+            "dust_bm",
+            "nh4_bm",
+            "no3_bm",
+            "om_bm",
+            "so4_bm",
+            "ss_bm",
+            "pm25_nbm",
+            "bc_nbm",
+            "dust_nbm",
+            "nh4_nbm",
+            "no3_nbm",
+            "om_nbm",
+            "so4_nbm",
+            "ss_nbm",
+            "faqsd_o3",
+            "faqsd_pm25",
+            "l50dba_exi_custom_dup"
+          ]
+        },
+        {
+          "path": "run.json",
+          "bytes": 1447,
+          "sha256": "bd080de6439b201f5b8322c586dc29d5a96a9154ed297b29092fc7b373dff308"
+        }
+      ],
+      "remote_task_dir": "/app/data/tasks/tier2-golden-fanin_all",
+      "fanin_sources": [
+        "bg_ndi_wi",
+        "zcta5_cbp",
+        "tiger_proximity",
+        "nhd_bluespace",
+        "noise",
+        "vnl",
+        "temis",
+        "fara_tract",
+        "acag",
+        "faqsd",
+        "custom_raster"
+      ],
+      "dispatch_plan": {
+        "bg_ndi_wi": [
+          "ndi",
+          "walkability"
+        ],
+        "zcta5_cbp": [
+          "cbp_zcta5"
+        ],
+        "tiger_proximity": [
+          "tiger_proximity"
+        ],
+        "nhd_bluespace": [
+          "nhd_bluespace"
+        ],
+        "noise": [
+          "noise"
+        ],
+        "vnl": [
+          "vnl"
+        ],
+        "temis": [
+          "temis"
+        ],
+        "fara_tract": [
+          "fara_tract"
+        ],
+        "acag": [
+          "acag"
+        ],
+        "faqsd": [
+          "faqsd"
+        ],
+        "custom": [
+          "custom_714c9715"
+        ]
+      },
+      "partials_in": [
+        {
+          "path": "output/result_acag.csv",
+          "bytes": 443469,
+          "sha256": "3ac0420b731ad86aeef3259431e07a68d2ede09fe9fdd8173001090b9894a55a"
+        },
+        {
+          "path": "output/result_bg_ndi_wi.csv",
+          "bytes": 44924,
+          "sha256": "1b0b8b6babb9d436a0acfbc417404579b4c65aed3f43fa23433f8faa22ff6129"
+        },
+        {
+          "path": "output/result_custom.csv",
+          "bytes": 31028,
+          "sha256": "86255ba33c034f8200abebe378dc2b77ddeb99122b76732d66ff623aa2a64216"
+        },
+        {
+          "path": "output/result_faqsd.csv",
+          "bytes": 48898,
+          "sha256": "00f1401d336a1cd73e6df5821f5c6e077de559cd14f9f8bf20ee32e1cb9f8e4a"
+        },
+        {
+          "path": "output/result_fara_tract.csv",
+          "bytes": 31508,
+          "sha256": "25be1201fbe697132ad52b947bf0d09f22d302a47958f14e5395505e2e6db986"
+        },
+        {
+          "path": "output/result_nhd_bluespace.csv",
+          "bytes": 90374,
+          "sha256": "404657677e80cd3eaf766148b4ac142476f38aff4c39bde7e938312f61e1da8f"
+        },
+        {
+          "path": "output/result_noise.csv",
+          "bytes": 67581,
+          "sha256": "d768fbe3610cdbf906ee95b1b4824604cc912b112c34726183cdf2e0059c9667"
+        },
+        {
+          "path": "output/result_temis.csv",
+          "bytes": 86338,
+          "sha256": "f3fee495a03d7457ffa8d26217cbec153df27221ffba69a21bc18f814aa78f6c"
+        },
+        {
+          "path": "output/result_tiger_proximity.csv",
+          "bytes": 68032,
+          "sha256": "f4aca7d5e493abd38bb9f9f81305d3483df4f0d2b7295ce6deceea761800e05e"
+        },
+        {
+          "path": "output/result_vnl.csv",
+          "bytes": 29151,
+          "sha256": "bf490c40771e9969b8f049e9686f5e1e56a3faede4a7e1e1ab0e6e30cd914279"
+        },
+        {
+          "path": "output/result_zcta5_cbp.csv",
+          "bytes": 125435,
+          "sha256": "785c96a1f0ba0476492f26231c434199691164cd2b830972afce936c376ff389"
+        }
+      ]
+    }
+  },
+  "cross_checks": {
+    "identical_c3_outputs": [
+      [
+        "noise/output/c3_noise.parquet",
+        "custom_raster/output/c3_customgrid_3940345e.parquet"
+      ],
+      [
+        "fara_tract/output/c3_tract_us.parquet",
+        "faqsd/output/c3_tract_us.parquet"
+      ],
+      [
+        "bg_ndi_wi/output/c3_bg.parquet",
+        "bg_ndi_wi_rev/output/c3_bg.parquet",
+        "custom_bg_csv/output/c3_bg.parquet"
+      ],
+      [
+        "bg_ndi_wi/output/c3_bg_2020.parquet",
+        "bg_ndi_wi_rev/output/c3_bg_2020.parquet"
+      ]
+    ],
+    "upload_vs_catalog": [
+      {
+        "upload_run": "custom_raster",
+        "catalog_run": "noise",
+        "column": "l50dba_exi",
+        "episodes": 1001,
+        "both_present": 993,
+        "missing_one_side": 0,
+        "identical": 985,
+        "max_abs_diff": 2.842170943040401e-14
+      },
+      {
+        "upload_run": "custom_bg_csv",
+        "catalog_run": "bg_ndi_wi",
+        "column": "NatWalkInd",
+        "episodes": 1001,
+        "both_present": 1001,
+        "missing_one_side": 0,
+        "identical": 1001,
+        "max_abs_diff": 0.0
+      }
+    ]
+  }
+}

@@ -1,0 +1,15 @@
+name: vnl_grid_demo_task_1000_r50
+linkage_pattern: grid_weights
+geometry_type: raster
+source:
+  file: VNL/C3/VNL_v21_npp_2013_global_vcmcfg_c202205302300.average_masked.dat.tif
+buffer:
+  patient_file: /app/data/tasks/tier2-golden-render/combos/vnl__vnl__b1000_r50/input.parquet
+  patient_adapter: demo_conus
+  buffer_m: 1000
+  grid_id_offset: 1
+engine:
+  backend: duckdb
+output:
+  path: /app/data/tasks/tier2-golden-render/combos/vnl__vnl__b1000_r50/output/c3_vnl.parquet
+  format: parquet

@@ -1,0 +1,29 @@
+name: nhd_bluespace_demo_task_1000_r50
+linkage_pattern: precomputed_static
+geometry_type: line
+source:
+  file: NHD/C4/NHDPlus_H_National_Release_2_GDB.gdb
+buffer:
+  patient_file: /app/data/tasks/tier2-golden-render/combos/nhd_bluespace__nhd_bluespace__b1000_r50/input.parquet
+  patient_adapter: demo_conus
+  buffer_m: 1000
+exposure:
+  file: /app/data/tasks/tier2-golden-render/combos/nhd_bluespace__nhd_bluespace__b1000_r50/output/c3_nhd_bluespace.parquet
+  join_col: geoid
+  value_cols:
+  - dist_flow_m
+  - dist_water_m
+  - dist_area_m
+  - dist_coast_m
+  - dist_blue_m
+time:
+  temporal_resolution: static
+  temporal_mode: static
+  output_grouping: episode
+engine:
+  backend: duckdb
+plugin: nhd
+output:
+  path: /app/data/tasks/tier2-golden-render/combos/nhd_bluespace__nhd_bluespace__b1000_r50/output/c4_nhd_bluespace.parquet
+  format: parquet
+  label_path: output/python_v2/270m/NHD/C4/label_nhd_demo100k.parquet

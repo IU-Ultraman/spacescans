@@ -1,0 +1,22 @@
+{
+  "experiments": {
+    "vnl": {
+      "status": "running",
+      "progress": 1.0,
+      "current_step": null,
+      "steps": [
+        "c3_vnl",
+        "c4_vnl"
+      ],
+      "pid": 4553,
+      "message": "Completed 2 pipeline steps"
+    }
+  },
+  "steps": [
+    "c3_vnl",
+    "c4_vnl"
+  ],
+  "current_step": null,
+  "total_steps": 2,
+  "progress": 1.0
+}

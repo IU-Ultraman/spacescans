@@ -1,0 +1,28 @@
+name: tiger_roads_demo_task_b500_r25
+linkage_pattern: tiger_proximity
+geometry_type: line
+source:
+  file: TIGER/C4
+  county_file: County/C3/tl_2010_us_county10/tl_2010_us_county10.shp
+  road_cache_dir: cache/C3/tiger_roads_filtered
+buffer:
+  patient_file: /app/data/tasks/tier2-golden-render/combos/tiger_proximity__tiger_proximity__b500_r25/input.parquet
+  patient_adapter: demo_conus
+  buffer_m: 500
+time:
+  years:
+  - 2013
+  - 2014
+  - 2015
+  - 2016
+  - 2017
+  - 2018
+  - 2019
+  temporal_resolution: yearly
+  temporal_mode: yearly
+  output_grouping: episode
+engine:
+  backend: duckdb
+output:
+  path: /app/data/tasks/tier2-golden-render/combos/tiger_proximity__tiger_proximity__b500_r25/output/c3_tiger_roads.parquet
+  format: parquet

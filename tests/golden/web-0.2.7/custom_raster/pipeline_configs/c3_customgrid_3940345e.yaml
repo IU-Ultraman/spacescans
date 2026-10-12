@@ -1,0 +1,17 @@
+name: custom_grid_task_m_raster
+linkage_pattern: grid_weights
+geometry_type: raster
+source:
+  file: /app/data/custom_exposomes/user-9997/714c9715/rasters/static.tif
+buffer:
+  patient_file: /app/data/tasks/tier2-golden-custom_raster/input.parquet
+  patient_adapter: demo_conus
+  buffer_m: 270
+  grid_id_offset: 0
+engine:
+  backend: duckdb
+output:
+  path: /app/data/tasks/tier2-golden-custom_raster/output/c3_customgrid_3940345e.parquet
+  format: parquet
+time:
+  output_grouping: episode

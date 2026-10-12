@@ -1,0 +1,38 @@
+name: bg_ndi_demo_task_b270_r25
+linkage_pattern: yearly_areal_bg_vintage
+geometry_type: polygon
+source:
+  file: /app/data/tasks/tier2-golden-render/combos/bg_ndi_wi__walkability-ndi__b270_r25/output/c3_bg.parquet
+  join_col: GEOID10
+source_2020:
+  file: /app/data/tasks/tier2-golden-render/combos/bg_ndi_wi__walkability-ndi__b270_r25/output/c3_bg_2020.parquet
+  join_col: GEOID
+buffer:
+  patient_file: /app/data/tasks/tier2-golden-render/combos/bg_ndi_wi__walkability-ndi__b270_r25/input.parquet
+  patient_adapter: demo_conus
+  buffer_m: 270
+exposure:
+  file: NDI/C4/ndi_bg_acs5_2008_2012_to_2020_2024_nationwide_summaryfile_xgboost.rds
+  vintage_col: bg_vintage
+  join_col_2010: bg_fips_2010
+  join_col_2020: bg_fips_2020
+  value_cols:
+  - ndi
+  year_col: index_year
+time:
+  years:
+  - 2013
+  - 2014
+  - 2015
+  - 2016
+  - 2017
+  - 2018
+  - 2019
+  temporal_resolution: yearly
+  temporal_mode: yearly
+  output_grouping: episode
+engine:
+  backend: duckdb
+output:
+  path: /app/data/tasks/tier2-golden-render/combos/bg_ndi_wi__walkability-ndi__b270_r25/output/c4_ndi.parquet
+  format: parquet

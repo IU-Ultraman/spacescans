@@ -1,0 +1,35 @@
+name: bg_wi_demo_task_b270_r25
+linkage_pattern: static_areal
+geometry_type: polygon
+source:
+  file: /app/data/tasks/tier2-golden-render/combos/bg_ndi_wi__walkability-ndi__b270_r25/output/c3_bg.parquet
+  join_col: GEOID10
+buffer:
+  patient_file: /app/data/tasks/tier2-golden-render/combos/bg_ndi_wi__walkability-ndi__b270_r25/input.parquet
+  patient_adapter: demo_conus
+  buffer_m: 270
+exposure:
+  file: Walkability/C4/epawalkind_nationwide_2016_2021.Rda
+  key: wi
+  join_col: GEOID10
+  value_cols:
+  - NatWalkInd
+  year_col: year
+time:
+  years:
+  - 2016
+  temporal_resolution: static
+  temporal_mode: static
+  output_grouping: episode
+transforms:
+- type: filter
+  target: exposure
+  column: year
+  values:
+  - 2016
+engine:
+  backend: duckdb
+output:
+  path: /app/data/tasks/tier2-golden-render/combos/bg_ndi_wi__walkability-ndi__b270_r25/output/c4_wi.parquet
+  format: parquet
+  label_path: output/python_v2/270m/BG_US/C4/label_wi_demo100k.parquet

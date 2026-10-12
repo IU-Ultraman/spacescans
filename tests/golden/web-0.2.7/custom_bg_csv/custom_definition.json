@@ -1,0 +1,36 @@
+{
+  "label": "Walkability via upload (paper RQ1)",
+  "description": "The catalog's 2016 National Walkability Index by 2010 block group, uploaded as a user dataset.",
+  "boundary": "BG",
+  "spatial_method": "areal",
+  "coverage_years": [
+    2013,
+    2019
+  ],
+  "coverage_region": "CONUS",
+  "experiment": "custom",
+  "data_source": "Uploaded by user: walkability_bg2010_2016.csv",
+  "temporal": "static",
+  "variable_type": "continuous",
+  "display_unit": "unitless",
+  "value_cols": [
+    "NatWalkInd"
+  ],
+  "geometry": "polygon",
+  "dataset_id": "18180893",
+  "variable_key": "custom_18180893",
+  "owner_uid": "9997",
+  "join_col": "GEOID10",
+  "key_col": "GEOID10",
+  "year_col": null,
+  "value_labels": {
+    "NatWalkInd": "National Walkability Index"
+  },
+  "value_units": {},
+  "values_path": "/app/data/custom_exposomes/user-9997/18180893/values.csv",
+  "row_count": 220653,
+  "distinct_keys": 220653,
+  "sha256": "488875c9e30d8f946143510b684276bec63cf7a23200a27754886e76c9fc679f",
+  "uploaded_filename": "walkability_bg2010_2016.csv",
+  "created_at": "2026-10-12T20:54:48.403957+00:00"
+}

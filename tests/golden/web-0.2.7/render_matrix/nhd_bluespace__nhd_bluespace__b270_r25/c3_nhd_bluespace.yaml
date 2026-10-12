@@ -1,0 +1,15 @@
+name: nhd_demo_task_b270_r25
+linkage_pattern: nhd_proximity
+geometry_type: line
+source:
+  file: NHD/C4/NHDPlus_H_National_Release_2_GDB.gdb
+  road_cache_dir: cache/C3/nhd_features
+buffer:
+  patient_file: /app/data/tasks/tier2-golden-render/combos/nhd_bluespace__nhd_bluespace__b270_r25/input.parquet
+  patient_adapter: demo_conus
+  buffer_m: 270
+engine:
+  backend: duckdb
+output:
+  path: /app/data/tasks/tier2-golden-render/combos/nhd_bluespace__nhd_bluespace__b270_r25/output/c3_nhd_bluespace.parquet
+  format: parquet

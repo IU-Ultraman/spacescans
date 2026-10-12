@@ -1,0 +1,26 @@
+{
+  "experiments": {
+    "zcta5_cbp": {
+      "status": "running",
+      "progress": 1.0,
+      "current_step": null,
+      "steps": [
+        "c3_zcta5",
+        "c3_county",
+        "c4_zcta5_cbp",
+        "c4_county_cbp"
+      ],
+      "pid": 5496,
+      "message": "Completed 4 pipeline steps"
+    }
+  },
+  "steps": [
+    "c3_zcta5",
+    "c3_county",
+    "c4_zcta5_cbp",
+    "c4_county_cbp"
+  ],
+  "current_step": null,
+  "total_steps": 4,
+  "progress": 1.0
+}

@@ -1,0 +1,55 @@
+{
+  "name": "vnl",
+  "experiment": "vnl",
+  "variables": [
+    "vnl"
+  ],
+  "task_dir": "/app/data/tasks/tier2-golden-vnl",
+  "command": "cd /app && /opt/conda/bin/python -m app.experiments.vnl run /app/data/tasks/tier2-golden-vnl --variables vnl",
+  "env_overrides": {
+    "C3_CACHE_DIR": "/app/data/tasks/tier2-golden-vnl/golden_c3_cache"
+  },
+  "cache": "cold: private empty cache",
+  "note": "",
+  "attempts": [
+    {
+      "attempt": 1,
+      "waited_s": 0.0,
+      "started_utc": "2026-10-12T20:43:41+00:00",
+      "rc": 0,
+      "wall_s": 12.501,
+      "lock_refused": false
+    }
+  ],
+  "rc": 0,
+  "wall_s": 12.501,
+  "started_utc": "2026-10-12T20:43:41+00:00",
+  "ended_utc": "2026-10-12T20:44:01+00:00",
+  "started_eastern": "2026-10-12T16:43:41-04:00",
+  "ended_eastern": "2026-10-12T16:44:01-04:00",
+  "result_exists": true,
+  "success": true,
+  "fan_in": {
+    "fan_in": [
+      "vnl"
+    ]
+  },
+  "log_span": {
+    "first_ts": "2026-10-12T20:43:41.611989+00:00",
+    "last_ts": "2026-10-12T20:43:53.449556+00:00",
+    "steps": {
+      "c3_vnl": {
+        "spawn_ts": "2026-10-12T20:43:41.611989+00:00",
+        "exit_ts": "2026-10-12T20:43:44.147706+00:00",
+        "rc": 0,
+        "seconds": 2.536
+      },
+      "c4_vnl": {
+        "spawn_ts": "2026-10-12T20:43:44.151296+00:00",
+        "exit_ts": "2026-10-12T20:43:53.449556+00:00",
+        "rc": 0,
+        "seconds": 9.298
+      }
+    }
+  }
+}

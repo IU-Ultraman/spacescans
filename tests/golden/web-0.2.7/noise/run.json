@@ -1,0 +1,55 @@
+{
+  "name": "noise",
+  "experiment": "noise",
+  "variables": [
+    "noise"
+  ],
+  "task_dir": "/app/data/tasks/tier2-golden-noise",
+  "command": "cd /app && /opt/conda/bin/python -m app.experiments.noise run /app/data/tasks/tier2-golden-noise --variables noise",
+  "env_overrides": {
+    "C3_CACHE_DIR": "/app/data/tasks/tier2-golden-noise/golden_c3_cache"
+  },
+  "cache": "cold: private empty cache",
+  "note": "",
+  "attempts": [
+    {
+      "attempt": 1,
+      "waited_s": 0.0,
+      "started_utc": "2026-10-12T20:43:22+00:00",
+      "rc": 0,
+      "wall_s": 6.046,
+      "lock_refused": false
+    }
+  ],
+  "rc": 0,
+  "wall_s": 6.046,
+  "started_utc": "2026-10-12T20:43:22+00:00",
+  "ended_utc": "2026-10-12T20:43:28+00:00",
+  "started_eastern": "2026-10-12T16:43:22-04:00",
+  "ended_eastern": "2026-10-12T16:43:28-04:00",
+  "result_exists": true,
+  "success": true,
+  "fan_in": {
+    "fan_in": [
+      "noise"
+    ]
+  },
+  "log_span": {
+    "first_ts": "2026-10-12T20:43:22.990930+00:00",
+    "last_ts": "2026-10-12T20:43:28.506794+00:00",
+    "steps": {
+      "c3_noise": {
+        "spawn_ts": "2026-10-12T20:43:22.990930+00:00",
+        "exit_ts": "2026-10-12T20:43:24.338914+00:00",
+        "rc": 0,
+        "seconds": 1.348
+      },
+      "c4_noise": {
+        "spawn_ts": "2026-10-12T20:43:24.341892+00:00",
+        "exit_ts": "2026-10-12T20:43:28.506794+00:00",
+        "rc": 0,
+        "seconds": 4.165
+      }
+    }
+  }
+}

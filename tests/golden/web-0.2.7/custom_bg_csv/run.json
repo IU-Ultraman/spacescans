@@ -1,0 +1,55 @@
+{
+  "name": "custom_bg_csv",
+  "experiment": "custom",
+  "variables": [
+    "custom_18180893"
+  ],
+  "task_dir": "/app/data/tasks/tier2-golden-custom_bg_csv",
+  "command": "cd /app && /opt/conda/bin/python -m app.experiments.custom run /app/data/tasks/tier2-golden-custom_bg_csv --variables custom_18180893",
+  "env_overrides": {
+    "C3_CACHE_DIR": "/app/data/tasks/tier2-golden-custom_bg_csv/golden_c3_cache"
+  },
+  "cache": "cold: private empty cache",
+  "note": "walkability 2016 by 2010 BG written to CSV and registered with app.custom_exposomes.create",
+  "attempts": [
+    {
+      "attempt": 1,
+      "waited_s": 0.0,
+      "started_utc": "2026-10-12T20:54:48+00:00",
+      "rc": 0,
+      "wall_s": 39.587,
+      "lock_refused": false
+    }
+  ],
+  "rc": 0,
+  "wall_s": 39.587,
+  "started_utc": "2026-10-12T20:54:48+00:00",
+  "ended_utc": "2026-10-12T20:55:28+00:00",
+  "started_eastern": "2026-10-12T16:54:48-04:00",
+  "ended_eastern": "2026-10-12T16:55:28-04:00",
+  "result_exists": true,
+  "success": true,
+  "fan_in": {
+    "fan_in": [
+      "custom"
+    ]
+  },
+  "log_span": {
+    "first_ts": "2026-10-12T20:54:49.152362+00:00",
+    "last_ts": "2026-10-12T20:55:27.924906+00:00",
+    "steps": {
+      "c3_bg": {
+        "spawn_ts": "2026-10-12T20:54:49.152362+00:00",
+        "exit_ts": "2026-10-12T20:55:26.180891+00:00",
+        "rc": 0,
+        "seconds": 37.029
+      },
+      "c4_custom_18180893": {
+        "spawn_ts": "2026-10-12T20:55:26.186495+00:00",
+        "exit_ts": "2026-10-12T20:55:27.908585+00:00",
+        "rc": 0,
+        "seconds": 1.722
+      }
+    }
+  }
+}

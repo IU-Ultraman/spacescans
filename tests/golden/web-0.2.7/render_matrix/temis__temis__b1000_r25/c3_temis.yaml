@@ -1,0 +1,28 @@
+name: temis_grid_demo_task_1000_r25
+linkage_pattern: grid_weights
+geometry_type: raster
+source:
+  file: TEMIS/C3/temis_template.tif
+buffer:
+  patient_file: /app/data/tasks/tier2-golden-render/combos/temis__temis__b1000_r25/input.parquet
+  patient_adapter: demo_conus
+  buffer_m: 1000
+transforms:
+- type: spatial_fix
+  target: source
+  fix_type: assign_crs
+  crs: EPSG:4326
+- type: spatial_fix
+  target: source
+  fix_type: set_extent
+  extent:
+  - -180.0
+  - 180.0
+  - -90.0
+  - 90.0
+engine:
+  backend: duckdb
+plugin: temis
+output:
+  path: /app/data/tasks/tier2-golden-render/combos/temis__temis__b1000_r25/output/c3_temis.parquet
+  format: parquet

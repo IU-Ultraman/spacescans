@@ -1,0 +1,51 @@
+name: zcta5_cbp_demo_task_1000_r25
+linkage_pattern: yearly_areal
+geometry_type: polygon
+source:
+  file: /app/data/tasks/tier2-golden-render/combos/zcta5_cbp__cbp_zcta5__b1000_r25/output/c3_zcta5.parquet
+  join_col: ZCTA5CE10
+buffer:
+  patient_file: /app/data/tasks/tier2-golden-render/combos/zcta5_cbp__cbp_zcta5__b1000_r25/input.parquet
+  patient_adapter: demo_conus
+  buffer_m: 1000
+exposure:
+  file: Community_Organization_Density/C4/zbp_nationwide_0521.Rda
+  join_col: zip
+  value_cols:
+  - r_religious
+  - r_civic
+  - r_business
+  - r_political
+  - r_professional
+  - r_labor
+  - r_bowling
+  - r_recreational
+  - r_golf
+  - r_sports
+  year_col: year
+transforms:
+- type: derive
+  target: exposure
+  registry_key: zfill_str
+  output_col: zip
+  params:
+    source_col: zip
+    width: 5
+time:
+  years:
+  - 2013
+  - 2014
+  - 2015
+  - 2016
+  - 2017
+  - 2018
+  - 2019
+  temporal_resolution: yearly
+  temporal_mode: yearly
+  output_grouping: episode
+engine:
+  backend: duckdb
+output:
+  path: /app/data/tasks/tier2-golden-render/combos/zcta5_cbp__cbp_zcta5__b1000_r25/output/c4_zcta5_cbp.parquet
+  format: parquet
+  label_path: output/python_v2/270m/CBP_US/label_zbp_demo100k.parquet

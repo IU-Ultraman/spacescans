@@ -1,0 +1,30 @@
+name: custom_areal_task_1000_r25
+linkage_pattern: yearly_areal
+geometry_type: polygon
+source:
+  file: /app/data/tasks/tier2-golden-render/combos/custom__tract_yearly__b1000_r25/output/c3_tract_us.parquet
+  join_col: GEOID10
+buffer:
+  patient_file: /app/data/tasks/tier2-golden-render/combos/custom__tract_yearly__b1000_r25/input.parquet
+  patient_adapter: demo_conus
+  buffer_m: 1000
+exposure:
+  file: /app/data/custom_exposomes/user-9997/00000005/values.csv
+  join_col: GEOID10
+  value_cols:
+  - NatWalkInd
+  year_col: year
+time:
+  years:
+  - 2014
+  - 2015
+  - 2016
+  - 2017
+  temporal_resolution: yearly
+  temporal_mode: yearly
+  output_grouping: episode
+engine:
+  backend: duckdb
+output:
+  path: /app/data/tasks/tier2-golden-render/combos/custom__tract_yearly__b1000_r25/output/c4_custom_00000005.parquet
+  format: parquet

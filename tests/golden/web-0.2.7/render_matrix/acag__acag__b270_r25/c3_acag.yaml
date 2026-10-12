@@ -1,0 +1,15 @@
+name: acag_grid_demo_task_b270_r25
+linkage_pattern: grid_weights
+geometry_type: raster
+source:
+  file: ACAG/C3/acag_template.tif
+buffer:
+  patient_file: /app/data/tasks/tier2-golden-render/combos/acag__acag__b270_r25/input.parquet
+  patient_adapter: demo_conus
+  buffer_m: 270
+  grid_id_offset: 1
+engine:
+  backend: duckdb
+output:
+  path: /app/data/tasks/tier2-golden-render/combos/acag__acag__b270_r25/output/c3_acag.parquet
+  format: parquet

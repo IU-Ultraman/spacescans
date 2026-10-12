@@ -1,0 +1,134 @@
+{
+  "root": "spacescans-web/pipeline-data (mounted at /project)",
+  "generated_utc": "2026-10-12T20:48:14+00:00",
+  "directories": {
+    ".uploads": {
+      "files": 0,
+      "bytes": 0,
+      "newest_mtime_utc": null,
+      "listing_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "ACAG": {
+      "files": 2932,
+      "bytes": 27352701063,
+      "newest_mtime_utc": "2026-09-15T04:06:08.228126+00:00",
+      "listing_sha256": "2fce31f1d470c1a477490b8c661af8813f50d41ebba0da0ae97393c2c1cf117d"
+    },
+    "BG": {
+      "files": 616,
+      "bytes": 2262964156,
+      "newest_mtime_utc": "2026-07-28T04:20:14.208021+00:00",
+      "listing_sha256": "0868b7af09481d000c5496ed8f31a847f5c6ccb82f2f56264d59e2735887ebc2"
+    },
+    "Community_Organization_Density": {
+      "files": 3,
+      "bytes": 84414333,
+      "newest_mtime_utc": "2026-07-17T19:01:00.061361+00:00",
+      "listing_sha256": "2c484d146775c04d5b7435f3d4e2d2a08abb4d2ff5ee347fe1f9927f0000ad57"
+    },
+    "County": {
+      "files": 7,
+      "bytes": 121991182,
+      "newest_mtime_utc": "2026-07-31T20:46:37.020871+00:00",
+      "listing_sha256": "ad56f99614b4de7ba208e9cc936286e4ef5691388fd7bd90ed3697c99693a171"
+    },
+    "FAQSD": {
+      "files": 18,
+      "bytes": 23326574611,
+      "newest_mtime_utc": "2026-09-15T08:21:06.782760+00:00",
+      "listing_sha256": "22654dcd6b99ad34f1e5fb60eca96be437dba13ac5b7a8a7c5560b21d28965b2"
+    },
+    "FARA": {
+      "files": 3,
+      "bytes": 447642002,
+      "newest_mtime_utc": "2026-07-17T19:07:39.480452+00:00",
+      "listing_sha256": "7b5ac439e7bffb397b720b6e7c7687be4ae6cfd773d6cd17c8980526eafafab5"
+    },
+    "NDI": {
+      "files": 2,
+      "bytes": 39447307,
+      "newest_mtime_utc": "2026-08-11T21:43:14.849015+00:00",
+      "listing_sha256": "cbafe5622abca4192426f638d5f15a01d72fc44be13cefff5eb9bdcc5e7e4d0a"
+    },
+    "Noise": {
+      "files": 5,
+      "bytes": 1250842143,
+      "newest_mtime_utc": "2026-07-28T04:20:14.210070+00:00",
+      "listing_sha256": "e87c21607d04d5e98b95fa58522f680121d857f87ca014f5d27b8df1d9559085"
+    },
+    "TEMIS": {
+      "files": 10259,
+      "bytes": 32473891291,
+      "newest_mtime_utc": "2026-07-28T04:08:59.186681+00:00",
+      "listing_sha256": "763d04a193f7027c6f245bc7a4cb7545d5cd689b2c482d76fd62c4c66f966e67"
+    },
+    "TRACT": {
+      "files": 258,
+      "bytes": 610140719,
+      "newest_mtime_utc": "2026-07-28T04:20:14.208631+00:00",
+      "listing_sha256": "9a18ec633f59a7a85eb3fd4bfe805c6e81c5503291dbeadcc14040f929d5ead0"
+    },
+    "VNL": {
+      "files": 10,
+      "bytes": 81292262918,
+      "newest_mtime_utc": "2026-07-30T19:50:07.593669+00:00",
+      "listing_sha256": "1f820e6e8d6b9ad7a5cc0d9ef27fbe192a7a5931ebd7c5b835e689dbaf91d2fd"
+    },
+    "Walkability": {
+      "files": 2,
+      "bytes": 26492033,
+      "newest_mtime_utc": "2026-07-17T19:02:34.018486+00:00",
+      "listing_sha256": "39def3521fa8553710a8045a56c210ed76100c5f8b967afea7f403f6bcb94c4e"
+    },
+    "ZCTA5": {
+      "files": 8,
+      "bytes": 840182152,
+      "newest_mtime_utc": "2026-07-28T04:20:14.209609+00:00",
+      "listing_sha256": "a8afd5ff37615eac622b6619213df63432da9af8e0455fa76943220b80764569"
+    },
+    "cache": {
+      "files": 37479,
+      "bytes": 53325986769,
+      "newest_mtime_utc": "2026-09-15T03:32:19.538539+00:00",
+      "listing_sha256": "8af9190c715aa7eacf2971a27c5efd29555cf86225612607c41179aab65283fd"
+    }
+  },
+  "full_sha256": {
+    "NDI/C4/ndi_bg_acs5_2008_2012_to_2020_2024_nationwide_summaryfile_xgboost.rds": {
+      "bytes": 39439111,
+      "sha256": "005f177c7980f7dd1bd64696107ded01120f7ede1afc455fdd1b8e0df7634461"
+    },
+    "Walkability/C4/epawalkind_nationwide_2016_2021.Rda": {
+      "bytes": 26483837,
+      "sha256": "e37b9adf4300d0804a1c1c06f534fcd1a37944725f4f218c6c0fc8b2078aea34"
+    },
+    "FARA/C4/fara_nationwide_2010_2019_interpolated.Rda": {
+      "bytes": 447630044,
+      "sha256": "4d03fc173de6a67bc7885c42173f033f0f6b6d13d487a263874abdba43f4517e"
+    },
+    "FARA/C4/varnameCountRemoved.csv": {
+      "bytes": 3762,
+      "sha256": "873f8942b7d65d5a05a546aaa4b09171ba83a7ff2356a165abc124a130883203"
+    },
+    "Community_Organization_Density/C4/cbp_nationwide_0519.Rda": {
+      "bytes": 8192301,
+      "sha256": "e45a8d6bb9f0aef93edd98672e334e65bd0ffcecc125aacd9d2d3b25fb7448f6"
+    },
+    "Community_Organization_Density/C4/zbp_nationwide_0521.Rda": {
+      "bytes": 76213836,
+      "sha256": "124141e9d463039d8a1ef82bf53c735584815e89740871a92ca2f3d27fff2936"
+    },
+    "TEMIS/C3/temis_template.tif": {
+      "bytes": 2076126,
+      "sha256": "49fcbfe28ffb95f4b476f1481cdccce1fd678ed53fd365ad1a62875f125d2847"
+    },
+    "TEMIS/C4/converted/manifest.json": {
+      "bytes": 1477,
+      "sha256": "995d7409079338fb0846da4171e90605debd96d7a1a3385e63f7b25e8604545c"
+    },
+    "ACAG/C3/acag_template.tif": {
+      "bytes": 233766,
+      "sha256": "5530456d10d2888745c158bce81b8eade3315338ead847d8112950fc0d15cc6e"
+    }
+  }
+}

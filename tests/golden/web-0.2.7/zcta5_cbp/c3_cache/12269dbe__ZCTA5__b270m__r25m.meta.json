@@ -1,0 +1,10 @@
+{
+  "sha_full": "12269dbefdeb6151638c711e86757ef9ebf60c3a850ea26d3e13608122808c12",
+  "boundary": "ZCTA5",
+  "buffer_m": 270,
+  "raster_res_m": 25,
+  "input_row_count": 1001,
+  "wall_clock_seconds": 27,
+  "file_size_bytes": 19299,
+  "created_at": "2026-10-12T20:48:33.211917+00:00"
+}

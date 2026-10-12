@@ -1,0 +1,22 @@
+{
+  "experiments": {
+    "faqsd": {
+      "status": "running",
+      "progress": 1.0,
+      "current_step": null,
+      "steps": [
+        "c3_tract_us",
+        "c4_tract_faqsd"
+      ],
+      "pid": 6373,
+      "message": "Completed 2 pipeline steps"
+    }
+  },
+  "steps": [
+    "c3_tract_us",
+    "c4_tract_faqsd"
+  ],
+  "current_step": null,
+  "total_steps": 2,
+  "progress": 1.0
+}

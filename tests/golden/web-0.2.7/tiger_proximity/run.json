@@ -1,0 +1,55 @@
+{
+  "name": "tiger_proximity",
+  "experiment": "tiger_proximity",
+  "variables": [
+    "tiger_proximity"
+  ],
+  "task_dir": "/app/data/tasks/tier2-golden-tiger_proximity",
+  "command": "cd /app && /opt/conda/bin/python -m app.experiments.tiger_proximity run /app/data/tasks/tier2-golden-tiger_proximity --variables tiger_proximity",
+  "env_overrides": {
+    "C3_CACHE_DIR": "/app/data/tasks/tier2-golden-tiger_proximity/golden_c3_cache"
+  },
+  "cache": "cold: private empty cache",
+  "note": "",
+  "attempts": [
+    {
+      "attempt": 1,
+      "waited_s": 0.0,
+      "started_utc": "2026-10-12T20:45:10+00:00",
+      "rc": 0,
+      "wall_s": 128.732,
+      "lock_refused": false
+    }
+  ],
+  "rc": 0,
+  "wall_s": 128.732,
+  "started_utc": "2026-10-12T20:45:10+00:00",
+  "ended_utc": "2026-10-12T20:47:19+00:00",
+  "started_eastern": "2026-10-12T16:45:10-04:00",
+  "ended_eastern": "2026-10-12T16:47:19-04:00",
+  "result_exists": true,
+  "success": true,
+  "fan_in": {
+    "fan_in": [
+      "tiger_proximity"
+    ]
+  },
+  "log_span": {
+    "first_ts": "2026-10-12T20:45:11.000216+00:00",
+    "last_ts": "2026-10-12T20:47:19.097697+00:00",
+    "steps": {
+      "c3_tiger_roads": {
+        "spawn_ts": "2026-10-12T20:45:11.000216+00:00",
+        "exit_ts": "2026-10-12T20:47:18.374443+00:00",
+        "rc": 0,
+        "seconds": 127.374
+      },
+      "c4_tiger_roads": {
+        "spawn_ts": "2026-10-12T20:47:18.390911+00:00",
+        "exit_ts": "2026-10-12T20:47:19.097697+00:00",
+        "rc": 0,
+        "seconds": 0.707
+      }
+    }
+  }
+}

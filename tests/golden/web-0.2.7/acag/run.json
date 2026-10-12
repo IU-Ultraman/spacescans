@@ -1,0 +1,55 @@
+{
+  "name": "acag",
+  "experiment": "acag",
+  "variables": [
+    "acag"
+  ],
+  "task_dir": "/app/data/tasks/tier2-golden-acag",
+  "command": "cd /app && /opt/conda/bin/python -m app.experiments.acag run /app/data/tasks/tier2-golden-acag --variables acag",
+  "env_overrides": {
+    "C3_CACHE_DIR": "/app/data/tasks/tier2-golden-acag/golden_c3_cache"
+  },
+  "cache": "cold: private empty cache",
+  "note": "",
+  "attempts": [
+    {
+      "attempt": 1,
+      "waited_s": 0.0,
+      "started_utc": "2026-10-12T20:55:29+00:00",
+      "rc": 0,
+      "wall_s": 915.255,
+      "lock_refused": false
+    }
+  ],
+  "rc": 0,
+  "wall_s": 915.255,
+  "started_utc": "2026-10-12T20:55:29+00:00",
+  "ended_utc": "2026-10-12T21:10:45+00:00",
+  "started_eastern": "2026-10-12T16:55:29-04:00",
+  "ended_eastern": "2026-10-12T17:10:45-04:00",
+  "result_exists": true,
+  "success": true,
+  "fan_in": {
+    "fan_in": [
+      "acag"
+    ]
+  },
+  "log_span": {
+    "first_ts": "2026-10-12T20:55:30.412366+00:00",
+    "last_ts": "2026-10-12T21:10:44.630967+00:00",
+    "steps": {
+      "c3_acag": {
+        "spawn_ts": "2026-10-12T20:55:30.412366+00:00",
+        "exit_ts": "2026-10-12T20:55:32.052556+00:00",
+        "rc": 0,
+        "seconds": 1.64
+      },
+      "c4_acag": {
+        "spawn_ts": "2026-10-12T20:55:32.056707+00:00",
+        "exit_ts": "2026-10-12T21:10:44.630967+00:00",
+        "rc": 0,
+        "seconds": 912.574
+      }
+    }
+  }
+}

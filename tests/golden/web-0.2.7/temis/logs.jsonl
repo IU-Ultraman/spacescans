@@ -1,0 +1,20 @@
+{"ts": "2026-10-12T20:43:30.065840+00:00", "level": "info", "source": "runner", "msg": "spawning c3_temis: /opt/conda/bin/python /opt/conda/bin/spacescans run --data-dir /project /app/data/tasks/tier2-golden-temis/pipeline_configs/c3_temis.yaml"}
+{"ts": "2026-10-12T20:43:30.518160+00:00", "level": "info", "source": "c3_temis", "msg": "[grid_weights] processing 1001 buffers \u00d7 raster=temis_template.tif in 1 chunks of 5000"}
+{"ts": "2026-10-12T20:43:31.104721+00:00", "level": "info", "source": "c3_temis", "msg": "[grid_weights]   1001/1001 (100.0%)  elapsed= 0.01m  rate=1707.2/s  ETA= 0.00m"}
+{"ts": "2026-10-12T20:43:31.104930+00:00", "level": "info", "source": "c3_temis", "msg": "[grid_weights] === SUMMARY (main loop + concat) ==="}
+{"ts": "2026-10-12T20:43:31.104982+00:00", "level": "info", "source": "c3_temis", "msg": "[grid_weights]   exact_extract    0.01m ( 98.8%)"}
+{"ts": "2026-10-12T20:43:31.105029+00:00", "level": "info", "source": "c3_temis", "msg": "[grid_weights]   postprocess      0.00m (  0.8%)"}
+{"ts": "2026-10-12T20:43:31.105058+00:00", "level": "info", "source": "c3_temis", "msg": "[grid_weights]   raster_open      0.00m (  0.2%)"}
+{"ts": "2026-10-12T20:43:31.105083+00:00", "level": "info", "source": "c3_temis", "msg": "[grid_weights]   loop_other       0.00m (  0.1%)"}
+{"ts": "2026-10-12T20:43:31.105107+00:00", "level": "info", "source": "c3_temis", "msg": "[grid_weights]   pd.concat        0.00m (  0.0%)"}
+{"ts": "2026-10-12T20:43:31.105129+00:00", "level": "info", "source": "c3_temis", "msg": "[grid_weights]   total            0.01m"}
+{"ts": "2026-10-12T20:43:31.109922+00:00", "level": "info", "source": "c3_temis", "msg": "Output: /app/data/tasks/tier2-golden-temis/output/c3_temis.parquet"}
+{"ts": "2026-10-12T20:43:31.197323+00:00", "level": "info", "source": "runner", "msg": "step c3_temis exit code 0"}
+{"ts": "2026-10-12T20:43:31.197917+00:00", "level": "info", "source": "c3_temis", "msg": "cache write: 12269dbe__BG_TEMIS__b270m.parquet"}
+{"ts": "2026-10-12T20:43:31.200894+00:00", "level": "info", "source": "runner", "msg": "spawning c4_temis: /opt/conda/bin/python /opt/conda/bin/spacescans run --data-dir /project /app/data/tasks/tier2-golden-temis/pipeline_configs/c4_temis.yaml"}
+{"ts": "2026-10-12T20:43:33.093048+00:00", "level": "info", "source": "c4_temis", "msg": "[temis/uvddc] converted fast path: 1,346,235 rows from 6 parquet(s)"}
+{"ts": "2026-10-12T20:43:34.454040+00:00", "level": "info", "source": "c4_temis", "msg": "[temis/uvdec] converted fast path: 1,346,235 rows from 6 parquet(s)"}
+{"ts": "2026-10-12T20:43:35.786595+00:00", "level": "info", "source": "c4_temis", "msg": "[temis/uvdvc] converted fast path: 1,346,235 rows from 6 parquet(s)"}
+{"ts": "2026-10-12T20:43:36.904714+00:00", "level": "info", "source": "c4_temis", "msg": "[temis/uvief] converted fast path: 1,346,235 rows from 6 parquet(s)"}
+{"ts": "2026-10-12T20:43:38.862689+00:00", "level": "info", "source": "c4_temis", "msg": "Output: /app/data/tasks/tier2-golden-temis/output/c4_temis.parquet"}
+{"ts": "2026-10-12T20:43:38.966653+00:00", "level": "info", "source": "runner", "msg": "step c4_temis exit code 0"}
