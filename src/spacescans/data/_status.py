@@ -117,6 +117,7 @@ class DatasetStatus:
     download_bytes: int          # what a fetch would still download (0 if not fetchable)
     disk_bytes: int              # space the dataset needs once in place
     fetchable: bool              # spacescans data fetch can complete it now
+    fetch_helps: bool            # a fetch gets at least part of what is missing
     needed_artifacts: list[str]  # mirror artifacts a fetch would (re)place
     instructions: list[str]
     next: str
@@ -136,7 +137,8 @@ class DatasetStatus:
             "missing": self.missing, "missing_count": self.missing_count,
             "problems": self.problems, "warnings": self.warnings,
             "download_bytes": self.download_bytes, "disk_bytes": self.disk_bytes,
-            "fetchable": self.fetchable, "needed_artifacts": self.needed_artifacts,
+            "fetchable": self.fetchable, "fetch_helps": self.fetch_helps,
+            "needed_artifacts": self.needed_artifacts,
             "instructions": self.instructions, "next": self.next,
         }
 
@@ -290,6 +292,8 @@ def dataset_status(manifest: Manifest, key: str, root: Path, *, deep: bool = Fal
     needed = [a for a in arts if not a.complete]
     fetchable = ds.acquire == "mirror" and bool(needed) and all(
         manifest.artifacts[a.name].available for a in needed)
+    fetch_helps = ds.acquire == "mirror" and any(
+        manifest.artifacts[a.name].available for a in needed)
     corrupt = bool(layout.size_problems) or any(a.state == "corrupt" for a in arts)
 
     if layout.present == 0 and not any(a.receipt for a in arts):
@@ -325,7 +329,7 @@ def dataset_status(manifest: Manifest, key: str, root: Path, *, deep: bool = Fal
             art = manifest.artifacts[a.name]
             if not art.available and art.interim:
                 instructions.append(f"{art.name}: {art.interim}")
-    next_step = _dataset_next(ds, status, fetchable, needed, manifest)
+    next_step = _dataset_next(ds, status, fetchable, fetch_helps, needed, manifest)
 
     return DatasetStatus(
         dataset=key, status=status, title=ds.title, acquire=ds.acquire, provider=ds.provider,
@@ -334,14 +338,14 @@ def dataset_status(manifest: Manifest, key: str, root: Path, *, deep: bool = Fal
         artifacts=arts, expected=layout.expected, present=layout.present,
         present_bytes=layout.present_bytes, missing=layout.missing,
         missing_count=layout.missing_count, problems=problems, warnings=warnings,
-        download_bytes=download, disk_bytes=disk, fetchable=fetchable,
+        download_bytes=download, disk_bytes=disk, fetchable=fetchable, fetch_helps=fetch_helps,
         needed_artifacts=[a.name for a in needed] if ds.acquire == "mirror" else [],
         instructions=instructions, next=next_step,
     )
 
 
-def _dataset_next(ds: Dataset, status: str, fetchable: bool, needed: list[ArtifactState],
-                  manifest: Manifest) -> str:
+def _dataset_next(ds: Dataset, status: str, fetchable: bool, fetch_helps: bool,
+                  needed: list[ArtifactState], manifest: Manifest) -> str:
     if status in USABLE:
         if status == "unverified":
             return f"optional: spacescans data verify --dataset {ds.key}"
@@ -350,7 +354,8 @@ def _dataset_next(ds: Dataset, status: str, fetchable: bool, needed: list[Artifa
         return f"spacescans data fetch --dataset {ds.key}"
     if ds.acquire == "mirror":
         pending = [a.name for a in needed if not manifest.artifacts[a.name].available]
-        return ("not yet on the mirror: " + ", ".join(pending) +
+        head = f"spacescans data fetch --dataset {ds.key}; then " if fetch_helps else ""
+        return (head + "not yet on the mirror: " + ", ".join(pending) +
                 "; see instructions (or fetch with --mirror DIR)")
     if ds.acquire == "generated":
         return "produced on first use; see instructions"
@@ -444,7 +449,7 @@ def _variable_next(v: str, not_usable: Sequence[DatasetStatus]) -> str:
     if all(d.fetchable for d in not_usable):
         return f"spacescans data fetch {v}"
     manual = [d.dataset for d in not_usable if not d.fetchable]
-    head = "spacescans data fetch " + v + "; then " if any(d.fetchable for d in not_usable) else ""
+    head = "spacescans data fetch " + v + "; then " if any(d.fetch_helps for d in not_usable) else ""
     return head + "manual step for dataset " + ", ".join(manual) + " (see its instructions)"
 
 
@@ -452,8 +457,8 @@ def _next_steps(var_status: Sequence[VariableStatus], ds_keys: Sequence[str],
                 ds_status: Mapping[str, DatasetStatus], in_use: Sequence[str]) -> list[dict[str, Any]]:
     steps: list[dict[str, Any]] = []
     fetch_vars = [v.variable for v in var_status
-                  if v.not_usable and any(ds_status[k].fetchable for k in v.not_usable)]
-    fetch_ds = [k for k in ds_keys if not ds_status[k].usable and ds_status[k].fetchable]
+                  if v.not_usable and any(ds_status[k].fetch_helps for k in v.not_usable)]
+    fetch_ds = [k for k in ds_keys if not ds_status[k].usable and ds_status[k].fetch_helps]
     if fetch_vars or fetch_ds:
         cmd = "spacescans data fetch " + " ".join(fetch_vars)
         if fetch_ds:

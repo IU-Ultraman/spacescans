@@ -240,3 +240,18 @@ def test_real_manifest_statuses_for_an_empty_dir(data_dir):
     total = sum(a.bytes for a in man.artifacts.values() if a.available)
     assert rep.dataset("bg_boundaries").download_bytes == 1336811339
     assert rep.download_bytes <= total + 10 ** 11
+
+
+def test_partly_mirrored_dataset_still_suggests_a_fetch(mini_manifest, data_dir, archive):
+    # One file of the dataset is on the mirror, the other is not uploaded yet.
+    mini_manifest["datasets"]["fara_labels"]["artifacts"] = ["labels.csv", "panel.Rda"]
+    mini_manifest["datasets"]["ndi_panel"]["artifacts"] = [archive.name]
+    del mini_manifest["datasets"]["county_boundaries"]
+    mini_manifest["variables"] = {"fara_tract": {"requires": ["fara_labels"]}}
+    del mini_manifest["boundaries"]
+    rep = status(["fara_tract"], data_dir=data_dir, manifest=mini_manifest)
+    d = rep.dataset("fara_labels")
+    assert d.status == "action_required" and not d.fetchable and d.fetch_helps
+    assert d.next.startswith("spacescans data fetch --dataset fara_labels; then not yet on the mirror")
+    assert rep.variable("fara_tract").next.startswith("spacescans data fetch fara_tract; then manual")
+    assert rep.next_steps[0]["variables"] == ["fara_tract"]
