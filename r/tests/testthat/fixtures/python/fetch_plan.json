@@ -1,0 +1,68 @@
+{
+ "data_dir": "/tmp/ss/ss-data",
+ "items": [
+  {
+   "artifact": "bg_boundaries_v1.tar.gz",
+   "datasets": [
+    "bg_boundaries"
+   ],
+   "kind": "tar",
+   "bytes": 1336811339,
+   "disk_bytes": 2262929328,
+   "resume_from": 0,
+   "remaining_bytes": 1336811339,
+   "verified_archive": false,
+   "source": "https://indiana-my.sharepoint.com/:f:/g/personal/xai_iu_edu/IgDZCqTyHu9yQLgJdoSpy3SoAbF0Yw5qXC8DuHuDamBnhwI?e=22P4ck"
+  }
+ ],
+ "manual": [
+  {
+   "dataset": "ndi_panel",
+   "status": "action_required",
+   "title": "Neighborhood Deprivation Index, block-group panel (ACS 5-year 2008-2012 to 2020-2024)",
+   "acquire": "mirror",
+   "terms": null,
+   "instructions": [
+    "ndi_bg_acs5_2008_2012_to_2020_2024_nationwide_summaryfile_xgboost.rds: Not on the mirror yet. Until it is, copy pipeline-data/NDI/C4/<this file> from a spacescans-web checkout into <data_dir>/NDI/C4/, or pass --mirror <folder holding it>."
+   ],
+   "missing": [
+    "NDI/C4/ndi_bg_acs5_2008_2012_to_2020_2024_nationwide_summaryfile_xgboost.rds"
+   ]
+  },
+  {
+   "dataset": "vnl",
+   "status": "action_required",
+   "title": "VIIRS Nighttime Lights, VNL v2.1 annual average_masked, 2013-2019",
+   "acquire": "provider-manual",
+   "terms": {
+    "id": "eog-vnl",
+    "url": "https://eogdata.mines.edu/files/EOG_products_CC_License.pdf",
+    "summary": "Free EOG account required to download. Use and redistribution are allowed under CC BY 4.0 with attribution to EOG.",
+    "license": "CC BY 4.0",
+    "account": true
+   },
+   "instructions": [
+    "Create a free EOG account at https://eogdata.mines.edu/products/vnl/ and sign in (spacescans does not automate the login).",
+    "Download the annual global VNL v2.1 'average_masked' file for each year 2013-2019: VNL_v21_npp_{year}_global_vcmcfg_c202205302300.average_masked.dat.tif.gz for 2013 and VNL_v21_npp_{year}_global_vcmslcfg_c202205302300.average_masked.dat.tif.gz for 2014-2019.",
+    "gunzip each file and place the .tif files, with their original names, in <data_dir>/VNL/C3/. Keep exactly one file per year: the reader reads every *.tif in that folder.",
+    "Each unpacked file is about 11.6 GB (about 81 GB for the 7 years)."
+   ],
+   "missing": [
+    "VNL/C3/VNL_v21_npp_2013_global_vcmcfg_c202205302300.average_masked.dat.tif",
+    "VNL/C3: no file for year 2013",
+    "VNL/C3: no file for year 2014",
+    "VNL/C3: no file for year 2015",
+    "VNL/C3: no file for year 2016",
+    "VNL/C3: no file for year 2017",
+    "VNL/C3: no file for year 2018",
+    "VNL/C3: no file for year 2019"
+   ]
+  }
+ ],
+ "already_usable": [],
+ "download_bytes": 1336811339,
+ "disk_bytes": 3599740667,
+ "free_bytes": 267389411328,
+ "terms_required": [],
+ "terms_used": []
+}

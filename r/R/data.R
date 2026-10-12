@@ -47,9 +47,14 @@ ss_data_dir <- function(path = NULL) {
   if (is.null(cmd) || !length(cmd) || is.na(cmd) || !nzchar(cmd)) return("")
   out <- cmd
   out <- gsub("spacescans data fetch --dataset ([A-Za-z0-9_]+)", 'ss_fetch(datasets = "\\1")', out)
-  out <- gsub("spacescans data fetch --variable ([A-Za-z0-9_]+)", 'ss_fetch("\\1")', out)
   out <- gsub("spacescans data verify --dataset ([A-Za-z0-9_]+)", 'ss_data_verify(datasets = "\\1")', out)
   out <- gsub("spacescans data import --dataset ([A-Za-z0-9_]+)", 'ss_data_import("\\1", paths = ...)', out)
+  # Positional variables: "spacescans data fetch ndi walkability".
+  m <- regmatches(out, regexpr("spacescans data fetch( [A-Za-z0-9_]+)+", out))
+  if (length(m)) {
+    vars <- strsplit(sub("^spacescans data fetch ", "", m), " ", fixed = TRUE)[[1]]
+    out <- sub(m, sprintf("ss_fetch(%s)", .ss_deparse_chr(vars)), out, fixed = TRUE)
+  }
   out <- gsub("spacescans data fetch", "ss_fetch()", out, fixed = TRUE)
   out
 }
@@ -246,7 +251,8 @@ print.ss_fetch_plan <- function(x, ...) {
   cat("Needs a manual step:\n")
   for (m in manual) {
     ds <- if (is.list(m)) m$dataset %||% m$name %||% "?" else as.character(m)
-    cat("  ", ds, if (is.list(m) && !is.null(m$reason)) paste0(": ", m$reason), "\n", sep = "")
+    why <- if (is.list(m)) m$reason %||% m$title
+    cat("  ", ds, if (!is.null(why)) paste0(": ", why), "\n", sep = "")
   }
   cat("ss_data_terms(\"<dataset>\") shows the instructions; ss_data_import() places files you downloaded.\n")
   invisible()

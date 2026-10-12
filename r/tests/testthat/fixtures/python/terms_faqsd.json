@@ -1,0 +1,22 @@
+{
+ "dataset": "faqsd",
+ "title": "US EPA FAQSD daily ozone (8-hour maximum) and PM2.5 (daily average) by 2010 census tract, 2013-2019",
+ "provider": "US EPA, Fused Air Quality Surfaces Using Downscaling (FAQSD), via RSIG",
+ "license": "US federal public domain",
+ "redistribution": "allowed",
+ "attribution": "Credit the US EPA (FAQSD downscaler outputs, RSIG).",
+ "source_url": "https://www.epa.gov/hesc/rsig-related-downloadable-data-files#faqsd",
+ "acquire": "provider-manual",
+ "terms": {
+  "id": "epa-faqsd",
+  "url": "https://www.epa.gov/hesc/rsig-related-downloadable-data-files#faqsd",
+  "summary": "Public domain. Downloads come from EPA's server, which does not support resuming and streams at about 0.25 MB/s.",
+  "license": "US federal public domain",
+  "account": false
+ },
+ "instructions": [
+  "Download https://ofmpub.epa.gov/rsig/rsigserver?data/FAQSD/outputs/{year}_{kind}.txt.gz for year 2013-2019 and kind ozone_daily_8hour_maximum, pm25_daily_average (14 files, about 6.5 GB compressed).",
+  "EPA's server ignores Range requests and streams at about 0.25 MB/s, so each 470 MB file needs one unbroken connection of about 30 minutes; never cap a download below about 3 hours.",
+  "gunzip each file into <data_dir>/FAQSD/C4/{year}_{kind}.txt and keep the names exactly as published (about 23.3 GB unpacked)."
+ ]
+}
