@@ -1,0 +1,60 @@
+{
+  "python": "3.12.13 | packaged by conda-forge | (main, Mar  5 2026, 16:39:32) [GCC 14.3.0]",
+  "python_executable": "/opt/conda/bin/python",
+  "platform": "Linux-6.12.72-linuxkit-aarch64-with-glibc2.36",
+  "machine": "aarch64",
+  "cpu_count": 14,
+  "spacescans.__version__": "0.2.7",
+  "spacescans.__file__": "/opt/conda/lib/python3.12/site-packages/spacescans/__init__.py",
+  "dist spacescans-pipeline": "0.2.7",
+  "spacescans-pipeline direct_url": {
+    "url": "https://github.com/IU-Ultraman/spacescans.git",
+    "vcs_info": {
+      "commit_id": "a31370fbee79874ec29c32b8fc732bb83ec28d6c",
+      "requested_revision": "v0.2.7",
+      "vcs": "git"
+    }
+  },
+  "packages": {
+    "numpy": "2.5.1",
+    "pandas": "3.0.5",
+    "pyarrow": "26.0.0",
+    "duckdb": "1.5.6",
+    "shapely": "2.2.0",
+    "geopandas": "1.2.0",
+    "pyproj": "3.8.0",
+    "rasterio": "1.5.0",
+    "exactextract": "0.3.0",
+    "pyogrio": "0.13.0",
+    "fiona": null,
+    "pydantic": "2.10.3",
+    "pyyaml": "6.0.3",
+    "netCDF4": "1.7.4",
+    "xarray": "2026.9.0",
+    "pyhdf": "0.11.7",
+    "pyreadr": "0.5.7",
+    "scipy": null,
+    "fastapi": "0.115.6",
+    "uvicorn": "0.34.0",
+    "jsonschema": "4.26.0",
+    "h5netcdf": null
+  },
+  "native": {
+    "rasterio.__gdal_version__": "3.12.3",
+    "rasterio.proj": "9.7.1",
+    "rasterio.geos": "3.14.1",
+    "shapely.geos_version": "3.14.1",
+    "shapely.geos_capi_version_string": "3.14.1-CAPI-1.20.5",
+    "pyproj.proj_version_str": "9.8.1",
+    "pyproj.datadir": "/opt/conda/lib/python3.12/site-packages/pyproj/proj_dir/share/proj",
+    "pyogrio.__gdal_version_string__": "3.12.4",
+    "pyogrio.__gdal_geos_version__": "(3, 14, 1)",
+    "exactextract.__version__": "0.3.0",
+    "duckdb.__version__": "1.5.6",
+    "duckdb threads": 14,
+    "duckdb memory_limit": "18.7 GiB",
+    "pyarrow.cpp_build_info.version": "26.0.0",
+    "numpy blas": "{'name': 'blas', 'found': True, 'version': '3.9.0', 'detection method': 'pkgconfig', 'include directory': '/opt/conda/include', 'lib directory': '/opt/conda/lib', 'openblas configuration': 'unknown', 'pc file directory': '/opt/conda/lib/pkgconfig'}"
+  },
+  "meminfo_first_line": "MemTotal:       24571496 kB"
+}

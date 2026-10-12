@@ -1,0 +1,14 @@
+commit 3991c3bc26ff2d198cad250a3820cc97fb851a13
+Author: xuguang-ai <xuguang.ai@outlook.com>
+Date:   Fri Oct 9 16:54:51 2026 -0400
+
+    Build the backend against pipeline v0.2.7
+    
+    v0.2.7 carries the pipeline half of the validation fixes this repository already
+    expects: the nearest-road search covers every county near each point (the
+    BG_TIGER2 cache tag was introduced for it), the CBP county fallback is chosen
+    per episode, missing FARA values stay missing, and the polygon rasterization
+    grid no longer depends on the cohort. Until this bump a rebuilt image installed
+    v0.2.6 and recomputed under the new tags with the old search.
+    
+    Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>

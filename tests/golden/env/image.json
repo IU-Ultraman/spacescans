@@ -1,0 +1,87 @@
+{
+  "frozen_image": {
+    "tag": "spacescans-web-backend:frozen-2026-10-12",
+    "id": "sha256:94b192a9fce12b4ef1c18e1a81a82ccf84e364bb397737f8108d068f7b9fa810",
+    "repo_digests": [
+      "spacescans-web-backend@sha256:94b192a9fce12b4ef1c18e1a81a82ccf84e364bb397737f8108d068f7b9fa810"
+    ],
+    "created_utc": "2026-10-12T20:32:16.454278886Z",
+    "comment": "tier2 P0 freeze of the running backend (web 3991c3b, pipeline v0.2.7)",
+    "size_bytes": 661833847,
+    "architecture": "arm64",
+    "os": "linux",
+    "rootfs_layers": 20,
+    "top_layer": "sha256:ea4f93e25a60d2984c0290ab56c392e7cd654ec69302f47bc2ba26068954c7cf",
+    "cmd": [
+      "python",
+      "-m",
+      "uvicorn",
+      "app.main:app",
+      "--host",
+      "0.0.0.0",
+      "--port",
+      "8000"
+    ],
+    "entrypoint": [
+      "/usr/local/bin/_entrypoint.sh"
+    ],
+    "working_dir": "/app",
+    "user": "mambauser",
+    "env_keys": [
+      "GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN",
+      "SPACESCANS_DATA_DIR",
+      "SPACESCANS_CONFIG_TEMPLATES_DIR",
+      "SPACESCANS_PIPELINE_PYTHON",
+      "SPACESCANS_PIPELINE_CLI",
+      "SECRET_KEY",
+      "CODESPACE_NAME",
+      "PATH",
+      "LANG",
+      "LC_ALL",
+      "ENV_NAME",
+      "MAMBA_ROOT_PREFIX",
+      "MAMBA_EXE",
+      "MAMBA_USER",
+      "MAMBA_USER_ID",
+      "MAMBA_USER_GID"
+    ],
+    "made_with": "docker commit -m 'tier2 P0 freeze of the running backend (web 3991c3b, pipeline v0.2.7)' spacescans-web-backend-1 spacescans-web-backend:frozen-2026-10-12",
+    "frozen_at_eastern": "2026-10-12T16:32:16-04:00"
+  },
+  "source_image": {
+    "tag": "spacescans-web-backend:latest",
+    "id": "sha256:8b219bc1b06776ca076fda1532fe329bb5e752ad16655b9cfe0bf54e8b5abac9",
+    "repo_digests": [
+      "spacescans-web-backend@sha256:8b219bc1b06776ca076fda1532fe329bb5e752ad16655b9cfe0bf54e8b5abac9"
+    ],
+    "created_utc": "2026-10-09T20:58:27.307876137Z",
+    "rootfs_layers": 19
+  },
+  "container": {
+    "name": "spacescans-web-backend-1",
+    "id": "bbb70ec855f4f86821e4bedddc3f45ac31742fa995bd19a1e7a00de4925530ea",
+    "image": "sha256:8b219bc1b06776ca076fda1532fe329bb5e752ad16655b9cfe0bf54e8b5abac9",
+    "started_utc": "2026-10-09T20:58:45.986327924Z",
+    "mounts": [
+      {
+        "type": "volume",
+        "source": "spacescans-web_backend-data",
+        "destination": "/app/data",
+        "rw": true
+      },
+      {
+        "type": "bind",
+        "source": "/Users/xai/Desktop/spacescans-all/spacescans-web/configs",
+        "destination": "/configs",
+        "rw": false
+      },
+      {
+        "type": "bind",
+        "source": "/Users/xai/Desktop/spacescans-all/spacescans-web/pipeline-data",
+        "destination": "/project",
+        "rw": true
+      }
+    ]
+  },
+  "docker_server_version": "29.2.1"
+}
