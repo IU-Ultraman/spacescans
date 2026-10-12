@@ -120,13 +120,60 @@ class CohortError(ValueError):
     (``missing_columns``, ``date_format``, ``date_timezone``, or
     ``invalid`` from :meth:`CohortReport.raise_for_errors`); ``issues``
     holds the structured findings when they come from :func:`validate`.
+
+    ``kind`` is the bridge's error class (``cohort``) and :meth:`to_dict`
+    its error shape, which never carries a cohort value.
     """
+
+    kind = "cohort"
 
     def __init__(self, message: str, issues: Sequence[Issue] = (), *,
                  code: str | None = None):
         super().__init__(message)
         self.issues: tuple[Issue, ...] = tuple(issues)
         self.code = code
+
+    def to_dict(self) -> dict[str, Any]:
+        """``{"kind", "message", "hint", "details", "type"}`` without cohort values.
+
+        Safe to log and to send to a client. The one message that quotes a
+        value (an unrecognised date format names a sample date) is replaced by
+        the same text without the sample; ``details`` holds the ``code`` and
+        the issues with their row numbers and counts. ``str(self)`` is
+        unchanged, so the web's messages stay as they are.
+        """
+        issues = [{**i.as_dict(), "message": _safe_message(i.code, i.message)}
+                  for i in self.issues]
+        if issues:
+            message = "; ".join(i["message"] for i in issues)
+        else:
+            message = _safe_message(self.code, str(self))
+        codes = {i["code"] for i in issues} | ({self.code} if self.code else set())
+        if any(i["rows"] for i in issues):
+            hint = "fix the rows listed in details.issues (1-based row numbers)"
+        elif codes & {"missing_columns"}:
+            hint = f"the cohort needs the columns {', '.join(REQUIRED)}"
+        elif codes & {"date_format", "date_timezone"}:
+            hint = f"give startDate and endDate as calendar dates, for example {ACCEPTED_DATE_EXAMPLES}"
+        else:
+            hint = None
+        return {"kind": self.kind, "message": message, "hint": hint,
+                "details": {"code": self.code, "issues": issues},
+                "type": type(self).__name__}
+
+
+_SAFE_MESSAGES = {
+    # detect_date_format's message names a sample value; this is the same text without it.
+    "date_format": (
+        "Unrecognized date format. Dates must use one consistent format across "
+        f"startDate and endDate. Accepted: {ACCEPTED_DATE_EXAMPLES}"
+    ),
+}
+
+
+def _safe_message(code: str | None, message: str) -> str:
+    """``message`` with any quoted cohort value removed (see CohortError.to_dict)."""
+    return _SAFE_MESSAGES.get(code or "", message)
 
 
 # ---------------------------------------------------------------------------
