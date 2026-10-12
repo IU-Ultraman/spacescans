@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "spacescans.org/variable_metadata.schema.json",
+  "title": "spacescans-web variable metadata",
+  "type": "object",
+  "required": ["schema_version", "variables"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {"type": "integer", "const": 1},
+    "variables": {
+      "type": "object",
+      "minProperties": 1,
+      "patternProperties": {
+        "^[a-z][a-z0-9_]*$": {
+          "type": "object",
+          "required": [
+            "label", "description", "boundary",
+            "coverage_years", "coverage_region",
+            "experiment", "variable_type",
+            "display_unit", "value_cols"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "label": {"type": "string", "minLength": 1, "maxLength": 80},
+            "description": {"type": "string", "minLength": 1, "maxLength": 400},
+            "boundary": {
+              "type": "string",
+              "enum": ["Point", "BG", "ZCTA5", "Tract", "County"]
+            },
+            "spatial_method": {
+              "type": "string",
+              "enum": ["areal", "grid", "proximity"]
+            },
+            "coverage_years": {
+              "type": "array",
+              "items": {"type": "integer", "minimum": 1900, "maximum": 2100},
+              "minItems": 2, "maxItems": 2
+            },
+            "coverage_region": {
+              "type": "string",
+              "enum": ["CONUS", "US", "AK_HI"]
+            },
+            "experiment": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*$"
+            },
+            "ontology_id": {"type": "string", "minLength": 1},
+            "data_source": {"type": "string", "minLength": 1},
+            "temporal": {
+              "type": "string",
+              "enum": ["static", "yearly"]
+            },
+            "variable_type": {
+              "type": "string",
+              "enum": ["categorical", "continuous"]
+            },
+            "display_unit": {
+              "type": "string",
+              "pattern": "^[\\x20-\\x7E]+$",
+              "maxLength": 50
+            },
+            "value_cols": {
+              "type": "array",
+              "items": {"type": "string", "minLength": 1},
+              "minItems": 1
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

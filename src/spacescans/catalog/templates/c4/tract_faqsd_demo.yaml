@@ -1,0 +1,33 @@
+name: tract_faqsd_demo
+linkage_pattern: faqsd_daily_areal   # C4: EPA FAQSD daily tract surfaces → patient time-weighted mean (reader-contained)
+geometry_type: polygon
+
+source:                              # C4: C3-produced TRACT weight table (demo) — same table fara_tract uses
+  file: output/python_v2/270m/TRACT_US/C3/buffer270mTRACT25m_demo100k.parquet
+  join_col: GEOID10
+
+buffer:
+  patient_file: demo_patients_conus_fast_100000.parquet
+  patient_adapter: demo_conus
+  buffer_m: 270
+
+exposure:                            # C4: {year}_ozone_daily_8hour_maximum.txt + {year}_pm25_daily_average.txt, 2013–2019
+  file: FAQSD/C4
+  value_cols:
+    - o3
+    - pm25
+
+time:
+  years: [2013, 2014, 2015, 2016, 2017, 2018, 2019]
+  temporal_resolution: daily
+  temporal_mode: yearly
+  output_grouping: patient            # v1/CLI default; the web runner injects 'episode'
+
+engine:
+  backend: duckdb
+
+plugin: faqsd
+
+output:
+  path: output/python_v2/270m/TRACT_US/C4/faqsd_demo100k.parquet
+  format: parquet

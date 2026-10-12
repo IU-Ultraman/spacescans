@@ -1,0 +1,39 @@
+name: bg_wi_demo
+linkage_pattern: static_areal        # C4: static (use 2016 single year as walkability index)
+geometry_type: polygon
+
+source:                              # C4: C3-produced BG weight table (demo)
+  file: output/python_v2/270m/BG_US/C3/buffer270mBG25m_demo100k.parquet
+  join_col: GEOID10
+
+buffer:
+  patient_file: demo_patients_conus_fast_100000.parquet
+  patient_adapter: demo_conus
+  buffer_m: 270
+
+exposure:                            # C4: EPA Walkability Index 2016-2021
+  file: Walkability/C4/epawalkind_nationwide_2016_2021.Rda
+  key: wi
+  join_col: GEOID10
+  value_cols:
+    - NatWalkInd
+  year_col: year
+
+time:
+  years: [2016]
+  temporal_resolution: static
+  temporal_mode: static
+
+transforms:
+  - type: filter
+    target: exposure
+    column: year
+    values: [2016]
+
+engine:
+  backend: duckdb
+
+output:
+  path: output/python_v2/270m/BG_US/C4/wi_demo100k.parquet
+  format: parquet
+  label_path: output/python_v2/270m/BG_US/C4/label_wi_demo100k.parquet

@@ -1,0 +1,51 @@
+name: county_cbp_demo
+linkage_pattern: cbp_fallback        # C4: county CBP for patients missing ZBP, ZBP values for the rest
+geometry_type: polygon               # C3 only: describes input data geometry
+
+source:                              # C4: C3-produced county weight table (demo)
+  file: output/python_v2/270m/County_US/C3/buffer270mCounty25m_demo100k.parquet
+  join_col: GEOID10
+
+buffer:
+  patient_file: demo_patients_conus_fast_100000.parquet
+  patient_adapter: demo_conus
+  buffer_m: 270
+
+exposure:                            # C4: nationwide county CBP data
+  file: Community_Organization_Density/C4/cbp_nationwide_0519.Rda
+  join_col: fips
+  value_cols:
+    - r_religious
+    - r_civic
+    - r_business
+    - r_political
+    - r_professional
+    - r_labor
+    - r_bowling
+    - r_recreational
+    - r_golf
+    - r_sports
+  year_col: year
+  zbp_file: output/python_v2/270m/CBP_US/zbp_demo100k.parquet  # ZBP linked output from zcta5_cbp_demo
+
+transforms:                          # CBP fips is int (1001); GEOID10 is str ("01001")
+  - type: derive
+    target: exposure
+    registry_key: zfill_str
+    output_col: fips
+    params:
+      source_col: fips
+      width: 5
+
+time:
+  years: [2013, 2014, 2015, 2016, 2017, 2018, 2019]
+  temporal_resolution: yearly
+  temporal_mode: yearly
+
+engine:
+  backend: duckdb
+
+output:
+  path: output/python_v2/270m/CBP_US/cbp_demo100k.parquet
+  format: parquet
+  label_path: output/python_v2/270m/CBP_US/label_cbp_demo100k.parquet

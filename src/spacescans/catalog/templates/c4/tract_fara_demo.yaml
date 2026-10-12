@@ -1,0 +1,34 @@
+name: tract_fara_demo
+linkage_pattern: fara_tract          # C4: FARA yearly_areal with recode binary flags
+geometry_type: polygon
+
+source:                              # C4: C3-produced TRACT weight table (demo)
+  file: output/python_v2/270m/TRACT_US/C3/buffer270mTRACT25m_demo100k.parquet
+  join_col: GEOID10
+
+buffer:
+  patient_file: demo_patients_conus_fast_100000.parquet
+  patient_adapter: demo_conus
+  buffer_m: 270
+
+exposure:                            # C4: nationwide FARA 2010-2019 (interpolated)
+  file: FARA/C4/fara_nationwide_2010_2019_interpolated.Rda
+  key: fara1019
+  join_col: Fips
+  value_cols: []
+  year_col: year
+  label_file: FARA/C4/varnameCountRemoved.csv
+
+time:
+  years: [2013, 2014, 2015, 2016, 2017, 2018, 2019]
+  temporal_resolution: yearly
+  temporal_mode: yearly
+  output_grouping: patient   # Sprint 11 Phase A: explicit v1-default; web runner injects 'episode'
+
+engine:
+  backend: duckdb
+
+output:
+  path: output/python_v2/270m/TRACT_US/C4/fara_demo100k.parquet
+  format: parquet
+  label_path: output/python_v2/270m/TRACT_US/C4/label_fara_demo100k.parquet

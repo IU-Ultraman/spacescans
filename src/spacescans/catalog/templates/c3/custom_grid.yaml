@@ -1,0 +1,29 @@
+# Template for the C3 step of a user-uploaded RASTER exposure ("custom exposome").
+#
+# app/experiments/custom.py rewrites source.file to the uploaded GeoTIFF before
+# every run: the user's own raster IS the template grid, exactly as the shipped
+# TEMIS/VNL/ACAG templates are for theirs. grid_weights then emits one row per
+# (episode geoid, raster cell) with the share of the buffer that cell covers.
+#
+# No transforms block: a proper GeoTIFF carries its CRS and extent, and upload
+# validation refuses one that does not (or that is not north-up — exactextract
+# rejects bottom-up rasters, which is how ACAG first failed).
+name: custom_grid
+linkage_pattern: grid_weights
+geometry_type: raster
+
+source:
+  file: PLACEHOLDER              # rewritten: absolute path of the uploaded GeoTIFF
+
+buffer:
+  patient_file: PLACEHOLDER      # rewritten: the task's input.parquet
+  patient_adapter: demo_conus
+  buffer_m: 270
+  grid_id_offset: 0              # 0-based, row-major: grid_id = row * width + col
+
+engine:
+  backend: duckdb
+
+output:
+  path: PLACEHOLDER
+  format: parquet

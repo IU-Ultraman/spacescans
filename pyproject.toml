@@ -81,6 +81,9 @@ spacescans = [
     "resources/data/*.dbf",
     "resources/data/*.prj",
     "resources/data/*.cpg",
+    "catalog/*.json",
+    "catalog/templates/c3/*.yaml",
+    "catalog/templates/c4/*.yaml",
     "py.typed",
 ]
 
