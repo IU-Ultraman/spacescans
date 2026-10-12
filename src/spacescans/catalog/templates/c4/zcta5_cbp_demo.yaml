@@ -1,0 +1,50 @@
+name: zcta5_cbp_demo
+linkage_pattern: yearly_areal        # C4: yearly areal join with duration weighting
+geometry_type: polygon               # C3 only: describes input data geometry
+
+source:                              # C4: C3-produced ZCTA5 weight table (demo)
+  file: output/python_v2/270m/ZCTA5_US/C3/buffer270mZCTA525m_demo100k.parquet
+  join_col: ZCTA5CE10
+
+buffer:
+  patient_file: demo_patients_conus_fast_100000.parquet
+  patient_adapter: demo_conus
+  buffer_m: 270
+
+exposure:                            # C4: nationwide ZBP data
+  file: Community_Organization_Density/C4/zbp_nationwide_0521.Rda
+  join_col: zip
+  value_cols:
+    - r_religious
+    - r_civic
+    - r_business
+    - r_political
+    - r_professional
+    - r_labor
+    - r_bowling
+    - r_recreational
+    - r_golf
+    - r_sports
+  year_col: year
+
+transforms:                          # CBP zip is int (4760); ZCTA5CE10 is str ("04760")
+  - type: derive
+    target: exposure
+    registry_key: zfill_str
+    output_col: zip
+    params:
+      source_col: zip
+      width: 5
+
+time:
+  years: [2013, 2014, 2015, 2016, 2017, 2018, 2019]
+  temporal_resolution: yearly
+  temporal_mode: yearly
+
+engine:
+  backend: duckdb
+
+output:
+  path: output/python_v2/270m/CBP_US/zbp_demo100k.parquet
+  format: parquet
+  label_path: output/python_v2/270m/CBP_US/label_zbp_demo100k.parquet

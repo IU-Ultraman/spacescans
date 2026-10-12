@@ -1,0 +1,19 @@
+name: acag_grid_demo
+linkage_pattern: grid_weights        # C3: extract raster-buffer coverage weights
+geometry_type: raster                # C3 only: input data geometry
+
+source:                              # C3: ACAG template raster — defines the 0.01° North America grid
+  file: ACAG/C3/acag_template.tif    # (north-up, EPSG:4326, 11800 × 5400; see backend/scripts/make_acag_template.py)
+
+buffer:
+  patient_file: demo_patients_conus_fast_100000.parquet  # 100k CONUS demo
+  patient_adapter: demo_conus
+  buffer_m: 270
+  grid_id_offset: 1                  # the acag reader indexes template cells 1-based (v1 parity)
+
+engine:
+  backend: duckdb
+
+output:                              # C3 weight table [geoid, grid_id, weight]
+  path: output/python_v2/270m/ACAG/C3/buffer270m_acag_weights_demo100k.parquet
+  format: parquet

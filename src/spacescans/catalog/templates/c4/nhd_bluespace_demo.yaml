@@ -1,0 +1,38 @@
+name: nhd_bluespace_demo
+linkage_pattern: precomputed_static  # C4: episode-duration-weighted TWA over geoid-level distances
+geometry_type: line
+
+source:                              # Required by schema; not used spatially
+  file: NHD/C4/NHDPlus_H_National_Release_2_GDB.gdb
+
+buffer:
+  patient_file: demo_patients_conus_fast_100000.parquet
+  patient_adapter: demo_conus
+
+exposure:                            # C4: read C3 output via nhd plugin
+  file: output/python_v2/270m/NHD/C3/proximity_blue_demo100k.parquet
+  join_col: geoid
+  value_cols:
+    - dist_flow_m
+    - dist_water_m
+    - dist_area_m
+    - dist_coast_m
+    - dist_blue_m
+  # No fill_na for dist_coast: inland addresses (no coastline within range) stay
+  # NaN so downstream treats them as missing, not as a real ~100 km distance.
+  # (v1 filled 99999 here — dropped on purpose so state means / maps exclude them.)
+
+time:
+  temporal_resolution: static
+  temporal_mode: static
+  output_grouping: patient        # Sprint 7 A2: lock v1 CLI default explicitly (spec L74-77 [B3]; web overrides to episode at render time)
+
+engine:
+  backend: duckdb
+
+plugin: nhd
+
+output:
+  path: output/python_v2/270m/NHD/C4/nhd_demo100k.parquet
+  format: parquet
+  label_path: output/python_v2/270m/NHD/C4/label_nhd_demo100k.parquet

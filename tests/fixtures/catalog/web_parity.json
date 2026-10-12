@@ -1,0 +1,3378 @@
+{
+ "web_commit": "3991c3bc26ff2d198cad250a3820cc97fb851a13",
+ "input_sha256": "17d85d9c93c0cf4b48a882685fd5cfeb36b7926155335e96ae99256a9ec8ee3c",
+ "task_name": "task-0123456789abcdef",
+ "buffers": [
+  "270/25",
+  "500/50",
+  "1000/25"
+ ],
+ "custom_definitions": {
+  "custom_tracta": {
+   "experiment": "custom",
+   "geometry": "polygon",
+   "spatial_method": "areal",
+   "coverage_region": "CONUS",
+   "variable_type": "continuous",
+   "display_unit": "unitless",
+   "description": "probe dataset",
+   "data_source": "Uploaded by user: probe.csv",
+   "label": "Tract A",
+   "boundary": "Tract",
+   "join_col": "GEOID10",
+   "key_col": "tract",
+   "value_cols": [
+    "a1",
+    "a2"
+   ],
+   "year_col": null,
+   "values_path": "/srv/custom/user-1/tracta/values.csv",
+   "temporal": "static"
+  },
+  "custom_tractb": {
+   "experiment": "custom",
+   "geometry": "polygon",
+   "spatial_method": "areal",
+   "coverage_region": "CONUS",
+   "variable_type": "continuous",
+   "display_unit": "unitless",
+   "description": "probe dataset",
+   "data_source": "Uploaded by user: probe.csv",
+   "label": "Tract B",
+   "boundary": "Tract",
+   "join_col": "GEOID10",
+   "key_col": "GEOID",
+   "value_cols": [
+    "b1"
+   ],
+   "year_col": "year",
+   "values_path": "/srv/custom/user-1/tractb/values.csv",
+   "temporal": "yearly",
+   "coverage_years": [
+    2014,
+    2017
+   ]
+  },
+  "custom_bgy": {
+   "experiment": "custom",
+   "geometry": "polygon",
+   "spatial_method": "areal",
+   "coverage_region": "CONUS",
+   "variable_type": "continuous",
+   "display_unit": "unitless",
+   "description": "probe dataset",
+   "data_source": "Uploaded by user: probe.csv",
+   "label": "BG yearly",
+   "boundary": "BG",
+   "join_col": "GEOID10",
+   "key_col": "bg",
+   "value_cols": [
+    "v"
+   ],
+   "year_col": "yr",
+   "values_path": "/srv/custom/user-1/bgy/values.csv",
+   "temporal": "yearly",
+   "coverage_years": [
+    2013,
+    2019
+   ]
+  },
+  "custom_zip": {
+   "experiment": "custom",
+   "geometry": "polygon",
+   "spatial_method": "areal",
+   "coverage_region": "CONUS",
+   "variable_type": "continuous",
+   "display_unit": "unitless",
+   "description": "probe dataset",
+   "data_source": "Uploaded by user: probe.csv",
+   "label": "ZIP",
+   "boundary": "ZCTA5",
+   "join_col": "ZCTA5CE10",
+   "key_col": "zcta",
+   "value_cols": [
+    "z"
+   ],
+   "year_col": null,
+   "values_path": "/srv/custom/user-2/zip/values.csv",
+   "temporal": "static"
+  },
+  "custom_cty": {
+   "experiment": "custom",
+   "geometry": "polygon",
+   "spatial_method": "areal",
+   "coverage_region": "CONUS",
+   "variable_type": "continuous",
+   "display_unit": "unitless",
+   "description": "probe dataset",
+   "data_source": "Uploaded by user: probe.csv",
+   "label": "County",
+   "boundary": "County",
+   "join_col": "GEOID10",
+   "key_col": "fips",
+   "value_cols": [
+    "c1",
+    "c2",
+    "c3"
+   ],
+   "year_col": "year",
+   "values_path": "/srv/custom/user-2/cty/values.csv",
+   "temporal": "yearly"
+  },
+  "custom_nocov": {
+   "experiment": "custom",
+   "geometry": "polygon",
+   "spatial_method": "areal",
+   "coverage_region": "CONUS",
+   "variable_type": "continuous",
+   "display_unit": "unitless",
+   "description": "probe dataset",
+   "data_source": "Uploaded by user: probe.csv",
+   "label": "No coverage",
+   "boundary": "Tract",
+   "join_col": "GEOID10",
+   "key_col": "t",
+   "value_cols": [
+    "n"
+   ],
+   "year_col": null,
+   "values_path": "/srv/custom/user-2/nocov/values.csv",
+   "temporal": "static"
+  },
+  "custom_rs": {
+   "experiment": "custom",
+   "geometry": "raster",
+   "spatial_method": "grid",
+   "coverage_region": "CONUS",
+   "variable_type": "continuous",
+   "display_unit": "unitless",
+   "description": "probe dataset",
+   "data_source": "Uploaded by user: probe.csv",
+   "label": "Raster static",
+   "boundary": "Point",
+   "join_col": "grid_id",
+   "key_col": "grid_id",
+   "year_col": null,
+   "values_path": null,
+   "value_cols": [
+    "px"
+   ],
+   "bands": [
+    1
+   ],
+   "grid_hash": "g1aaaa11",
+   "rasters": [
+    {
+     "path": "/srv/custom/user-3/rs/rasters/static.tif",
+     "year": null
+    }
+   ],
+   "coverage_years": [
+    2013,
+    2019
+   ],
+   "temporal": "static"
+  },
+  "custom_ry": {
+   "experiment": "custom",
+   "geometry": "raster",
+   "spatial_method": "grid",
+   "coverage_region": "CONUS",
+   "variable_type": "continuous",
+   "display_unit": "unitless",
+   "description": "probe dataset",
+   "data_source": "Uploaded by user: probe.csv",
+   "label": "Raster yearly",
+   "boundary": "Point",
+   "join_col": "grid_id",
+   "key_col": "grid_id",
+   "year_col": "year",
+   "values_path": null,
+   "value_cols": [
+    "b1",
+    "b2"
+   ],
+   "bands": [
+    1,
+    2
+   ],
+   "grid_hash": "g2bbbb22",
+   "rasters": [
+    {
+     "path": "/srv/custom/user-3/ry/rasters/2015.tif",
+     "year": 2015
+    },
+    {
+     "path": "/srv/custom/user-3/ry/rasters/2016.tif",
+     "year": 2016
+    }
+   ],
+   "coverage_years": [
+    2015,
+    2016
+   ],
+   "temporal": "yearly"
+  },
+  "custom_rs2": {
+   "experiment": "custom",
+   "geometry": "raster",
+   "spatial_method": "grid",
+   "coverage_region": "CONUS",
+   "variable_type": "continuous",
+   "display_unit": "unitless",
+   "description": "probe dataset",
+   "data_source": "Uploaded by user: probe.csv",
+   "label": "Raster same grid",
+   "boundary": "Point",
+   "join_col": "grid_id",
+   "key_col": "grid_id",
+   "year_col": "year",
+   "values_path": null,
+   "value_cols": [
+    "q"
+   ],
+   "bands": [
+    1
+   ],
+   "grid_hash": "g1aaaa11",
+   "rasters": [
+    {
+     "path": "/srv/custom/user-3/rs2/rasters/2018.tif",
+     "year": 2018
+    }
+   ],
+   "coverage_years": [
+    2018,
+    2018
+   ],
+   "temporal": "yearly"
+  },
+  "custom_parcel": {
+   "experiment": "custom",
+   "geometry": "polygon",
+   "spatial_method": "areal",
+   "coverage_region": "CONUS",
+   "variable_type": "continuous",
+   "display_unit": "unitless",
+   "description": "probe dataset",
+   "data_source": "Uploaded by user: probe.csv",
+   "label": "Parcel",
+   "boundary": "Parcel",
+   "join_col": "GEOID10",
+   "key_col": "p",
+   "value_cols": [
+    "x"
+   ],
+   "year_col": null,
+   "values_path": "/srv/custom/user-4/parcel/values.csv",
+   "temporal": "static"
+  }
+ },
+ "files": {
+  "variable_metadata.json": "d5782c2cef24cf60764eb794cc814c4d6b4c2990a306603f41825c99b922b6d2",
+  "variable_metadata.schema.json": "77b63ae2749138f868c5d0d94e3e2ae5e8503de058902dec8a3ef53792bca132",
+  "feature_dictionary.json": "91c0ec0a1027af026e484584476db2ff0d801f1bce94639b6d80933a71c11840"
+ },
+ "templates": {
+  "c3/acag_grid_demo.yaml": "4ca07f4f45497d06944a25cf7c45fbcbd194df378a674783e8dd386600a156f9",
+  "c3/bg_fl_leon_demo.yaml": "5206b1761d068316f59b77c336622bc9a18f08b973083504cdbdaed25f786fb4",
+  "c3/bg_us_2020_demo.yaml": "7ffa9829eef9e42008c0aaa73b3c971d250decc7665bc0ff4bf674294ea5a0c5",
+  "c3/bg_us_demo.yaml": "2539744815ea764b01716cc164825707a1368d505699b4230772d2a0da2a741e",
+  "c3/county_us_demo.yaml": "37b203b9e8ce925b245501ce719c1f05e7f90cce795c72f42a0e2e183322d389",
+  "c3/custom_grid.yaml": "ba879bffddb1820295d014c16cc4b7cb2a2418b37c5159e5575f0acc5618b29b",
+  "c3/nhd_demo.yaml": "726e9bfb662ca6e3738a794e97051097991b5dc62b8cbc9339b71bb0a6848703",
+  "c3/noise_grid_conus_no_bg_geoid.yaml": "89d983ae02d7d37c36b2b4d2ff2b1f52db90f5eba341f1d37f31bba1d07abea0",
+  "c3/noise_grid_demo.yaml": "fe4495f3519f17d9391b52a8159f5acce0f78d9ddf715a6688682a6973c54fe2",
+  "c3/temis_grid_demo.yaml": "57c676330327e2d13fa98da280e10ccfb0ad2f6ebf4153b1d16b23d102f264dd",
+  "c3/tiger_roads_demo.yaml": "1e0d10bba5107c9ff13fad86210d86040b4a37d8a3108b92df878de5cb93476b",
+  "c3/tract_us_demo.yaml": "88a1adac5ff6fa4a9cde7b8fc2b3206980a8442424540df3a2b1efb7b3fedcc3",
+  "c3/vnl_grid_demo.yaml": "ee35acf53700cdb6a1a13d91b644e69d48cda81086b68100bd0bc35f3387684a",
+  "c3/zcta5_us_demo.yaml": "c4058d9dfd1a95426ef4954b3ef7575e89e6a5da143b11ca5010f6b683e1e2db",
+  "c4/acag_demo.yaml": "318f281069cd55d16d569f71ee0b791681cc5dc0439346a0742632937dcf9729",
+  "c4/bg_ndi_demo.yaml": "09e623f2bfa5cdd04d1e16001e8addccf6104f09fd59bc5d68d9c676bed267de",
+  "c4/bg_wi_demo.yaml": "7a8aee7a79e49fe6b970a4df469a1c284cc3a95e00ecf9d2a52ca38a49ae153b",
+  "c4/county_cbp_demo.yaml": "4223f5a2fd3f76f66242365aab9f6eb8969059578c50f80ff4fb03c00d56ccad",
+  "c4/custom_areal.yaml": "74dcd2a224d2d5e9e450918fe7d66339026cd7aec10d8da1a88709264cb16955",
+  "c4/nhd_bluespace_demo.yaml": "c8d1e46199545329859080d4a9442d0c4368b2bc0c6c0f11410fa3ca933ccf2e",
+  "c4/noise_conus_no_bg_geoid.yaml": "fcaf6249bf851a683f261fde0b81e4b8ffcd932117fa8ba1febfb01dbb34c06f",
+  "c4/noise_demo.yaml": "aee46ca64fe99581a1875daf39896523ce87d64255d8c28d6df876f82235bdb7",
+  "c4/temis_demo.yaml": "9c6b8a5bd112e2a88a2e3512ee35c2bc95e9d6a560dda84d83239ffcd01e9ae5",
+  "c4/tiger_roads_demo.yaml": "50ee8fbdf3a850390c66d1a1eb6dae47ea4abd3fc1efb94e6722937941a81310",
+  "c4/tract_faqsd_demo.yaml": "a434d898e8c5d894a90dc35f9864e79210840de7df3edbba7a033f2b470cda59",
+  "c4/tract_fara_demo.yaml": "50e3bdb17009e7e1d91265a010e1d34fe41b55e50bbc1a5e55b9957531661bcc",
+  "c4/vnl_demo.yaml": "9c7a1800660d484d3b71438e3918efa278fbe9884382bdede8b0578a481cf4c7",
+  "c4/zcta5_cbp_demo.yaml": "5c38af10dfdfd94f7f5c2d1a19a5e4ec876d090ed56cd362e7b7e71b298339c7"
+ },
+ "registry": {
+  "payload": {
+   "schema_version": 1,
+   "variables": {
+    "ndi": {
+     "spatial_method": "areal",
+     "label": "Neighborhood Deprivation Index (NDI)",
+     "description": "Composite measure of neighborhood-level socioeconomic deprivation from US Census ACS variables.",
+     "boundary": "BG",
+     "coverage_years": [
+      2012,
+      2022
+     ],
+     "coverage_region": "CONUS",
+     "experiment": "bg_ndi_wi",
+     "ontology_id": "SPACESCANS_Neighborhood_Deprivation_Index",
+     "data_source": "US Census ACS (5-year)",
+     "variable_type": "continuous",
+     "display_unit": "z-score",
+     "value_cols": [
+      "ndi"
+     ]
+    },
+    "walkability": {
+     "spatial_method": "areal",
+     "label": "EPA Walkability Index",
+     "description": "EPA National Walkability Index ranking neighborhoods on walkability characteristics (intersection density, transit proximity, employment mix).",
+     "boundary": "BG",
+     "coverage_years": [
+      2016,
+      2016
+     ],
+     "temporal": "static",
+     "coverage_region": "CONUS",
+     "experiment": "bg_ndi_wi",
+     "ontology_id": "SPACESCANS_Walkability",
+     "data_source": "EPA National Walkability Index",
+     "variable_type": "continuous",
+     "display_unit": "1-20 index",
+     "value_cols": [
+      "NatWalkInd"
+     ]
+    },
+    "cbp_zcta5": {
+     "spatial_method": "areal",
+     "label": "Community Organization Density",
+     "description": "Per-capita density of 10 community organization categories (religious, civic, business, political, professional, labor, bowling, recreational, golf, sports) at the ZIP Code Tabulation Area level from Census Zip Business Patterns.",
+     "boundary": "ZCTA5",
+     "coverage_years": [
+      2013,
+      2019
+     ],
+     "coverage_region": "CONUS",
+     "experiment": "zcta5_cbp",
+     "ontology_id": "SPACESCANS_Community_Organization_Density",
+     "data_source": "US Census ZIP/County Business Patterns (CBP)",
+     "variable_type": "continuous",
+     "display_unit": "establishments / 1k residents",
+     "value_cols": [
+      "r_religious",
+      "r_civic",
+      "r_business",
+      "r_political",
+      "r_professional",
+      "r_labor",
+      "r_bowling",
+      "r_recreational",
+      "r_golf",
+      "r_sports"
+     ]
+    },
+    "tiger_proximity": {
+     "spatial_method": "proximity",
+     "label": "TIGER Road Distance",
+     "description": "Per-residence annual distance (meters) to the nearest TIGER/Line primary road (S1100), secondary road (S1200), and primary+secondary combined, from US Census TIGER/Line shapefiles. Computed at each address, not aggregated to a Census area.",
+     "boundary": "Point",
+     "coverage_years": [
+      2013,
+      2019
+     ],
+     "coverage_region": "CONUS",
+     "experiment": "tiger_proximity",
+     "ontology_id": "SPACESCANS_Road_Proximity",
+     "data_source": "US Census TIGER/Line",
+     "variable_type": "continuous",
+     "display_unit": "meters",
+     "value_cols": [
+      "dist_pri",
+      "dist_sec",
+      "dist_prisec"
+     ]
+    },
+    "nhd_bluespace": {
+     "spatial_method": "proximity",
+     "label": "NHD Bluespace",
+     "description": "Per-residence static distance (meters) to the nearest NHD flowline (dist_flow_m), waterbody (dist_water_m), area-feature (dist_area_m), coastline (dist_coast_m; empty for inland addresses with no coastline nearby), and combined blue-feature (dist_blue_m), from NHDPlus_H National Release 2 GDB (static product, 2024 vintage). Computed at each address, not aggregated to a Census area.",
+     "boundary": "Point",
+     "coverage_years": [
+      2024,
+      2024
+     ],
+     "coverage_region": "CONUS",
+     "experiment": "nhd_bluespace",
+     "ontology_id": "SPACESCANS_Bluespace",
+     "data_source": "USGS NHDPlus HR (National Release 2)",
+     "temporal": "static",
+     "variable_type": "continuous",
+     "display_unit": "meters",
+     "value_cols": [
+      "dist_flow_m",
+      "dist_water_m",
+      "dist_area_m",
+      "dist_coast_m",
+      "dist_blue_m"
+     ]
+    },
+    "noise": {
+     "spatial_method": "grid",
+     "label": "NPS Soundscape Noise (L50 dBA)",
+     "description": "Per-residence static daytime environmental noise exposure in L50 dBA (existing/imp/nat scenarios) sampled from the US National Park Service geospatial sound model (Mennitt et al.) CONUS raster (270 m grid, static product). l50dba_exi is the existing-conditions surface; l50dba_imp and l50dba_nat are alternative-scenario surfaces.",
+     "boundary": "Point",
+     "coverage_years": [
+      2020,
+      2020
+     ],
+     "coverage_region": "CONUS",
+     "experiment": "noise",
+     "ontology_id": "000289",
+     "data_source": "US National Park Service \u2014 Geospatial sound model (Mennitt et al.)",
+     "temporal": "static",
+     "variable_type": "continuous",
+     "display_unit": "dBA",
+     "value_cols": [
+      "l50dba_exi",
+      "l50dba_imp",
+      "l50dba_nat"
+     ]
+    },
+    "vnl": {
+     "spatial_method": "grid",
+     "label": "VIIRS Nighttime Lights (VNL)",
+     "description": "Per-residence annual mean radiance sampled from the NOAA VIIRS Day/Night Band Nighttime Lights global v21 product (270 m grid, gridded raster linkage). Single value column 'value' carries the annual masked composite radiance in nanowatts/cm^2/sr.",
+     "boundary": "Point",
+     "coverage_years": [
+      2013,
+      2019
+     ],
+     "coverage_region": "CONUS",
+     "experiment": "vnl",
+     "ontology_id": "000290",
+     "data_source": "NOAA VIIRS Day/Night Band Nighttime Lights (VNL v21)",
+     "variable_type": "continuous",
+     "display_unit": "radiance",
+     "value_cols": [
+      "value"
+     ]
+    },
+    "temis": {
+     "spatial_method": "grid",
+     "label": "TEMIS UV Exposure",
+     "description": "Per-residence annual mean daily UV exposure sampled from KNMI TEMIS UV products (270 m grid, daily raster, gridded linkage). Four value columns: uvddc (daily DNA-damage UV dose), uvdec (daily erythemal UV dose), uvdvc (daily vitamin-D UV dose), uvief (UV index at noon).",
+     "boundary": "Point",
+     "coverage_years": [
+      2013,
+      2019
+     ],
+     "coverage_region": "CONUS",
+     "experiment": "temis",
+     "ontology_id": "000288",
+     "data_source": "KNMI TEMIS UV",
+     "variable_type": "continuous",
+     "display_unit": "UV index",
+     "value_cols": [
+      "uvddc",
+      "uvdec",
+      "uvdvc",
+      "uvief"
+     ]
+    },
+    "fara_tract": {
+     "spatial_method": "areal",
+     "label": "FARA Food Access",
+     "description": "Per-tract annual USDA FARA food-access indicators (binary flags + share variables, interpolated 2013-2019). Headline value_cols: LILATracts_1And10 (low-income+low-access urban-1mi/rural-10mi), LATracts1 (low-access 1 mile), HUNVFlag (low-vehicle-access), LowIncomeTracts. Full label set in varnameCountRemoved.csv.",
+     "boundary": "Tract",
+     "coverage_years": [
+      2013,
+      2019
+     ],
+     "coverage_region": "CONUS",
+     "experiment": "fara_tract",
+     "ontology_id": "000294",
+     "data_source": "USDA Food Access Research Atlas (FARA)",
+     "variable_type": "categorical",
+     "display_unit": "binary flags",
+     "value_cols": [
+      "LILATracts_1And10",
+      "LATracts1",
+      "HUNVFlag",
+      "LowIncomeTracts"
+     ]
+    },
+    "acag": {
+     "spatial_method": "grid",
+     "label": "ACAG PM2.5 Composition",
+     "description": "Per-residence mean PM2.5 mass and seven components (black carbon, dust, ammonium, nitrate, organic mass, sulfate, sea salt) from ACAG V5.NA.05 biweekly 0.01-degree surfaces (gridded linkage, 2013-2019). Each species also carries its biomass-burning share (_bm) and the derived non-biomass remainder (_nbm).",
+     "boundary": "Point",
+     "coverage_years": [
+      2013,
+      2019
+     ],
+     "coverage_region": "CONUS",
+     "experiment": "acag",
+     "ontology_id": "000102_2",
+     "data_source": "Washington University ACAG V5.NA.05 / V5.NA.05.02",
+     "variable_type": "continuous",
+     "display_unit": "ug/m3",
+     "value_cols": [
+      "pm25",
+      "bc",
+      "dust",
+      "nh4",
+      "no3",
+      "om",
+      "so4",
+      "ss",
+      "pm25_bm",
+      "bc_bm",
+      "dust_bm",
+      "nh4_bm",
+      "no3_bm",
+      "om_bm",
+      "so4_bm",
+      "ss_bm",
+      "pm25_nbm",
+      "bc_nbm",
+      "dust_nbm",
+      "nh4_nbm",
+      "no3_nbm",
+      "om_nbm",
+      "so4_nbm",
+      "ss_nbm"
+     ]
+    },
+    "faqsd": {
+     "spatial_method": "areal",
+     "label": "EPA FAQSD Air Quality",
+     "description": "Per-tract daily ozone (8-hour maximum, ppb) and PM2.5 (24-hour average, ug/m3) from EPA's Fused Air Quality Surface Using Downscaling, area-weighted over the residential buffer and averaged across each episode's days (2013-2019).",
+     "boundary": "Tract",
+     "coverage_years": [
+      2013,
+      2019
+     ],
+     "coverage_region": "CONUS",
+     "experiment": "faqsd",
+     "ontology_id": "000097_2",
+     "data_source": "US EPA FAQSD (downscaler) daily census-tract outputs",
+     "variable_type": "continuous",
+     "display_unit": "ppb / ug/m3",
+     "value_cols": [
+      "faqsd_o3",
+      "faqsd_pm25"
+     ]
+    }
+   }
+  },
+  "experiments": [
+   "bg_ndi_wi",
+   "zcta5_cbp",
+   "tiger_proximity",
+   "nhd_bluespace",
+   "noise",
+   "vnl",
+   "temis",
+   "fara_tract",
+   "acag",
+   "faqsd"
+  ],
+  "overlay_payload": {
+   "schema_version": 1,
+   "variables": {
+    "ndi": {
+     "spatial_method": "areal",
+     "label": "Neighborhood Deprivation Index (NDI)",
+     "description": "Composite measure of neighborhood-level socioeconomic deprivation from US Census ACS variables.",
+     "boundary": "BG",
+     "coverage_years": [
+      2012,
+      2022
+     ],
+     "coverage_region": "CONUS",
+     "experiment": "bg_ndi_wi",
+     "ontology_id": "SPACESCANS_Neighborhood_Deprivation_Index",
+     "data_source": "US Census ACS (5-year)",
+     "variable_type": "continuous",
+     "display_unit": "z-score",
+     "value_cols": [
+      "ndi"
+     ]
+    },
+    "walkability": {
+     "spatial_method": "areal",
+     "label": "EPA Walkability Index",
+     "description": "EPA National Walkability Index ranking neighborhoods on walkability characteristics (intersection density, transit proximity, employment mix).",
+     "boundary": "BG",
+     "coverage_years": [
+      2016,
+      2016
+     ],
+     "temporal": "static",
+     "coverage_region": "CONUS",
+     "experiment": "bg_ndi_wi",
+     "ontology_id": "SPACESCANS_Walkability",
+     "data_source": "EPA National Walkability Index",
+     "variable_type": "continuous",
+     "display_unit": "1-20 index",
+     "value_cols": [
+      "NatWalkInd"
+     ]
+    },
+    "cbp_zcta5": {
+     "spatial_method": "areal",
+     "label": "Community Organization Density",
+     "description": "Per-capita density of 10 community organization categories (religious, civic, business, political, professional, labor, bowling, recreational, golf, sports) at the ZIP Code Tabulation Area level from Census Zip Business Patterns.",
+     "boundary": "ZCTA5",
+     "coverage_years": [
+      2013,
+      2019
+     ],
+     "coverage_region": "CONUS",
+     "experiment": "zcta5_cbp",
+     "ontology_id": "SPACESCANS_Community_Organization_Density",
+     "data_source": "US Census ZIP/County Business Patterns (CBP)",
+     "variable_type": "continuous",
+     "display_unit": "establishments / 1k residents",
+     "value_cols": [
+      "r_religious",
+      "r_civic",
+      "r_business",
+      "r_political",
+      "r_professional",
+      "r_labor",
+      "r_bowling",
+      "r_recreational",
+      "r_golf",
+      "r_sports"
+     ]
+    },
+    "tiger_proximity": {
+     "spatial_method": "proximity",
+     "label": "TIGER Road Distance",
+     "description": "Per-residence annual distance (meters) to the nearest TIGER/Line primary road (S1100), secondary road (S1200), and primary+secondary combined, from US Census TIGER/Line shapefiles. Computed at each address, not aggregated to a Census area.",
+     "boundary": "Point",
+     "coverage_years": [
+      2013,
+      2019
+     ],
+     "coverage_region": "CONUS",
+     "experiment": "tiger_proximity",
+     "ontology_id": "SPACESCANS_Road_Proximity",
+     "data_source": "US Census TIGER/Line",
+     "variable_type": "continuous",
+     "display_unit": "meters",
+     "value_cols": [
+      "dist_pri",
+      "dist_sec",
+      "dist_prisec"
+     ]
+    },
+    "nhd_bluespace": {
+     "spatial_method": "proximity",
+     "label": "NHD Bluespace",
+     "description": "Per-residence static distance (meters) to the nearest NHD flowline (dist_flow_m), waterbody (dist_water_m), area-feature (dist_area_m), coastline (dist_coast_m; empty for inland addresses with no coastline nearby), and combined blue-feature (dist_blue_m), from NHDPlus_H National Release 2 GDB (static product, 2024 vintage). Computed at each address, not aggregated to a Census area.",
+     "boundary": "Point",
+     "coverage_years": [
+      2024,
+      2024
+     ],
+     "coverage_region": "CONUS",
+     "experiment": "nhd_bluespace",
+     "ontology_id": "SPACESCANS_Bluespace",
+     "data_source": "USGS NHDPlus HR (National Release 2)",
+     "temporal": "static",
+     "variable_type": "continuous",
+     "display_unit": "meters",
+     "value_cols": [
+      "dist_flow_m",
+      "dist_water_m",
+      "dist_area_m",
+      "dist_coast_m",
+      "dist_blue_m"
+     ]
+    },
+    "noise": {
+     "spatial_method": "grid",
+     "label": "NPS Soundscape Noise (L50 dBA)",
+     "description": "Per-residence static daytime environmental noise exposure in L50 dBA (existing/imp/nat scenarios) sampled from the US National Park Service geospatial sound model (Mennitt et al.) CONUS raster (270 m grid, static product). l50dba_exi is the existing-conditions surface; l50dba_imp and l50dba_nat are alternative-scenario surfaces.",
+     "boundary": "Point",
+     "coverage_years": [
+      2020,
+      2020
+     ],
+     "coverage_region": "CONUS",
+     "experiment": "noise",
+     "ontology_id": "000289",
+     "data_source": "US National Park Service \u2014 Geospatial sound model (Mennitt et al.)",
+     "temporal": "static",
+     "variable_type": "continuous",
+     "display_unit": "dBA",
+     "value_cols": [
+      "l50dba_exi",
+      "l50dba_imp",
+      "l50dba_nat"
+     ]
+    },
+    "vnl": {
+     "spatial_method": "grid",
+     "label": "VIIRS Nighttime Lights (VNL)",
+     "description": "Per-residence annual mean radiance sampled from the NOAA VIIRS Day/Night Band Nighttime Lights global v21 product (270 m grid, gridded raster linkage). Single value column 'value' carries the annual masked composite radiance in nanowatts/cm^2/sr.",
+     "boundary": "Point",
+     "coverage_years": [
+      2013,
+      2019
+     ],
+     "coverage_region": "CONUS",
+     "experiment": "vnl",
+     "ontology_id": "000290",
+     "data_source": "NOAA VIIRS Day/Night Band Nighttime Lights (VNL v21)",
+     "variable_type": "continuous",
+     "display_unit": "radiance",
+     "value_cols": [
+      "value"
+     ]
+    },
+    "temis": {
+     "spatial_method": "grid",
+     "label": "TEMIS UV Exposure",
+     "description": "Per-residence annual mean daily UV exposure sampled from KNMI TEMIS UV products (270 m grid, daily raster, gridded linkage). Four value columns: uvddc (daily DNA-damage UV dose), uvdec (daily erythemal UV dose), uvdvc (daily vitamin-D UV dose), uvief (UV index at noon).",
+     "boundary": "Point",
+     "coverage_years": [
+      2013,
+      2019
+     ],
+     "coverage_region": "CONUS",
+     "experiment": "temis",
+     "ontology_id": "000288",
+     "data_source": "KNMI TEMIS UV",
+     "variable_type": "continuous",
+     "display_unit": "UV index",
+     "value_cols": [
+      "uvddc",
+      "uvdec",
+      "uvdvc",
+      "uvief"
+     ]
+    },
+    "fara_tract": {
+     "spatial_method": "areal",
+     "label": "FARA Food Access",
+     "description": "Per-tract annual USDA FARA food-access indicators (binary flags + share variables, interpolated 2013-2019). Headline value_cols: LILATracts_1And10 (low-income+low-access urban-1mi/rural-10mi), LATracts1 (low-access 1 mile), HUNVFlag (low-vehicle-access), LowIncomeTracts. Full label set in varnameCountRemoved.csv.",
+     "boundary": "Tract",
+     "coverage_years": [
+      2013,
+      2019
+     ],
+     "coverage_region": "CONUS",
+     "experiment": "fara_tract",
+     "ontology_id": "000294",
+     "data_source": "USDA Food Access Research Atlas (FARA)",
+     "variable_type": "categorical",
+     "display_unit": "binary flags",
+     "value_cols": [
+      "LILATracts_1And10",
+      "LATracts1",
+      "HUNVFlag",
+      "LowIncomeTracts"
+     ]
+    },
+    "acag": {
+     "spatial_method": "grid",
+     "label": "ACAG PM2.5 Composition",
+     "description": "Per-residence mean PM2.5 mass and seven components (black carbon, dust, ammonium, nitrate, organic mass, sulfate, sea salt) from ACAG V5.NA.05 biweekly 0.01-degree surfaces (gridded linkage, 2013-2019). Each species also carries its biomass-burning share (_bm) and the derived non-biomass remainder (_nbm).",
+     "boundary": "Point",
+     "coverage_years": [
+      2013,
+      2019
+     ],
+     "coverage_region": "CONUS",
+     "experiment": "acag",
+     "ontology_id": "000102_2",
+     "data_source": "Washington University ACAG V5.NA.05 / V5.NA.05.02",
+     "variable_type": "continuous",
+     "display_unit": "ug/m3",
+     "value_cols": [
+      "pm25",
+      "bc",
+      "dust",
+      "nh4",
+      "no3",
+      "om",
+      "so4",
+      "ss",
+      "pm25_bm",
+      "bc_bm",
+      "dust_bm",
+      "nh4_bm",
+      "no3_bm",
+      "om_bm",
+      "so4_bm",
+      "ss_bm",
+      "pm25_nbm",
+      "bc_nbm",
+      "dust_nbm",
+      "nh4_nbm",
+      "no3_nbm",
+      "om_nbm",
+      "so4_nbm",
+      "ss_nbm"
+     ]
+    },
+    "faqsd": {
+     "spatial_method": "areal",
+     "label": "EPA FAQSD Air Quality",
+     "description": "Per-tract daily ozone (8-hour maximum, ppb) and PM2.5 (24-hour average, ug/m3) from EPA's Fused Air Quality Surface Using Downscaling, area-weighted over the residential buffer and averaged across each episode's days (2013-2019).",
+     "boundary": "Tract",
+     "coverage_years": [
+      2013,
+      2019
+     ],
+     "coverage_region": "CONUS",
+     "experiment": "faqsd",
+     "ontology_id": "000097_2",
+     "data_source": "US EPA FAQSD (downscaler) daily census-tract outputs",
+     "variable_type": "continuous",
+     "display_unit": "ppb / ug/m3",
+     "value_cols": [
+      "faqsd_o3",
+      "faqsd_pm25"
+     ]
+    },
+    "custom_tracta": {
+     "experiment": "custom",
+     "geometry": "polygon",
+     "spatial_method": "areal",
+     "coverage_region": "CONUS",
+     "variable_type": "continuous",
+     "display_unit": "unitless",
+     "description": "probe dataset",
+     "data_source": "Uploaded by user: probe.csv",
+     "label": "Tract A",
+     "boundary": "Tract",
+     "join_col": "GEOID10",
+     "key_col": "tract",
+     "value_cols": [
+      "a1",
+      "a2"
+     ],
+     "year_col": null,
+     "values_path": "/srv/custom/user-1/tracta/values.csv",
+     "temporal": "static"
+    },
+    "custom_tractb": {
+     "experiment": "custom",
+     "geometry": "polygon",
+     "spatial_method": "areal",
+     "coverage_region": "CONUS",
+     "variable_type": "continuous",
+     "display_unit": "unitless",
+     "description": "probe dataset",
+     "data_source": "Uploaded by user: probe.csv",
+     "label": "Tract B",
+     "boundary": "Tract",
+     "join_col": "GEOID10",
+     "key_col": "GEOID",
+     "value_cols": [
+      "b1"
+     ],
+     "year_col": "year",
+     "values_path": "/srv/custom/user-1/tractb/values.csv",
+     "temporal": "yearly",
+     "coverage_years": [
+      2014,
+      2017
+     ]
+    },
+    "custom_bgy": {
+     "experiment": "custom",
+     "geometry": "polygon",
+     "spatial_method": "areal",
+     "coverage_region": "CONUS",
+     "variable_type": "continuous",
+     "display_unit": "unitless",
+     "description": "probe dataset",
+     "data_source": "Uploaded by user: probe.csv",
+     "label": "BG yearly",
+     "boundary": "BG",
+     "join_col": "GEOID10",
+     "key_col": "bg",
+     "value_cols": [
+      "v"
+     ],
+     "year_col": "yr",
+     "values_path": "/srv/custom/user-1/bgy/values.csv",
+     "temporal": "yearly",
+     "coverage_years": [
+      2013,
+      2019
+     ]
+    },
+    "custom_zip": {
+     "experiment": "custom",
+     "geometry": "polygon",
+     "spatial_method": "areal",
+     "coverage_region": "CONUS",
+     "variable_type": "continuous",
+     "display_unit": "unitless",
+     "description": "probe dataset",
+     "data_source": "Uploaded by user: probe.csv",
+     "label": "ZIP",
+     "boundary": "ZCTA5",
+     "join_col": "ZCTA5CE10",
+     "key_col": "zcta",
+     "value_cols": [
+      "z"
+     ],
+     "year_col": null,
+     "values_path": "/srv/custom/user-2/zip/values.csv",
+     "temporal": "static"
+    },
+    "custom_cty": {
+     "experiment": "custom",
+     "geometry": "polygon",
+     "spatial_method": "areal",
+     "coverage_region": "CONUS",
+     "variable_type": "continuous",
+     "display_unit": "unitless",
+     "description": "probe dataset",
+     "data_source": "Uploaded by user: probe.csv",
+     "label": "County",
+     "boundary": "County",
+     "join_col": "GEOID10",
+     "key_col": "fips",
+     "value_cols": [
+      "c1",
+      "c2",
+      "c3"
+     ],
+     "year_col": "year",
+     "values_path": "/srv/custom/user-2/cty/values.csv",
+     "temporal": "yearly"
+    },
+    "custom_nocov": {
+     "experiment": "custom",
+     "geometry": "polygon",
+     "spatial_method": "areal",
+     "coverage_region": "CONUS",
+     "variable_type": "continuous",
+     "display_unit": "unitless",
+     "description": "probe dataset",
+     "data_source": "Uploaded by user: probe.csv",
+     "label": "No coverage",
+     "boundary": "Tract",
+     "join_col": "GEOID10",
+     "key_col": "t",
+     "value_cols": [
+      "n"
+     ],
+     "year_col": null,
+     "values_path": "/srv/custom/user-2/nocov/values.csv",
+     "temporal": "static"
+    },
+    "custom_rs": {
+     "experiment": "custom",
+     "geometry": "raster",
+     "spatial_method": "grid",
+     "coverage_region": "CONUS",
+     "variable_type": "continuous",
+     "display_unit": "unitless",
+     "description": "probe dataset",
+     "data_source": "Uploaded by user: probe.csv",
+     "label": "Raster static",
+     "boundary": "Point",
+     "join_col": "grid_id",
+     "key_col": "grid_id",
+     "year_col": null,
+     "values_path": null,
+     "value_cols": [
+      "px"
+     ],
+     "bands": [
+      1
+     ],
+     "grid_hash": "g1aaaa11",
+     "rasters": [
+      {
+       "path": "/srv/custom/user-3/rs/rasters/static.tif",
+       "year": null
+      }
+     ],
+     "coverage_years": [
+      2013,
+      2019
+     ],
+     "temporal": "static"
+    },
+    "custom_ry": {
+     "experiment": "custom",
+     "geometry": "raster",
+     "spatial_method": "grid",
+     "coverage_region": "CONUS",
+     "variable_type": "continuous",
+     "display_unit": "unitless",
+     "description": "probe dataset",
+     "data_source": "Uploaded by user: probe.csv",
+     "label": "Raster yearly",
+     "boundary": "Point",
+     "join_col": "grid_id",
+     "key_col": "grid_id",
+     "year_col": "year",
+     "values_path": null,
+     "value_cols": [
+      "b1",
+      "b2"
+     ],
+     "bands": [
+      1,
+      2
+     ],
+     "grid_hash": "g2bbbb22",
+     "rasters": [
+      {
+       "path": "/srv/custom/user-3/ry/rasters/2015.tif",
+       "year": 2015
+      },
+      {
+       "path": "/srv/custom/user-3/ry/rasters/2016.tif",
+       "year": 2016
+      }
+     ],
+     "coverage_years": [
+      2015,
+      2016
+     ],
+     "temporal": "yearly"
+    },
+    "custom_rs2": {
+     "experiment": "custom",
+     "geometry": "raster",
+     "spatial_method": "grid",
+     "coverage_region": "CONUS",
+     "variable_type": "continuous",
+     "display_unit": "unitless",
+     "description": "probe dataset",
+     "data_source": "Uploaded by user: probe.csv",
+     "label": "Raster same grid",
+     "boundary": "Point",
+     "join_col": "grid_id",
+     "key_col": "grid_id",
+     "year_col": "year",
+     "values_path": null,
+     "value_cols": [
+      "q"
+     ],
+     "bands": [
+      1
+     ],
+     "grid_hash": "g1aaaa11",
+     "rasters": [
+      {
+       "path": "/srv/custom/user-3/rs2/rasters/2018.tif",
+       "year": 2018
+      }
+     ],
+     "coverage_years": [
+      2018,
+      2018
+     ],
+     "temporal": "yearly"
+    },
+    "custom_parcel": {
+     "experiment": "custom",
+     "geometry": "polygon",
+     "spatial_method": "areal",
+     "coverage_region": "CONUS",
+     "variable_type": "continuous",
+     "display_unit": "unitless",
+     "description": "probe dataset",
+     "data_source": "Uploaded by user: probe.csv",
+     "label": "Parcel",
+     "boundary": "Parcel",
+     "join_col": "GEOID10",
+     "key_col": "p",
+     "value_cols": [
+      "x"
+     ],
+     "year_col": null,
+     "values_path": "/srv/custom/user-4/parcel/values.csv",
+     "temporal": "static"
+    }
+   }
+  },
+  "groups": [
+   {
+    "keys": [
+     "ndi"
+    ],
+    "overlay": false,
+    "result": {
+     "bg_ndi_wi": [
+      "ndi"
+     ]
+    }
+   },
+   {
+    "keys": [
+     "walkability",
+     "ndi"
+    ],
+    "overlay": false,
+    "result": {
+     "bg_ndi_wi": [
+      "ndi",
+      "walkability"
+     ]
+    }
+   },
+   {
+    "keys": [
+     "faqsd",
+     "acag",
+     "ndi",
+     "fara_tract"
+    ],
+    "overlay": false,
+    "result": {
+     "bg_ndi_wi": [
+      "ndi"
+     ],
+     "fara_tract": [
+      "fara_tract"
+     ],
+     "acag": [
+      "acag"
+     ],
+     "faqsd": [
+      "faqsd"
+     ]
+    }
+   },
+   {
+    "keys": [
+     "faqsd",
+     "temis",
+     "vnl",
+     "noise",
+     "nhd_bluespace",
+     "tiger_proximity",
+     "cbp_zcta5",
+     "walkability",
+     "ndi",
+     "acag",
+     "fara_tract"
+    ],
+    "overlay": false,
+    "result": {
+     "bg_ndi_wi": [
+      "ndi",
+      "walkability"
+     ],
+     "zcta5_cbp": [
+      "cbp_zcta5"
+     ],
+     "tiger_proximity": [
+      "tiger_proximity"
+     ],
+     "nhd_bluespace": [
+      "nhd_bluespace"
+     ],
+     "noise": [
+      "noise"
+     ],
+     "vnl": [
+      "vnl"
+     ],
+     "temis": [
+      "temis"
+     ],
+     "fara_tract": [
+      "fara_tract"
+     ],
+     "acag": [
+      "acag"
+     ],
+     "faqsd": [
+      "faqsd"
+     ]
+    }
+   },
+   {
+    "keys": [],
+    "overlay": false,
+    "result": {}
+   },
+   {
+    "keys": [
+     "ndi",
+     "pm25",
+     "aaa"
+    ],
+    "overlay": false,
+    "error": "KeyError: \"selection names variable(s) no catalog knows: ['aaa', 'pm25']\""
+   },
+   {
+    "keys": [
+     "custom_tracta",
+     "ndi",
+     "custom_rs"
+    ],
+    "overlay": true,
+    "result": {
+     "bg_ndi_wi": [
+      "ndi"
+     ],
+     "custom": [
+      "custom_tracta",
+      "custom_rs"
+     ]
+    }
+   },
+   {
+    "keys": [
+     "custom_rs",
+     "faqsd"
+    ],
+    "overlay": true,
+    "result": {
+     "faqsd": [
+      "faqsd"
+     ],
+     "custom": [
+      "custom_rs"
+     ]
+    }
+   }
+  ]
+ },
+ "features": [
+  {
+   "columns": [
+    "pid",
+    "startDate",
+    "endDate",
+    "longitude",
+    "latitude",
+    "ndi",
+    "NatWalkInd"
+   ],
+   "rows": [
+    {
+     "feature_name": "ndi",
+     "short_description": "Neighborhood Deprivation Index score",
+     "detailed_description": "Neighborhood Deprivation Index \u2014 composite socioeconomic deprivation score (z-score)."
+    },
+    {
+     "feature_name": "NatWalkInd",
+     "short_description": "National Walkability Index",
+     "detailed_description": "Relative walkability from the EPA National Walkability Index (1-20)."
+    }
+   ],
+   "csv": "feature_name,short_description,detailed_description\nndi,Neighborhood Deprivation Index score,Neighborhood Deprivation Index \u2014 composite socioeconomic deprivation score (z-score).\nNatWalkInd,National Walkability Index,Relative walkability from the EPA National Walkability Index (1-20).\n"
+  },
+  {
+   "columns": [
+    "faqsd_pm25",
+    "pm25",
+    "dist_pri",
+    "value",
+    "unknown_col",
+    "l50dba_exi"
+   ],
+   "rows": [
+    {
+     "feature_name": "faqsd_pm25",
+     "short_description": "PM2.5, daily average (FAQSD)",
+     "detailed_description": "Daily 24-hour average PM2.5 (ug/m3) from EPA FAQSD, area-weighted over the residential buffer and averaged over the episode's days."
+    },
+    {
+     "feature_name": "pm25",
+     "short_description": "PM2.5 mass",
+     "detailed_description": "Biweekly mean concentration of total fine particulate matter (PM2.5) mass in PM2.5 over the residential buffer (ACAG V5.NA.05, ug/m3)."
+    },
+    {
+     "feature_name": "dist_pri",
+     "short_description": "Distance to primary road",
+     "detailed_description": "Distance in meters to the nearest TIGER/Line primary road (S1100)."
+    },
+    {
+     "feature_name": "value",
+     "short_description": "Night-time radiance",
+     "detailed_description": "Annual mean night-time light radiance (nanowatts/cm^2/sr) from the VIIRS Day/Night Band."
+    },
+    {
+     "feature_name": "l50dba_exi",
+     "short_description": "Noise \u2014 existing conditions",
+     "detailed_description": "Existing-conditions daytime road+aviation transportation-noise surface, L50 dBA."
+    }
+   ],
+   "csv": "feature_name,short_description,detailed_description\nfaqsd_pm25,\"PM2.5, daily average (FAQSD)\",\"Daily 24-hour average PM2.5 (ug/m3) from EPA FAQSD, area-weighted over the residential buffer and averaged over the episode's days.\"\npm25,PM2.5 mass,\"Biweekly mean concentration of total fine particulate matter (PM2.5) mass in PM2.5 over the residential buffer (ACAG V5.NA.05, ug/m3).\"\ndist_pri,Distance to primary road,Distance in meters to the nearest TIGER/Line primary road (S1100).\nvalue,Night-time radiance,Annual mean night-time light radiance (nanowatts/cm^2/sr) from the VIIRS Day/Night Band.\nl50dba_exi,Noise \u2014 existing conditions,\"Existing-conditions daytime road+aviation transportation-noise surface, L50 dBA.\"\n"
+  },
+  {
+   "columns": [],
+   "rows": [],
+   "csv": "feature_name,short_description,detailed_description\n"
+  },
+  {
+   "columns": [
+    "r_religious",
+    "r_civic",
+    "uvief",
+    "LILATracts_1And10",
+    "dist_coast_m",
+    "ss_nbm"
+   ],
+   "rows": [
+    {
+     "feature_name": "r_religious",
+     "short_description": "Religious organizations",
+     "detailed_description": "Number of establishments in religious organizations per 10,000 population."
+    },
+    {
+     "feature_name": "r_civic",
+     "short_description": "Civic & social associations",
+     "detailed_description": "Number of establishments in civic and social associations per 10,000 population."
+    },
+    {
+     "feature_name": "uvief",
+     "short_description": "UV index at noon",
+     "detailed_description": "Ultraviolet index at local solar noon."
+    },
+    {
+     "feature_name": "LILATracts_1And10",
+     "short_description": "Low-income & low-access tract (1/10 mi)",
+     "detailed_description": "Share of the residential buffer in tracts flagged low-income and low-access at 1 mile (urban) / 10 miles (rural)."
+    },
+    {
+     "feature_name": "dist_coast_m",
+     "short_description": "Distance to coastline",
+     "detailed_description": "Distance in meters to the nearest coastline (99999 for inland addresses)."
+    },
+    {
+     "feature_name": "ss_nbm",
+     "short_description": "Sea salt \u2014 non-biomass",
+     "detailed_description": "Non-biomass sea salt in PM2.5: the plain estimate minus its biomass-burning share (derived, ug/m3)."
+    }
+   ],
+   "csv": "feature_name,short_description,detailed_description\nr_religious,Religious organizations,\"Number of establishments in religious organizations per 10,000 population.\"\nr_civic,Civic & social associations,\"Number of establishments in civic and social associations per 10,000 population.\"\nuvief,UV index at noon,Ultraviolet index at local solar noon.\nLILATracts_1And10,Low-income & low-access tract (1/10 mi),Share of the residential buffer in tracts flagged low-income and low-access at 1 mile (urban) / 10 miles (rural).\ndist_coast_m,Distance to coastline,Distance in meters to the nearest coastline (99999 for inland addresses).\nss_nbm,Sea salt \u2014 non-biomass,\"Non-biomass sea salt in PM2.5: the plain estimate minus its biomass-burning share (derived, ug/m3).\"\n"
+  }
+ ],
+ "runners": {
+  "bg_ndi_wi": {
+   "merge_keys": [
+    "walkability",
+    "ndi"
+   ],
+   "experiment_key": "bg_ndi_wi",
+   "variables": [
+    "walkability",
+    "ndi"
+   ],
+   "parquet_map": {
+    "walkability": "c4_wi.parquet",
+    "ndi": "c4_ndi.parquet"
+   },
+   "cohort_str_columns": [
+    "state_fips",
+    "county_fips",
+    "tract_geoid",
+    "bg_geoid"
+   ],
+   "episode_grouping_modules": [],
+   "cache_meta": {
+    "c3_bg": {
+     "boundary": "BG",
+     "raster_res_m": true,
+     "fields": [
+      "boundary",
+      "buffer_m",
+      "file_size_bytes",
+      "input_row_count",
+      "raster_res_m",
+      "sha_full",
+      "wall_clock_seconds"
+     ]
+    },
+    "c3_bg_2020": {
+     "boundary": "BG",
+     "raster_res_m": true,
+     "fields": [
+      "boundary",
+      "buffer_m",
+      "file_size_bytes",
+      "input_row_count",
+      "raster_res_m",
+      "sha_full",
+      "wall_clock_seconds"
+     ]
+    }
+   }
+  },
+  "zcta5_cbp": {
+   "merge_keys": [
+    "cbp_zcta5"
+   ],
+   "experiment_key": "zcta5_cbp",
+   "variables": [
+    "cbp_zcta5"
+   ],
+   "parquet_map": {
+    "cbp_zcta5": "c4_county_cbp.parquet"
+   },
+   "cohort_str_columns": [
+    "state_fips",
+    "county_fips",
+    "tract_geoid",
+    "bg_geoid",
+    "zcta5"
+   ],
+   "episode_grouping_modules": [],
+   "cache_meta": {
+    "c3_zcta5": {
+     "boundary": "ZCTA5",
+     "raster_res_m": true,
+     "fields": [
+      "boundary",
+      "buffer_m",
+      "file_size_bytes",
+      "input_row_count",
+      "raster_res_m",
+      "sha_full",
+      "wall_clock_seconds"
+     ]
+    },
+    "c3_county": {
+     "boundary": "COUNTY",
+     "raster_res_m": true,
+     "fields": [
+      "boundary",
+      "buffer_m",
+      "file_size_bytes",
+      "input_row_count",
+      "raster_res_m",
+      "sha_full",
+      "wall_clock_seconds"
+     ]
+    }
+   }
+  },
+  "tiger_proximity": {
+   "merge_keys": [
+    "tiger_proximity"
+   ],
+   "experiment_key": "tiger_proximity",
+   "variables": [
+    "tiger_proximity"
+   ],
+   "parquet_map": {
+    "tiger_proximity": "c4_tiger_roads.parquet"
+   },
+   "cohort_str_columns": [
+    "state_fips",
+    "county_fips",
+    "tract_geoid",
+    "bg_geoid",
+    "zcta5"
+   ],
+   "episode_grouping_modules": [
+    "spacescans.linkage.precomputed_areal_linkage"
+   ],
+   "cache_meta": {
+    "c3_tiger_roads": {
+     "boundary": "BG_TIGER2",
+     "raster_res_m": false,
+     "fields": [
+      "boundary",
+      "buffer_m",
+      "file_size_bytes",
+      "input_row_count",
+      "sha_full",
+      "wall_clock_seconds"
+     ]
+    }
+   }
+  },
+  "nhd_bluespace": {
+   "merge_keys": [
+    "nhd_bluespace"
+   ],
+   "experiment_key": "nhd_bluespace",
+   "variables": [
+    "nhd_bluespace"
+   ],
+   "parquet_map": {
+    "nhd_bluespace": "c4_nhd_bluespace.parquet"
+   },
+   "cohort_str_columns": [
+    "state_fips",
+    "county_fips",
+    "tract_geoid",
+    "bg_geoid",
+    "zcta5"
+   ],
+   "episode_grouping_modules": [
+    "spacescans.linkage.precomputed_static_linkage"
+   ],
+   "cache_meta": {
+    "c3_nhd_bluespace": {
+     "boundary": "BG_NHD",
+     "raster_res_m": false,
+     "fields": [
+      "boundary",
+      "buffer_m",
+      "file_size_bytes",
+      "input_row_count",
+      "sha_full",
+      "wall_clock_seconds"
+     ]
+    }
+   }
+  },
+  "noise": {
+   "merge_keys": [
+    "noise"
+   ],
+   "experiment_key": "noise",
+   "variables": [
+    "noise"
+   ],
+   "parquet_map": {
+    "noise": "c4_noise.parquet"
+   },
+   "cohort_str_columns": [
+    "state_fips",
+    "county_fips",
+    "tract_geoid",
+    "bg_geoid",
+    "zcta5"
+   ],
+   "episode_grouping_modules": [
+    "spacescans.linkage.static_areal_linkage"
+   ],
+   "cache_meta": {
+    "c3_noise": {
+     "boundary": "BG_NOISE",
+     "raster_res_m": false,
+     "fields": [
+      "boundary",
+      "buffer_m",
+      "file_size_bytes",
+      "input_row_count",
+      "sha_full",
+      "wall_clock_seconds"
+     ]
+    }
+   }
+  },
+  "vnl": {
+   "merge_keys": [
+    "vnl"
+   ],
+   "experiment_key": "vnl",
+   "variables": [
+    "vnl"
+   ],
+   "parquet_map": {
+    "vnl": "c4_vnl.parquet"
+   },
+   "cohort_str_columns": [
+    "state_fips",
+    "county_fips",
+    "tract_geoid",
+    "bg_geoid",
+    "zcta5"
+   ],
+   "episode_grouping_modules": [
+    "spacescans.linkage.gridded_linkage"
+   ],
+   "cache_meta": {
+    "c3_vnl": {
+     "boundary": "BG_VNL1",
+     "raster_res_m": false,
+     "fields": [
+      "boundary",
+      "buffer_m",
+      "file_size_bytes",
+      "input_row_count",
+      "sha_full",
+      "wall_clock_seconds"
+     ]
+    }
+   }
+  },
+  "temis": {
+   "merge_keys": [
+    "temis"
+   ],
+   "experiment_key": "temis",
+   "variables": [
+    "temis"
+   ],
+   "parquet_map": {
+    "temis": "c4_temis.parquet"
+   },
+   "cohort_str_columns": [
+    "state_fips",
+    "county_fips",
+    "tract_geoid",
+    "bg_geoid",
+    "zcta5"
+   ],
+   "episode_grouping_modules": [
+    "spacescans.linkage.gridded_linkage"
+   ],
+   "cache_meta": {
+    "c3_temis": {
+     "boundary": "BG_TEMIS",
+     "raster_res_m": false,
+     "fields": [
+      "boundary",
+      "buffer_m",
+      "file_size_bytes",
+      "input_row_count",
+      "sha_full",
+      "wall_clock_seconds"
+     ]
+    }
+   }
+  },
+  "fara_tract": {
+   "merge_keys": [
+    "fara_tract"
+   ],
+   "experiment_key": "fara_tract",
+   "variables": [
+    "fara_tract"
+   ],
+   "parquet_map": {
+    "fara_tract": "c4_tract_fara.parquet"
+   },
+   "cohort_str_columns": [
+    "state_fips",
+    "county_fips",
+    "tract_geoid",
+    "bg_geoid",
+    "zcta5"
+   ],
+   "episode_grouping_modules": [
+    "spacescans.linkage.fara_linkage"
+   ],
+   "cache_meta": {
+    "c3_tract_us": {
+     "boundary": "TRACT_FARA",
+     "raster_res_m": false,
+     "fields": [
+      "boundary",
+      "buffer_m",
+      "file_size_bytes",
+      "input_row_count",
+      "sha_full",
+      "wall_clock_seconds"
+     ]
+    }
+   }
+  },
+  "acag": {
+   "merge_keys": [
+    "acag"
+   ],
+   "experiment_key": "acag",
+   "variables": [
+    "acag"
+   ],
+   "parquet_map": {
+    "acag": "c4_acag.parquet"
+   },
+   "cohort_str_columns": [
+    "state_fips",
+    "county_fips",
+    "tract_geoid",
+    "bg_geoid",
+    "zcta5"
+   ],
+   "episode_grouping_modules": [
+    "spacescans.linkage.acag_linkage"
+   ],
+   "cache_meta": {
+    "c3_acag": {
+     "boundary": "BG_ACAG",
+     "raster_res_m": false,
+     "fields": [
+      "boundary",
+      "buffer_m",
+      "file_size_bytes",
+      "input_row_count",
+      "sha_full",
+      "wall_clock_seconds"
+     ]
+    }
+   }
+  },
+  "faqsd": {
+   "merge_keys": [
+    "faqsd"
+   ],
+   "experiment_key": "faqsd",
+   "variables": [
+    "faqsd"
+   ],
+   "parquet_map": {
+    "faqsd": "c4_tract_faqsd.parquet"
+   },
+   "cohort_str_columns": [
+    "state_fips",
+    "county_fips",
+    "tract_geoid",
+    "bg_geoid",
+    "zcta5"
+   ],
+   "episode_grouping_modules": [
+    "spacescans.plugins.readers.faqsd"
+   ],
+   "cache_meta": {
+    "c3_tract_us": {
+     "boundary": "TRACT_FARA",
+     "raster_res_m": false,
+     "fields": [
+      "boundary",
+      "buffer_m",
+      "file_size_bytes",
+      "input_row_count",
+      "sha_full",
+      "wall_clock_seconds"
+     ]
+    }
+   },
+   "faqsd_columns_after_merge": [
+    "PATID",
+    "geoid",
+    "faqsd_o3",
+    "faqsd_pm25",
+    "other"
+   ]
+  },
+  "custom": {
+   "merge_keys": [
+    "custom_tracta",
+    "custom_rs"
+   ],
+   "experiment_key": "custom",
+   "variables": [
+    "custom_tracta",
+    "custom_rs"
+   ],
+   "parquet_map": {
+    "custom_tracta": "c4_custom_tracta.parquet",
+    "custom_rs": "c4_custom_rs.parquet"
+   },
+   "cohort_str_columns": [
+    "state_fips",
+    "county_fips",
+    "tract_geoid",
+    "bg_geoid",
+    "zcta5"
+   ],
+   "episode_grouping_modules": [
+    "spacescans.linkage.static_areal_linkage",
+    "spacescans.linkage.yearly_areal_linkage"
+   ],
+   "cache_meta": {
+    "c3_tract_us": {
+     "boundary": "TRACT_FARA",
+     "raster_res_m": false,
+     "fields": [
+      "boundary",
+      "buffer_m",
+      "file_size_bytes",
+      "input_row_count",
+      "sha_full",
+      "wall_clock_seconds"
+     ]
+    },
+    "c3_bg": {
+     "boundary": "BG",
+     "raster_res_m": false,
+     "fields": [
+      "boundary",
+      "buffer_m",
+      "file_size_bytes",
+      "input_row_count",
+      "sha_full",
+      "wall_clock_seconds"
+     ]
+    },
+    "c3_zcta5": {
+     "boundary": "ZCTA5",
+     "raster_res_m": false,
+     "fields": [
+      "boundary",
+      "buffer_m",
+      "file_size_bytes",
+      "input_row_count",
+      "sha_full",
+      "wall_clock_seconds"
+     ]
+    },
+    "c3_county_us": {
+     "boundary": "COUNTY",
+     "raster_res_m": false,
+     "fields": [
+      "boundary",
+      "buffer_m",
+      "file_size_bytes",
+      "input_row_count",
+      "sha_full",
+      "wall_clock_seconds"
+     ]
+    },
+    "c3_customgrid_g1aaaa11": {
+     "boundary": "CUSTOMGRID_g1aaaa11",
+     "raster_res_m": false,
+     "fields": [
+      "boundary",
+      "buffer_m",
+      "file_size_bytes",
+      "input_row_count",
+      "sha_full",
+      "wall_clock_seconds"
+     ]
+    },
+    "c3_customgrid_g2bbbb22": {
+     "boundary": "CUSTOMGRID_g2bbbb22",
+     "raster_res_m": false,
+     "fields": [
+      "boundary",
+      "buffer_m",
+      "file_size_bytes",
+      "input_row_count",
+      "sha_full",
+      "wall_clock_seconds"
+     ]
+    }
+   }
+  }
+ },
+ "plans": [
+  {
+   "experiment": "bg_ndi_wi",
+   "keys": [
+    "ndi"
+   ],
+   "overlay": null,
+   "steps": [
+    {
+     "name": "c3_bg",
+     "template": "c3/bg_us_demo.yaml",
+     "is_c3": true
+    },
+    {
+     "name": "c3_bg_2020",
+     "template": "c3/bg_us_2020_demo.yaml",
+     "is_c3": true
+    },
+    {
+     "name": "c4_ndi",
+     "template": "c4/bg_ndi_demo.yaml",
+     "is_c3": false
+    }
+   ],
+   "renders": {
+    "270/25": {
+     "c3_bg": "5589e0a69c843d9a7ed03d18abe0180a566890a8924fd3fd51db93b8c8bacdd5",
+     "c3_bg_2020": "cc61ff3b0c7953b05a03fd346c5325a3554d2061afcd3f45e872a38cc2528571",
+     "c4_ndi": "15f5d9a3a9b4bc5b2b4b4a5e471593c730b04e125e7c3ddad1c6c5c02f717bb1"
+    },
+    "500/50": {
+     "c3_bg": "c0e06a55f82570eb9af72e6b9675b6bd38dbeb6540cc4e2815ad1a8d4a3393c7",
+     "c3_bg_2020": "9f789e889997260e3f56f343760713daa1f4d60de2208860760c269ba6fee980",
+     "c4_ndi": "c4216d02732b822d9df71cb9b2c71a3c85b47ffa4c081bc3d02b00bc57f5da22"
+    },
+    "1000/25": {
+     "c3_bg": "aef8d1ca678bf4ff2edfdb0e0fc89b05216bf7f993241e1c351c54aa14a81695",
+     "c3_bg_2020": "35b6b74501e9d9823a16f444a71902ffb8886906abbf64d572858096d1c1f278",
+     "c4_ndi": "5458490afbd844c550c13dc0dfb6c27b8b65173bedc0fe66e0df032c180257fa"
+    }
+   },
+   "cache_keys": {
+    "270/25": {
+     "c3_bg": "17d85d9c__BG__b270m__r25m",
+     "c3_bg_2020": "17d85d9c__BG2020__b270m__r25m"
+    },
+    "500/50": {
+     "c3_bg": "17d85d9c__BG__b500m__r50m",
+     "c3_bg_2020": "17d85d9c__BG2020__b500m__r50m"
+    },
+    "1000/25": {
+     "c3_bg": "17d85d9c__BG__b1000m__r25m",
+     "c3_bg_2020": "17d85d9c__BG2020__b1000m__r25m"
+    }
+   }
+  },
+  {
+   "experiment": "bg_ndi_wi",
+   "keys": [
+    "walkability"
+   ],
+   "overlay": null,
+   "steps": [
+    {
+     "name": "c3_bg",
+     "template": "c3/bg_us_demo.yaml",
+     "is_c3": true
+    },
+    {
+     "name": "c4_wi",
+     "template": "c4/bg_wi_demo.yaml",
+     "is_c3": false
+    }
+   ],
+   "renders": {
+    "270/25": {
+     "c3_bg": "5589e0a69c843d9a7ed03d18abe0180a566890a8924fd3fd51db93b8c8bacdd5",
+     "c4_wi": "145e181248fe051c420607ae8ae152eab25cfe105d5edf17bb9a8ec36e2ba360"
+    },
+    "500/50": {
+     "c3_bg": "c0e06a55f82570eb9af72e6b9675b6bd38dbeb6540cc4e2815ad1a8d4a3393c7",
+     "c4_wi": "dbe446350b04fb24adfff9eefa5fdee141acdcf0c6b01b235f7aa6f1c76e50c5"
+    },
+    "1000/25": {
+     "c3_bg": "aef8d1ca678bf4ff2edfdb0e0fc89b05216bf7f993241e1c351c54aa14a81695",
+     "c4_wi": "0951499c07d39a0fa311e6f5d95b5b233360ccfc154399ebb71edcd2b59d11f5"
+    }
+   },
+   "cache_keys": {
+    "270/25": {
+     "c3_bg": "17d85d9c__BG__b270m__r25m"
+    },
+    "500/50": {
+     "c3_bg": "17d85d9c__BG__b500m__r50m"
+    },
+    "1000/25": {
+     "c3_bg": "17d85d9c__BG__b1000m__r25m"
+    }
+   }
+  },
+  {
+   "experiment": "bg_ndi_wi",
+   "keys": [
+    "ndi",
+    "walkability"
+   ],
+   "overlay": null,
+   "steps": [
+    {
+     "name": "c3_bg",
+     "template": "c3/bg_us_demo.yaml",
+     "is_c3": true
+    },
+    {
+     "name": "c3_bg_2020",
+     "template": "c3/bg_us_2020_demo.yaml",
+     "is_c3": true
+    },
+    {
+     "name": "c4_ndi",
+     "template": "c4/bg_ndi_demo.yaml",
+     "is_c3": false
+    },
+    {
+     "name": "c4_wi",
+     "template": "c4/bg_wi_demo.yaml",
+     "is_c3": false
+    }
+   ],
+   "renders": {
+    "270/25": {
+     "c3_bg": "5589e0a69c843d9a7ed03d18abe0180a566890a8924fd3fd51db93b8c8bacdd5",
+     "c3_bg_2020": "cc61ff3b0c7953b05a03fd346c5325a3554d2061afcd3f45e872a38cc2528571",
+     "c4_ndi": "15f5d9a3a9b4bc5b2b4b4a5e471593c730b04e125e7c3ddad1c6c5c02f717bb1",
+     "c4_wi": "145e181248fe051c420607ae8ae152eab25cfe105d5edf17bb9a8ec36e2ba360"
+    },
+    "500/50": {
+     "c3_bg": "c0e06a55f82570eb9af72e6b9675b6bd38dbeb6540cc4e2815ad1a8d4a3393c7",
+     "c3_bg_2020": "9f789e889997260e3f56f343760713daa1f4d60de2208860760c269ba6fee980",
+     "c4_ndi": "c4216d02732b822d9df71cb9b2c71a3c85b47ffa4c081bc3d02b00bc57f5da22",
+     "c4_wi": "dbe446350b04fb24adfff9eefa5fdee141acdcf0c6b01b235f7aa6f1c76e50c5"
+    },
+    "1000/25": {
+     "c3_bg": "aef8d1ca678bf4ff2edfdb0e0fc89b05216bf7f993241e1c351c54aa14a81695",
+     "c3_bg_2020": "35b6b74501e9d9823a16f444a71902ffb8886906abbf64d572858096d1c1f278",
+     "c4_ndi": "5458490afbd844c550c13dc0dfb6c27b8b65173bedc0fe66e0df032c180257fa",
+     "c4_wi": "0951499c07d39a0fa311e6f5d95b5b233360ccfc154399ebb71edcd2b59d11f5"
+    }
+   },
+   "cache_keys": {
+    "270/25": {
+     "c3_bg": "17d85d9c__BG__b270m__r25m",
+     "c3_bg_2020": "17d85d9c__BG2020__b270m__r25m"
+    },
+    "500/50": {
+     "c3_bg": "17d85d9c__BG__b500m__r50m",
+     "c3_bg_2020": "17d85d9c__BG2020__b500m__r50m"
+    },
+    "1000/25": {
+     "c3_bg": "17d85d9c__BG__b1000m__r25m",
+     "c3_bg_2020": "17d85d9c__BG2020__b1000m__r25m"
+    }
+   }
+  },
+  {
+   "experiment": "bg_ndi_wi",
+   "keys": [
+    "walkability",
+    "ndi"
+   ],
+   "overlay": null,
+   "steps": [
+    {
+     "name": "c3_bg",
+     "template": "c3/bg_us_demo.yaml",
+     "is_c3": true
+    },
+    {
+     "name": "c3_bg_2020",
+     "template": "c3/bg_us_2020_demo.yaml",
+     "is_c3": true
+    },
+    {
+     "name": "c4_ndi",
+     "template": "c4/bg_ndi_demo.yaml",
+     "is_c3": false
+    },
+    {
+     "name": "c4_wi",
+     "template": "c4/bg_wi_demo.yaml",
+     "is_c3": false
+    }
+   ],
+   "renders": {
+    "270/25": {
+     "c3_bg": "5589e0a69c843d9a7ed03d18abe0180a566890a8924fd3fd51db93b8c8bacdd5",
+     "c3_bg_2020": "cc61ff3b0c7953b05a03fd346c5325a3554d2061afcd3f45e872a38cc2528571",
+     "c4_ndi": "15f5d9a3a9b4bc5b2b4b4a5e471593c730b04e125e7c3ddad1c6c5c02f717bb1",
+     "c4_wi": "145e181248fe051c420607ae8ae152eab25cfe105d5edf17bb9a8ec36e2ba360"
+    },
+    "500/50": {
+     "c3_bg": "c0e06a55f82570eb9af72e6b9675b6bd38dbeb6540cc4e2815ad1a8d4a3393c7",
+     "c3_bg_2020": "9f789e889997260e3f56f343760713daa1f4d60de2208860760c269ba6fee980",
+     "c4_ndi": "c4216d02732b822d9df71cb9b2c71a3c85b47ffa4c081bc3d02b00bc57f5da22",
+     "c4_wi": "dbe446350b04fb24adfff9eefa5fdee141acdcf0c6b01b235f7aa6f1c76e50c5"
+    },
+    "1000/25": {
+     "c3_bg": "aef8d1ca678bf4ff2edfdb0e0fc89b05216bf7f993241e1c351c54aa14a81695",
+     "c3_bg_2020": "35b6b74501e9d9823a16f444a71902ffb8886906abbf64d572858096d1c1f278",
+     "c4_ndi": "5458490afbd844c550c13dc0dfb6c27b8b65173bedc0fe66e0df032c180257fa",
+     "c4_wi": "0951499c07d39a0fa311e6f5d95b5b233360ccfc154399ebb71edcd2b59d11f5"
+    }
+   },
+   "cache_keys": {
+    "270/25": {
+     "c3_bg": "17d85d9c__BG__b270m__r25m",
+     "c3_bg_2020": "17d85d9c__BG2020__b270m__r25m"
+    },
+    "500/50": {
+     "c3_bg": "17d85d9c__BG__b500m__r50m",
+     "c3_bg_2020": "17d85d9c__BG2020__b500m__r50m"
+    },
+    "1000/25": {
+     "c3_bg": "17d85d9c__BG__b1000m__r25m",
+     "c3_bg_2020": "17d85d9c__BG2020__b1000m__r25m"
+    }
+   }
+  },
+  {
+   "experiment": "bg_ndi_wi",
+   "keys": [
+    "ndi",
+    "ndi"
+   ],
+   "overlay": null,
+   "steps": [
+    {
+     "name": "c3_bg",
+     "template": "c3/bg_us_demo.yaml",
+     "is_c3": true
+    },
+    {
+     "name": "c3_bg_2020",
+     "template": "c3/bg_us_2020_demo.yaml",
+     "is_c3": true
+    },
+    {
+     "name": "c4_ndi",
+     "template": "c4/bg_ndi_demo.yaml",
+     "is_c3": false
+    }
+   ],
+   "renders": {
+    "270/25": {
+     "c3_bg": "5589e0a69c843d9a7ed03d18abe0180a566890a8924fd3fd51db93b8c8bacdd5",
+     "c3_bg_2020": "cc61ff3b0c7953b05a03fd346c5325a3554d2061afcd3f45e872a38cc2528571",
+     "c4_ndi": "15f5d9a3a9b4bc5b2b4b4a5e471593c730b04e125e7c3ddad1c6c5c02f717bb1"
+    },
+    "500/50": {
+     "c3_bg": "c0e06a55f82570eb9af72e6b9675b6bd38dbeb6540cc4e2815ad1a8d4a3393c7",
+     "c3_bg_2020": "9f789e889997260e3f56f343760713daa1f4d60de2208860760c269ba6fee980",
+     "c4_ndi": "c4216d02732b822d9df71cb9b2c71a3c85b47ffa4c081bc3d02b00bc57f5da22"
+    },
+    "1000/25": {
+     "c3_bg": "aef8d1ca678bf4ff2edfdb0e0fc89b05216bf7f993241e1c351c54aa14a81695",
+     "c3_bg_2020": "35b6b74501e9d9823a16f444a71902ffb8886906abbf64d572858096d1c1f278",
+     "c4_ndi": "5458490afbd844c550c13dc0dfb6c27b8b65173bedc0fe66e0df032c180257fa"
+    }
+   },
+   "cache_keys": {
+    "270/25": {
+     "c3_bg": "17d85d9c__BG__b270m__r25m",
+     "c3_bg_2020": "17d85d9c__BG2020__b270m__r25m"
+    },
+    "500/50": {
+     "c3_bg": "17d85d9c__BG__b500m__r50m",
+     "c3_bg_2020": "17d85d9c__BG2020__b500m__r50m"
+    },
+    "1000/25": {
+     "c3_bg": "17d85d9c__BG__b1000m__r25m",
+     "c3_bg_2020": "17d85d9c__BG2020__b1000m__r25m"
+    }
+   }
+  },
+  {
+   "experiment": "bg_ndi_wi",
+   "keys": [],
+   "overlay": null,
+   "error": "ValueError: at least one variable must be selected"
+  },
+  {
+   "experiment": "bg_ndi_wi",
+   "keys": [
+    "ndi",
+    "pm25"
+   ],
+   "overlay": null,
+   "error": "ValueError: unknown variable(s): pm25"
+  },
+  {
+   "experiment": "bg_ndi_wi",
+   "keys": [
+    "cbp_zcta5"
+   ],
+   "overlay": null,
+   "error": "ValueError: unknown variable(s): cbp_zcta5"
+  },
+  {
+   "experiment": "zcta5_cbp",
+   "keys": [
+    "cbp_zcta5"
+   ],
+   "overlay": null,
+   "steps": [
+    {
+     "name": "c3_zcta5",
+     "template": "c3/zcta5_us_demo.yaml",
+     "is_c3": true
+    },
+    {
+     "name": "c3_county",
+     "template": "c3/county_us_demo.yaml",
+     "is_c3": true
+    },
+    {
+     "name": "c4_zcta5_cbp",
+     "template": "c4/zcta5_cbp_demo.yaml",
+     "is_c3": false
+    },
+    {
+     "name": "c4_county_cbp",
+     "template": "c4/county_cbp_demo.yaml",
+     "is_c3": false
+    }
+   ],
+   "renders": {
+    "270/25": {
+     "c3_zcta5": "9169c0098abbb5c2fa69ab8b7c3be78163ad63797ab1e3f3b3264558f88f58e0",
+     "c3_county": "0f0581a755c6709a3477928cbe3ae06e9e52f571c566d23cc76031a81556a7cb",
+     "c4_zcta5_cbp": "d66d270bbbc83ae15af7ce2b7ac0b77d7a89fb97735b8d1771c9980af0a9a364",
+     "c4_county_cbp": "1c51174e6f258d31b4e51fffd6cc891eaf293dd071dd95f53209789a51cbc5a0"
+    },
+    "500/50": {
+     "c3_zcta5": "71dc2d54b3bff0eaf278e71b1bc9bed615ef34b2043aeacb6454bc21d98e352c",
+     "c3_county": "6be4d910054c2bf4de966be28c197e547dbb0c2d04f8eede814be37247cf4e99",
+     "c4_zcta5_cbp": "ed8220c9833beae645fcdc340b82df6ca25f11105b2d1f05d3ddd2a01f89cb8d",
+     "c4_county_cbp": "2f33b95320f4ffd2714d7f7976367f478a847b2bc7cf24beebe3c85430742a2e"
+    },
+    "1000/25": {
+     "c3_zcta5": "970f7dad494bb376f09f33ad734605f7a0b7d24a89207e54454c8e98e2fbf488",
+     "c3_county": "6b6cdf3018557ad707ee088f9218ced10d8e82883f296383cf453af8f0403949",
+     "c4_zcta5_cbp": "0ea654d3ed9ab13496c08218d1d9d9869a4cf68a6090a8c30c8403df9053c9d8",
+     "c4_county_cbp": "44d12fe22aabeb25bdf2da56cb1079ef4da5979fd31e31cb344a23a2566a5c80"
+    }
+   },
+   "cache_keys": {
+    "270/25": {
+     "c3_zcta5": "17d85d9c__ZCTA5__b270m__r25m",
+     "c3_county": "17d85d9c__COUNTY__b270m__r25m"
+    },
+    "500/50": {
+     "c3_zcta5": "17d85d9c__ZCTA5__b500m__r50m",
+     "c3_county": "17d85d9c__COUNTY__b500m__r50m"
+    },
+    "1000/25": {
+     "c3_zcta5": "17d85d9c__ZCTA5__b1000m__r25m",
+     "c3_county": "17d85d9c__COUNTY__b1000m__r25m"
+    }
+   }
+  },
+  {
+   "experiment": "zcta5_cbp",
+   "keys": [
+    "ndi"
+   ],
+   "overlay": null,
+   "error": "ValueError: unknown variable(s): ndi"
+  },
+  {
+   "experiment": "zcta5_cbp",
+   "keys": [],
+   "overlay": null,
+   "error": "ValueError: at least one variable must be selected"
+  },
+  {
+   "experiment": "tiger_proximity",
+   "keys": [
+    "tiger_proximity"
+   ],
+   "overlay": null,
+   "steps": [
+    {
+     "name": "c3_tiger_roads",
+     "template": "c3/tiger_roads_demo.yaml",
+     "is_c3": true
+    },
+    {
+     "name": "c4_tiger_roads",
+     "template": "c4/tiger_roads_demo.yaml",
+     "is_c3": false
+    }
+   ],
+   "renders": {
+    "270/25": {
+     "c3_tiger_roads": "b3fce6ca0598bc98200b4f6a5b06d07e7a9ddc9ab591b8ede9d0165205e7f3c1",
+     "c4_tiger_roads": "939baacfed612284755dd285d53b52d684949b6dec3d12c4a71d5da71d941948"
+    },
+    "500/50": {
+     "c3_tiger_roads": "6f4e0d32160f9379de2244b02150c0f572be86432a51e7df50c840ade00562cb",
+     "c4_tiger_roads": "082236d4ebb408fdfd18d4347888e4d470b771eb4db0f360ea91d7eea3d5c189"
+    },
+    "1000/25": {
+     "c3_tiger_roads": "3bce4835b5f32a989502b0a8ccf2d6768c61b612b771e916e9df4ebd90bfc9c3",
+     "c4_tiger_roads": "b2a9f379236cdbf4fa201a7287ff1b2d498ae6539d0fc39c46515c488a39c521"
+    }
+   },
+   "cache_keys": {
+    "270/25": {
+     "c3_tiger_roads": "17d85d9c__BG_TIGER2__b270m"
+    },
+    "500/50": {
+     "c3_tiger_roads": "17d85d9c__BG_TIGER2__b500m"
+    },
+    "1000/25": {
+     "c3_tiger_roads": "17d85d9c__BG_TIGER2__b1000m"
+    }
+   }
+  },
+  {
+   "experiment": "nhd_bluespace",
+   "keys": [
+    "nhd_bluespace"
+   ],
+   "overlay": null,
+   "steps": [
+    {
+     "name": "c3_nhd_bluespace",
+     "template": "c3/nhd_demo.yaml",
+     "is_c3": true
+    },
+    {
+     "name": "c4_nhd_bluespace",
+     "template": "c4/nhd_bluespace_demo.yaml",
+     "is_c3": false
+    }
+   ],
+   "renders": {
+    "270/25": {
+     "c3_nhd_bluespace": "2d2f9b05756d540c5a71130ab52a55ff85b258119cb46f5f7a80a54802f7d89f",
+     "c4_nhd_bluespace": "0b32d9c974bb319478ddcfb96cc4991f39463e1afdfe59dc9c7681f6df0129bf"
+    },
+    "500/50": {
+     "c3_nhd_bluespace": "3a9b3eff1d5665b24de8319b7e48443b18af325dacd8b0845f772a15ce0e61b7",
+     "c4_nhd_bluespace": "47f8b7c3cd840ae0500d25348401272f09940b720d960b8cf6a798269bfbab87"
+    },
+    "1000/25": {
+     "c3_nhd_bluespace": "c756449d59d6693fc07f22e4ff313e33386fe062664ad1bf7c6a3187f9d04ed1",
+     "c4_nhd_bluespace": "b5645c2b02f47894c10b57bbe5155658dc77f6eb8bddd43150562f90c33acd3c"
+    }
+   },
+   "cache_keys": {
+    "270/25": {
+     "c3_nhd_bluespace": "17d85d9c__BG_NHD__b270m"
+    },
+    "500/50": {
+     "c3_nhd_bluespace": "17d85d9c__BG_NHD__b500m"
+    },
+    "1000/25": {
+     "c3_nhd_bluespace": "17d85d9c__BG_NHD__b1000m"
+    }
+   }
+  },
+  {
+   "experiment": "noise",
+   "keys": [
+    "noise"
+   ],
+   "overlay": null,
+   "steps": [
+    {
+     "name": "c3_noise",
+     "template": "c3/noise_grid_demo.yaml",
+     "is_c3": true
+    },
+    {
+     "name": "c4_noise",
+     "template": "c4/noise_demo.yaml",
+     "is_c3": false
+    }
+   ],
+   "renders": {
+    "270/25": {
+     "c3_noise": "3c0af63755c0b3222338399c039a3bfbb85616f78db74f5e2aac621a350d5baa",
+     "c4_noise": "1d283a4a36ab7f7450ad83bd9867a3b147bfc0be29d2f92fd74f6c985484734d"
+    },
+    "500/50": {
+     "c3_noise": "ce3ad42fe879b8407f69135d7d6c451b57b2b6ae41c33b404d93d7ac71bd3db5",
+     "c4_noise": "bc3d743ed1434aca5bd2f7dbe0d7c58060077d262efb2f5f8455f615aced844a"
+    },
+    "1000/25": {
+     "c3_noise": "294b920eb1e191eb73740a8f7f03451809a4e7667fd397ee17eecba03fae55f5",
+     "c4_noise": "29db8a3b36b45a1bc611eaf17afe80d3578914abcd83795dee6ebc7173ed3ad4"
+    }
+   },
+   "cache_keys": {
+    "270/25": {
+     "c3_noise": "17d85d9c__BG_NOISE__b270m"
+    },
+    "500/50": {
+     "c3_noise": "17d85d9c__BG_NOISE__b500m"
+    },
+    "1000/25": {
+     "c3_noise": "17d85d9c__BG_NOISE__b1000m"
+    }
+   }
+  },
+  {
+   "experiment": "vnl",
+   "keys": [
+    "vnl"
+   ],
+   "overlay": null,
+   "steps": [
+    {
+     "name": "c3_vnl",
+     "template": "c3/vnl_grid_demo.yaml",
+     "is_c3": true
+    },
+    {
+     "name": "c4_vnl",
+     "template": "c4/vnl_demo.yaml",
+     "is_c3": false
+    }
+   ],
+   "renders": {
+    "270/25": {
+     "c3_vnl": "03b2a68511a4a6c5d78ea622df294be8fafd902a8e33f4d5a1b61d1d2b3869a6",
+     "c4_vnl": "bf5f06f53ccefe01607d27e80eb3700546212806e2e78a2f9a7aad055af72506"
+    },
+    "500/50": {
+     "c3_vnl": "84ac19e0fd1bd2294ccdabfc848a2732bb644ac14286a6640c9378f272fb1135",
+     "c4_vnl": "14ab6261e10a0737af1d114543fbd72c95799109a5c73a8b9459dde5d34a77c8"
+    },
+    "1000/25": {
+     "c3_vnl": "bf1081627a090cd92d2abd195904d70e87ef832a1053dc324fde89cc5d81be7f",
+     "c4_vnl": "f664e9ef5ca1e04bf151a6fce992a93892f3a420219fffb7b2e307736b7477d2"
+    }
+   },
+   "cache_keys": {
+    "270/25": {
+     "c3_vnl": "17d85d9c__BG_VNL1__b270m"
+    },
+    "500/50": {
+     "c3_vnl": "17d85d9c__BG_VNL1__b500m"
+    },
+    "1000/25": {
+     "c3_vnl": "17d85d9c__BG_VNL1__b1000m"
+    }
+   }
+  },
+  {
+   "experiment": "temis",
+   "keys": [
+    "temis"
+   ],
+   "overlay": null,
+   "steps": [
+    {
+     "name": "c3_temis",
+     "template": "c3/temis_grid_demo.yaml",
+     "is_c3": true
+    },
+    {
+     "name": "c4_temis",
+     "template": "c4/temis_demo.yaml",
+     "is_c3": false
+    }
+   ],
+   "renders": {
+    "270/25": {
+     "c3_temis": "8ef12930013cf8b9261bdc60dcb0cc7af4ba90abc735140266e1316c32ae08e4",
+     "c4_temis": "a237b1a0c1240dc0cf11d1a5dac67d2c20b4e82138fbaf0da999bb68c8ae1bae"
+    },
+    "500/50": {
+     "c3_temis": "db943a0ba40067d1965311dc1bc27bb7230386555b654a59f23518491691c088",
+     "c4_temis": "019203313aa7f3dd9b62e385a365547f43e73466706209d4e6f3e664790abeb0"
+    },
+    "1000/25": {
+     "c3_temis": "d086c700754f9fe8255a9c7becc59ad07d119c23742c8676747fa3528ae0fdd2",
+     "c4_temis": "5843964b84315ff1f6a134a8c9bfa9324bdedb9b92d25a8e9bd41126c92f9ac3"
+    }
+   },
+   "cache_keys": {
+    "270/25": {
+     "c3_temis": "17d85d9c__BG_TEMIS__b270m"
+    },
+    "500/50": {
+     "c3_temis": "17d85d9c__BG_TEMIS__b500m"
+    },
+    "1000/25": {
+     "c3_temis": "17d85d9c__BG_TEMIS__b1000m"
+    }
+   }
+  },
+  {
+   "experiment": "fara_tract",
+   "keys": [
+    "fara_tract"
+   ],
+   "overlay": null,
+   "steps": [
+    {
+     "name": "c3_tract_us",
+     "template": "c3/tract_us_demo.yaml",
+     "is_c3": true
+    },
+    {
+     "name": "c4_tract_fara",
+     "template": "c4/tract_fara_demo.yaml",
+     "is_c3": false
+    }
+   ],
+   "renders": {
+    "270/25": {
+     "c3_tract_us": "acfe567588e5ad63e377816caaf30df429389beb64f9992572cc47e266b5c01c",
+     "c4_tract_fara": "0ba0e2afcc07aa3b172f1115b7d51e22935355c295109bd178a017484d7970f8"
+    },
+    "500/50": {
+     "c3_tract_us": "4588d2d7ab86095025ec3303eb54e5a1cecb0d9292340ee1064930eb0c1f0940",
+     "c4_tract_fara": "a77811d5f986eb8ee01da4b49409c2bb972a588fbce84721c58f208de65a8dfa"
+    },
+    "1000/25": {
+     "c3_tract_us": "ed7b04eaff12c7d601c5d7376d1548d30cf8b37dc20637615059ac520f767880",
+     "c4_tract_fara": "48803f95233ed40fe95b4a85e3fe66ff0725b41cf643325c4b8bb43d93c0da83"
+    }
+   },
+   "cache_keys": {
+    "270/25": {
+     "c3_tract_us": "17d85d9c__TRACT_FARA__b270m__r25m"
+    },
+    "500/50": {
+     "c3_tract_us": "17d85d9c__TRACT_FARA__b500m__r50m"
+    },
+    "1000/25": {
+     "c3_tract_us": "17d85d9c__TRACT_FARA__b1000m__r25m"
+    }
+   }
+  },
+  {
+   "experiment": "acag",
+   "keys": [
+    "acag"
+   ],
+   "overlay": null,
+   "steps": [
+    {
+     "name": "c3_acag",
+     "template": "c3/acag_grid_demo.yaml",
+     "is_c3": true
+    },
+    {
+     "name": "c4_acag",
+     "template": "c4/acag_demo.yaml",
+     "is_c3": false
+    }
+   ],
+   "renders": {
+    "270/25": {
+     "c3_acag": "c5c5384b9af23c13bd4e4103e1c1a6bfb1e46a3a00bab327e9738286fdc758d4",
+     "c4_acag": "59e588022a993b85d1066596603acbc90cfc72aacbe25708f0bae2637576f3dc"
+    },
+    "500/50": {
+     "c3_acag": "995dc19586a75d4dff5c2774c0ab3ad842de16a14b0406a5216a1b5a75767bfa",
+     "c4_acag": "adb420ad6e3cf65c083872034c349c3f97dbafe6a0fd459940bd3bda5fa40ca4"
+    },
+    "1000/25": {
+     "c3_acag": "769a4dd52e24f36dc648c18a976f45dceaf8ffe1f4dcd6fab4ca22efb9bfe5aa",
+     "c4_acag": "3b738011490a156c7947db1480ef845760d921793ca83bd9eb4564718a47b226"
+    }
+   },
+   "cache_keys": {
+    "270/25": {
+     "c3_acag": "17d85d9c__BG_ACAG__b270m"
+    },
+    "500/50": {
+     "c3_acag": "17d85d9c__BG_ACAG__b500m"
+    },
+    "1000/25": {
+     "c3_acag": "17d85d9c__BG_ACAG__b1000m"
+    }
+   }
+  },
+  {
+   "experiment": "faqsd",
+   "keys": [
+    "faqsd"
+   ],
+   "overlay": null,
+   "steps": [
+    {
+     "name": "c3_tract_us",
+     "template": "c3/tract_us_demo.yaml",
+     "is_c3": true
+    },
+    {
+     "name": "c4_tract_faqsd",
+     "template": "c4/tract_faqsd_demo.yaml",
+     "is_c3": false
+    }
+   ],
+   "renders": {
+    "270/25": {
+     "c3_tract_us": "acfe567588e5ad63e377816caaf30df429389beb64f9992572cc47e266b5c01c",
+     "c4_tract_faqsd": "39bfb1b38fe1db001b1bf6000eebae5805473c6d6667c0bd9c4ea60d3470e5b5"
+    },
+    "500/50": {
+     "c3_tract_us": "4588d2d7ab86095025ec3303eb54e5a1cecb0d9292340ee1064930eb0c1f0940",
+     "c4_tract_faqsd": "5d73db2c9bccaf5df2b2c15365c58fb048aa90a6eda2dcd75f5952034d6fb94f"
+    },
+    "1000/25": {
+     "c3_tract_us": "ed7b04eaff12c7d601c5d7376d1548d30cf8b37dc20637615059ac520f767880",
+     "c4_tract_faqsd": "c347db644e6c521349ec1010ef9c9e03a5e2677696014a694997cb0583ad3017"
+    }
+   },
+   "cache_keys": {
+    "270/25": {
+     "c3_tract_us": "17d85d9c__TRACT_FARA__b270m__r25m"
+    },
+    "500/50": {
+     "c3_tract_us": "17d85d9c__TRACT_FARA__b500m__r50m"
+    },
+    "1000/25": {
+     "c3_tract_us": "17d85d9c__TRACT_FARA__b1000m__r25m"
+    }
+   }
+  },
+  {
+   "experiment": "tiger_proximity",
+   "keys": [
+    "ndi"
+   ],
+   "overlay": null,
+   "error": "ValueError: unknown variable(s): ndi"
+  },
+  {
+   "experiment": "nhd_bluespace",
+   "keys": [
+    "ndi"
+   ],
+   "overlay": null,
+   "error": "ValueError: unknown variable(s): ndi"
+  },
+  {
+   "experiment": "noise",
+   "keys": [
+    "ndi"
+   ],
+   "overlay": null,
+   "error": "ValueError: unknown variable(s): ndi"
+  },
+  {
+   "experiment": "vnl",
+   "keys": [
+    "ndi"
+   ],
+   "overlay": null,
+   "error": "ValueError: unknown variable(s): ndi"
+  },
+  {
+   "experiment": "temis",
+   "keys": [
+    "ndi"
+   ],
+   "overlay": null,
+   "error": "ValueError: unknown variable(s): ndi"
+  },
+  {
+   "experiment": "fara_tract",
+   "keys": [
+    "ndi"
+   ],
+   "overlay": null,
+   "error": "ValueError: unknown variable(s): ndi"
+  },
+  {
+   "experiment": "acag",
+   "keys": [
+    "ndi"
+   ],
+   "overlay": null,
+   "error": "ValueError: unknown variable(s): ndi"
+  },
+  {
+   "experiment": "faqsd",
+   "keys": [
+    "ndi"
+   ],
+   "overlay": null,
+   "error": "ValueError: unknown variable(s): ndi"
+  },
+  {
+   "experiment": "tiger_proximity",
+   "keys": [],
+   "overlay": null,
+   "error": "ValueError: at least one variable must be selected"
+  },
+  {
+   "experiment": "nhd_bluespace",
+   "keys": [],
+   "overlay": null,
+   "error": "ValueError: at least one variable must be selected"
+  },
+  {
+   "experiment": "noise",
+   "keys": [],
+   "overlay": null,
+   "error": "ValueError: at least one variable must be selected"
+  },
+  {
+   "experiment": "vnl",
+   "keys": [],
+   "overlay": null,
+   "error": "ValueError: at least one variable must be selected"
+  },
+  {
+   "experiment": "temis",
+   "keys": [],
+   "overlay": null,
+   "error": "ValueError: at least one variable must be selected"
+  },
+  {
+   "experiment": "fara_tract",
+   "keys": [],
+   "overlay": null,
+   "error": "ValueError: at least one variable must be selected"
+  },
+  {
+   "experiment": "acag",
+   "keys": [],
+   "overlay": null,
+   "error": "ValueError: at least one variable must be selected"
+  },
+  {
+   "experiment": "faqsd",
+   "keys": [],
+   "overlay": null,
+   "error": "ValueError: at least one variable must be selected"
+  },
+  {
+   "experiment": "custom",
+   "keys": [
+    "custom_tracta"
+   ],
+   "overlay": "all",
+   "steps": [
+    {
+     "name": "c3_tract_us",
+     "template": "c3/tract_us_demo.yaml",
+     "is_c3": true
+    },
+    {
+     "name": "c4_custom_tracta",
+     "template": "c4/custom_areal.yaml",
+     "is_c3": false
+    }
+   ],
+   "renders": {
+    "270/25": {
+     "c3_tract_us": "21152b653296828e46bf0401e70fe8ebdbc9f469cf873f8afdbdd00dc1d7774f",
+     "c4_custom_tracta": "8d1c549c615e01d8e147fc522a23eb84f0343795ff3e290d4c9f90a418c331e3"
+    },
+    "500/50": {
+     "c3_tract_us": "d151e96ea91fae611aba960a24673c3728b3a09f1561a2b51a2281b6b8345440",
+     "c4_custom_tracta": "2ed4adbf3582f2827d9f1b2c6f095f6520b9fff3b97f59c76c1b3e16378dcd5c"
+    },
+    "1000/25": {
+     "c3_tract_us": "50358b27fa933627eee644f0531a293b438a817d662a598652e6509a24e0c093",
+     "c4_custom_tracta": "f1b3cbb5ef29f625d9063445ee7b2f52038f0bc5de5a0e0cd5c46bdef314b40d"
+    }
+   },
+   "cache_keys": {
+    "270/25": {
+     "c3_tract_us": "17d85d9c__TRACT_FARA__b270m__r25m"
+    },
+    "500/50": {
+     "c3_tract_us": "17d85d9c__TRACT_FARA__b500m__r50m"
+    },
+    "1000/25": {
+     "c3_tract_us": "17d85d9c__TRACT_FARA__b1000m__r25m"
+    }
+   }
+  },
+  {
+   "experiment": "custom",
+   "keys": [
+    "custom_tracta",
+    "custom_tractb"
+   ],
+   "overlay": "all",
+   "steps": [
+    {
+     "name": "c3_tract_us",
+     "template": "c3/tract_us_demo.yaml",
+     "is_c3": true
+    },
+    {
+     "name": "c4_custom_tracta",
+     "template": "c4/custom_areal.yaml",
+     "is_c3": false
+    },
+    {
+     "name": "c4_custom_tractb",
+     "template": "c4/custom_areal.yaml",
+     "is_c3": false
+    }
+   ],
+   "renders": {
+    "270/25": {
+     "c3_tract_us": "21152b653296828e46bf0401e70fe8ebdbc9f469cf873f8afdbdd00dc1d7774f",
+     "c4_custom_tracta": "8d1c549c615e01d8e147fc522a23eb84f0343795ff3e290d4c9f90a418c331e3",
+     "c4_custom_tractb": "c01e51a34643d9922472f2b50d3cc42894f032575abde488d6e161e6ea7013d0"
+    },
+    "500/50": {
+     "c3_tract_us": "d151e96ea91fae611aba960a24673c3728b3a09f1561a2b51a2281b6b8345440",
+     "c4_custom_tracta": "2ed4adbf3582f2827d9f1b2c6f095f6520b9fff3b97f59c76c1b3e16378dcd5c",
+     "c4_custom_tractb": "d0745434e04156da8f4b21efa38a4c5ec7105c24a7ac29300d67b086f3394251"
+    },
+    "1000/25": {
+     "c3_tract_us": "50358b27fa933627eee644f0531a293b438a817d662a598652e6509a24e0c093",
+     "c4_custom_tracta": "f1b3cbb5ef29f625d9063445ee7b2f52038f0bc5de5a0e0cd5c46bdef314b40d",
+     "c4_custom_tractb": "d0890b64a3ca82dc93cc33bb6a370b6ab0bf74d0d361e8819113cb29e535642a"
+    }
+   },
+   "cache_keys": {
+    "270/25": {
+     "c3_tract_us": "17d85d9c__TRACT_FARA__b270m__r25m"
+    },
+    "500/50": {
+     "c3_tract_us": "17d85d9c__TRACT_FARA__b500m__r50m"
+    },
+    "1000/25": {
+     "c3_tract_us": "17d85d9c__TRACT_FARA__b1000m__r25m"
+    }
+   }
+  },
+  {
+   "experiment": "custom",
+   "keys": [
+    "custom_tracta",
+    "custom_bgy"
+   ],
+   "overlay": "all",
+   "steps": [
+    {
+     "name": "c3_tract_us",
+     "template": "c3/tract_us_demo.yaml",
+     "is_c3": true
+    },
+    {
+     "name": "c3_bg",
+     "template": "c3/bg_us_demo.yaml",
+     "is_c3": true
+    },
+    {
+     "name": "c4_custom_tracta",
+     "template": "c4/custom_areal.yaml",
+     "is_c3": false
+    },
+    {
+     "name": "c4_custom_bgy",
+     "template": "c4/custom_areal.yaml",
+     "is_c3": false
+    }
+   ],
+   "renders": {
+    "270/25": {
+     "c3_tract_us": "21152b653296828e46bf0401e70fe8ebdbc9f469cf873f8afdbdd00dc1d7774f",
+     "c3_bg": "4a2d988a73fa1adc0cbe4ac467b734517c3105e3d2c8de094f3c3d83e4bbea8e",
+     "c4_custom_tracta": "8d1c549c615e01d8e147fc522a23eb84f0343795ff3e290d4c9f90a418c331e3",
+     "c4_custom_bgy": "82dc3050cd92ba4a2e8574257c872d3afaf271d35f236951a53a09cf55ab76fe"
+    },
+    "500/50": {
+     "c3_tract_us": "d151e96ea91fae611aba960a24673c3728b3a09f1561a2b51a2281b6b8345440",
+     "c3_bg": "78d7c679160b5b997997acd6d35cdcf4e3eba14a64229bfc87d2cce83ce45a9b",
+     "c4_custom_tracta": "2ed4adbf3582f2827d9f1b2c6f095f6520b9fff3b97f59c76c1b3e16378dcd5c",
+     "c4_custom_bgy": "7fb914f49b8153b1897ce47e2cac5d68d48acaa1fec9ca82b24220c2403bd856"
+    },
+    "1000/25": {
+     "c3_tract_us": "50358b27fa933627eee644f0531a293b438a817d662a598652e6509a24e0c093",
+     "c3_bg": "3772fcc0029c8107c1fcf5901f154186ccf39d3355a2f59523e8304b392b5b98",
+     "c4_custom_tracta": "f1b3cbb5ef29f625d9063445ee7b2f52038f0bc5de5a0e0cd5c46bdef314b40d",
+     "c4_custom_bgy": "a335e4138d0992d4011bb688111ae7edf7b5303ae837a70e6d7a7616500bda29"
+    }
+   },
+   "cache_keys": {
+    "270/25": {
+     "c3_tract_us": "17d85d9c__TRACT_FARA__b270m__r25m",
+     "c3_bg": "17d85d9c__BG__b270m__r25m"
+    },
+    "500/50": {
+     "c3_tract_us": "17d85d9c__TRACT_FARA__b500m__r50m",
+     "c3_bg": "17d85d9c__BG__b500m__r50m"
+    },
+    "1000/25": {
+     "c3_tract_us": "17d85d9c__TRACT_FARA__b1000m__r25m",
+     "c3_bg": "17d85d9c__BG__b1000m__r25m"
+    }
+   }
+  },
+  {
+   "experiment": "custom",
+   "keys": [
+    "custom_bgy",
+    "custom_tracta",
+    "custom_zip",
+    "custom_cty"
+   ],
+   "overlay": "all",
+   "steps": [
+    {
+     "name": "c3_bg",
+     "template": "c3/bg_us_demo.yaml",
+     "is_c3": true
+    },
+    {
+     "name": "c3_tract_us",
+     "template": "c3/tract_us_demo.yaml",
+     "is_c3": true
+    },
+    {
+     "name": "c3_zcta5",
+     "template": "c3/zcta5_us_demo.yaml",
+     "is_c3": true
+    },
+    {
+     "name": "c3_county_us",
+     "template": "c3/county_us_demo.yaml",
+     "is_c3": true
+    },
+    {
+     "name": "c4_custom_bgy",
+     "template": "c4/custom_areal.yaml",
+     "is_c3": false
+    },
+    {
+     "name": "c4_custom_tracta",
+     "template": "c4/custom_areal.yaml",
+     "is_c3": false
+    },
+    {
+     "name": "c4_custom_zip",
+     "template": "c4/custom_areal.yaml",
+     "is_c3": false
+    },
+    {
+     "name": "c4_custom_cty",
+     "template": "c4/custom_areal.yaml",
+     "is_c3": false
+    }
+   ],
+   "renders": {
+    "270/25": {
+     "c3_bg": "4a2d988a73fa1adc0cbe4ac467b734517c3105e3d2c8de094f3c3d83e4bbea8e",
+     "c3_tract_us": "21152b653296828e46bf0401e70fe8ebdbc9f469cf873f8afdbdd00dc1d7774f",
+     "c3_zcta5": "c582e2e85666d9f7c71dcc59ade17c52cc27de5677bfd0a877702046f65d2f71",
+     "c3_county_us": "38b5a9469d7272839fd7a23df1afba29548ce23eb36b04b9692cc2c7b9ef91a4",
+     "c4_custom_bgy": "82dc3050cd92ba4a2e8574257c872d3afaf271d35f236951a53a09cf55ab76fe",
+     "c4_custom_tracta": "8d1c549c615e01d8e147fc522a23eb84f0343795ff3e290d4c9f90a418c331e3",
+     "c4_custom_zip": "0eb47d6b1d5afb1942851aa705fbdadc60b44f76ec170763f78d67fa69a23a6e",
+     "c4_custom_cty": "59fcef7e721631bb102b933c309fe0dbcc2f0ea536724b216f26d6c9ee8badcc"
+    },
+    "500/50": {
+     "c3_bg": "78d7c679160b5b997997acd6d35cdcf4e3eba14a64229bfc87d2cce83ce45a9b",
+     "c3_tract_us": "d151e96ea91fae611aba960a24673c3728b3a09f1561a2b51a2281b6b8345440",
+     "c3_zcta5": "d9b7ee54c084d100e968c430e5866a756fb310a8f14be71930a8584c465fad92",
+     "c3_county_us": "354edf917c5f74e729a4e442d70d9977a9df0dfaf60c4d3f08dfa6aaf09acf53",
+     "c4_custom_bgy": "7fb914f49b8153b1897ce47e2cac5d68d48acaa1fec9ca82b24220c2403bd856",
+     "c4_custom_tracta": "2ed4adbf3582f2827d9f1b2c6f095f6520b9fff3b97f59c76c1b3e16378dcd5c",
+     "c4_custom_zip": "d5d7f047db7643f68ddc53b04a73d495b45b3875c03324f525e23e1e8c0902c1",
+     "c4_custom_cty": "a6012c57330443fd24aa44218e9250f723f72470007bf30285138885dc590f3e"
+    },
+    "1000/25": {
+     "c3_bg": "3772fcc0029c8107c1fcf5901f154186ccf39d3355a2f59523e8304b392b5b98",
+     "c3_tract_us": "50358b27fa933627eee644f0531a293b438a817d662a598652e6509a24e0c093",
+     "c3_zcta5": "13460dfa5e1a5f30d5aabbf8c085c8cee6878ae656d0a66df7487427ef572190",
+     "c3_county_us": "f60f61b923586966160dc3e51f48ca038816283ba1da00fd5217208440dd29eb",
+     "c4_custom_bgy": "a335e4138d0992d4011bb688111ae7edf7b5303ae837a70e6d7a7616500bda29",
+     "c4_custom_tracta": "f1b3cbb5ef29f625d9063445ee7b2f52038f0bc5de5a0e0cd5c46bdef314b40d",
+     "c4_custom_zip": "ad308fd1292f2dc203abeed28b49036d758cc2cb56fc8060ccf576e8f41a5fee",
+     "c4_custom_cty": "c3cc6fe5f3580bec6c177b42bd7729d02e6015208f30b58a186fb2cab9ff2dd7"
+    }
+   },
+   "cache_keys": {
+    "270/25": {
+     "c3_bg": "17d85d9c__BG__b270m__r25m",
+     "c3_tract_us": "17d85d9c__TRACT_FARA__b270m__r25m",
+     "c3_zcta5": "17d85d9c__ZCTA5__b270m__r25m",
+     "c3_county_us": "17d85d9c__COUNTY__b270m__r25m"
+    },
+    "500/50": {
+     "c3_bg": "17d85d9c__BG__b500m__r50m",
+     "c3_tract_us": "17d85d9c__TRACT_FARA__b500m__r50m",
+     "c3_zcta5": "17d85d9c__ZCTA5__b500m__r50m",
+     "c3_county_us": "17d85d9c__COUNTY__b500m__r50m"
+    },
+    "1000/25": {
+     "c3_bg": "17d85d9c__BG__b1000m__r25m",
+     "c3_tract_us": "17d85d9c__TRACT_FARA__b1000m__r25m",
+     "c3_zcta5": "17d85d9c__ZCTA5__b1000m__r25m",
+     "c3_county_us": "17d85d9c__COUNTY__b1000m__r25m"
+    }
+   }
+  },
+  {
+   "experiment": "custom",
+   "keys": [
+    "custom_nocov"
+   ],
+   "overlay": "all",
+   "steps": [
+    {
+     "name": "c3_tract_us",
+     "template": "c3/tract_us_demo.yaml",
+     "is_c3": true
+    },
+    {
+     "name": "c4_custom_nocov",
+     "template": "c4/custom_areal.yaml",
+     "is_c3": false
+    }
+   ],
+   "renders": {
+    "270/25": {
+     "c3_tract_us": "21152b653296828e46bf0401e70fe8ebdbc9f469cf873f8afdbdd00dc1d7774f",
+     "c4_custom_nocov": "949c798c6fe54b5f715a0202450efa83c8dd8c9d0a7cf7e552a08cc045c0fab0"
+    },
+    "500/50": {
+     "c3_tract_us": "d151e96ea91fae611aba960a24673c3728b3a09f1561a2b51a2281b6b8345440",
+     "c4_custom_nocov": "76c280d5973e471d7dc3e5a63e87fec46ee77aedd3b9864231ba4d217ecae54f"
+    },
+    "1000/25": {
+     "c3_tract_us": "50358b27fa933627eee644f0531a293b438a817d662a598652e6509a24e0c093",
+     "c4_custom_nocov": "e83f965fd2e4e3b9e860ad54b16eee860d033451340a444793c10a3cb18c895f"
+    }
+   },
+   "cache_keys": {
+    "270/25": {
+     "c3_tract_us": "17d85d9c__TRACT_FARA__b270m__r25m"
+    },
+    "500/50": {
+     "c3_tract_us": "17d85d9c__TRACT_FARA__b500m__r50m"
+    },
+    "1000/25": {
+     "c3_tract_us": "17d85d9c__TRACT_FARA__b1000m__r25m"
+    }
+   }
+  },
+  {
+   "experiment": "custom",
+   "keys": [
+    "custom_rs"
+   ],
+   "overlay": "all",
+   "steps": [
+    {
+     "name": "c3_customgrid_g1aaaa11",
+     "template": "c3/custom_grid.yaml",
+     "is_c3": true
+    },
+    {
+     "name": "c4_custom_rs",
+     "template": "c4/custom_areal.yaml",
+     "is_c3": false
+    }
+   ],
+   "renders": {
+    "270/25": {
+     "c3_customgrid_g1aaaa11": "4eb1b905e2fe02a7051d292dbc5cc40ff8f651d0656bf61f8b112065c20cd1f7",
+     "c4_custom_rs": "63282e71f73a648d6108a7be0012f4042f0bedf57ed55b777f5559a07039c22d"
+    },
+    "500/50": {
+     "c3_customgrid_g1aaaa11": "0d1c31f6576973dc8a835bb6156c4b2148fe79f7a80118986d4f8140a7047c8f",
+     "c4_custom_rs": "73a529a46571399f5c20a75d3ee2fd2e0e275056e154130f0ccd82100d67f7b7"
+    },
+    "1000/25": {
+     "c3_customgrid_g1aaaa11": "950838fc838f06fcf302a74df9d85f616c81af68e2d3c59d5d5d9ff04d99386f",
+     "c4_custom_rs": "db76dd4becb9f48bade190f6c2356620685730974abdc1b931c0af97c58ab292"
+    }
+   },
+   "cache_keys": {
+    "270/25": {
+     "c3_customgrid_g1aaaa11": "17d85d9c__CUSTOMGRID_g1aaaa11__b270m"
+    },
+    "500/50": {
+     "c3_customgrid_g1aaaa11": "17d85d9c__CUSTOMGRID_g1aaaa11__b500m"
+    },
+    "1000/25": {
+     "c3_customgrid_g1aaaa11": "17d85d9c__CUSTOMGRID_g1aaaa11__b1000m"
+    }
+   }
+  },
+  {
+   "experiment": "custom",
+   "keys": [
+    "custom_ry"
+   ],
+   "overlay": "all",
+   "steps": [
+    {
+     "name": "c3_customgrid_g2bbbb22",
+     "template": "c3/custom_grid.yaml",
+     "is_c3": true
+    },
+    {
+     "name": "c4_custom_ry",
+     "template": "c4/custom_areal.yaml",
+     "is_c3": false
+    }
+   ],
+   "renders": {
+    "270/25": {
+     "c3_customgrid_g2bbbb22": "7dfb9fd82c7c574e265a948ff4322cf200776adc5e65fa320d9a2e9f668339b8",
+     "c4_custom_ry": "cad28a37c956da85573ad11e36de55657e494d78210a9a35190f9401f4f1417d"
+    },
+    "500/50": {
+     "c3_customgrid_g2bbbb22": "85b01eee25e691c9b0caf4eabbbb7232d87ba130027c99d1336d2aafb245d297",
+     "c4_custom_ry": "3605a9930f5f6ba42026ed7c890640c9ef6ad3a7f058f811f8f0f8f6dc51b619"
+    },
+    "1000/25": {
+     "c3_customgrid_g2bbbb22": "90c3deb0a85ba619e061a79a8f1d92a5273662caa43091acfdc4006a94666ba6",
+     "c4_custom_ry": "616b45dbf5c0588e13dc2d1e99dae4b4839ad819d04048c0154131a4e039a785"
+    }
+   },
+   "cache_keys": {
+    "270/25": {
+     "c3_customgrid_g2bbbb22": "17d85d9c__CUSTOMGRID_g2bbbb22__b270m"
+    },
+    "500/50": {
+     "c3_customgrid_g2bbbb22": "17d85d9c__CUSTOMGRID_g2bbbb22__b500m"
+    },
+    "1000/25": {
+     "c3_customgrid_g2bbbb22": "17d85d9c__CUSTOMGRID_g2bbbb22__b1000m"
+    }
+   }
+  },
+  {
+   "experiment": "custom",
+   "keys": [
+    "custom_rs",
+    "custom_rs2"
+   ],
+   "overlay": "all",
+   "steps": [
+    {
+     "name": "c3_customgrid_g1aaaa11",
+     "template": "c3/custom_grid.yaml",
+     "is_c3": true
+    },
+    {
+     "name": "c4_custom_rs",
+     "template": "c4/custom_areal.yaml",
+     "is_c3": false
+    },
+    {
+     "name": "c4_custom_rs2",
+     "template": "c4/custom_areal.yaml",
+     "is_c3": false
+    }
+   ],
+   "renders": {
+    "270/25": {
+     "c3_customgrid_g1aaaa11": "4eb1b905e2fe02a7051d292dbc5cc40ff8f651d0656bf61f8b112065c20cd1f7",
+     "c4_custom_rs": "63282e71f73a648d6108a7be0012f4042f0bedf57ed55b777f5559a07039c22d",
+     "c4_custom_rs2": "8b65f97d3f30e67a4567499f3b28f89634c9edaab9976e8975c8b6644d8ce9ec"
+    },
+    "500/50": {
+     "c3_customgrid_g1aaaa11": "0d1c31f6576973dc8a835bb6156c4b2148fe79f7a80118986d4f8140a7047c8f",
+     "c4_custom_rs": "73a529a46571399f5c20a75d3ee2fd2e0e275056e154130f0ccd82100d67f7b7",
+     "c4_custom_rs2": "db260c6780f5c54492826219983128c1ccd7fd38b8360754241c3201f4ea82e7"
+    },
+    "1000/25": {
+     "c3_customgrid_g1aaaa11": "950838fc838f06fcf302a74df9d85f616c81af68e2d3c59d5d5d9ff04d99386f",
+     "c4_custom_rs": "db76dd4becb9f48bade190f6c2356620685730974abdc1b931c0af97c58ab292",
+     "c4_custom_rs2": "8466b8838478cc7e41616ca3197a16f10264acbc43ea684228a17a4ab351957d"
+    }
+   },
+   "cache_keys": {
+    "270/25": {
+     "c3_customgrid_g1aaaa11": "17d85d9c__CUSTOMGRID_g1aaaa11__b270m"
+    },
+    "500/50": {
+     "c3_customgrid_g1aaaa11": "17d85d9c__CUSTOMGRID_g1aaaa11__b500m"
+    },
+    "1000/25": {
+     "c3_customgrid_g1aaaa11": "17d85d9c__CUSTOMGRID_g1aaaa11__b1000m"
+    }
+   }
+  },
+  {
+   "experiment": "custom",
+   "keys": [
+    "custom_rs2",
+    "custom_rs"
+   ],
+   "overlay": "all",
+   "steps": [
+    {
+     "name": "c3_customgrid_g1aaaa11",
+     "template": "c3/custom_grid.yaml",
+     "is_c3": true
+    },
+    {
+     "name": "c4_custom_rs2",
+     "template": "c4/custom_areal.yaml",
+     "is_c3": false
+    },
+    {
+     "name": "c4_custom_rs",
+     "template": "c4/custom_areal.yaml",
+     "is_c3": false
+    }
+   ],
+   "renders": {
+    "270/25": {
+     "c3_customgrid_g1aaaa11": "c7f867dd4d0ffcab1df5b8791310bb83f45151ecafcafde6fdf97284efd87de7",
+     "c4_custom_rs2": "8b65f97d3f30e67a4567499f3b28f89634c9edaab9976e8975c8b6644d8ce9ec",
+     "c4_custom_rs": "63282e71f73a648d6108a7be0012f4042f0bedf57ed55b777f5559a07039c22d"
+    },
+    "500/50": {
+     "c3_customgrid_g1aaaa11": "565c7f5169ee581995af09876bf4cbdf322cbfe7f1748464a784a8043e1484b4",
+     "c4_custom_rs2": "db260c6780f5c54492826219983128c1ccd7fd38b8360754241c3201f4ea82e7",
+     "c4_custom_rs": "73a529a46571399f5c20a75d3ee2fd2e0e275056e154130f0ccd82100d67f7b7"
+    },
+    "1000/25": {
+     "c3_customgrid_g1aaaa11": "8f4903e00a66e3d090b08f37534b3e0c426e80c2ad7d00ed6f780df5fea51a31",
+     "c4_custom_rs2": "8466b8838478cc7e41616ca3197a16f10264acbc43ea684228a17a4ab351957d",
+     "c4_custom_rs": "db76dd4becb9f48bade190f6c2356620685730974abdc1b931c0af97c58ab292"
+    }
+   },
+   "cache_keys": {
+    "270/25": {
+     "c3_customgrid_g1aaaa11": "17d85d9c__CUSTOMGRID_g1aaaa11__b270m"
+    },
+    "500/50": {
+     "c3_customgrid_g1aaaa11": "17d85d9c__CUSTOMGRID_g1aaaa11__b500m"
+    },
+    "1000/25": {
+     "c3_customgrid_g1aaaa11": "17d85d9c__CUSTOMGRID_g1aaaa11__b1000m"
+    }
+   }
+  },
+  {
+   "experiment": "custom",
+   "keys": [
+    "custom_tracta",
+    "custom_ry",
+    "custom_cty"
+   ],
+   "overlay": "all",
+   "steps": [
+    {
+     "name": "c3_tract_us",
+     "template": "c3/tract_us_demo.yaml",
+     "is_c3": true
+    },
+    {
+     "name": "c3_customgrid_g2bbbb22",
+     "template": "c3/custom_grid.yaml",
+     "is_c3": true
+    },
+    {
+     "name": "c3_county_us",
+     "template": "c3/county_us_demo.yaml",
+     "is_c3": true
+    },
+    {
+     "name": "c4_custom_tracta",
+     "template": "c4/custom_areal.yaml",
+     "is_c3": false
+    },
+    {
+     "name": "c4_custom_ry",
+     "template": "c4/custom_areal.yaml",
+     "is_c3": false
+    },
+    {
+     "name": "c4_custom_cty",
+     "template": "c4/custom_areal.yaml",
+     "is_c3": false
+    }
+   ],
+   "renders": {
+    "270/25": {
+     "c3_tract_us": "21152b653296828e46bf0401e70fe8ebdbc9f469cf873f8afdbdd00dc1d7774f",
+     "c3_customgrid_g2bbbb22": "7dfb9fd82c7c574e265a948ff4322cf200776adc5e65fa320d9a2e9f668339b8",
+     "c3_county_us": "38b5a9469d7272839fd7a23df1afba29548ce23eb36b04b9692cc2c7b9ef91a4",
+     "c4_custom_tracta": "8d1c549c615e01d8e147fc522a23eb84f0343795ff3e290d4c9f90a418c331e3",
+     "c4_custom_ry": "cad28a37c956da85573ad11e36de55657e494d78210a9a35190f9401f4f1417d",
+     "c4_custom_cty": "59fcef7e721631bb102b933c309fe0dbcc2f0ea536724b216f26d6c9ee8badcc"
+    },
+    "500/50": {
+     "c3_tract_us": "d151e96ea91fae611aba960a24673c3728b3a09f1561a2b51a2281b6b8345440",
+     "c3_customgrid_g2bbbb22": "85b01eee25e691c9b0caf4eabbbb7232d87ba130027c99d1336d2aafb245d297",
+     "c3_county_us": "354edf917c5f74e729a4e442d70d9977a9df0dfaf60c4d3f08dfa6aaf09acf53",
+     "c4_custom_tracta": "2ed4adbf3582f2827d9f1b2c6f095f6520b9fff3b97f59c76c1b3e16378dcd5c",
+     "c4_custom_ry": "3605a9930f5f6ba42026ed7c890640c9ef6ad3a7f058f811f8f0f8f6dc51b619",
+     "c4_custom_cty": "a6012c57330443fd24aa44218e9250f723f72470007bf30285138885dc590f3e"
+    },
+    "1000/25": {
+     "c3_tract_us": "50358b27fa933627eee644f0531a293b438a817d662a598652e6509a24e0c093",
+     "c3_customgrid_g2bbbb22": "90c3deb0a85ba619e061a79a8f1d92a5273662caa43091acfdc4006a94666ba6",
+     "c3_county_us": "f60f61b923586966160dc3e51f48ca038816283ba1da00fd5217208440dd29eb",
+     "c4_custom_tracta": "f1b3cbb5ef29f625d9063445ee7b2f52038f0bc5de5a0e0cd5c46bdef314b40d",
+     "c4_custom_ry": "616b45dbf5c0588e13dc2d1e99dae4b4839ad819d04048c0154131a4e039a785",
+     "c4_custom_cty": "c3cc6fe5f3580bec6c177b42bd7729d02e6015208f30b58a186fb2cab9ff2dd7"
+    }
+   },
+   "cache_keys": {
+    "270/25": {
+     "c3_tract_us": "17d85d9c__TRACT_FARA__b270m__r25m",
+     "c3_customgrid_g2bbbb22": "17d85d9c__CUSTOMGRID_g2bbbb22__b270m",
+     "c3_county_us": "17d85d9c__COUNTY__b270m__r25m"
+    },
+    "500/50": {
+     "c3_tract_us": "17d85d9c__TRACT_FARA__b500m__r50m",
+     "c3_customgrid_g2bbbb22": "17d85d9c__CUSTOMGRID_g2bbbb22__b500m",
+     "c3_county_us": "17d85d9c__COUNTY__b500m__r50m"
+    },
+    "1000/25": {
+     "c3_tract_us": "17d85d9c__TRACT_FARA__b1000m__r25m",
+     "c3_customgrid_g2bbbb22": "17d85d9c__CUSTOMGRID_g2bbbb22__b1000m",
+     "c3_county_us": "17d85d9c__COUNTY__b1000m__r25m"
+    }
+   }
+  },
+  {
+   "experiment": "custom",
+   "keys": [
+    "custom_tracta",
+    "custom_tracta"
+   ],
+   "overlay": "all",
+   "steps": [
+    {
+     "name": "c3_tract_us",
+     "template": "c3/tract_us_demo.yaml",
+     "is_c3": true
+    },
+    {
+     "name": "c4_custom_tracta",
+     "template": "c4/custom_areal.yaml",
+     "is_c3": false
+    },
+    {
+     "name": "c4_custom_tracta",
+     "template": "c4/custom_areal.yaml",
+     "is_c3": false
+    }
+   ],
+   "renders": {
+    "270/25": {
+     "c3_tract_us": "21152b653296828e46bf0401e70fe8ebdbc9f469cf873f8afdbdd00dc1d7774f",
+     "c4_custom_tracta": "8d1c549c615e01d8e147fc522a23eb84f0343795ff3e290d4c9f90a418c331e3"
+    },
+    "500/50": {
+     "c3_tract_us": "d151e96ea91fae611aba960a24673c3728b3a09f1561a2b51a2281b6b8345440",
+     "c4_custom_tracta": "2ed4adbf3582f2827d9f1b2c6f095f6520b9fff3b97f59c76c1b3e16378dcd5c"
+    },
+    "1000/25": {
+     "c3_tract_us": "50358b27fa933627eee644f0531a293b438a817d662a598652e6509a24e0c093",
+     "c4_custom_tracta": "f1b3cbb5ef29f625d9063445ee7b2f52038f0bc5de5a0e0cd5c46bdef314b40d"
+    }
+   },
+   "cache_keys": {
+    "270/25": {
+     "c3_tract_us": "17d85d9c__TRACT_FARA__b270m__r25m"
+    },
+    "500/50": {
+     "c3_tract_us": "17d85d9c__TRACT_FARA__b500m__r50m"
+    },
+    "1000/25": {
+     "c3_tract_us": "17d85d9c__TRACT_FARA__b1000m__r25m"
+    }
+   }
+  },
+  {
+   "experiment": "custom",
+   "keys": [],
+   "overlay": "all",
+   "error": "ValueError: at least one variable must be selected"
+  },
+  {
+   "experiment": "custom",
+   "keys": [
+    "custom_missing"
+   ],
+   "overlay": "all",
+   "error": "ValueError: 'custom_missing' has no definition in config.custom_variables \u2014 the task config was written without resolving it"
+  },
+  {
+   "experiment": "custom",
+   "keys": [
+    "custom_parcel"
+   ],
+   "overlay": "all",
+   "error": "ValueError: custom exposome on unsupported boundary 'Parcel'; expected one of ['BG', 'County', 'Tract', 'ZCTA5']"
+  },
+  {
+   "experiment": "custom",
+   "keys": [
+    "custom_tracta"
+   ],
+   "overlay": [
+    "not",
+    "a",
+    "mapping"
+   ],
+   "error": "ValueError: config.custom_variables is not a mapping"
+  }
+ ]
+}

@@ -1,0 +1,264 @@
+{
+  "schema_version": 1,
+  "variables": {
+    "ndi": {
+      "spatial_method": "areal",
+      "label": "Neighborhood Deprivation Index (NDI)",
+      "description": "Composite measure of neighborhood-level socioeconomic deprivation from US Census ACS variables.",
+      "boundary": "BG",
+      "coverage_years": [
+        2012,
+        2022
+      ],
+      "coverage_region": "CONUS",
+      "experiment": "bg_ndi_wi",
+      "ontology_id": "SPACESCANS_Neighborhood_Deprivation_Index",
+      "data_source": "US Census ACS (5-year)",
+      "variable_type": "continuous",
+      "display_unit": "z-score",
+      "value_cols": [
+        "ndi"
+      ]
+    },
+    "walkability": {
+      "spatial_method": "areal",
+      "label": "EPA Walkability Index",
+      "description": "EPA National Walkability Index ranking neighborhoods on walkability characteristics (intersection density, transit proximity, employment mix).",
+      "boundary": "BG",
+      "coverage_years": [
+        2016,
+        2016
+      ],
+      "temporal": "static",
+      "coverage_region": "CONUS",
+      "experiment": "bg_ndi_wi",
+      "ontology_id": "SPACESCANS_Walkability",
+      "data_source": "EPA National Walkability Index",
+      "variable_type": "continuous",
+      "display_unit": "1-20 index",
+      "value_cols": [
+        "NatWalkInd"
+      ]
+    },
+    "cbp_zcta5": {
+      "spatial_method": "areal",
+      "label": "Community Organization Density",
+      "description": "Per-capita density of 10 community organization categories (religious, civic, business, political, professional, labor, bowling, recreational, golf, sports) at the ZIP Code Tabulation Area level from Census Zip Business Patterns.",
+      "boundary": "ZCTA5",
+      "coverage_years": [
+        2013,
+        2019
+      ],
+      "coverage_region": "CONUS",
+      "experiment": "zcta5_cbp",
+      "ontology_id": "SPACESCANS_Community_Organization_Density",
+      "data_source": "US Census ZIP/County Business Patterns (CBP)",
+      "variable_type": "continuous",
+      "display_unit": "establishments / 1k residents",
+      "value_cols": [
+        "r_religious",
+        "r_civic",
+        "r_business",
+        "r_political",
+        "r_professional",
+        "r_labor",
+        "r_bowling",
+        "r_recreational",
+        "r_golf",
+        "r_sports"
+      ]
+    },
+    "tiger_proximity": {
+      "spatial_method": "proximity",
+      "label": "TIGER Road Distance",
+      "description": "Per-residence annual distance (meters) to the nearest TIGER/Line primary road (S1100), secondary road (S1200), and primary+secondary combined, from US Census TIGER/Line shapefiles. Computed at each address, not aggregated to a Census area.",
+      "boundary": "Point",
+      "coverage_years": [
+        2013,
+        2019
+      ],
+      "coverage_region": "CONUS",
+      "experiment": "tiger_proximity",
+      "ontology_id": "SPACESCANS_Road_Proximity",
+      "data_source": "US Census TIGER/Line",
+      "variable_type": "continuous",
+      "display_unit": "meters",
+      "value_cols": [
+        "dist_pri",
+        "dist_sec",
+        "dist_prisec"
+      ]
+    },
+    "nhd_bluespace": {
+      "spatial_method": "proximity",
+      "label": "NHD Bluespace",
+      "description": "Per-residence static distance (meters) to the nearest NHD flowline (dist_flow_m), waterbody (dist_water_m), area-feature (dist_area_m), coastline (dist_coast_m; empty for inland addresses with no coastline nearby), and combined blue-feature (dist_blue_m), from NHDPlus_H National Release 2 GDB (static product, 2024 vintage). Computed at each address, not aggregated to a Census area.",
+      "boundary": "Point",
+      "coverage_years": [
+        2024,
+        2024
+      ],
+      "coverage_region": "CONUS",
+      "experiment": "nhd_bluespace",
+      "ontology_id": "SPACESCANS_Bluespace",
+      "data_source": "USGS NHDPlus HR (National Release 2)",
+      "temporal": "static",
+      "variable_type": "continuous",
+      "display_unit": "meters",
+      "value_cols": [
+        "dist_flow_m",
+        "dist_water_m",
+        "dist_area_m",
+        "dist_coast_m",
+        "dist_blue_m"
+      ]
+    },
+    "noise": {
+      "spatial_method": "grid",
+      "label": "NPS Soundscape Noise (L50 dBA)",
+      "description": "Per-residence static daytime environmental noise exposure in L50 dBA (existing/imp/nat scenarios) sampled from the US National Park Service geospatial sound model (Mennitt et al.) CONUS raster (270 m grid, static product). l50dba_exi is the existing-conditions surface; l50dba_imp and l50dba_nat are alternative-scenario surfaces.",
+      "boundary": "Point",
+      "coverage_years": [
+        2020,
+        2020
+      ],
+      "coverage_region": "CONUS",
+      "experiment": "noise",
+      "ontology_id": "000289",
+      "data_source": "US National Park Service — Geospatial sound model (Mennitt et al.)",
+      "temporal": "static",
+      "variable_type": "continuous",
+      "display_unit": "dBA",
+      "value_cols": [
+        "l50dba_exi",
+        "l50dba_imp",
+        "l50dba_nat"
+      ]
+    },
+    "vnl": {
+      "spatial_method": "grid",
+      "label": "VIIRS Nighttime Lights (VNL)",
+      "description": "Per-residence annual mean radiance sampled from the NOAA VIIRS Day/Night Band Nighttime Lights global v21 product (270 m grid, gridded raster linkage). Single value column 'value' carries the annual masked composite radiance in nanowatts/cm^2/sr.",
+      "boundary": "Point",
+      "coverage_years": [
+        2013,
+        2019
+      ],
+      "coverage_region": "CONUS",
+      "experiment": "vnl",
+      "ontology_id": "000290",
+      "data_source": "NOAA VIIRS Day/Night Band Nighttime Lights (VNL v21)",
+      "variable_type": "continuous",
+      "display_unit": "radiance",
+      "value_cols": [
+        "value"
+      ]
+    },
+    "temis": {
+      "spatial_method": "grid",
+      "label": "TEMIS UV Exposure",
+      "description": "Per-residence annual mean daily UV exposure sampled from KNMI TEMIS UV products (270 m grid, daily raster, gridded linkage). Four value columns: uvddc (daily DNA-damage UV dose), uvdec (daily erythemal UV dose), uvdvc (daily vitamin-D UV dose), uvief (UV index at noon).",
+      "boundary": "Point",
+      "coverage_years": [
+        2013,
+        2019
+      ],
+      "coverage_region": "CONUS",
+      "experiment": "temis",
+      "ontology_id": "000288",
+      "data_source": "KNMI TEMIS UV",
+      "variable_type": "continuous",
+      "display_unit": "UV index",
+      "value_cols": [
+        "uvddc",
+        "uvdec",
+        "uvdvc",
+        "uvief"
+      ]
+    },
+    "fara_tract": {
+      "spatial_method": "areal",
+      "label": "FARA Food Access",
+      "description": "Per-tract annual USDA FARA food-access indicators (binary flags + share variables, interpolated 2013-2019). Headline value_cols: LILATracts_1And10 (low-income+low-access urban-1mi/rural-10mi), LATracts1 (low-access 1 mile), HUNVFlag (low-vehicle-access), LowIncomeTracts. Full label set in varnameCountRemoved.csv.",
+      "boundary": "Tract",
+      "coverage_years": [
+        2013,
+        2019
+      ],
+      "coverage_region": "CONUS",
+      "experiment": "fara_tract",
+      "ontology_id": "000294",
+      "data_source": "USDA Food Access Research Atlas (FARA)",
+      "variable_type": "categorical",
+      "display_unit": "binary flags",
+      "value_cols": [
+        "LILATracts_1And10",
+        "LATracts1",
+        "HUNVFlag",
+        "LowIncomeTracts"
+      ]
+    },
+    "acag": {
+      "spatial_method": "grid",
+      "label": "ACAG PM2.5 Composition",
+      "description": "Per-residence mean PM2.5 mass and seven components (black carbon, dust, ammonium, nitrate, organic mass, sulfate, sea salt) from ACAG V5.NA.05 biweekly 0.01-degree surfaces (gridded linkage, 2013-2019). Each species also carries its biomass-burning share (_bm) and the derived non-biomass remainder (_nbm).",
+      "boundary": "Point",
+      "coverage_years": [
+        2013,
+        2019
+      ],
+      "coverage_region": "CONUS",
+      "experiment": "acag",
+      "ontology_id": "000102_2",
+      "data_source": "Washington University ACAG V5.NA.05 / V5.NA.05.02",
+      "variable_type": "continuous",
+      "display_unit": "ug/m3",
+      "value_cols": [
+        "pm25",
+        "bc",
+        "dust",
+        "nh4",
+        "no3",
+        "om",
+        "so4",
+        "ss",
+        "pm25_bm",
+        "bc_bm",
+        "dust_bm",
+        "nh4_bm",
+        "no3_bm",
+        "om_bm",
+        "so4_bm",
+        "ss_bm",
+        "pm25_nbm",
+        "bc_nbm",
+        "dust_nbm",
+        "nh4_nbm",
+        "no3_nbm",
+        "om_nbm",
+        "so4_nbm",
+        "ss_nbm"
+      ]
+    },
+    "faqsd": {
+      "spatial_method": "areal",
+      "label": "EPA FAQSD Air Quality",
+      "description": "Per-tract daily ozone (8-hour maximum, ppb) and PM2.5 (24-hour average, ug/m3) from EPA's Fused Air Quality Surface Using Downscaling, area-weighted over the residential buffer and averaged across each episode's days (2013-2019).",
+      "boundary": "Tract",
+      "coverage_years": [
+        2013,
+        2019
+      ],
+      "coverage_region": "CONUS",
+      "experiment": "faqsd",
+      "ontology_id": "000097_2",
+      "data_source": "US EPA FAQSD (downscaler) daily census-tract outputs",
+      "variable_type": "continuous",
+      "display_unit": "ppb / ug/m3",
+      "value_cols": [
+        "faqsd_o3",
+        "faqsd_pm25"
+      ]
+    }
+  }
+}

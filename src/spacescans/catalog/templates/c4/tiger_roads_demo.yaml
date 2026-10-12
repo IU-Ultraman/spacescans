@@ -1,0 +1,34 @@
+name: tiger_roads_demo
+linkage_pattern: precomputed_areal   # C4: load (geoid × year × distance) → duration-weighted TWA
+geometry_type: line                  # C3 only: describes input data geometry
+
+source:                              # Not used spatially; required by schema
+  file: TIGER/C4
+
+buffer:
+  patient_file: demo_patients_conus_fast_100000.parquet
+  patient_adapter: demo_conus
+
+exposure:                            # C4: read via tiger_roads plugin
+  file: output/python_v2/270m/TIGER/C3/annual_proximity_demo100k.parquet
+  join_col: geoid
+  value_cols:
+    - dist_pri
+    - dist_sec
+    - dist_prisec
+
+time:
+  years: [2013, 2014, 2015, 2016, 2017, 2018, 2019]
+  temporal_resolution: yearly
+  temporal_mode: yearly
+  output_grouping: episode   # Sprint 5: per-episode rows; PATID may repeat with distinct geoid
+
+engine:
+  backend: duckdb
+
+plugin: tiger_roads                  # reader: loads pkl/parquet, normalizes column names
+
+output:
+  path: output/python_v2/270m/TIGER/C4/roadProximity_demo100k.parquet
+  format: parquet
+  label_path: output/python_v2/270m/TIGER/C4/label_roadProximity_demo100k.parquet

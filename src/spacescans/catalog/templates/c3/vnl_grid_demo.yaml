@@ -1,0 +1,20 @@
+name: vnl_grid_demo
+linkage_pattern: grid_weights        # C3: extract raster-buffer coverage weights
+geometry_type: raster                # C3 only: input data geometry
+
+source:                              # C3: 2013 VNL global raster (11 GB)
+  file: VNL/C3/VNL_v21_npp_2013_global_vcmcfg_c202205302300.average_masked.dat.tif
+
+buffer:
+  patient_file: demo_patients_conus_fast_100000.parquet  # 100k CONUS demo
+  patient_adapter: demo_conus
+  buffer_m: 270
+  grid_id_offset: 1                  # the vnl reader indexes cells 1-based (R terra parity), like acag;
+                                     # without this every value came from the cell one column west
+
+engine:
+  backend: duckdb
+
+output:                              # C3: weight table [geoid, grid_id, weight]
+  path: output/python_v2/270m/VNL/C3/buffer270m_vnl_weights_demo100k.parquet
+  format: parquet
