@@ -1,0 +1,35 @@
+name: tract_fara_demo_task_1000_r50
+linkage_pattern: fara_tract
+geometry_type: polygon
+source:
+  file: /app/data/tasks/tier2-golden-render/combos/fara_tract__fara_tract__b1000_r50/output/c3_tract_us.parquet
+  join_col: GEOID10
+buffer:
+  patient_file: /app/data/tasks/tier2-golden-render/combos/fara_tract__fara_tract__b1000_r50/input.parquet
+  patient_adapter: demo_conus
+  buffer_m: 1000
+exposure:
+  file: FARA/C4/fara_nationwide_2010_2019_interpolated.Rda
+  key: fara1019
+  join_col: Fips
+  value_cols: []
+  year_col: year
+  label_file: FARA/C4/varnameCountRemoved.csv
+time:
+  years:
+  - 2013
+  - 2014
+  - 2015
+  - 2016
+  - 2017
+  - 2018
+  - 2019
+  temporal_resolution: yearly
+  temporal_mode: yearly
+  output_grouping: episode
+engine:
+  backend: duckdb
+output:
+  path: /app/data/tasks/tier2-golden-render/combos/fara_tract__fara_tract__b1000_r50/output/c4_tract_fara.parquet
+  format: parquet
+  label_path: output/python_v2/270m/TRACT_US/C4/label_fara_demo100k.parquet

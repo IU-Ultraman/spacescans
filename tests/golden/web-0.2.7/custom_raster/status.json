@@ -1,0 +1,22 @@
+{
+  "experiments": {
+    "custom": {
+      "status": "running",
+      "progress": 1.0,
+      "current_step": null,
+      "steps": [
+        "c3_customgrid_3940345e",
+        "c4_custom_714c9715"
+      ],
+      "pid": 6639,
+      "message": "Completed 2 pipeline steps"
+    }
+  },
+  "steps": [
+    "c3_customgrid_3940345e",
+    "c4_custom_714c9715"
+  ],
+  "current_step": null,
+  "total_steps": 2,
+  "progress": 1.0
+}

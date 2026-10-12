@@ -1,0 +1,35 @@
+name: tiger_roads_demo_task_1000_r25
+linkage_pattern: precomputed_areal
+geometry_type: line
+source:
+  file: TIGER/C4
+buffer:
+  patient_file: /app/data/tasks/tier2-golden-render/combos/tiger_proximity__tiger_proximity__b1000_r25/input.parquet
+  patient_adapter: demo_conus
+  buffer_m: 1000
+exposure:
+  file: /app/data/tasks/tier2-golden-render/combos/tiger_proximity__tiger_proximity__b1000_r25/output/c3_tiger_roads.parquet
+  join_col: geoid
+  value_cols:
+  - dist_pri
+  - dist_sec
+  - dist_prisec
+time:
+  years:
+  - 2013
+  - 2014
+  - 2015
+  - 2016
+  - 2017
+  - 2018
+  - 2019
+  temporal_resolution: yearly
+  temporal_mode: yearly
+  output_grouping: episode
+engine:
+  backend: duckdb
+plugin: tiger_roads
+output:
+  path: /app/data/tasks/tier2-golden-render/combos/tiger_proximity__tiger_proximity__b1000_r25/output/c4_tiger_roads.parquet
+  format: parquet
+  label_path: output/python_v2/270m/TIGER/C4/label_roadProximity_demo100k.parquet

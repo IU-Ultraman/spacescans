@@ -1,0 +1,21 @@
+{"ts": "2026-10-12T20:54:49.152362+00:00", "level": "info", "source": "runner", "msg": "spawning c3_bg: /opt/conda/bin/python /opt/conda/bin/spacescans run --data-dir /project /app/data/tasks/tier2-golden-custom_bg_csv/pipeline_configs/c3_bg.yaml"}
+{"ts": "2026-10-12T20:55:00.300345+00:00", "level": "info", "source": "c3_bg", "msg": "[overlap_fast] processing 217740 boundaries \u00d7 1001 buffers via 13818 tiles (30 km each)"}
+{"ts": "2026-10-12T20:55:07.343215+00:00", "level": "info", "source": "c3_bg", "msg": "[overlap_fast] tile  6900/13818 ( 49.9%) elapsed=  0.12m  rate=979.7/s  ETA= 0.12m  tiles_with_work=152"}
+{"ts": "2026-10-12T20:55:25.682349+00:00", "level": "info", "source": "c3_bg", "msg": "[overlap_fast] tile 13800/13818 ( 99.9%) elapsed=  0.42m  rate=543.7/s  ETA= 0.00m  tiles_with_work=568"}
+{"ts": "2026-10-12T20:55:25.756302+00:00", "level": "info", "source": "c3_bg", "msg": "[overlap_fast] === SUMMARY ==="}
+{"ts": "2026-10-12T20:55:25.756487+00:00", "level": "info", "source": "c3_bg", "msg": "[overlap_fast]   rasterize        0.24m ( 57.4%)"}
+{"ts": "2026-10-12T20:55:25.756697+00:00", "level": "info", "source": "c3_bg", "msg": "[overlap_fast]   exact_extract    0.08m ( 19.2%)"}
+{"ts": "2026-10-12T20:55:25.756917+00:00", "level": "info", "source": "c3_bg", "msg": "[overlap_fast]   memfile          0.06m ( 15.0%)"}
+{"ts": "2026-10-12T20:55:25.757033+00:00", "level": "info", "source": "c3_bg", "msg": "[overlap_fast]   postprocess      0.03m (  7.5%)"}
+{"ts": "2026-10-12T20:55:25.759229+00:00", "level": "info", "source": "c3_bg", "msg": "[overlap_fast]   tile_index       0.00m (  0.7%)"}
+{"ts": "2026-10-12T20:55:25.763595+00:00", "level": "info", "source": "c3_bg", "msg": "[overlap_fast]   loop_other       0.00m (  0.1%)"}
+{"ts": "2026-10-12T20:55:25.763685+00:00", "level": "info", "source": "c3_bg", "msg": "[overlap_fast]   concat+norm      0.00m (  0.2%)"}
+{"ts": "2026-10-12T20:55:25.763739+00:00", "level": "info", "source": "c3_bg", "msg": "[overlap_fast]   total            0.42m"}
+{"ts": "2026-10-12T20:55:25.763771+00:00", "level": "info", "source": "c3_bg", "msg": "[overlap_fast]   tiles processed: 569 / 13818"}
+{"ts": "2026-10-12T20:55:26.039027+00:00", "level": "info", "source": "c3_bg", "msg": "Output: /app/data/tasks/tier2-golden-custom_bg_csv/output/c3_bg.parquet"}
+{"ts": "2026-10-12T20:55:26.180891+00:00", "level": "info", "source": "runner", "msg": "step c3_bg exit code 0"}
+{"ts": "2026-10-12T20:55:26.182791+00:00", "level": "info", "source": "c3_bg", "msg": "cache write: 12269dbe__BG__b270m__r25m.parquet"}
+{"ts": "2026-10-12T20:55:26.186495+00:00", "level": "info", "source": "runner", "msg": "spawning c4_custom_18180893: /opt/conda/bin/python /opt/conda/bin/spacescans run --data-dir /project /app/data/tasks/tier2-golden-custom_bg_csv/pipeline_configs/c4_custom_18180893.yaml"}
+{"ts": "2026-10-12T20:55:27.799410+00:00", "level": "info", "source": "c4_custom_18180893", "msg": "Output: /app/data/tasks/tier2-golden-custom_bg_csv/output/c4_custom_18180893.parquet"}
+{"ts": "2026-10-12T20:55:27.908585+00:00", "level": "info", "source": "runner", "msg": "step c4_custom_18180893 exit code 0"}
+{"ts": "2026-10-12T20:55:27.924906+00:00", "level": "info", "source": "merge", "msg": "custom_18180893.NatWalkInd: 100.0% of episodes linked (1,001/1,001)"}

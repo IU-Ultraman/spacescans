@@ -1,0 +1,48 @@
+{"ts": "2026-10-12T20:55:30.412366+00:00", "level": "info", "source": "runner", "msg": "spawning c3_acag: /opt/conda/bin/python /opt/conda/bin/spacescans run --data-dir /project /app/data/tasks/tier2-golden-acag/pipeline_configs/c3_acag.yaml"}
+{"ts": "2026-10-12T20:55:31.240526+00:00", "level": "info", "source": "c3_acag", "msg": "[grid_weights] processing 1001 buffers \u00d7 raster=acag_template.tif in 1 chunks of 5000"}
+{"ts": "2026-10-12T20:55:31.909310+00:00", "level": "info", "source": "c3_acag", "msg": "[grid_weights]   1001/1001 (100.0%)  elapsed= 0.01m  rate=1499.4/s  ETA= 0.00m"}
+{"ts": "2026-10-12T20:55:31.909470+00:00", "level": "info", "source": "c3_acag", "msg": "[grid_weights] === SUMMARY (main loop + concat) ==="}
+{"ts": "2026-10-12T20:55:31.909517+00:00", "level": "info", "source": "c3_acag", "msg": "[grid_weights]   exact_extract    0.01m ( 98.7%)"}
+{"ts": "2026-10-12T20:55:31.909547+00:00", "level": "info", "source": "c3_acag", "msg": "[grid_weights]   postprocess      0.00m (  1.0%)"}
+{"ts": "2026-10-12T20:55:31.909574+00:00", "level": "info", "source": "c3_acag", "msg": "[grid_weights]   raster_open      0.00m (  0.2%)"}
+{"ts": "2026-10-12T20:55:31.909589+00:00", "level": "info", "source": "c3_acag", "msg": "[grid_weights]   loop_other       0.00m (  0.1%)"}
+{"ts": "2026-10-12T20:55:31.909603+00:00", "level": "info", "source": "c3_acag", "msg": "[grid_weights]   pd.concat        0.00m (  0.0%)"}
+{"ts": "2026-10-12T20:55:31.909616+00:00", "level": "info", "source": "c3_acag", "msg": "[grid_weights]   total            0.01m"}
+{"ts": "2026-10-12T20:55:31.915615+00:00", "level": "info", "source": "c3_acag", "msg": "Output: /app/data/tasks/tier2-golden-acag/output/c3_acag.parquet"}
+{"ts": "2026-10-12T20:55:32.052556+00:00", "level": "info", "source": "runner", "msg": "step c3_acag exit code 0"}
+{"ts": "2026-10-12T20:55:32.053513+00:00", "level": "info", "source": "c3_acag", "msg": "cache write: 12269dbe__BG_ACAG__b270m.parquet"}
+{"ts": "2026-10-12T20:55:32.056707+00:00", "level": "info", "source": "runner", "msg": "spawning c4_acag: /opt/conda/bin/python /opt/conda/bin/spacescans run --data-dir /project /app/data/tasks/tier2-golden-acag/pipeline_configs/c4_acag.yaml"}
+{"ts": "2026-10-12T20:55:32.596785+00:00", "level": "info", "source": "c4_acag", "msg": "  Processing: pm25 (/project/ACAG/C4/xNorthAmerica/PM25/BiWeekly)"}
+{"ts": "2026-10-12T20:56:34.061671+00:00", "level": "info", "source": "c4_acag", "msg": "  Done: pm25 (995 patients)"}
+{"ts": "2026-10-12T20:56:34.063585+00:00", "level": "info", "source": "c4_acag", "msg": "  Processing: bc (/project/ACAG/C4/xNorthAmerica/BC/BiWeekly)"}
+{"ts": "2026-10-12T20:57:26.131019+00:00", "level": "info", "source": "c4_acag", "msg": "  Done: bc (995 patients)"}
+{"ts": "2026-10-12T20:57:26.131717+00:00", "level": "info", "source": "c4_acag", "msg": "  Processing: dust (/project/ACAG/C4/xNorthAmerica/DUST/BiWeekly)"}
+{"ts": "2026-10-12T20:58:18.355414+00:00", "level": "info", "source": "c4_acag", "msg": "  Done: dust (995 patients)"}
+{"ts": "2026-10-12T20:58:18.358105+00:00", "level": "info", "source": "c4_acag", "msg": "  Processing: nh4 (/project/ACAG/C4/xNorthAmerica/NH4/BiWeekly)"}
+{"ts": "2026-10-12T20:59:11.264640+00:00", "level": "info", "source": "c4_acag", "msg": "  Done: nh4 (995 patients)"}
+{"ts": "2026-10-12T20:59:11.265177+00:00", "level": "info", "source": "c4_acag", "msg": "  Processing: no3 (/project/ACAG/C4/xNorthAmerica/NO3/BiWeekly)"}
+{"ts": "2026-10-12T21:00:05.678544+00:00", "level": "info", "source": "c4_acag", "msg": "  Done: no3 (995 patients)"}
+{"ts": "2026-10-12T21:00:05.679030+00:00", "level": "info", "source": "c4_acag", "msg": "  Processing: om (/project/ACAG/C4/xNorthAmerica/OM/BiWeekly)"}
+{"ts": "2026-10-12T21:01:05.078826+00:00", "level": "info", "source": "c4_acag", "msg": "  Done: om (995 patients)"}
+{"ts": "2026-10-12T21:01:05.081422+00:00", "level": "info", "source": "c4_acag", "msg": "  Processing: so4 (/project/ACAG/C4/xNorthAmerica/SO4/BiWeekly)"}
+{"ts": "2026-10-12T21:01:58.855560+00:00", "level": "info", "source": "c4_acag", "msg": "  Done: so4 (995 patients)"}
+{"ts": "2026-10-12T21:01:58.857655+00:00", "level": "info", "source": "c4_acag", "msg": "  Processing: ss (/project/ACAG/C4/xNorthAmerica/SS/BiWeekly)"}
+{"ts": "2026-10-12T21:02:56.992763+00:00", "level": "info", "source": "c4_acag", "msg": "  Done: ss (995 patients)"}
+{"ts": "2026-10-12T21:02:56.994287+00:00", "level": "info", "source": "c4_acag", "msg": "  Processing: pm25_bm (/project/ACAG/C4/xNorthAmerica/PM25_bm/BiWeekly)"}
+{"ts": "2026-10-12T21:04:08.948661+00:00", "level": "info", "source": "c4_acag", "msg": "  Done: pm25_bm (995 patients)"}
+{"ts": "2026-10-12T21:04:08.964752+00:00", "level": "info", "source": "c4_acag", "msg": "  Processing: bc_bm (/project/ACAG/C4/xNorthAmerica/BC_bm/BiWeekly)"}
+{"ts": "2026-10-12T21:05:04.665991+00:00", "level": "info", "source": "c4_acag", "msg": "  Done: bc_bm (995 patients)"}
+{"ts": "2026-10-12T21:05:04.666638+00:00", "level": "info", "source": "c4_acag", "msg": "  Processing: dust_bm (/project/ACAG/C4/xNorthAmerica/DUST_bm/BiWeekly)"}
+{"ts": "2026-10-12T21:05:54.564954+00:00", "level": "info", "source": "c4_acag", "msg": "  Done: dust_bm (995 patients)"}
+{"ts": "2026-10-12T21:05:54.565237+00:00", "level": "info", "source": "c4_acag", "msg": "  Processing: nh4_bm (/project/ACAG/C4/xNorthAmerica/NH4_bm/BiWeekly)"}
+{"ts": "2026-10-12T21:06:49.246382+00:00", "level": "info", "source": "c4_acag", "msg": "  Done: nh4_bm (995 patients)"}
+{"ts": "2026-10-12T21:06:49.246667+00:00", "level": "info", "source": "c4_acag", "msg": "  Processing: no3_bm (/project/ACAG/C4/xNorthAmerica/NO3_bm/BiWeekly)"}
+{"ts": "2026-10-12T21:07:46.066626+00:00", "level": "info", "source": "c4_acag", "msg": "  Done: no3_bm (995 patients)"}
+{"ts": "2026-10-12T21:07:46.067556+00:00", "level": "info", "source": "c4_acag", "msg": "  Processing: om_bm (/project/ACAG/C4/xNorthAmerica/OM_bm/BiWeekly)"}
+{"ts": "2026-10-12T21:08:57.153194+00:00", "level": "info", "source": "c4_acag", "msg": "  Done: om_bm (995 patients)"}
+{"ts": "2026-10-12T21:08:57.154320+00:00", "level": "info", "source": "c4_acag", "msg": "  Processing: so4_bm (/project/ACAG/C4/xNorthAmerica/SO4_bm/BiWeekly)"}
+{"ts": "2026-10-12T21:09:53.036142+00:00", "level": "info", "source": "c4_acag", "msg": "  Done: so4_bm (995 patients)"}
+{"ts": "2026-10-12T21:09:53.036486+00:00", "level": "info", "source": "c4_acag", "msg": "  Processing: ss_bm (/project/ACAG/C4/xNorthAmerica/SS_bm/BiWeekly)"}
+{"ts": "2026-10-12T21:10:44.426374+00:00", "level": "info", "source": "c4_acag", "msg": "  Done: ss_bm (995 patients)"}
+{"ts": "2026-10-12T21:10:44.468417+00:00", "level": "info", "source": "c4_acag", "msg": "Output: /app/data/tasks/tier2-golden-acag/output/c4_acag.parquet"}
+{"ts": "2026-10-12T21:10:44.630967+00:00", "level": "info", "source": "runner", "msg": "step c4_acag exit code 0"}

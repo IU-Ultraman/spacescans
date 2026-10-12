@@ -1,0 +1,39 @@
+{"ts": "2026-10-12T20:44:04.200709+00:00", "level": "info", "source": "runner", "msg": "spawning c3_nhd_bluespace: /opt/conda/bin/python /opt/conda/bin/spacescans run --data-dir /project /app/data/tasks/tier2-golden-nhd_bluespace/pipeline_configs/c3_nhd_bluespace.yaml"}
+{"ts": "2026-10-12T20:44:04.658712+00:00", "level": "info", "source": "c3_nhd_bluespace", "msg": "[nhd_proximity] feature cache: /project/cache/C3/nhd_features"}
+{"ts": "2026-10-12T20:44:04.658940+00:00", "level": "info", "source": "c3_nhd_bluespace", "msg": "[nhd_proximity] GDB absent at /project/NHD/C4/NHDPlus_H_National_Release_2_GDB.gdb \u2014 serving from the tile cache only"}
+{"ts": "2026-10-12T20:44:04.658983+00:00", "level": "info", "source": "c3_nhd_bluespace", "msg": "[nhd_proximity] layers per category: {'flow': ['NetworkNHDFlowline', 'NonNetworkNHDFlowline'], 'water': ['NHDWaterbody'], 'area': ['NHDArea'], 'coast': ['NetworkNHDFlowline', 'NonNetworkNHDFlowline']}"}
+{"ts": "2026-10-12T20:44:04.715098+00:00", "level": "info", "source": "c3_nhd_bluespace", "msg": "[nhd_proximity] 1001 patients across 453 tiles"}
+{"ts": "2026-10-12T20:44:08.591951+00:00", "level": "info", "source": "c3_nhd_bluespace", "msg": "[nhd_proximity] tile 22/453 (  4.9%) elapsed=0.07m"}
+{"ts": "2026-10-12T20:44:11.946228+00:00", "level": "info", "source": "c3_nhd_bluespace", "msg": "[nhd_proximity] tile 44/453 (  9.7%) elapsed=0.12m"}
+{"ts": "2026-10-12T20:44:14.314038+00:00", "level": "info", "source": "c3_nhd_bluespace", "msg": "[nhd_proximity] tile 66/453 ( 14.6%) elapsed=0.16m"}
+{"ts": "2026-10-12T20:44:25.084520+00:00", "level": "info", "source": "c3_nhd_bluespace", "msg": "[nhd_proximity] tile 88/453 ( 19.4%) elapsed=0.34m"}
+{"ts": "2026-10-12T20:44:29.172621+00:00", "level": "info", "source": "c3_nhd_bluespace", "msg": "[nhd_proximity] tile 110/453 ( 24.3%) elapsed=0.41m"}
+{"ts": "2026-10-12T20:44:37.905182+00:00", "level": "info", "source": "c3_nhd_bluespace", "msg": "[nhd_proximity] tile 132/453 ( 29.1%) elapsed=0.55m"}
+{"ts": "2026-10-12T20:44:40.122094+00:00", "level": "info", "source": "c3_nhd_bluespace", "msg": "[nhd_proximity] tile 154/453 ( 34.0%) elapsed=0.59m"}
+{"ts": "2026-10-12T20:44:42.110891+00:00", "level": "info", "source": "c3_nhd_bluespace", "msg": "[nhd_proximity] tile 176/453 ( 38.9%) elapsed=0.62m"}
+{"ts": "2026-10-12T20:44:44.466407+00:00", "level": "info", "source": "c3_nhd_bluespace", "msg": "[nhd_proximity] tile 198/453 ( 43.7%) elapsed=0.66m"}
+{"ts": "2026-10-12T20:44:46.593813+00:00", "level": "info", "source": "c3_nhd_bluespace", "msg": "[nhd_proximity] tile 220/453 ( 48.6%) elapsed=0.70m"}
+{"ts": "2026-10-12T20:44:48.082491+00:00", "level": "info", "source": "c3_nhd_bluespace", "msg": "[nhd_proximity] tile 242/453 ( 53.4%) elapsed=0.72m"}
+{"ts": "2026-10-12T20:44:50.817401+00:00", "level": "info", "source": "c3_nhd_bluespace", "msg": "[nhd_proximity] tile 264/453 ( 58.3%) elapsed=0.77m"}
+{"ts": "2026-10-12T20:44:53.836742+00:00", "level": "info", "source": "c3_nhd_bluespace", "msg": "[nhd_proximity] tile 286/453 ( 63.1%) elapsed=0.82m"}
+{"ts": "2026-10-12T20:44:55.458082+00:00", "level": "info", "source": "c3_nhd_bluespace", "msg": "[nhd_proximity] tile 308/453 ( 68.0%) elapsed=0.85m"}
+{"ts": "2026-10-12T20:44:57.211330+00:00", "level": "info", "source": "c3_nhd_bluespace", "msg": "[nhd_proximity] tile 330/453 ( 72.8%) elapsed=0.88m"}
+{"ts": "2026-10-12T20:44:59.577091+00:00", "level": "info", "source": "c3_nhd_bluespace", "msg": "[nhd_proximity] tile 352/453 ( 77.7%) elapsed=0.92m"}
+{"ts": "2026-10-12T20:45:01.391955+00:00", "level": "info", "source": "c3_nhd_bluespace", "msg": "[nhd_proximity] tile 374/453 ( 82.6%) elapsed=0.95m"}
+{"ts": "2026-10-12T20:45:03.099518+00:00", "level": "info", "source": "c3_nhd_bluespace", "msg": "[nhd_proximity] tile 396/453 ( 87.4%) elapsed=0.97m"}
+{"ts": "2026-10-12T20:45:04.961488+00:00", "level": "info", "source": "c3_nhd_bluespace", "msg": "[nhd_proximity] tile 418/453 ( 92.3%) elapsed=1.01m"}
+{"ts": "2026-10-12T20:45:07.319735+00:00", "level": "info", "source": "c3_nhd_bluespace", "msg": "[nhd_proximity] tile 440/453 ( 97.1%) elapsed=1.04m"}
+{"ts": "2026-10-12T20:45:08.300925+00:00", "level": "info", "source": "c3_nhd_bluespace", "msg": "[nhd_proximity] tile 453/453 (100.0%) elapsed=1.06m"}
+{"ts": "2026-10-12T20:45:08.304102+00:00", "level": "info", "source": "c3_nhd_bluespace", "msg": "[nhd_proximity] === SUMMARY ==="}
+{"ts": "2026-10-12T20:45:08.304225+00:00", "level": "info", "source": "c3_nhd_bluespace", "msg": "[nhd_proximity]   layer_load       0.57m ( 54.1%)"}
+{"ts": "2026-10-12T20:45:08.304276+00:00", "level": "info", "source": "c3_nhd_bluespace", "msg": "[nhd_proximity]   sjoin_nearest    0.13m ( 12.1%)"}
+{"ts": "2026-10-12T20:45:08.304330+00:00", "level": "info", "source": "c3_nhd_bluespace", "msg": "[nhd_proximity]   other            0.00m (  0.0%)"}
+{"ts": "2026-10-12T20:45:08.304353+00:00", "level": "info", "source": "c3_nhd_bluespace", "msg": "[nhd_proximity]   misc             0.36m ( 33.8%)"}
+{"ts": "2026-10-12T20:45:08.304368+00:00", "level": "info", "source": "c3_nhd_bluespace", "msg": "[nhd_proximity]   total            1.06m"}
+{"ts": "2026-10-12T20:45:08.304395+00:00", "level": "info", "source": "c3_nhd_bluespace", "msg": "[nhd_proximity]   feature cache: hits=1812 misses=0 hit_rate=100.0%"}
+{"ts": "2026-10-12T20:45:08.319068+00:00", "level": "info", "source": "c3_nhd_bluespace", "msg": "Output: /app/data/tasks/tier2-golden-nhd_bluespace/output/c3_nhd_bluespace.parquet"}
+{"ts": "2026-10-12T20:45:08.447110+00:00", "level": "info", "source": "runner", "msg": "step c3_nhd_bluespace exit code 0"}
+{"ts": "2026-10-12T20:45:08.448826+00:00", "level": "info", "source": "c3_nhd_bluespace", "msg": "cache write: 12269dbe__BG_NHD__b270m.parquet"}
+{"ts": "2026-10-12T20:45:08.453389+00:00", "level": "info", "source": "runner", "msg": "spawning c4_nhd_bluespace: /opt/conda/bin/python /opt/conda/bin/spacescans run --data-dir /project /app/data/tasks/tier2-golden-nhd_bluespace/pipeline_configs/c4_nhd_bluespace.yaml"}
+{"ts": "2026-10-12T20:45:09.168867+00:00", "level": "info", "source": "c4_nhd_bluespace", "msg": "Output: /app/data/tasks/tier2-golden-nhd_bluespace/output/c4_nhd_bluespace.parquet"}
+{"ts": "2026-10-12T20:45:09.261874+00:00", "level": "info", "source": "runner", "msg": "step c4_nhd_bluespace exit code 0"}

@@ -1,0 +1,12 @@
+[
+  {
+    "path": "manifest.json",
+    "bytes": 1882,
+    "sha256": "89fcaaec194da96d15cdca195828483220cbebb360bb63669c5eb2c2642ab2d7"
+  },
+  {
+    "path": "rasters/static.tif",
+    "bytes": 431945796,
+    "sha256": "1d1a0c7be9872665be254201f61c082bc430a4a476d98dadac1726ca1fad816b"
+  }
+]

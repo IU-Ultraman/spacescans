@@ -1,0 +1,16 @@
+name: county_us_demo_task_cta5_cbp
+linkage_pattern: boundary_overlap_fast
+geometry_type: polygon
+source:
+  file: County/C3/tl_2010_us_county10/tl_2010_us_county10.shp
+  join_col: GEOID10
+buffer:
+  patient_file: /app/data/tasks/tier2-golden-zcta5_cbp/input.parquet
+  patient_adapter: demo_conus
+  buffer_m: 270
+  raster_res_m: 25
+engine:
+  backend: duckdb
+output:
+  path: /app/data/tasks/tier2-golden-zcta5_cbp/output/c3_county.parquet
+  format: parquet

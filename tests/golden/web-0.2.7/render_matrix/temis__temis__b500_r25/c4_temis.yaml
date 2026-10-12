@@ -1,0 +1,37 @@
+name: temis_270m_demo_task_b500_r25
+linkage_pattern: gridded
+geometry_type: raster
+source:
+  file: /app/data/tasks/tier2-golden-render/combos/temis__temis__b500_r25/output/c3_temis.parquet
+buffer:
+  patient_file: /app/data/tasks/tier2-golden-render/combos/temis__temis__b500_r25/input.parquet
+  patient_adapter: demo_conus
+  buffer_m: 500
+exposure:
+  file: TEMIS/C4/raw
+  join_col: grid_id
+  value_cols:
+  - uvddc
+  - uvdec
+  - uvdvc
+  - uvief
+  date_col: date
+time:
+  years:
+  - 2013
+  - 2014
+  - 2015
+  - 2016
+  - 2017
+  - 2018
+  - 2019
+  temporal_resolution: daily
+  temporal_mode: yearly
+  output_grouping: episode
+engine:
+  backend: duckdb
+plugin: temis
+output:
+  path: /app/data/tasks/tier2-golden-render/combos/temis__temis__b500_r25/output/c4_temis.parquet
+  format: parquet
+  label_path: output/python_v2/270m/TEMIS/C4/label_temis_270m_demo100k.parquet

@@ -1,0 +1,84 @@
+{
+  "name": "fanin_all",
+  "task_dir": "/app/data/tasks/tier2-golden-fanin_all",
+  "sources": [
+    "bg_ndi_wi",
+    "zcta5_cbp",
+    "tiger_proximity",
+    "nhd_bluespace",
+    "noise",
+    "vnl",
+    "temis",
+    "fara_tract",
+    "acag",
+    "faqsd",
+    "custom_raster"
+  ],
+  "variables": [
+    "ndi",
+    "walkability",
+    "cbp_zcta5",
+    "tiger_proximity",
+    "nhd_bluespace",
+    "noise",
+    "vnl",
+    "temis",
+    "fara_tract",
+    "acag",
+    "faqsd",
+    "custom_714c9715"
+  ],
+  "dispatch_plan": {
+    "bg_ndi_wi": [
+      "ndi",
+      "walkability"
+    ],
+    "zcta5_cbp": [
+      "cbp_zcta5"
+    ],
+    "tiger_proximity": [
+      "tiger_proximity"
+    ],
+    "nhd_bluespace": [
+      "nhd_bluespace"
+    ],
+    "noise": [
+      "noise"
+    ],
+    "vnl": [
+      "vnl"
+    ],
+    "temis": [
+      "temis"
+    ],
+    "fara_tract": [
+      "fara_tract"
+    ],
+    "acag": [
+      "acag"
+    ],
+    "faqsd": [
+      "faqsd"
+    ],
+    "custom": [
+      "custom_714c9715"
+    ]
+  },
+  "fan_in": {
+    "fan_in": [
+      "bg_ndi_wi",
+      "zcta5_cbp",
+      "tiger_proximity",
+      "nhd_bluespace",
+      "noise",
+      "vnl",
+      "temis",
+      "fara_tract",
+      "acag",
+      "faqsd",
+      "custom"
+    ]
+  },
+  "success": true,
+  "note": "not a runner: app.experiments._merge.fan_in over the partials of the runs listed in sources, in the order app.variable_registry.variables_by_experiment gives (the dispatcher's order)"
+}

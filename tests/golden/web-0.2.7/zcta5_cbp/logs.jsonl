@@ -1,0 +1,40 @@
+{"ts": "2026-10-12T20:48:05.434603+00:00", "level": "info", "source": "runner", "msg": "spawning c3_zcta5: /opt/conda/bin/python /opt/conda/bin/spacescans run --data-dir /project /app/data/tasks/tier2-golden-zcta5_cbp/pipeline_configs/c3_zcta5.yaml"}
+{"ts": "2026-10-12T20:48:13.177150+00:00", "level": "info", "source": "c3_zcta5", "msg": "[overlap_fast] processing 33120 boundaries \u00d7 1001 buffers via 13818 tiles (30 km each)"}
+{"ts": "2026-10-12T20:48:18.579770+00:00", "level": "info", "source": "c3_zcta5", "msg": "[overlap_fast] tile  6900/13818 ( 49.9%) elapsed=  0.09m  rate=1277.2/s  ETA= 0.09m  tiles_with_work=152"}
+{"ts": "2026-10-12T20:48:32.870812+00:00", "level": "info", "source": "c3_zcta5", "msg": "[overlap_fast] tile 13800/13818 ( 99.9%) elapsed=  0.33m  rate=700.7/s  ETA= 0.00m  tiles_with_work=568"}
+{"ts": "2026-10-12T20:48:32.952260+00:00", "level": "info", "source": "c3_zcta5", "msg": "[overlap_fast] === SUMMARY ==="}
+{"ts": "2026-10-12T20:48:32.952411+00:00", "level": "info", "source": "c3_zcta5", "msg": "[overlap_fast]   rasterize        0.18m ( 54.4%)"}
+{"ts": "2026-10-12T20:48:32.952461+00:00", "level": "info", "source": "c3_zcta5", "msg": "[overlap_fast]   exact_extract    0.07m ( 22.3%)"}
+{"ts": "2026-10-12T20:48:32.952491+00:00", "level": "info", "source": "c3_zcta5", "msg": "[overlap_fast]   memfile          0.04m ( 13.4%)"}
+{"ts": "2026-10-12T20:48:32.952533+00:00", "level": "info", "source": "c3_zcta5", "msg": "[overlap_fast]   postprocess      0.03m (  8.7%)"}
+{"ts": "2026-10-12T20:48:32.952556+00:00", "level": "info", "source": "c3_zcta5", "msg": "[overlap_fast]   tile_index       0.00m (  0.8%)"}
+{"ts": "2026-10-12T20:48:32.952575+00:00", "level": "info", "source": "c3_zcta5", "msg": "[overlap_fast]   loop_other       0.00m (  0.1%)"}
+{"ts": "2026-10-12T20:48:32.952589+00:00", "level": "info", "source": "c3_zcta5", "msg": "[overlap_fast]   concat+norm      0.00m (  0.3%)"}
+{"ts": "2026-10-12T20:48:32.952603+00:00", "level": "info", "source": "c3_zcta5", "msg": "[overlap_fast]   total            0.33m"}
+{"ts": "2026-10-12T20:48:32.952617+00:00", "level": "info", "source": "c3_zcta5", "msg": "[overlap_fast]   tiles processed: 569 / 13818"}
+{"ts": "2026-10-12T20:48:33.081952+00:00", "level": "info", "source": "c3_zcta5", "msg": "Output: /app/data/tasks/tier2-golden-zcta5_cbp/output/c3_zcta5.parquet"}
+{"ts": "2026-10-12T20:48:33.210326+00:00", "level": "info", "source": "runner", "msg": "step c3_zcta5 exit code 0"}
+{"ts": "2026-10-12T20:48:33.211988+00:00", "level": "info", "source": "c3_zcta5", "msg": "cache write: 12269dbe__ZCTA5__b270m__r25m.parquet"}
+{"ts": "2026-10-12T20:48:33.250707+00:00", "level": "info", "source": "runner", "msg": "spawning c3_county: /opt/conda/bin/python /opt/conda/bin/spacescans run --data-dir /project /app/data/tasks/tier2-golden-zcta5_cbp/pipeline_configs/c3_county.yaml"}
+{"ts": "2026-10-12T20:48:34.760275+00:00", "level": "info", "source": "c3_county", "msg": "[overlap_fast] processing 3221 boundaries \u00d7 1001 buffers via 13818 tiles (30 km each)"}
+{"ts": "2026-10-12T20:48:38.826833+00:00", "level": "info", "source": "c3_county", "msg": "[overlap_fast] tile  6900/13818 ( 49.9%) elapsed=  0.07m  rate=1696.5/s  ETA= 0.07m  tiles_with_work=152"}
+{"ts": "2026-10-12T20:48:49.679272+00:00", "level": "info", "source": "c3_county", "msg": "[overlap_fast] tile 13800/13818 ( 99.9%) elapsed=  0.25m  rate=925.0/s  ETA= 0.00m  tiles_with_work=568"}
+{"ts": "2026-10-12T20:48:49.735444+00:00", "level": "info", "source": "c3_county", "msg": "[overlap_fast] === SUMMARY ==="}
+{"ts": "2026-10-12T20:48:49.736303+00:00", "level": "info", "source": "c3_county", "msg": "[overlap_fast]   rasterize        0.11m ( 43.2%)"}
+{"ts": "2026-10-12T20:48:49.736401+00:00", "level": "info", "source": "c3_county", "msg": "[overlap_fast]   exact_extract    0.07m ( 28.0%)"}
+{"ts": "2026-10-12T20:48:49.736436+00:00", "level": "info", "source": "c3_county", "msg": "[overlap_fast]   memfile          0.04m ( 17.2%)"}
+{"ts": "2026-10-12T20:48:49.736456+00:00", "level": "info", "source": "c3_county", "msg": "[overlap_fast]   postprocess      0.03m ( 10.4%)"}
+{"ts": "2026-10-12T20:48:49.736497+00:00", "level": "info", "source": "c3_county", "msg": "[overlap_fast]   tile_index       0.00m (  0.9%)"}
+{"ts": "2026-10-12T20:48:49.736520+00:00", "level": "info", "source": "c3_county", "msg": "[overlap_fast]   loop_other       0.00m (  0.1%)"}
+{"ts": "2026-10-12T20:48:49.736534+00:00", "level": "info", "source": "c3_county", "msg": "[overlap_fast]   concat+norm      0.00m (  0.2%)"}
+{"ts": "2026-10-12T20:48:49.736548+00:00", "level": "info", "source": "c3_county", "msg": "[overlap_fast]   total            0.25m"}
+{"ts": "2026-10-12T20:48:49.736562+00:00", "level": "info", "source": "c3_county", "msg": "[overlap_fast]   tiles processed: 569 / 13818"}
+{"ts": "2026-10-12T20:48:49.759293+00:00", "level": "info", "source": "c3_county", "msg": "Output: /app/data/tasks/tier2-golden-zcta5_cbp/output/c3_county.parquet"}
+{"ts": "2026-10-12T20:48:49.865054+00:00", "level": "info", "source": "runner", "msg": "step c3_county exit code 0"}
+{"ts": "2026-10-12T20:48:49.865720+00:00", "level": "info", "source": "c3_county", "msg": "cache write: 12269dbe__COUNTY__b270m__r25m.parquet"}
+{"ts": "2026-10-12T20:48:49.869036+00:00", "level": "info", "source": "runner", "msg": "spawning c4_zcta5_cbp: /opt/conda/bin/python /opt/conda/bin/spacescans run --data-dir /project /app/data/tasks/tier2-golden-zcta5_cbp/pipeline_configs/c4_zcta5_cbp.yaml"}
+{"ts": "2026-10-12T20:48:50.915270+00:00", "level": "info", "source": "c4_zcta5_cbp", "msg": "Output: /app/data/tasks/tier2-golden-zcta5_cbp/output/c4_zcta5_cbp.parquet"}
+{"ts": "2026-10-12T20:48:51.083588+00:00", "level": "info", "source": "runner", "msg": "step c4_zcta5_cbp exit code 0"}
+{"ts": "2026-10-12T20:48:51.087336+00:00", "level": "info", "source": "runner", "msg": "spawning c4_county_cbp: /opt/conda/bin/python /opt/conda/bin/spacescans run --data-dir /project /app/data/tasks/tier2-golden-zcta5_cbp/pipeline_configs/c4_county_cbp.yaml"}
+{"ts": "2026-10-12T20:48:51.702294+00:00", "level": "info", "source": "c4_county_cbp", "msg": "Output: /app/data/tasks/tier2-golden-zcta5_cbp/output/c4_county_cbp.parquet"}
+{"ts": "2026-10-12T20:48:51.819915+00:00", "level": "info", "source": "runner", "msg": "step c4_county_cbp exit code 0"}

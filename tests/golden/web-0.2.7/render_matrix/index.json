@@ -1,0 +1,3872 @@
+[
+  {
+    "combo": "bg_ndi_wi__ndi__b270_r25",
+    "experiment": "bg_ndi_wi",
+    "variables": [
+      "ndi"
+    ],
+    "buffer_m": 270,
+    "raster_res_m": 25,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/bg_ndi_wi__ndi__b270_r25",
+    "steps": [
+      {
+        "name": "c3_bg",
+        "template": "c3/bg_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG__b270m__r25m",
+        "sha256": "9fcdf7ca93e6ab2822119ae97781a6369bdc7117a65357c92fb8a71b024be42e"
+      },
+      {
+        "name": "c3_bg_2020",
+        "template": "c3/bg_us_2020_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG2020__b270m__r25m",
+        "sha256": "4ace82c8273d8a7b3fe1886cca932b0f223c33662fbaffaa7c94881d391c639e"
+      },
+      {
+        "name": "c4_ndi",
+        "template": "c4/bg_ndi_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "4a0ffd8f9ea5458bf59223d548fe5f7da44a47c6d0b3d066780de2ad25a0058d"
+      }
+    ]
+  },
+  {
+    "combo": "bg_ndi_wi__ndi__b270_r50",
+    "experiment": "bg_ndi_wi",
+    "variables": [
+      "ndi"
+    ],
+    "buffer_m": 270,
+    "raster_res_m": 50,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/bg_ndi_wi__ndi__b270_r50",
+    "steps": [
+      {
+        "name": "c3_bg",
+        "template": "c3/bg_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG__b270m__r50m",
+        "sha256": "4a5c4bf4953387e78fbc59c2fecc571d765a89d06232a1c6a9e8b381d1b0b891"
+      },
+      {
+        "name": "c3_bg_2020",
+        "template": "c3/bg_us_2020_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG2020__b270m__r50m",
+        "sha256": "456b6674c5c9f5cddf4d197d182d9311609fcb807b73b64ba495d074fe0c2fd0"
+      },
+      {
+        "name": "c4_ndi",
+        "template": "c4/bg_ndi_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "a98513771f351a2a9dc24591a70db18aa65f0121022720f685b1050b54737960"
+      }
+    ]
+  },
+  {
+    "combo": "bg_ndi_wi__ndi__b500_r25",
+    "experiment": "bg_ndi_wi",
+    "variables": [
+      "ndi"
+    ],
+    "buffer_m": 500,
+    "raster_res_m": 25,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/bg_ndi_wi__ndi__b500_r25",
+    "steps": [
+      {
+        "name": "c3_bg",
+        "template": "c3/bg_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG__b500m__r25m",
+        "sha256": "99e7e054c5edccd654937b68706db34e571550ca131a075cb24ac22868e0f653"
+      },
+      {
+        "name": "c3_bg_2020",
+        "template": "c3/bg_us_2020_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG2020__b500m__r25m",
+        "sha256": "8fab5fbc708f1881911e9ede2ccb77edc460477ee07cb2af28d8fcbe4b198ed6"
+      },
+      {
+        "name": "c4_ndi",
+        "template": "c4/bg_ndi_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "5aa93d7a5daa05b56fd3f37ea6ec1654662e9b08f70b8869035aa2c3a763a811"
+      }
+    ]
+  },
+  {
+    "combo": "bg_ndi_wi__ndi__b500_r50",
+    "experiment": "bg_ndi_wi",
+    "variables": [
+      "ndi"
+    ],
+    "buffer_m": 500,
+    "raster_res_m": 50,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/bg_ndi_wi__ndi__b500_r50",
+    "steps": [
+      {
+        "name": "c3_bg",
+        "template": "c3/bg_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG__b500m__r50m",
+        "sha256": "b49a5fe372f17edaa871f90d8ca2901183204673420e2e2f3085e5aad98e2888"
+      },
+      {
+        "name": "c3_bg_2020",
+        "template": "c3/bg_us_2020_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG2020__b500m__r50m",
+        "sha256": "cccc005972b7a4903a6349c7a7531a6066ac0483c87cf06d0fd66389794146bc"
+      },
+      {
+        "name": "c4_ndi",
+        "template": "c4/bg_ndi_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "d66df3bb329c690683c78c8f404aa81bb8c76b10333e01eab7b37c6f1da08865"
+      }
+    ]
+  },
+  {
+    "combo": "bg_ndi_wi__ndi__b1000_r25",
+    "experiment": "bg_ndi_wi",
+    "variables": [
+      "ndi"
+    ],
+    "buffer_m": 1000,
+    "raster_res_m": 25,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/bg_ndi_wi__ndi__b1000_r25",
+    "steps": [
+      {
+        "name": "c3_bg",
+        "template": "c3/bg_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG__b1000m__r25m",
+        "sha256": "a88e12efdea1aa84efcc3a96fb1b2f2525db9a60890ac3a737ed3c3d43f9452c"
+      },
+      {
+        "name": "c3_bg_2020",
+        "template": "c3/bg_us_2020_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG2020__b1000m__r25m",
+        "sha256": "447f562a2962a0ad1cafe846d68ee9096602a41b5f825bfe67c1fc6fd98775bf"
+      },
+      {
+        "name": "c4_ndi",
+        "template": "c4/bg_ndi_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "21172a42cfc4b5b0d9297c28587dae70c7e14c9a0ca4c230446d173518d3e5cc"
+      }
+    ]
+  },
+  {
+    "combo": "bg_ndi_wi__ndi__b1000_r50",
+    "experiment": "bg_ndi_wi",
+    "variables": [
+      "ndi"
+    ],
+    "buffer_m": 1000,
+    "raster_res_m": 50,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/bg_ndi_wi__ndi__b1000_r50",
+    "steps": [
+      {
+        "name": "c3_bg",
+        "template": "c3/bg_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG__b1000m__r50m",
+        "sha256": "0894d7e9252b13651291a08b5f70fa3f24e5e37ab078775b5b0bf1a36ff5c8ca"
+      },
+      {
+        "name": "c3_bg_2020",
+        "template": "c3/bg_us_2020_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG2020__b1000m__r50m",
+        "sha256": "611937993be7edab0cf1d9f3bc47a76cd699905d958f5557d5793cb5d96ed3da"
+      },
+      {
+        "name": "c4_ndi",
+        "template": "c4/bg_ndi_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "18044995b5d90cc4364f7a6eefcb90a8b5abc83b4fe1b10bfc10fbc06d1353de"
+      }
+    ]
+  },
+  {
+    "combo": "bg_ndi_wi__walkability__b270_r25",
+    "experiment": "bg_ndi_wi",
+    "variables": [
+      "walkability"
+    ],
+    "buffer_m": 270,
+    "raster_res_m": 25,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/bg_ndi_wi__walkability__b270_r25",
+    "steps": [
+      {
+        "name": "c3_bg",
+        "template": "c3/bg_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG__b270m__r25m",
+        "sha256": "b6605550d77572900fc8601169c956f7dc65bdb19c2cc4f001d55c4979ae5099"
+      },
+      {
+        "name": "c4_wi",
+        "template": "c4/bg_wi_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "1dcad7105abeb1958f5f711a3ee40198ceb3bea7f1284d34072997160600ab5b"
+      }
+    ]
+  },
+  {
+    "combo": "bg_ndi_wi__walkability__b270_r50",
+    "experiment": "bg_ndi_wi",
+    "variables": [
+      "walkability"
+    ],
+    "buffer_m": 270,
+    "raster_res_m": 50,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/bg_ndi_wi__walkability__b270_r50",
+    "steps": [
+      {
+        "name": "c3_bg",
+        "template": "c3/bg_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG__b270m__r50m",
+        "sha256": "b51fbe56cd63408560f83ea3c2a1506ceeca8933cf6b209c43f8c8bf33938cd2"
+      },
+      {
+        "name": "c4_wi",
+        "template": "c4/bg_wi_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "f455c3333464c7fd100f7a253bc18554fe486d1aedb1363704edee8c0dfac435"
+      }
+    ]
+  },
+  {
+    "combo": "bg_ndi_wi__walkability__b500_r25",
+    "experiment": "bg_ndi_wi",
+    "variables": [
+      "walkability"
+    ],
+    "buffer_m": 500,
+    "raster_res_m": 25,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/bg_ndi_wi__walkability__b500_r25",
+    "steps": [
+      {
+        "name": "c3_bg",
+        "template": "c3/bg_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG__b500m__r25m",
+        "sha256": "8615b3185ee6f09019a5b55a00b8d92b84d6c7116cb0f9d35c743dbe8b008cb6"
+      },
+      {
+        "name": "c4_wi",
+        "template": "c4/bg_wi_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "2a0c870f474572e65698d6b3a963334e369749a21d8e2e274403b5a13252beeb"
+      }
+    ]
+  },
+  {
+    "combo": "bg_ndi_wi__walkability__b500_r50",
+    "experiment": "bg_ndi_wi",
+    "variables": [
+      "walkability"
+    ],
+    "buffer_m": 500,
+    "raster_res_m": 50,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/bg_ndi_wi__walkability__b500_r50",
+    "steps": [
+      {
+        "name": "c3_bg",
+        "template": "c3/bg_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG__b500m__r50m",
+        "sha256": "bc4efd3d75140779d442e548ebab5b2835f90329a059466eb97bcc779f58434d"
+      },
+      {
+        "name": "c4_wi",
+        "template": "c4/bg_wi_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "b89f911dfe3b003b6bebf723e9642155fa86831b7800f2c50cc4fd737c86a649"
+      }
+    ]
+  },
+  {
+    "combo": "bg_ndi_wi__walkability__b1000_r25",
+    "experiment": "bg_ndi_wi",
+    "variables": [
+      "walkability"
+    ],
+    "buffer_m": 1000,
+    "raster_res_m": 25,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/bg_ndi_wi__walkability__b1000_r25",
+    "steps": [
+      {
+        "name": "c3_bg",
+        "template": "c3/bg_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG__b1000m__r25m",
+        "sha256": "bdf3d337ac193fc2e461364159d139f392090383c2b4a4b0c970ff52fcdf7488"
+      },
+      {
+        "name": "c4_wi",
+        "template": "c4/bg_wi_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "922bb6b7d5b2d3ed9f19bbe4cef3201aa7434a832535609570a05069eb2feda1"
+      }
+    ]
+  },
+  {
+    "combo": "bg_ndi_wi__walkability__b1000_r50",
+    "experiment": "bg_ndi_wi",
+    "variables": [
+      "walkability"
+    ],
+    "buffer_m": 1000,
+    "raster_res_m": 50,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/bg_ndi_wi__walkability__b1000_r50",
+    "steps": [
+      {
+        "name": "c3_bg",
+        "template": "c3/bg_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG__b1000m__r50m",
+        "sha256": "2aa27a6d8e929207f6c9fdc146dba64f5eda3bd84659a62d819924e6c69a5b00"
+      },
+      {
+        "name": "c4_wi",
+        "template": "c4/bg_wi_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "56a6cd92d578821bcfbf79dcecb784ff1e2b6360f9d2f2cea90ff11f75ef0457"
+      }
+    ]
+  },
+  {
+    "combo": "bg_ndi_wi__ndi-walkability__b270_r25",
+    "experiment": "bg_ndi_wi",
+    "variables": [
+      "ndi",
+      "walkability"
+    ],
+    "buffer_m": 270,
+    "raster_res_m": 25,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/bg_ndi_wi__ndi-walkability__b270_r25",
+    "steps": [
+      {
+        "name": "c3_bg",
+        "template": "c3/bg_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG__b270m__r25m",
+        "sha256": "a4f6625019bf1ee11304850a8efea6ddcecf69c32fd87401c9198e26bfc86c5a"
+      },
+      {
+        "name": "c3_bg_2020",
+        "template": "c3/bg_us_2020_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG2020__b270m__r25m",
+        "sha256": "04ea8624c74c36932f42ee42ebf19b858bf43c340b4fe461e824f2dcd8dc5919"
+      },
+      {
+        "name": "c4_ndi",
+        "template": "c4/bg_ndi_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "2206253d6ed8a183bf618e430a8b9fb2dd9c5c1bb7f91b165e1bc5a6647efbf7"
+      },
+      {
+        "name": "c4_wi",
+        "template": "c4/bg_wi_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "b8fbe19f57a69544ea012730cc68461e155e1927caafbc587875c1188a7710c5"
+      }
+    ]
+  },
+  {
+    "combo": "bg_ndi_wi__ndi-walkability__b270_r50",
+    "experiment": "bg_ndi_wi",
+    "variables": [
+      "ndi",
+      "walkability"
+    ],
+    "buffer_m": 270,
+    "raster_res_m": 50,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/bg_ndi_wi__ndi-walkability__b270_r50",
+    "steps": [
+      {
+        "name": "c3_bg",
+        "template": "c3/bg_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG__b270m__r50m",
+        "sha256": "81f0944a9eba770378768c8f10f0282d246b745366b42c494f9d5fb4cf406d77"
+      },
+      {
+        "name": "c3_bg_2020",
+        "template": "c3/bg_us_2020_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG2020__b270m__r50m",
+        "sha256": "6274e99990b64c99e37288c92e0981fb587e2f073d0037217f81e2cca6f07f49"
+      },
+      {
+        "name": "c4_ndi",
+        "template": "c4/bg_ndi_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "4ebcf8c7419a1010a5ca6991135f527211ba85e1e1adbaf25f859fe43ca1fe87"
+      },
+      {
+        "name": "c4_wi",
+        "template": "c4/bg_wi_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "d29928abe88570cc1ed76725843f2a0d2c781b8685cba880dee039e94b6005bd"
+      }
+    ]
+  },
+  {
+    "combo": "bg_ndi_wi__ndi-walkability__b500_r25",
+    "experiment": "bg_ndi_wi",
+    "variables": [
+      "ndi",
+      "walkability"
+    ],
+    "buffer_m": 500,
+    "raster_res_m": 25,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/bg_ndi_wi__ndi-walkability__b500_r25",
+    "steps": [
+      {
+        "name": "c3_bg",
+        "template": "c3/bg_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG__b500m__r25m",
+        "sha256": "2775b9a5a197dcacb29e09bf809c67c96ab349170274ab40f1ae6646fb4afb15"
+      },
+      {
+        "name": "c3_bg_2020",
+        "template": "c3/bg_us_2020_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG2020__b500m__r25m",
+        "sha256": "5dd58283afc3f23d239c385a83402078a188ad161dd3243fa83c8d3406534478"
+      },
+      {
+        "name": "c4_ndi",
+        "template": "c4/bg_ndi_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "0378cd6e338f0689636a4aa78a55f5fb340ac53e4951ddb00c5ed35b931f37b9"
+      },
+      {
+        "name": "c4_wi",
+        "template": "c4/bg_wi_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "80a0a8b3810f03eee1a3bd4b53a4516a27040447ea6b2c5e0c26872f4033005e"
+      }
+    ]
+  },
+  {
+    "combo": "bg_ndi_wi__ndi-walkability__b500_r50",
+    "experiment": "bg_ndi_wi",
+    "variables": [
+      "ndi",
+      "walkability"
+    ],
+    "buffer_m": 500,
+    "raster_res_m": 50,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/bg_ndi_wi__ndi-walkability__b500_r50",
+    "steps": [
+      {
+        "name": "c3_bg",
+        "template": "c3/bg_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG__b500m__r50m",
+        "sha256": "b098974421ceca2d7583fc398d762dcea13c2ed0111c0596c5e50b58b8340be4"
+      },
+      {
+        "name": "c3_bg_2020",
+        "template": "c3/bg_us_2020_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG2020__b500m__r50m",
+        "sha256": "d02efdec06b428d2f2affe58cd5806f2e34e48567257876e7f9e513a389df736"
+      },
+      {
+        "name": "c4_ndi",
+        "template": "c4/bg_ndi_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "783501be84561b4812b3869ff89867eef343bea9fedfacae8d7aa910c3f92c2b"
+      },
+      {
+        "name": "c4_wi",
+        "template": "c4/bg_wi_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "965f60e25adb96970240c1fa9d623fe8d339948440a36abc950d436fb9dcc1ac"
+      }
+    ]
+  },
+  {
+    "combo": "bg_ndi_wi__ndi-walkability__b1000_r25",
+    "experiment": "bg_ndi_wi",
+    "variables": [
+      "ndi",
+      "walkability"
+    ],
+    "buffer_m": 1000,
+    "raster_res_m": 25,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/bg_ndi_wi__ndi-walkability__b1000_r25",
+    "steps": [
+      {
+        "name": "c3_bg",
+        "template": "c3/bg_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG__b1000m__r25m",
+        "sha256": "e5ac475d0b64769a32e460a5e4ef27a06d14149cbe7a8cf9ece23b20dd584b06"
+      },
+      {
+        "name": "c3_bg_2020",
+        "template": "c3/bg_us_2020_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG2020__b1000m__r25m",
+        "sha256": "f59db1f3e94d5810c9af9622baad10a20eacf6d57d5b56042f9f5c55ef1ab09c"
+      },
+      {
+        "name": "c4_ndi",
+        "template": "c4/bg_ndi_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "40dac0c01b562cbb0afe085037510ea8101c44c1a94cbe0de50b2ed167230e22"
+      },
+      {
+        "name": "c4_wi",
+        "template": "c4/bg_wi_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "e4c06033c2fa03bda6d2ef49f19a9b4b2d9796366e0779e60d283fa29c046056"
+      }
+    ]
+  },
+  {
+    "combo": "bg_ndi_wi__ndi-walkability__b1000_r50",
+    "experiment": "bg_ndi_wi",
+    "variables": [
+      "ndi",
+      "walkability"
+    ],
+    "buffer_m": 1000,
+    "raster_res_m": 50,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/bg_ndi_wi__ndi-walkability__b1000_r50",
+    "steps": [
+      {
+        "name": "c3_bg",
+        "template": "c3/bg_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG__b1000m__r50m",
+        "sha256": "2a035dbc66b99b0f4172ed776e6591ed003d491af4e23cfa7f203543a6ccac52"
+      },
+      {
+        "name": "c3_bg_2020",
+        "template": "c3/bg_us_2020_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG2020__b1000m__r50m",
+        "sha256": "3da236e40e415db65a9de0cfcc0dd8d6c7a120cbe00ea6f4e86475075c81d59f"
+      },
+      {
+        "name": "c4_ndi",
+        "template": "c4/bg_ndi_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "b58efa6c370ebe111706961b0074cf085cc280adfcc5d6a6b601e93bc5abb47b"
+      },
+      {
+        "name": "c4_wi",
+        "template": "c4/bg_wi_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "c44c63438d2c61bca88860b85d95362c0cae06a94bbe482b0ff4cc20c68eeb43"
+      }
+    ]
+  },
+  {
+    "combo": "bg_ndi_wi__walkability-ndi__b270_r25",
+    "experiment": "bg_ndi_wi",
+    "variables": [
+      "walkability",
+      "ndi"
+    ],
+    "buffer_m": 270,
+    "raster_res_m": 25,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/bg_ndi_wi__walkability-ndi__b270_r25",
+    "steps": [
+      {
+        "name": "c3_bg",
+        "template": "c3/bg_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG__b270m__r25m",
+        "sha256": "af3da9a21fbf0f4ae8f9ee122f7458415e50ba7060f4f26ecfb4081d8c790b9e"
+      },
+      {
+        "name": "c3_bg_2020",
+        "template": "c3/bg_us_2020_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG2020__b270m__r25m",
+        "sha256": "701e3e77e6d5556aab29c164f43749596a352612b381df84667f45b4aeda568c"
+      },
+      {
+        "name": "c4_ndi",
+        "template": "c4/bg_ndi_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "5e2711ebdae94292956176bf42f7d23a614dc5ae3feb5fdaf27eaff4ed16f172"
+      },
+      {
+        "name": "c4_wi",
+        "template": "c4/bg_wi_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "e0974234767d463a52a3351ea5b3654564a02d88d070e39cf01055eb30c178e9"
+      }
+    ]
+  },
+  {
+    "combo": "bg_ndi_wi__walkability-ndi__b270_r50",
+    "experiment": "bg_ndi_wi",
+    "variables": [
+      "walkability",
+      "ndi"
+    ],
+    "buffer_m": 270,
+    "raster_res_m": 50,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/bg_ndi_wi__walkability-ndi__b270_r50",
+    "steps": [
+      {
+        "name": "c3_bg",
+        "template": "c3/bg_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG__b270m__r50m",
+        "sha256": "c1bce7ee2b910bd6a1a86de5eae629407904c5f9d20e5b8a2dfe21391e878e1c"
+      },
+      {
+        "name": "c3_bg_2020",
+        "template": "c3/bg_us_2020_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG2020__b270m__r50m",
+        "sha256": "18a580deaa11b3fa0b85dffd8ae598cc66b08b68381ea31acc36c11cd783faea"
+      },
+      {
+        "name": "c4_ndi",
+        "template": "c4/bg_ndi_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "0ddfcc368e5d53616903825ff9b99cf752ea6f04e9732b6ba248143636b8220c"
+      },
+      {
+        "name": "c4_wi",
+        "template": "c4/bg_wi_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "fb5be752870f213683eb42c84aa33c04ab3c13970b8ff04ad07877a984977e9a"
+      }
+    ]
+  },
+  {
+    "combo": "bg_ndi_wi__walkability-ndi__b500_r25",
+    "experiment": "bg_ndi_wi",
+    "variables": [
+      "walkability",
+      "ndi"
+    ],
+    "buffer_m": 500,
+    "raster_res_m": 25,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/bg_ndi_wi__walkability-ndi__b500_r25",
+    "steps": [
+      {
+        "name": "c3_bg",
+        "template": "c3/bg_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG__b500m__r25m",
+        "sha256": "dabdb8a7b1b449af321c2301a67a5b543e14c3682cea39f35553d6269f212a1e"
+      },
+      {
+        "name": "c3_bg_2020",
+        "template": "c3/bg_us_2020_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG2020__b500m__r25m",
+        "sha256": "b9408a2ca97ffad96c74ca034730e2e3713545503141cbdd43c3935e2dd9895b"
+      },
+      {
+        "name": "c4_ndi",
+        "template": "c4/bg_ndi_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "e1e90c479f8707a47cc5e10768e625cd38dcc9fc27985c0959eeafa388ddc92a"
+      },
+      {
+        "name": "c4_wi",
+        "template": "c4/bg_wi_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "328229154a17b78d733a658483932d6ff382314cc03382ae68ccc04a06379b41"
+      }
+    ]
+  },
+  {
+    "combo": "bg_ndi_wi__walkability-ndi__b500_r50",
+    "experiment": "bg_ndi_wi",
+    "variables": [
+      "walkability",
+      "ndi"
+    ],
+    "buffer_m": 500,
+    "raster_res_m": 50,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/bg_ndi_wi__walkability-ndi__b500_r50",
+    "steps": [
+      {
+        "name": "c3_bg",
+        "template": "c3/bg_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG__b500m__r50m",
+        "sha256": "f7ebb66a29c8686c94ce9c091859a14255dd2ce3da2f47ee928f1b349363112a"
+      },
+      {
+        "name": "c3_bg_2020",
+        "template": "c3/bg_us_2020_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG2020__b500m__r50m",
+        "sha256": "d319295464c66f0380928ea4ea01bd4619e1fc23154d8460bae3c9842cdc9b79"
+      },
+      {
+        "name": "c4_ndi",
+        "template": "c4/bg_ndi_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "f227903eb226156e75582370dc40ee6f47cd6361ef600b4fb34184812aae3796"
+      },
+      {
+        "name": "c4_wi",
+        "template": "c4/bg_wi_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "8094bcac77045e2dbd8a74347273d7488073095dd0f621775d5edd864dd5b967"
+      }
+    ]
+  },
+  {
+    "combo": "bg_ndi_wi__walkability-ndi__b1000_r25",
+    "experiment": "bg_ndi_wi",
+    "variables": [
+      "walkability",
+      "ndi"
+    ],
+    "buffer_m": 1000,
+    "raster_res_m": 25,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/bg_ndi_wi__walkability-ndi__b1000_r25",
+    "steps": [
+      {
+        "name": "c3_bg",
+        "template": "c3/bg_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG__b1000m__r25m",
+        "sha256": "71b6370797e386a07775907cc987994c91dcdeb6c4cccd2a5423332da88fe45f"
+      },
+      {
+        "name": "c3_bg_2020",
+        "template": "c3/bg_us_2020_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG2020__b1000m__r25m",
+        "sha256": "8ae3081807ba16f6df96530e5c27923845fbb952e5716073eb878b858628efc5"
+      },
+      {
+        "name": "c4_ndi",
+        "template": "c4/bg_ndi_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "f91ed7482affb59ad52d0f7a48b671c0df39f1c99ed598d3b54f656a2c78e9c5"
+      },
+      {
+        "name": "c4_wi",
+        "template": "c4/bg_wi_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "3acbcb536393b7add73eeab15bc3e96403367b7fcafd2b461b9164561c36be16"
+      }
+    ]
+  },
+  {
+    "combo": "bg_ndi_wi__walkability-ndi__b1000_r50",
+    "experiment": "bg_ndi_wi",
+    "variables": [
+      "walkability",
+      "ndi"
+    ],
+    "buffer_m": 1000,
+    "raster_res_m": 50,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/bg_ndi_wi__walkability-ndi__b1000_r50",
+    "steps": [
+      {
+        "name": "c3_bg",
+        "template": "c3/bg_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG__b1000m__r50m",
+        "sha256": "d86c8b3c2abdf87eae1ff5b165c4222ef5637c2e284fa037e3c04120a9e574de"
+      },
+      {
+        "name": "c3_bg_2020",
+        "template": "c3/bg_us_2020_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG2020__b1000m__r50m",
+        "sha256": "3b7ba86a8f3e37bb4c0e333a645a6ac3e4b6b54a098c6a4c227c92a7224399bb"
+      },
+      {
+        "name": "c4_ndi",
+        "template": "c4/bg_ndi_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "d2f9bc64480036303654989ab614a7d18509b3409f569decbe8eb175e8b74f3d"
+      },
+      {
+        "name": "c4_wi",
+        "template": "c4/bg_wi_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "c2ca4704f566d5d0ee163654a6c6d05fbeddefe01522b11271bc947c7afd0981"
+      }
+    ]
+  },
+  {
+    "combo": "zcta5_cbp__cbp_zcta5__b270_r25",
+    "experiment": "zcta5_cbp",
+    "variables": [
+      "cbp_zcta5"
+    ],
+    "buffer_m": 270,
+    "raster_res_m": 25,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/zcta5_cbp__cbp_zcta5__b270_r25",
+    "steps": [
+      {
+        "name": "c3_zcta5",
+        "template": "c3/zcta5_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__ZCTA5__b270m__r25m",
+        "sha256": "980fd47af86410c38c2a5094d09e3409683d7b37065060495c81a74f20de1e9f"
+      },
+      {
+        "name": "c3_county",
+        "template": "c3/county_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__COUNTY__b270m__r25m",
+        "sha256": "2ffc69bb7c3906200c8b34e7247f6f72990b826d4e35e03ad265aef964c099f9"
+      },
+      {
+        "name": "c4_zcta5_cbp",
+        "template": "c4/zcta5_cbp_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "f984e7b4f9e251c676e354247b514600430ac9c4656fe9ac0afce4311bd6bd05"
+      },
+      {
+        "name": "c4_county_cbp",
+        "template": "c4/county_cbp_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "0766b9772effc736b29d452b26ca7899a78e983682c99614ddc4278171de115c"
+      }
+    ]
+  },
+  {
+    "combo": "zcta5_cbp__cbp_zcta5__b270_r50",
+    "experiment": "zcta5_cbp",
+    "variables": [
+      "cbp_zcta5"
+    ],
+    "buffer_m": 270,
+    "raster_res_m": 50,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/zcta5_cbp__cbp_zcta5__b270_r50",
+    "steps": [
+      {
+        "name": "c3_zcta5",
+        "template": "c3/zcta5_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__ZCTA5__b270m__r50m",
+        "sha256": "eb589aa79f2b1362c19960bada3619feec9d9d7d8a365ab707d8eefbc75199e9"
+      },
+      {
+        "name": "c3_county",
+        "template": "c3/county_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__COUNTY__b270m__r50m",
+        "sha256": "b0fc0800bba5097211b4891103f53e1988a780deef6cc0c273afabe00300bd92"
+      },
+      {
+        "name": "c4_zcta5_cbp",
+        "template": "c4/zcta5_cbp_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "44d681c34a1db98169c354b325e417f353a59e6020d331c5f39a313858ac3f05"
+      },
+      {
+        "name": "c4_county_cbp",
+        "template": "c4/county_cbp_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "0b04a6502221f97af0468cbf36ff97f02452f091ea833ac9da05700d594a2225"
+      }
+    ]
+  },
+  {
+    "combo": "zcta5_cbp__cbp_zcta5__b500_r25",
+    "experiment": "zcta5_cbp",
+    "variables": [
+      "cbp_zcta5"
+    ],
+    "buffer_m": 500,
+    "raster_res_m": 25,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/zcta5_cbp__cbp_zcta5__b500_r25",
+    "steps": [
+      {
+        "name": "c3_zcta5",
+        "template": "c3/zcta5_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__ZCTA5__b500m__r25m",
+        "sha256": "b62717ecadb952d83c3b7e732b6d238e09ad5f7e2d30895f8412cf7b486d364e"
+      },
+      {
+        "name": "c3_county",
+        "template": "c3/county_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__COUNTY__b500m__r25m",
+        "sha256": "8164d0d3002ad7ca9fea9c05046245124edb6cfd00482ef652cf63cc4a645f2e"
+      },
+      {
+        "name": "c4_zcta5_cbp",
+        "template": "c4/zcta5_cbp_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "883bb6509dec1ce867a5f0f6dd6607586a52b758309ca6ff29acf84ebef3abb9"
+      },
+      {
+        "name": "c4_county_cbp",
+        "template": "c4/county_cbp_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "7d7a168ab1e93341926822787986298c5522b8c84c999ab1597e3b2ce45dca9a"
+      }
+    ]
+  },
+  {
+    "combo": "zcta5_cbp__cbp_zcta5__b500_r50",
+    "experiment": "zcta5_cbp",
+    "variables": [
+      "cbp_zcta5"
+    ],
+    "buffer_m": 500,
+    "raster_res_m": 50,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/zcta5_cbp__cbp_zcta5__b500_r50",
+    "steps": [
+      {
+        "name": "c3_zcta5",
+        "template": "c3/zcta5_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__ZCTA5__b500m__r50m",
+        "sha256": "2c31518fd4b4bd544a6c069c883fc0dab0fa1c0a46606bc09f65d980102dc33e"
+      },
+      {
+        "name": "c3_county",
+        "template": "c3/county_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__COUNTY__b500m__r50m",
+        "sha256": "8ba6668d6f77286ed0863a81f98a639c2e22f235464b68ef62f6dcccd46acd64"
+      },
+      {
+        "name": "c4_zcta5_cbp",
+        "template": "c4/zcta5_cbp_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "3a05ef938dbc98553028d4ef9f39f1728a87e91883081049801fc82c161ab9e1"
+      },
+      {
+        "name": "c4_county_cbp",
+        "template": "c4/county_cbp_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "99da9e8be8b2451233730977e19ca85e41b60d68c9bec4f8a6730ced606c6f49"
+      }
+    ]
+  },
+  {
+    "combo": "zcta5_cbp__cbp_zcta5__b1000_r25",
+    "experiment": "zcta5_cbp",
+    "variables": [
+      "cbp_zcta5"
+    ],
+    "buffer_m": 1000,
+    "raster_res_m": 25,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/zcta5_cbp__cbp_zcta5__b1000_r25",
+    "steps": [
+      {
+        "name": "c3_zcta5",
+        "template": "c3/zcta5_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__ZCTA5__b1000m__r25m",
+        "sha256": "b11aa2b47b9d16a12265cc27d042a5a690d28b6dcf742303f370e31770baf0f0"
+      },
+      {
+        "name": "c3_county",
+        "template": "c3/county_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__COUNTY__b1000m__r25m",
+        "sha256": "e46be3b82dbd611c64cf88fbb370791d09c133e29d6f7cbf4ba1782952558e80"
+      },
+      {
+        "name": "c4_zcta5_cbp",
+        "template": "c4/zcta5_cbp_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "e7f71432c4793f81c7b35fa070b2ee7985bc0a7598f1a47be9dab72f7416adee"
+      },
+      {
+        "name": "c4_county_cbp",
+        "template": "c4/county_cbp_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "0c529eefff9336f4cc6a8672b277f0e25ec9a30d3a4853829e8cb27e7b8f4dfd"
+      }
+    ]
+  },
+  {
+    "combo": "zcta5_cbp__cbp_zcta5__b1000_r50",
+    "experiment": "zcta5_cbp",
+    "variables": [
+      "cbp_zcta5"
+    ],
+    "buffer_m": 1000,
+    "raster_res_m": 50,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/zcta5_cbp__cbp_zcta5__b1000_r50",
+    "steps": [
+      {
+        "name": "c3_zcta5",
+        "template": "c3/zcta5_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__ZCTA5__b1000m__r50m",
+        "sha256": "e08e8b881fca69faa10f16c283c01a83205216c3445a8de971e8deb70ff9a019"
+      },
+      {
+        "name": "c3_county",
+        "template": "c3/county_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__COUNTY__b1000m__r50m",
+        "sha256": "53b48ad70b45ab7e1206ee8dab7d17c15ce3479d2f053f8faa1f4d5f959b7390"
+      },
+      {
+        "name": "c4_zcta5_cbp",
+        "template": "c4/zcta5_cbp_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "36a510649ac082b55de0c4d6c4b72c2763f24f8b354a34f81ee1b227461ce574"
+      },
+      {
+        "name": "c4_county_cbp",
+        "template": "c4/county_cbp_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "13937c12f47693895fa817954383c1033f26681276f5e098eb0b3250f907995e"
+      }
+    ]
+  },
+  {
+    "combo": "tiger_proximity__tiger_proximity__b270_r25",
+    "experiment": "tiger_proximity",
+    "variables": [
+      "tiger_proximity"
+    ],
+    "buffer_m": 270,
+    "raster_res_m": 25,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/tiger_proximity__tiger_proximity__b270_r25",
+    "steps": [
+      {
+        "name": "c3_tiger_roads",
+        "template": "c3/tiger_roads_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG_TIGER2__b270m",
+        "sha256": "919a118ce7f3fbed5e5b534cd2e5494e03fc58a3fa645ed40f2179fdec5c926c"
+      },
+      {
+        "name": "c4_tiger_roads",
+        "template": "c4/tiger_roads_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "70ae02fca84025a0ba694e3f283d2c25397b0ac8648901f54f4fcc308546756f"
+      }
+    ]
+  },
+  {
+    "combo": "tiger_proximity__tiger_proximity__b270_r50",
+    "experiment": "tiger_proximity",
+    "variables": [
+      "tiger_proximity"
+    ],
+    "buffer_m": 270,
+    "raster_res_m": 50,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/tiger_proximity__tiger_proximity__b270_r50",
+    "steps": [
+      {
+        "name": "c3_tiger_roads",
+        "template": "c3/tiger_roads_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG_TIGER2__b270m",
+        "sha256": "0d8d8759657b8c39b3b0d558b1b58cf464ec60b72c27616a286f7ef8a73ba8a7"
+      },
+      {
+        "name": "c4_tiger_roads",
+        "template": "c4/tiger_roads_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "36574a1ca6ca9a9815774d72591386db658490e667fc2f2284b6c0a5db727f68"
+      }
+    ]
+  },
+  {
+    "combo": "tiger_proximity__tiger_proximity__b500_r25",
+    "experiment": "tiger_proximity",
+    "variables": [
+      "tiger_proximity"
+    ],
+    "buffer_m": 500,
+    "raster_res_m": 25,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/tiger_proximity__tiger_proximity__b500_r25",
+    "steps": [
+      {
+        "name": "c3_tiger_roads",
+        "template": "c3/tiger_roads_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG_TIGER2__b500m",
+        "sha256": "9b9b869d893b83a46e74c8557393a25ab48d256212184632ead0f27efc5bb1a1"
+      },
+      {
+        "name": "c4_tiger_roads",
+        "template": "c4/tiger_roads_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "ea5caba46869801cd12f6f8b05b1341b33834c74335754fd13eb2665709b5c84"
+      }
+    ]
+  },
+  {
+    "combo": "tiger_proximity__tiger_proximity__b500_r50",
+    "experiment": "tiger_proximity",
+    "variables": [
+      "tiger_proximity"
+    ],
+    "buffer_m": 500,
+    "raster_res_m": 50,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/tiger_proximity__tiger_proximity__b500_r50",
+    "steps": [
+      {
+        "name": "c3_tiger_roads",
+        "template": "c3/tiger_roads_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG_TIGER2__b500m",
+        "sha256": "ca51ed3bb52f4baf6f97c26837ee78bb03ec4864e8a3b5c8b6108a5aec809245"
+      },
+      {
+        "name": "c4_tiger_roads",
+        "template": "c4/tiger_roads_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "02deb4577d31dc0b23b06edca9a9f3d9a01fe0a94aca475822aeb14e424f3a22"
+      }
+    ]
+  },
+  {
+    "combo": "tiger_proximity__tiger_proximity__b1000_r25",
+    "experiment": "tiger_proximity",
+    "variables": [
+      "tiger_proximity"
+    ],
+    "buffer_m": 1000,
+    "raster_res_m": 25,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/tiger_proximity__tiger_proximity__b1000_r25",
+    "steps": [
+      {
+        "name": "c3_tiger_roads",
+        "template": "c3/tiger_roads_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG_TIGER2__b1000m",
+        "sha256": "2d7c0c746e1a5208764b464a085ba4a0d8f1e45bed754603072b10eee4f61382"
+      },
+      {
+        "name": "c4_tiger_roads",
+        "template": "c4/tiger_roads_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "bee43bb6f35bec11b92617a80fa5f9b7ced18c32d36375a9ed74e8ea2c1e7928"
+      }
+    ]
+  },
+  {
+    "combo": "tiger_proximity__tiger_proximity__b1000_r50",
+    "experiment": "tiger_proximity",
+    "variables": [
+      "tiger_proximity"
+    ],
+    "buffer_m": 1000,
+    "raster_res_m": 50,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/tiger_proximity__tiger_proximity__b1000_r50",
+    "steps": [
+      {
+        "name": "c3_tiger_roads",
+        "template": "c3/tiger_roads_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG_TIGER2__b1000m",
+        "sha256": "ede5bd68725b16e4ec489b96486f54acbaed3a6ff62c725c70a6d8c0ea2df48c"
+      },
+      {
+        "name": "c4_tiger_roads",
+        "template": "c4/tiger_roads_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "5b5c686791c009244e3377293bb71fa2bc682bb03c2590a89cbc1498f380cd11"
+      }
+    ]
+  },
+  {
+    "combo": "nhd_bluespace__nhd_bluespace__b270_r25",
+    "experiment": "nhd_bluespace",
+    "variables": [
+      "nhd_bluespace"
+    ],
+    "buffer_m": 270,
+    "raster_res_m": 25,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/nhd_bluespace__nhd_bluespace__b270_r25",
+    "steps": [
+      {
+        "name": "c3_nhd_bluespace",
+        "template": "c3/nhd_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG_NHD__b270m",
+        "sha256": "7cc3bd911bfa5fd29fb941dd44d3d9e87d4382485af3d02cb5689a4ccdc01447"
+      },
+      {
+        "name": "c4_nhd_bluespace",
+        "template": "c4/nhd_bluespace_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "3c24390a7777dd6fd3e5fb3ad28ed4db4f77d3142910aedf81e154d1161be2bb"
+      }
+    ]
+  },
+  {
+    "combo": "nhd_bluespace__nhd_bluespace__b270_r50",
+    "experiment": "nhd_bluespace",
+    "variables": [
+      "nhd_bluespace"
+    ],
+    "buffer_m": 270,
+    "raster_res_m": 50,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/nhd_bluespace__nhd_bluespace__b270_r50",
+    "steps": [
+      {
+        "name": "c3_nhd_bluespace",
+        "template": "c3/nhd_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG_NHD__b270m",
+        "sha256": "06a4e55cf15da73bb99884c9f6d07f3655250d89ee467bcf87fa3625d2988ea2"
+      },
+      {
+        "name": "c4_nhd_bluespace",
+        "template": "c4/nhd_bluespace_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "bb4518546d9df57fe38fce58781a881d85c0e44434789b09491e715dde8915d9"
+      }
+    ]
+  },
+  {
+    "combo": "nhd_bluespace__nhd_bluespace__b500_r25",
+    "experiment": "nhd_bluespace",
+    "variables": [
+      "nhd_bluespace"
+    ],
+    "buffer_m": 500,
+    "raster_res_m": 25,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/nhd_bluespace__nhd_bluespace__b500_r25",
+    "steps": [
+      {
+        "name": "c3_nhd_bluespace",
+        "template": "c3/nhd_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG_NHD__b500m",
+        "sha256": "9ab763166bca7d85657b683fac6f58725a65045f46e5c91abf360de429530222"
+      },
+      {
+        "name": "c4_nhd_bluespace",
+        "template": "c4/nhd_bluespace_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "fd752c125b72f6c753d16178910d1008c4d891f113537c5c55d4c1577f3d8e4b"
+      }
+    ]
+  },
+  {
+    "combo": "nhd_bluespace__nhd_bluespace__b500_r50",
+    "experiment": "nhd_bluespace",
+    "variables": [
+      "nhd_bluespace"
+    ],
+    "buffer_m": 500,
+    "raster_res_m": 50,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/nhd_bluespace__nhd_bluespace__b500_r50",
+    "steps": [
+      {
+        "name": "c3_nhd_bluespace",
+        "template": "c3/nhd_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG_NHD__b500m",
+        "sha256": "e7a15d1483266480bf8ee22025a184908bffc6d0aa418992ca6831287a0c7d38"
+      },
+      {
+        "name": "c4_nhd_bluespace",
+        "template": "c4/nhd_bluespace_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "9f4f5671bf5758b8d6832c88ffade371109352faf0cca3399aed51b5bb5797f2"
+      }
+    ]
+  },
+  {
+    "combo": "nhd_bluespace__nhd_bluespace__b1000_r25",
+    "experiment": "nhd_bluespace",
+    "variables": [
+      "nhd_bluespace"
+    ],
+    "buffer_m": 1000,
+    "raster_res_m": 25,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/nhd_bluespace__nhd_bluespace__b1000_r25",
+    "steps": [
+      {
+        "name": "c3_nhd_bluespace",
+        "template": "c3/nhd_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG_NHD__b1000m",
+        "sha256": "5339284edb9854f66ecdbadad6ccf4732fe67856b75d26af979947226e0ba527"
+      },
+      {
+        "name": "c4_nhd_bluespace",
+        "template": "c4/nhd_bluespace_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "e43157991ec9b6f213183b4b811f40687da25e7d5fc49a3d97b5656cb16ee953"
+      }
+    ]
+  },
+  {
+    "combo": "nhd_bluespace__nhd_bluespace__b1000_r50",
+    "experiment": "nhd_bluespace",
+    "variables": [
+      "nhd_bluespace"
+    ],
+    "buffer_m": 1000,
+    "raster_res_m": 50,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/nhd_bluespace__nhd_bluespace__b1000_r50",
+    "steps": [
+      {
+        "name": "c3_nhd_bluespace",
+        "template": "c3/nhd_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG_NHD__b1000m",
+        "sha256": "d35a154d85fb1010adae2cb9ce89cd6562772e08421711595992bb7af365d411"
+      },
+      {
+        "name": "c4_nhd_bluespace",
+        "template": "c4/nhd_bluespace_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "33a99d350c870d9b04da6dc30deb44ed2beb5d67e5c82be827554928284d9b42"
+      }
+    ]
+  },
+  {
+    "combo": "noise__noise__b270_r25",
+    "experiment": "noise",
+    "variables": [
+      "noise"
+    ],
+    "buffer_m": 270,
+    "raster_res_m": 25,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/noise__noise__b270_r25",
+    "steps": [
+      {
+        "name": "c3_noise",
+        "template": "c3/noise_grid_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG_NOISE__b270m",
+        "sha256": "e198c7a33e52d761cd7f832b9e4c94f5e1e6a804c3ae1c9a867041d5a8db6ee2"
+      },
+      {
+        "name": "c4_noise",
+        "template": "c4/noise_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "75a03fb55fbf85dd89b66b656b63f575352b08a986cc02f22fd89f22680b32fb"
+      }
+    ]
+  },
+  {
+    "combo": "noise__noise__b270_r50",
+    "experiment": "noise",
+    "variables": [
+      "noise"
+    ],
+    "buffer_m": 270,
+    "raster_res_m": 50,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/noise__noise__b270_r50",
+    "steps": [
+      {
+        "name": "c3_noise",
+        "template": "c3/noise_grid_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG_NOISE__b270m",
+        "sha256": "057688137c10103cea85e1c376f3563f1caebce1075d1a2b94878c9f3ae3ac70"
+      },
+      {
+        "name": "c4_noise",
+        "template": "c4/noise_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "3b52c1168a5e5f1882306825cae11aee01901d39d461c0ff73c8ac384a951fa3"
+      }
+    ]
+  },
+  {
+    "combo": "noise__noise__b500_r25",
+    "experiment": "noise",
+    "variables": [
+      "noise"
+    ],
+    "buffer_m": 500,
+    "raster_res_m": 25,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/noise__noise__b500_r25",
+    "steps": [
+      {
+        "name": "c3_noise",
+        "template": "c3/noise_grid_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG_NOISE__b500m",
+        "sha256": "ddbe64b783fc4637551e5d546df5f142545c04e2bee2638e5da656a1392f5264"
+      },
+      {
+        "name": "c4_noise",
+        "template": "c4/noise_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "ee4da4501e6f7d7552135eb228c5ef58b1d6b2514c04f53ad6e042786b5f5bd2"
+      }
+    ]
+  },
+  {
+    "combo": "noise__noise__b500_r50",
+    "experiment": "noise",
+    "variables": [
+      "noise"
+    ],
+    "buffer_m": 500,
+    "raster_res_m": 50,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/noise__noise__b500_r50",
+    "steps": [
+      {
+        "name": "c3_noise",
+        "template": "c3/noise_grid_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG_NOISE__b500m",
+        "sha256": "c96b83a2a799b46833ef7bf342606765ff1eb911c396d38aa861d2359096e475"
+      },
+      {
+        "name": "c4_noise",
+        "template": "c4/noise_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "17860a04921616780cb35a6ec5bd761b4c1426f2e00f09d06c4cc7ac19326e40"
+      }
+    ]
+  },
+  {
+    "combo": "noise__noise__b1000_r25",
+    "experiment": "noise",
+    "variables": [
+      "noise"
+    ],
+    "buffer_m": 1000,
+    "raster_res_m": 25,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/noise__noise__b1000_r25",
+    "steps": [
+      {
+        "name": "c3_noise",
+        "template": "c3/noise_grid_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG_NOISE__b1000m",
+        "sha256": "2fdc0e3fcf0c9213b70e38ce1233b1b22bc0c8bbb9d95d158df8d278e023f1e5"
+      },
+      {
+        "name": "c4_noise",
+        "template": "c4/noise_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "38eaf17bef235b8215d750d5d5bf3733cfd614df9af7a50a8d031fe1979e9cab"
+      }
+    ]
+  },
+  {
+    "combo": "noise__noise__b1000_r50",
+    "experiment": "noise",
+    "variables": [
+      "noise"
+    ],
+    "buffer_m": 1000,
+    "raster_res_m": 50,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/noise__noise__b1000_r50",
+    "steps": [
+      {
+        "name": "c3_noise",
+        "template": "c3/noise_grid_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG_NOISE__b1000m",
+        "sha256": "6e0949bcf1cc4370de76710709de8f7fae3f79d01a6cb81f816c9f0fbfe3db3e"
+      },
+      {
+        "name": "c4_noise",
+        "template": "c4/noise_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "93f7ce5146bf21240aa532ce2303e05fbc245e0c47256028f9b452116bd00f65"
+      }
+    ]
+  },
+  {
+    "combo": "vnl__vnl__b270_r25",
+    "experiment": "vnl",
+    "variables": [
+      "vnl"
+    ],
+    "buffer_m": 270,
+    "raster_res_m": 25,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/vnl__vnl__b270_r25",
+    "steps": [
+      {
+        "name": "c3_vnl",
+        "template": "c3/vnl_grid_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG_VNL1__b270m",
+        "sha256": "d4d24f6a5bf850109c837115feb1541106e3891aa634b8af9c2931ee032674a8"
+      },
+      {
+        "name": "c4_vnl",
+        "template": "c4/vnl_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "b843bea128c6d0c015c6894263a9b2611c5a0dd65a6c2dd36acfff3c02861f06"
+      }
+    ]
+  },
+  {
+    "combo": "vnl__vnl__b270_r50",
+    "experiment": "vnl",
+    "variables": [
+      "vnl"
+    ],
+    "buffer_m": 270,
+    "raster_res_m": 50,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/vnl__vnl__b270_r50",
+    "steps": [
+      {
+        "name": "c3_vnl",
+        "template": "c3/vnl_grid_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG_VNL1__b270m",
+        "sha256": "8f6a2fcda6f4972c2b4b9df79734a856a3999a365179a90fd537d7dbc57315ff"
+      },
+      {
+        "name": "c4_vnl",
+        "template": "c4/vnl_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "a36e0ab229bfefad4846c9fdb5e400fa8e0194d578730d3d72c6e04f75d4ab72"
+      }
+    ]
+  },
+  {
+    "combo": "vnl__vnl__b500_r25",
+    "experiment": "vnl",
+    "variables": [
+      "vnl"
+    ],
+    "buffer_m": 500,
+    "raster_res_m": 25,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/vnl__vnl__b500_r25",
+    "steps": [
+      {
+        "name": "c3_vnl",
+        "template": "c3/vnl_grid_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG_VNL1__b500m",
+        "sha256": "6ed740ac04add25ad458349221a50e556582509bfb71b0f3e8d0890ad52917a8"
+      },
+      {
+        "name": "c4_vnl",
+        "template": "c4/vnl_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "c8cced8abdfa97d13c8066e61ea4cd2a8f52edc5489e6d99c7adbabbcd5628a8"
+      }
+    ]
+  },
+  {
+    "combo": "vnl__vnl__b500_r50",
+    "experiment": "vnl",
+    "variables": [
+      "vnl"
+    ],
+    "buffer_m": 500,
+    "raster_res_m": 50,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/vnl__vnl__b500_r50",
+    "steps": [
+      {
+        "name": "c3_vnl",
+        "template": "c3/vnl_grid_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG_VNL1__b500m",
+        "sha256": "7467cdccc28fdeb4275320e27780f910c9e8352adc2894f5b54d2a71dbb53282"
+      },
+      {
+        "name": "c4_vnl",
+        "template": "c4/vnl_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "de524f5dce0c265eb1e377cd00ebaa97c961a77b79f684e011b8a759a6c62841"
+      }
+    ]
+  },
+  {
+    "combo": "vnl__vnl__b1000_r25",
+    "experiment": "vnl",
+    "variables": [
+      "vnl"
+    ],
+    "buffer_m": 1000,
+    "raster_res_m": 25,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/vnl__vnl__b1000_r25",
+    "steps": [
+      {
+        "name": "c3_vnl",
+        "template": "c3/vnl_grid_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG_VNL1__b1000m",
+        "sha256": "65d6e2fa482f3f03ebba280e2409026a4a70532eebf954e1218e1f785fbcaf67"
+      },
+      {
+        "name": "c4_vnl",
+        "template": "c4/vnl_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "5ceb11f0daa9fe1a7b1ef8edee27744b7ae1f3ee90a2965a0b78f7f75ac28e1d"
+      }
+    ]
+  },
+  {
+    "combo": "vnl__vnl__b1000_r50",
+    "experiment": "vnl",
+    "variables": [
+      "vnl"
+    ],
+    "buffer_m": 1000,
+    "raster_res_m": 50,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/vnl__vnl__b1000_r50",
+    "steps": [
+      {
+        "name": "c3_vnl",
+        "template": "c3/vnl_grid_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG_VNL1__b1000m",
+        "sha256": "0f0d56fdf40e0937af15f843cbc3cc3fbeaa0645bb7b0bcc7136ba64c543832f"
+      },
+      {
+        "name": "c4_vnl",
+        "template": "c4/vnl_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "9fd2c004ebeb1994be893141d92568507712e72cfc769315ce5ecb4b3395144e"
+      }
+    ]
+  },
+  {
+    "combo": "temis__temis__b270_r25",
+    "experiment": "temis",
+    "variables": [
+      "temis"
+    ],
+    "buffer_m": 270,
+    "raster_res_m": 25,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/temis__temis__b270_r25",
+    "steps": [
+      {
+        "name": "c3_temis",
+        "template": "c3/temis_grid_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG_TEMIS__b270m",
+        "sha256": "308d3a7b8c9418a58215f6fafdd40a67e1816e0ba1285bd97c07c11f9bb0301d"
+      },
+      {
+        "name": "c4_temis",
+        "template": "c4/temis_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "698366c117938b9ac3bbd32e303d802bc59670c399a9500f9fbd594550204892"
+      }
+    ]
+  },
+  {
+    "combo": "temis__temis__b270_r50",
+    "experiment": "temis",
+    "variables": [
+      "temis"
+    ],
+    "buffer_m": 270,
+    "raster_res_m": 50,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/temis__temis__b270_r50",
+    "steps": [
+      {
+        "name": "c3_temis",
+        "template": "c3/temis_grid_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG_TEMIS__b270m",
+        "sha256": "f8e0525bdee93adc5e7c505498151a19c01b81afb5cf2345651dfc48858f720a"
+      },
+      {
+        "name": "c4_temis",
+        "template": "c4/temis_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "2248bd155e882e5845d727aa2d1e57218a5d7e804d46f12bc422a26f2fa90179"
+      }
+    ]
+  },
+  {
+    "combo": "temis__temis__b500_r25",
+    "experiment": "temis",
+    "variables": [
+      "temis"
+    ],
+    "buffer_m": 500,
+    "raster_res_m": 25,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/temis__temis__b500_r25",
+    "steps": [
+      {
+        "name": "c3_temis",
+        "template": "c3/temis_grid_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG_TEMIS__b500m",
+        "sha256": "2d81a2cd03da544d20a8a0526930eb98092560156bf133af4aaf6a801e456cbf"
+      },
+      {
+        "name": "c4_temis",
+        "template": "c4/temis_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "80a3e10d1021b3cb554b4bf11e1b388a36d225b302325c1c42c7989e25ace97b"
+      }
+    ]
+  },
+  {
+    "combo": "temis__temis__b500_r50",
+    "experiment": "temis",
+    "variables": [
+      "temis"
+    ],
+    "buffer_m": 500,
+    "raster_res_m": 50,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/temis__temis__b500_r50",
+    "steps": [
+      {
+        "name": "c3_temis",
+        "template": "c3/temis_grid_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG_TEMIS__b500m",
+        "sha256": "a3f9f2402472da21b503140ba166c13d18ec05e0c6ab179222e0dde8197eada6"
+      },
+      {
+        "name": "c4_temis",
+        "template": "c4/temis_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "575cbbfcc5d73b3a2962eab9d694189dfa3f0c050f924f50390bbe59a8028e42"
+      }
+    ]
+  },
+  {
+    "combo": "temis__temis__b1000_r25",
+    "experiment": "temis",
+    "variables": [
+      "temis"
+    ],
+    "buffer_m": 1000,
+    "raster_res_m": 25,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/temis__temis__b1000_r25",
+    "steps": [
+      {
+        "name": "c3_temis",
+        "template": "c3/temis_grid_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG_TEMIS__b1000m",
+        "sha256": "b5ff91cfe8c2750aa21e7899b347a2eb4206b3d159ed0f0f67e3269e75ab7da9"
+      },
+      {
+        "name": "c4_temis",
+        "template": "c4/temis_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "0d66e4017f217877935562dbe0a0029f52255ecbda6a6aaa009d5c2873021b39"
+      }
+    ]
+  },
+  {
+    "combo": "temis__temis__b1000_r50",
+    "experiment": "temis",
+    "variables": [
+      "temis"
+    ],
+    "buffer_m": 1000,
+    "raster_res_m": 50,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/temis__temis__b1000_r50",
+    "steps": [
+      {
+        "name": "c3_temis",
+        "template": "c3/temis_grid_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG_TEMIS__b1000m",
+        "sha256": "3bf3134b5121419937e2c318a3e34a516e923da86944007b6836d34a9380ff69"
+      },
+      {
+        "name": "c4_temis",
+        "template": "c4/temis_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "f70006d21e24f881a4d645cf7d43e02347666d0f1476c60940bce95fc8592148"
+      }
+    ]
+  },
+  {
+    "combo": "fara_tract__fara_tract__b270_r25",
+    "experiment": "fara_tract",
+    "variables": [
+      "fara_tract"
+    ],
+    "buffer_m": 270,
+    "raster_res_m": 25,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/fara_tract__fara_tract__b270_r25",
+    "steps": [
+      {
+        "name": "c3_tract_us",
+        "template": "c3/tract_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__TRACT_FARA__b270m__r25m",
+        "sha256": "f79c2e9037e392dc2f911ac1445ca4151acf0c0775cb98e915c30243d6c49020"
+      },
+      {
+        "name": "c4_tract_fara",
+        "template": "c4/tract_fara_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "d805a2c5dcc18445d68e512e0c74e0bfaeb72e6da73b87049a1a4d33c120102c"
+      }
+    ]
+  },
+  {
+    "combo": "fara_tract__fara_tract__b270_r50",
+    "experiment": "fara_tract",
+    "variables": [
+      "fara_tract"
+    ],
+    "buffer_m": 270,
+    "raster_res_m": 50,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/fara_tract__fara_tract__b270_r50",
+    "steps": [
+      {
+        "name": "c3_tract_us",
+        "template": "c3/tract_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__TRACT_FARA__b270m__r50m",
+        "sha256": "326ec2fa0727b6ab2d6a6d5ce3e93f6b7a28f844264703d054325d0e3abd12d4"
+      },
+      {
+        "name": "c4_tract_fara",
+        "template": "c4/tract_fara_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "0aa68246a5dd4f2f6b84f8a59f05318b3407efa4045e1ec2d3fda694cdb775dc"
+      }
+    ]
+  },
+  {
+    "combo": "fara_tract__fara_tract__b500_r25",
+    "experiment": "fara_tract",
+    "variables": [
+      "fara_tract"
+    ],
+    "buffer_m": 500,
+    "raster_res_m": 25,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/fara_tract__fara_tract__b500_r25",
+    "steps": [
+      {
+        "name": "c3_tract_us",
+        "template": "c3/tract_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__TRACT_FARA__b500m__r25m",
+        "sha256": "71842886980778ef0bb442d9e453b9e5977446beb0a6ff301731c40bcf0aa87c"
+      },
+      {
+        "name": "c4_tract_fara",
+        "template": "c4/tract_fara_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "a32cf5d07257e6a31983b9c6dc08146a284cfea95fff7f47007d2699eb2ca6a7"
+      }
+    ]
+  },
+  {
+    "combo": "fara_tract__fara_tract__b500_r50",
+    "experiment": "fara_tract",
+    "variables": [
+      "fara_tract"
+    ],
+    "buffer_m": 500,
+    "raster_res_m": 50,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/fara_tract__fara_tract__b500_r50",
+    "steps": [
+      {
+        "name": "c3_tract_us",
+        "template": "c3/tract_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__TRACT_FARA__b500m__r50m",
+        "sha256": "6c9704830b0d3b1d143558a7b3aca293212963450cdf0ff8063f7ae9793c75bf"
+      },
+      {
+        "name": "c4_tract_fara",
+        "template": "c4/tract_fara_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "f144c2b67669e2e08379e37761c7926ebade281a18f13f8da648c16639d91487"
+      }
+    ]
+  },
+  {
+    "combo": "fara_tract__fara_tract__b1000_r25",
+    "experiment": "fara_tract",
+    "variables": [
+      "fara_tract"
+    ],
+    "buffer_m": 1000,
+    "raster_res_m": 25,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/fara_tract__fara_tract__b1000_r25",
+    "steps": [
+      {
+        "name": "c3_tract_us",
+        "template": "c3/tract_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__TRACT_FARA__b1000m__r25m",
+        "sha256": "6e60fd239d70c4db97b8e2a7840687a04e83ebbe7da7127155a403c12fd28f74"
+      },
+      {
+        "name": "c4_tract_fara",
+        "template": "c4/tract_fara_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "f52831eac44fe31255d01327e09dd0ae58472cac5a3cbc23b2cdd042bfea3cce"
+      }
+    ]
+  },
+  {
+    "combo": "fara_tract__fara_tract__b1000_r50",
+    "experiment": "fara_tract",
+    "variables": [
+      "fara_tract"
+    ],
+    "buffer_m": 1000,
+    "raster_res_m": 50,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/fara_tract__fara_tract__b1000_r50",
+    "steps": [
+      {
+        "name": "c3_tract_us",
+        "template": "c3/tract_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__TRACT_FARA__b1000m__r50m",
+        "sha256": "0f2464654ef717e122ea5f005e5267fcb3cd3e244c0449abd444eacd4b8bd66e"
+      },
+      {
+        "name": "c4_tract_fara",
+        "template": "c4/tract_fara_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "1cad5f51486bedd149888c35f793f092dc686ac1d2cd535a4606166ed9dab130"
+      }
+    ]
+  },
+  {
+    "combo": "acag__acag__b270_r25",
+    "experiment": "acag",
+    "variables": [
+      "acag"
+    ],
+    "buffer_m": 270,
+    "raster_res_m": 25,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/acag__acag__b270_r25",
+    "steps": [
+      {
+        "name": "c3_acag",
+        "template": "c3/acag_grid_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG_ACAG__b270m",
+        "sha256": "b4a0dd778fb54dc5d4716a70b876d5f40ff7c38f3c3bf268952e9e75d435d25a"
+      },
+      {
+        "name": "c4_acag",
+        "template": "c4/acag_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "b739e09d070b17ed6e0d32fa39f80f980328ea988d85db6068300b688269f6b8"
+      }
+    ]
+  },
+  {
+    "combo": "acag__acag__b270_r50",
+    "experiment": "acag",
+    "variables": [
+      "acag"
+    ],
+    "buffer_m": 270,
+    "raster_res_m": 50,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/acag__acag__b270_r50",
+    "steps": [
+      {
+        "name": "c3_acag",
+        "template": "c3/acag_grid_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG_ACAG__b270m",
+        "sha256": "74beb096e875a58f1b4879e7a7dfa215386af964c3cde40ab4088c2ba6acb3e7"
+      },
+      {
+        "name": "c4_acag",
+        "template": "c4/acag_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "1c8187f308ffc8a8c911310b72cd13d80a7edc686b0d049ab8ad1c60d27e3b08"
+      }
+    ]
+  },
+  {
+    "combo": "acag__acag__b500_r25",
+    "experiment": "acag",
+    "variables": [
+      "acag"
+    ],
+    "buffer_m": 500,
+    "raster_res_m": 25,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/acag__acag__b500_r25",
+    "steps": [
+      {
+        "name": "c3_acag",
+        "template": "c3/acag_grid_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG_ACAG__b500m",
+        "sha256": "7d4ff9cfe5e7c801e9ff78e02c524c1dd5688511bb98403a1e719733fb097624"
+      },
+      {
+        "name": "c4_acag",
+        "template": "c4/acag_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "78e6b122ee99aa9973a60bc1ce88e0ba4f36b4148a103de381e330931dc03d7e"
+      }
+    ]
+  },
+  {
+    "combo": "acag__acag__b500_r50",
+    "experiment": "acag",
+    "variables": [
+      "acag"
+    ],
+    "buffer_m": 500,
+    "raster_res_m": 50,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/acag__acag__b500_r50",
+    "steps": [
+      {
+        "name": "c3_acag",
+        "template": "c3/acag_grid_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG_ACAG__b500m",
+        "sha256": "afb9308020caa8920ce2dc8722e49193467a99ae82900e250881e3abf208a889"
+      },
+      {
+        "name": "c4_acag",
+        "template": "c4/acag_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "445a66ade295cdbde4286b1360654a4c2e2b813fe51d3c306c9580f42e0264bf"
+      }
+    ]
+  },
+  {
+    "combo": "acag__acag__b1000_r25",
+    "experiment": "acag",
+    "variables": [
+      "acag"
+    ],
+    "buffer_m": 1000,
+    "raster_res_m": 25,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/acag__acag__b1000_r25",
+    "steps": [
+      {
+        "name": "c3_acag",
+        "template": "c3/acag_grid_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG_ACAG__b1000m",
+        "sha256": "beebc2d7036bbe0831d18f777690e2624be88959cad4b514f5b3847024bc7135"
+      },
+      {
+        "name": "c4_acag",
+        "template": "c4/acag_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "b5376b70ec3514cb89bf462b1e6d3b8ad22532e2ef75e8f300d3f92216fa70c1"
+      }
+    ]
+  },
+  {
+    "combo": "acag__acag__b1000_r50",
+    "experiment": "acag",
+    "variables": [
+      "acag"
+    ],
+    "buffer_m": 1000,
+    "raster_res_m": 50,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/acag__acag__b1000_r50",
+    "steps": [
+      {
+        "name": "c3_acag",
+        "template": "c3/acag_grid_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG_ACAG__b1000m",
+        "sha256": "21c8ee1d252dd0df5a5c0939d455197773e4cf46b9e51f08743ca540e14efefd"
+      },
+      {
+        "name": "c4_acag",
+        "template": "c4/acag_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "1072dc0bf8884ec3d2fa6b5efa0010e18b2dc9a3ce37342b3818203a17396d67"
+      }
+    ]
+  },
+  {
+    "combo": "faqsd__faqsd__b270_r25",
+    "experiment": "faqsd",
+    "variables": [
+      "faqsd"
+    ],
+    "buffer_m": 270,
+    "raster_res_m": 25,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/faqsd__faqsd__b270_r25",
+    "steps": [
+      {
+        "name": "c3_tract_us",
+        "template": "c3/tract_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__TRACT_FARA__b270m__r25m",
+        "sha256": "6d827fdbb99bbe2c16db8b90b82e25e5ac7c0cc8497508d825ca36954df91b45"
+      },
+      {
+        "name": "c4_tract_faqsd",
+        "template": "c4/tract_faqsd_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "5678e6b1e7c2e6783ce76e75bbca858816138a2b6001c25266aa1840db57689b"
+      }
+    ]
+  },
+  {
+    "combo": "faqsd__faqsd__b270_r50",
+    "experiment": "faqsd",
+    "variables": [
+      "faqsd"
+    ],
+    "buffer_m": 270,
+    "raster_res_m": 50,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/faqsd__faqsd__b270_r50",
+    "steps": [
+      {
+        "name": "c3_tract_us",
+        "template": "c3/tract_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__TRACT_FARA__b270m__r50m",
+        "sha256": "2880fd3f3a41f929a186db6f67707a8a2ff15d5e28c211ea494af729d9710de8"
+      },
+      {
+        "name": "c4_tract_faqsd",
+        "template": "c4/tract_faqsd_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "06e5f85547c8e80ce08ac03ecf3e1395bd660e1dc25264531d7d32e3b645fff8"
+      }
+    ]
+  },
+  {
+    "combo": "faqsd__faqsd__b500_r25",
+    "experiment": "faqsd",
+    "variables": [
+      "faqsd"
+    ],
+    "buffer_m": 500,
+    "raster_res_m": 25,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/faqsd__faqsd__b500_r25",
+    "steps": [
+      {
+        "name": "c3_tract_us",
+        "template": "c3/tract_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__TRACT_FARA__b500m__r25m",
+        "sha256": "7693ab16bd27bb4841b97e8fc7ded9ce583e721910ba65468de1c1cf767db309"
+      },
+      {
+        "name": "c4_tract_faqsd",
+        "template": "c4/tract_faqsd_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "433997ba8d7fe422b8f39a19553fcce55333b067a1adbf20fb41b99b2089ae03"
+      }
+    ]
+  },
+  {
+    "combo": "faqsd__faqsd__b500_r50",
+    "experiment": "faqsd",
+    "variables": [
+      "faqsd"
+    ],
+    "buffer_m": 500,
+    "raster_res_m": 50,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/faqsd__faqsd__b500_r50",
+    "steps": [
+      {
+        "name": "c3_tract_us",
+        "template": "c3/tract_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__TRACT_FARA__b500m__r50m",
+        "sha256": "dab230ea3a79823945ddd33defe4298915c2cb058c7c69b2ed05d3fc28d38514"
+      },
+      {
+        "name": "c4_tract_faqsd",
+        "template": "c4/tract_faqsd_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "ae4eca02b210770a29838d9f472dc36e10c9f8b1d7e0eaa9b2ae3514e63d9b74"
+      }
+    ]
+  },
+  {
+    "combo": "faqsd__faqsd__b1000_r25",
+    "experiment": "faqsd",
+    "variables": [
+      "faqsd"
+    ],
+    "buffer_m": 1000,
+    "raster_res_m": 25,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/faqsd__faqsd__b1000_r25",
+    "steps": [
+      {
+        "name": "c3_tract_us",
+        "template": "c3/tract_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__TRACT_FARA__b1000m__r25m",
+        "sha256": "9b982466e35f3b73be6b8908df21d08894762d84c5510da5ed93bf5547994b05"
+      },
+      {
+        "name": "c4_tract_faqsd",
+        "template": "c4/tract_faqsd_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "034fb01fec5c5e190189903a9ea6d79d7f5733f1545cfaa74c7e2846eecfde53"
+      }
+    ]
+  },
+  {
+    "combo": "faqsd__faqsd__b1000_r50",
+    "experiment": "faqsd",
+    "variables": [
+      "faqsd"
+    ],
+    "buffer_m": 1000,
+    "raster_res_m": 50,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/faqsd__faqsd__b1000_r50",
+    "steps": [
+      {
+        "name": "c3_tract_us",
+        "template": "c3/tract_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__TRACT_FARA__b1000m__r50m",
+        "sha256": "f55beb8efd4313b1a0dc8334ad24ceac16866a1bef3bca69b7be6f803e6e3cd8"
+      },
+      {
+        "name": "c4_tract_faqsd",
+        "template": "c4/tract_faqsd_demo.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "f66de9cfbe06ae03b08cea4da42eb56e4b10654ded4563cad3fd76b602084039"
+      }
+    ]
+  },
+  {
+    "combo": "custom__bg__b270_r25",
+    "experiment": "custom",
+    "variables": [
+      "custom_18180893"
+    ],
+    "buffer_m": 270,
+    "raster_res_m": 25,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/custom__bg__b270_r25",
+    "steps": [
+      {
+        "name": "c3_bg",
+        "template": "c3/bg_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG__b270m__r25m",
+        "sha256": "46518a1e9a3bb1a3cb2ded4c19f394ecd262586f7a12e7cb957a040b5c22330a"
+      },
+      {
+        "name": "c4_custom_18180893",
+        "template": "c4/custom_areal.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "97c9935033e9e9529d52576f35fcf8dca5543b5d21dee71701fc5af13990121c"
+      }
+    ]
+  },
+  {
+    "combo": "custom__bg__b270_r50",
+    "experiment": "custom",
+    "variables": [
+      "custom_18180893"
+    ],
+    "buffer_m": 270,
+    "raster_res_m": 50,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/custom__bg__b270_r50",
+    "steps": [
+      {
+        "name": "c3_bg",
+        "template": "c3/bg_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG__b270m__r50m",
+        "sha256": "9b6bd41ba51d26eb6502a09c91a91818a1d0414f187909123d26572dc6f720d7"
+      },
+      {
+        "name": "c4_custom_18180893",
+        "template": "c4/custom_areal.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "46c73f748dcfde6fc0540d84b7da1586d10a4b8610e56584c319a6ffbec5e5f0"
+      }
+    ]
+  },
+  {
+    "combo": "custom__bg__b500_r25",
+    "experiment": "custom",
+    "variables": [
+      "custom_18180893"
+    ],
+    "buffer_m": 500,
+    "raster_res_m": 25,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/custom__bg__b500_r25",
+    "steps": [
+      {
+        "name": "c3_bg",
+        "template": "c3/bg_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG__b500m__r25m",
+        "sha256": "693f085cad159f243945a92b64bddea80c855c398b18509c19585664f4e5613d"
+      },
+      {
+        "name": "c4_custom_18180893",
+        "template": "c4/custom_areal.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "ac10c684e1f690773a72ec51f8ca6dada84a27be13cdae9b654dd237231485f4"
+      }
+    ]
+  },
+  {
+    "combo": "custom__bg__b500_r50",
+    "experiment": "custom",
+    "variables": [
+      "custom_18180893"
+    ],
+    "buffer_m": 500,
+    "raster_res_m": 50,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/custom__bg__b500_r50",
+    "steps": [
+      {
+        "name": "c3_bg",
+        "template": "c3/bg_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG__b500m__r50m",
+        "sha256": "32dc9c085f9ff377dc1a50751df7e0cec809a33a01826e2435a1aff079218e9d"
+      },
+      {
+        "name": "c4_custom_18180893",
+        "template": "c4/custom_areal.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "535bf41b7996caf577487bb4207db1f2e8c12528a80fcfe45e68090836d798c9"
+      }
+    ]
+  },
+  {
+    "combo": "custom__bg__b1000_r25",
+    "experiment": "custom",
+    "variables": [
+      "custom_18180893"
+    ],
+    "buffer_m": 1000,
+    "raster_res_m": 25,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/custom__bg__b1000_r25",
+    "steps": [
+      {
+        "name": "c3_bg",
+        "template": "c3/bg_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG__b1000m__r25m",
+        "sha256": "95b854727724c008e58b702096ed6e6559946df112d043dab7da60d559285901"
+      },
+      {
+        "name": "c4_custom_18180893",
+        "template": "c4/custom_areal.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "b8d6472d911c0d90ffdbb330599788a03823d37a9e9009bdfd7f58bd642de109"
+      }
+    ]
+  },
+  {
+    "combo": "custom__bg__b1000_r50",
+    "experiment": "custom",
+    "variables": [
+      "custom_18180893"
+    ],
+    "buffer_m": 1000,
+    "raster_res_m": 50,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/custom__bg__b1000_r50",
+    "steps": [
+      {
+        "name": "c3_bg",
+        "template": "c3/bg_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG__b1000m__r50m",
+        "sha256": "5c53f6fe51bac940db9fa775e80932dee6cf40b81107a85637b3cf98f8bd3bc0"
+      },
+      {
+        "name": "c4_custom_18180893",
+        "template": "c4/custom_areal.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "8e4b6b2a9d21b812ae6d9de0ae6227d730c4a37908d0e87d56902b2e8a10f8a0"
+      }
+    ]
+  },
+  {
+    "combo": "custom__tract__b270_r25",
+    "experiment": "custom",
+    "variables": [
+      "custom_00000001"
+    ],
+    "buffer_m": 270,
+    "raster_res_m": 25,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/custom__tract__b270_r25",
+    "steps": [
+      {
+        "name": "c3_tract_us",
+        "template": "c3/tract_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__TRACT_FARA__b270m__r25m",
+        "sha256": "5a2a2ef0cc8ad8363423fd31d1d78d27c2bbb01daeced340ca6746b16c8c82f3"
+      },
+      {
+        "name": "c4_custom_00000001",
+        "template": "c4/custom_areal.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "388e4958779d1ca5b9912e2ab1f78fb0d6117aeb74ffb855b02ef9f9eb1cc860"
+      }
+    ]
+  },
+  {
+    "combo": "custom__tract__b270_r50",
+    "experiment": "custom",
+    "variables": [
+      "custom_00000001"
+    ],
+    "buffer_m": 270,
+    "raster_res_m": 50,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/custom__tract__b270_r50",
+    "steps": [
+      {
+        "name": "c3_tract_us",
+        "template": "c3/tract_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__TRACT_FARA__b270m__r50m",
+        "sha256": "aa81daf3a3bd676de35da47d98634ad7799ac0073d709fe20bfabd56e4beb939"
+      },
+      {
+        "name": "c4_custom_00000001",
+        "template": "c4/custom_areal.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "70e41c7d1884c558442e1277a67da63eabb219783cd9a9d3db17576bc16a4bd7"
+      }
+    ]
+  },
+  {
+    "combo": "custom__tract__b500_r25",
+    "experiment": "custom",
+    "variables": [
+      "custom_00000001"
+    ],
+    "buffer_m": 500,
+    "raster_res_m": 25,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/custom__tract__b500_r25",
+    "steps": [
+      {
+        "name": "c3_tract_us",
+        "template": "c3/tract_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__TRACT_FARA__b500m__r25m",
+        "sha256": "d08eb029429a01730f8a2a8e1bf24825bc94849eba4bbd1ad8ab3465b2864d1a"
+      },
+      {
+        "name": "c4_custom_00000001",
+        "template": "c4/custom_areal.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "86f3befb19d74d1fdd2c3461b727ac93fadd66fdeca07d0960abb5f7210ceba7"
+      }
+    ]
+  },
+  {
+    "combo": "custom__tract__b500_r50",
+    "experiment": "custom",
+    "variables": [
+      "custom_00000001"
+    ],
+    "buffer_m": 500,
+    "raster_res_m": 50,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/custom__tract__b500_r50",
+    "steps": [
+      {
+        "name": "c3_tract_us",
+        "template": "c3/tract_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__TRACT_FARA__b500m__r50m",
+        "sha256": "84169afe19878c10184a9248321b9b92c981e4702163deb4b734941798b88de8"
+      },
+      {
+        "name": "c4_custom_00000001",
+        "template": "c4/custom_areal.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "a5b49bfaf3d416b81da90c0eba940feb3e6c920329cd03d17674143d36516966"
+      }
+    ]
+  },
+  {
+    "combo": "custom__tract__b1000_r25",
+    "experiment": "custom",
+    "variables": [
+      "custom_00000001"
+    ],
+    "buffer_m": 1000,
+    "raster_res_m": 25,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/custom__tract__b1000_r25",
+    "steps": [
+      {
+        "name": "c3_tract_us",
+        "template": "c3/tract_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__TRACT_FARA__b1000m__r25m",
+        "sha256": "a2430bdd0451005dfb31dc8cae9c23e2df8ccaa01f217cc405359b14fcdf0e1e"
+      },
+      {
+        "name": "c4_custom_00000001",
+        "template": "c4/custom_areal.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "bbfb161284476ae228aa209df0ad9376c800d616981591bfb23c175362196cf4"
+      }
+    ]
+  },
+  {
+    "combo": "custom__tract__b1000_r50",
+    "experiment": "custom",
+    "variables": [
+      "custom_00000001"
+    ],
+    "buffer_m": 1000,
+    "raster_res_m": 50,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/custom__tract__b1000_r50",
+    "steps": [
+      {
+        "name": "c3_tract_us",
+        "template": "c3/tract_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__TRACT_FARA__b1000m__r50m",
+        "sha256": "398a85dcd6b68d57ababd456d732b5c2d591a7b751850f8ad77838a7d54c5f89"
+      },
+      {
+        "name": "c4_custom_00000001",
+        "template": "c4/custom_areal.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "37527020b653988f674c52a02644ed1e3fc6d85753007f3cb916e7c97022d83a"
+      }
+    ]
+  },
+  {
+    "combo": "custom__zcta5__b270_r25",
+    "experiment": "custom",
+    "variables": [
+      "custom_00000002"
+    ],
+    "buffer_m": 270,
+    "raster_res_m": 25,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/custom__zcta5__b270_r25",
+    "steps": [
+      {
+        "name": "c3_zcta5",
+        "template": "c3/zcta5_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__ZCTA5__b270m__r25m",
+        "sha256": "6e303c7beac2a38ea69caa2a813bcf2050102513b8de6af5d3ce034d56865858"
+      },
+      {
+        "name": "c4_custom_00000002",
+        "template": "c4/custom_areal.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "68c8c7aee372e76914c86503a3e46afe1c5aead728bed5650fefa9de84225390"
+      }
+    ]
+  },
+  {
+    "combo": "custom__zcta5__b270_r50",
+    "experiment": "custom",
+    "variables": [
+      "custom_00000002"
+    ],
+    "buffer_m": 270,
+    "raster_res_m": 50,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/custom__zcta5__b270_r50",
+    "steps": [
+      {
+        "name": "c3_zcta5",
+        "template": "c3/zcta5_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__ZCTA5__b270m__r50m",
+        "sha256": "6d0889c47c34d4f06103db719d05e014244508fdb699e8b1b01ac4dc93e67e18"
+      },
+      {
+        "name": "c4_custom_00000002",
+        "template": "c4/custom_areal.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "cfa89cd3f2a920c34bc2cd1fd6b763d63a2bc1c6d2e66b52d229b08343cc3fe5"
+      }
+    ]
+  },
+  {
+    "combo": "custom__zcta5__b500_r25",
+    "experiment": "custom",
+    "variables": [
+      "custom_00000002"
+    ],
+    "buffer_m": 500,
+    "raster_res_m": 25,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/custom__zcta5__b500_r25",
+    "steps": [
+      {
+        "name": "c3_zcta5",
+        "template": "c3/zcta5_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__ZCTA5__b500m__r25m",
+        "sha256": "91e0c009c35fa712c08d5f823184f39620bee0e67645cf2f98257a9e0fc0696d"
+      },
+      {
+        "name": "c4_custom_00000002",
+        "template": "c4/custom_areal.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "07fd35028f2071bc6e2af075f5490361eff967ef0448340dad1495254ee3caca"
+      }
+    ]
+  },
+  {
+    "combo": "custom__zcta5__b500_r50",
+    "experiment": "custom",
+    "variables": [
+      "custom_00000002"
+    ],
+    "buffer_m": 500,
+    "raster_res_m": 50,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/custom__zcta5__b500_r50",
+    "steps": [
+      {
+        "name": "c3_zcta5",
+        "template": "c3/zcta5_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__ZCTA5__b500m__r50m",
+        "sha256": "c8f703aaca27e83db59767ce6070ffaa346ca7ce9a8e6ed8bf22ec692b75ae9d"
+      },
+      {
+        "name": "c4_custom_00000002",
+        "template": "c4/custom_areal.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "c2aad547100145fd2af1242440d6415f1755365ef3794846dbf8f8a0d881d01c"
+      }
+    ]
+  },
+  {
+    "combo": "custom__zcta5__b1000_r25",
+    "experiment": "custom",
+    "variables": [
+      "custom_00000002"
+    ],
+    "buffer_m": 1000,
+    "raster_res_m": 25,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/custom__zcta5__b1000_r25",
+    "steps": [
+      {
+        "name": "c3_zcta5",
+        "template": "c3/zcta5_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__ZCTA5__b1000m__r25m",
+        "sha256": "7058d0d872e2d50d5b7a8090340d80da96a81c74a84de9ce5139ec2f0a38aaf3"
+      },
+      {
+        "name": "c4_custom_00000002",
+        "template": "c4/custom_areal.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "6d1a1415375e2002aeb4f637fcd374de8cb22b0aaeceb9f56648546f88d5a844"
+      }
+    ]
+  },
+  {
+    "combo": "custom__zcta5__b1000_r50",
+    "experiment": "custom",
+    "variables": [
+      "custom_00000002"
+    ],
+    "buffer_m": 1000,
+    "raster_res_m": 50,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/custom__zcta5__b1000_r50",
+    "steps": [
+      {
+        "name": "c3_zcta5",
+        "template": "c3/zcta5_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__ZCTA5__b1000m__r50m",
+        "sha256": "7f7c23a0e6237e89a44f1e06194bbbd08ba6ac606af713c868a3db774b3269f1"
+      },
+      {
+        "name": "c4_custom_00000002",
+        "template": "c4/custom_areal.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "489537a2cfb4d3ae887f62778a19e94c98bf1a288ab36054bbc4f8b869aa43ed"
+      }
+    ]
+  },
+  {
+    "combo": "custom__county__b270_r25",
+    "experiment": "custom",
+    "variables": [
+      "custom_00000003"
+    ],
+    "buffer_m": 270,
+    "raster_res_m": 25,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/custom__county__b270_r25",
+    "steps": [
+      {
+        "name": "c3_county_us",
+        "template": "c3/county_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__COUNTY__b270m__r25m",
+        "sha256": "03a68b0430fb1ed177b60a534411a57cc10016dba9e353dc901ba46391374e73"
+      },
+      {
+        "name": "c4_custom_00000003",
+        "template": "c4/custom_areal.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "9d07d2ac64abae111b44e61964d98357302910f15c9bac353ab733b594c2ed14"
+      }
+    ]
+  },
+  {
+    "combo": "custom__county__b270_r50",
+    "experiment": "custom",
+    "variables": [
+      "custom_00000003"
+    ],
+    "buffer_m": 270,
+    "raster_res_m": 50,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/custom__county__b270_r50",
+    "steps": [
+      {
+        "name": "c3_county_us",
+        "template": "c3/county_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__COUNTY__b270m__r50m",
+        "sha256": "bad1533f1cbec72b22c1306cccbdcc7598338859a842e291f08349dde3016861"
+      },
+      {
+        "name": "c4_custom_00000003",
+        "template": "c4/custom_areal.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "3a11e3567baa24d9472ba446bfbde470f63815510a0cd92ffed190cc240613ea"
+      }
+    ]
+  },
+  {
+    "combo": "custom__county__b500_r25",
+    "experiment": "custom",
+    "variables": [
+      "custom_00000003"
+    ],
+    "buffer_m": 500,
+    "raster_res_m": 25,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/custom__county__b500_r25",
+    "steps": [
+      {
+        "name": "c3_county_us",
+        "template": "c3/county_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__COUNTY__b500m__r25m",
+        "sha256": "30936745f60f5b852073677e383a811380a001192fe70128d28fe859fdf88cb3"
+      },
+      {
+        "name": "c4_custom_00000003",
+        "template": "c4/custom_areal.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "e47983c10e43e0405dea006637c8c0bf109898615e1a65c5e4fcd5a64f76a1b5"
+      }
+    ]
+  },
+  {
+    "combo": "custom__county__b500_r50",
+    "experiment": "custom",
+    "variables": [
+      "custom_00000003"
+    ],
+    "buffer_m": 500,
+    "raster_res_m": 50,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/custom__county__b500_r50",
+    "steps": [
+      {
+        "name": "c3_county_us",
+        "template": "c3/county_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__COUNTY__b500m__r50m",
+        "sha256": "1a85a4632a2d4f1872b42be3c6edc1135c0a9214bd5bf0fbc12331c798424276"
+      },
+      {
+        "name": "c4_custom_00000003",
+        "template": "c4/custom_areal.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "85fe5d0c179b7dec544582e548069e6c8ba99b94b18bd2d953ea2f4970e8e41b"
+      }
+    ]
+  },
+  {
+    "combo": "custom__county__b1000_r25",
+    "experiment": "custom",
+    "variables": [
+      "custom_00000003"
+    ],
+    "buffer_m": 1000,
+    "raster_res_m": 25,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/custom__county__b1000_r25",
+    "steps": [
+      {
+        "name": "c3_county_us",
+        "template": "c3/county_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__COUNTY__b1000m__r25m",
+        "sha256": "df73cc770313cadaa452ecdfa1607dee2f44018af83eeb7e561ad9e75ce3ae3f"
+      },
+      {
+        "name": "c4_custom_00000003",
+        "template": "c4/custom_areal.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "ddb72ed0aef4e22cda2c514f6b066b05704ea8b40cf76ee600e255af231aacb3"
+      }
+    ]
+  },
+  {
+    "combo": "custom__county__b1000_r50",
+    "experiment": "custom",
+    "variables": [
+      "custom_00000003"
+    ],
+    "buffer_m": 1000,
+    "raster_res_m": 50,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/custom__county__b1000_r50",
+    "steps": [
+      {
+        "name": "c3_county_us",
+        "template": "c3/county_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__COUNTY__b1000m__r50m",
+        "sha256": "accb2aa7efc65e79d5aa683120715dffd04e88be7f779fd464fc75821a3e9c5c"
+      },
+      {
+        "name": "c4_custom_00000003",
+        "template": "c4/custom_areal.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "95110aa757eb9772e70917358eac142afe51e04cfa3a027361f390beae98cbbb"
+      }
+    ]
+  },
+  {
+    "combo": "custom__bg_yearly__b270_r25",
+    "experiment": "custom",
+    "variables": [
+      "custom_00000004"
+    ],
+    "buffer_m": 270,
+    "raster_res_m": 25,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/custom__bg_yearly__b270_r25",
+    "steps": [
+      {
+        "name": "c3_bg",
+        "template": "c3/bg_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG__b270m__r25m",
+        "sha256": "b3540e539a3e25a4b74034b3410bce9ce0426790e19b38c7c33ee3427d87a065"
+      },
+      {
+        "name": "c4_custom_00000004",
+        "template": "c4/custom_areal.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "3ae18cb50b43fc2850b394c16c167f7c792e20c3cd85f769914934ebc3793be1"
+      }
+    ]
+  },
+  {
+    "combo": "custom__bg_yearly__b270_r50",
+    "experiment": "custom",
+    "variables": [
+      "custom_00000004"
+    ],
+    "buffer_m": 270,
+    "raster_res_m": 50,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/custom__bg_yearly__b270_r50",
+    "steps": [
+      {
+        "name": "c3_bg",
+        "template": "c3/bg_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG__b270m__r50m",
+        "sha256": "f7edc550603a9f171253d946b181385300d1edc6864bc9a54c88d40c0011c1e0"
+      },
+      {
+        "name": "c4_custom_00000004",
+        "template": "c4/custom_areal.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "0f879e60ea61b981d56505f9f663082031a88a0412c34ba0b7e3391ffa287198"
+      }
+    ]
+  },
+  {
+    "combo": "custom__bg_yearly__b500_r25",
+    "experiment": "custom",
+    "variables": [
+      "custom_00000004"
+    ],
+    "buffer_m": 500,
+    "raster_res_m": 25,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/custom__bg_yearly__b500_r25",
+    "steps": [
+      {
+        "name": "c3_bg",
+        "template": "c3/bg_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG__b500m__r25m",
+        "sha256": "0590fc934ae274fdd03243f17eb6db0f937052962df355701e30e448c9300223"
+      },
+      {
+        "name": "c4_custom_00000004",
+        "template": "c4/custom_areal.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "48ad6f5bea95247b1a6507b36d5cb2fe8fa5c4e9c00c4f00e66cae8ca903af21"
+      }
+    ]
+  },
+  {
+    "combo": "custom__bg_yearly__b500_r50",
+    "experiment": "custom",
+    "variables": [
+      "custom_00000004"
+    ],
+    "buffer_m": 500,
+    "raster_res_m": 50,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/custom__bg_yearly__b500_r50",
+    "steps": [
+      {
+        "name": "c3_bg",
+        "template": "c3/bg_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG__b500m__r50m",
+        "sha256": "ef3f75932d74a561ef102a42625004e66a1d8e153453969001291fc248f29e97"
+      },
+      {
+        "name": "c4_custom_00000004",
+        "template": "c4/custom_areal.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "013a2f65ce13593ecf182c074a20b6f821381700f51e0eab4d8a8afcb5efd79d"
+      }
+    ]
+  },
+  {
+    "combo": "custom__bg_yearly__b1000_r25",
+    "experiment": "custom",
+    "variables": [
+      "custom_00000004"
+    ],
+    "buffer_m": 1000,
+    "raster_res_m": 25,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/custom__bg_yearly__b1000_r25",
+    "steps": [
+      {
+        "name": "c3_bg",
+        "template": "c3/bg_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG__b1000m__r25m",
+        "sha256": "9834584171fea0fb4355e81b002ca3dc9699891508a412c618afacbb2d92792d"
+      },
+      {
+        "name": "c4_custom_00000004",
+        "template": "c4/custom_areal.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "bbcc51439d01d63de6a32ead203c851b2154eee3067805bdc0fb5d75daa0256c"
+      }
+    ]
+  },
+  {
+    "combo": "custom__bg_yearly__b1000_r50",
+    "experiment": "custom",
+    "variables": [
+      "custom_00000004"
+    ],
+    "buffer_m": 1000,
+    "raster_res_m": 50,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/custom__bg_yearly__b1000_r50",
+    "steps": [
+      {
+        "name": "c3_bg",
+        "template": "c3/bg_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG__b1000m__r50m",
+        "sha256": "c48f0939520acad95ea968717ecfa1c1914ab406fbb293365c56b69bc5a564e4"
+      },
+      {
+        "name": "c4_custom_00000004",
+        "template": "c4/custom_areal.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "2030b9ab215ec2992385fd4c7b2a6b1b3f08626e148df851151129adfacbc9a9"
+      }
+    ]
+  },
+  {
+    "combo": "custom__tract_yearly__b270_r25",
+    "experiment": "custom",
+    "variables": [
+      "custom_00000005"
+    ],
+    "buffer_m": 270,
+    "raster_res_m": 25,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/custom__tract_yearly__b270_r25",
+    "steps": [
+      {
+        "name": "c3_tract_us",
+        "template": "c3/tract_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__TRACT_FARA__b270m__r25m",
+        "sha256": "65def5983e96386c8c62253158c879f420e9bab385aacdcea54295aab8daf950"
+      },
+      {
+        "name": "c4_custom_00000005",
+        "template": "c4/custom_areal.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "027229f4c37457183bf4e7c47b3ebd4f03626646d414cec764e7bdafe0d94e57"
+      }
+    ]
+  },
+  {
+    "combo": "custom__tract_yearly__b270_r50",
+    "experiment": "custom",
+    "variables": [
+      "custom_00000005"
+    ],
+    "buffer_m": 270,
+    "raster_res_m": 50,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/custom__tract_yearly__b270_r50",
+    "steps": [
+      {
+        "name": "c3_tract_us",
+        "template": "c3/tract_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__TRACT_FARA__b270m__r50m",
+        "sha256": "7f44b93083e3f7fd6187a392e05836b1b0b3135d456ae85e697cd52b4d428917"
+      },
+      {
+        "name": "c4_custom_00000005",
+        "template": "c4/custom_areal.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "36fee9599f3c157a7ddced6154877d9295b3a4a5575c07d790bce2a81ec1a399"
+      }
+    ]
+  },
+  {
+    "combo": "custom__tract_yearly__b500_r25",
+    "experiment": "custom",
+    "variables": [
+      "custom_00000005"
+    ],
+    "buffer_m": 500,
+    "raster_res_m": 25,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/custom__tract_yearly__b500_r25",
+    "steps": [
+      {
+        "name": "c3_tract_us",
+        "template": "c3/tract_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__TRACT_FARA__b500m__r25m",
+        "sha256": "6292cd97ea10a29a9bd60be89f2ad59d52e5983039dc06fcdf08811bc571fe8a"
+      },
+      {
+        "name": "c4_custom_00000005",
+        "template": "c4/custom_areal.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "2ea20fc2c3d042f7f18acb8ec6b26820dc6f2667fb0f49e76d68428cd9c17180"
+      }
+    ]
+  },
+  {
+    "combo": "custom__tract_yearly__b500_r50",
+    "experiment": "custom",
+    "variables": [
+      "custom_00000005"
+    ],
+    "buffer_m": 500,
+    "raster_res_m": 50,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/custom__tract_yearly__b500_r50",
+    "steps": [
+      {
+        "name": "c3_tract_us",
+        "template": "c3/tract_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__TRACT_FARA__b500m__r50m",
+        "sha256": "5641aaaacb237128ded0c0b967357f2b6f040b58c40e0a0b383bcc9188f33f10"
+      },
+      {
+        "name": "c4_custom_00000005",
+        "template": "c4/custom_areal.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "73c13be1669deb6e58845491f60d7ac4efb4975bd0e00a916b76be3633fa88e0"
+      }
+    ]
+  },
+  {
+    "combo": "custom__tract_yearly__b1000_r25",
+    "experiment": "custom",
+    "variables": [
+      "custom_00000005"
+    ],
+    "buffer_m": 1000,
+    "raster_res_m": 25,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/custom__tract_yearly__b1000_r25",
+    "steps": [
+      {
+        "name": "c3_tract_us",
+        "template": "c3/tract_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__TRACT_FARA__b1000m__r25m",
+        "sha256": "ee1e2757d11625c63d6b74d2f069a289322547591e5411af400e1401334ac3d4"
+      },
+      {
+        "name": "c4_custom_00000005",
+        "template": "c4/custom_areal.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "57eecf091344fd65742a47c68e2c01910d1c4b6e8d577ece43c5e28c08bd0982"
+      }
+    ]
+  },
+  {
+    "combo": "custom__tract_yearly__b1000_r50",
+    "experiment": "custom",
+    "variables": [
+      "custom_00000005"
+    ],
+    "buffer_m": 1000,
+    "raster_res_m": 50,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/custom__tract_yearly__b1000_r50",
+    "steps": [
+      {
+        "name": "c3_tract_us",
+        "template": "c3/tract_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__TRACT_FARA__b1000m__r50m",
+        "sha256": "2dcafbcbecaea0bbfe6c338daa90ff8e08ef06f989502bb8e89fcc5f24297c85"
+      },
+      {
+        "name": "c4_custom_00000005",
+        "template": "c4/custom_areal.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "c9376e79f3f086660592d819ade9e5e0ff2c746388de146ba6899b02a7a15f4b"
+      }
+    ]
+  },
+  {
+    "combo": "custom__bg-tract-bg_yearly__b270_r25",
+    "experiment": "custom",
+    "variables": [
+      "custom_18180893",
+      "custom_00000001",
+      "custom_00000004"
+    ],
+    "buffer_m": 270,
+    "raster_res_m": 25,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/custom__bg-tract-bg_yearly__b270_r25",
+    "steps": [
+      {
+        "name": "c3_bg",
+        "template": "c3/bg_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG__b270m__r25m",
+        "sha256": "366e568d80a2b0317c378924e2f4c0f68e8d3e4ec58b124e1265f15ad48a3501"
+      },
+      {
+        "name": "c3_tract_us",
+        "template": "c3/tract_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__TRACT_FARA__b270m__r25m",
+        "sha256": "0a1b03665284fd9801ed2e3a2410aa5f36c9263c275f8365e95867066dc15053"
+      },
+      {
+        "name": "c4_custom_18180893",
+        "template": "c4/custom_areal.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "7a8726213868c46912ab55b714c28a50134438132ae6887910575e42bd635512"
+      },
+      {
+        "name": "c4_custom_00000001",
+        "template": "c4/custom_areal.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "e73f646bebc400cf2e8a5253bbf9aa12c169300cc962ec2822bfb95c98f49e06"
+      },
+      {
+        "name": "c4_custom_00000004",
+        "template": "c4/custom_areal.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "ec30c0675e97f850983a00a0242adda4cfcedb28df8c34aad4950e9580dbefe2"
+      }
+    ]
+  },
+  {
+    "combo": "custom__bg-tract-bg_yearly__b270_r50",
+    "experiment": "custom",
+    "variables": [
+      "custom_18180893",
+      "custom_00000001",
+      "custom_00000004"
+    ],
+    "buffer_m": 270,
+    "raster_res_m": 50,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/custom__bg-tract-bg_yearly__b270_r50",
+    "steps": [
+      {
+        "name": "c3_bg",
+        "template": "c3/bg_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG__b270m__r50m",
+        "sha256": "5a7f923d8ca35fed1eb18a41763ea03d3dc72c7a75e95e2bbb15f2d8b73999a0"
+      },
+      {
+        "name": "c3_tract_us",
+        "template": "c3/tract_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__TRACT_FARA__b270m__r50m",
+        "sha256": "afb780619ee7f0123634a3be2b319e850dca7beb6953b3f2457e124f731bbf3b"
+      },
+      {
+        "name": "c4_custom_18180893",
+        "template": "c4/custom_areal.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "0d9a6a2ec60f7d0d24601297d2c797f334e3276a153edacad383b5cf12b5e7d9"
+      },
+      {
+        "name": "c4_custom_00000001",
+        "template": "c4/custom_areal.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "7de7b613870d0e56d2d8a0fc9ce4cf520946de4c7fc69bd88d8fd016a231eba1"
+      },
+      {
+        "name": "c4_custom_00000004",
+        "template": "c4/custom_areal.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "07bfdb95aea011954beac0d746af22077660813e0d7ed6aa5b922ebd2e5fd857"
+      }
+    ]
+  },
+  {
+    "combo": "custom__bg-tract-bg_yearly__b500_r25",
+    "experiment": "custom",
+    "variables": [
+      "custom_18180893",
+      "custom_00000001",
+      "custom_00000004"
+    ],
+    "buffer_m": 500,
+    "raster_res_m": 25,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/custom__bg-tract-bg_yearly__b500_r25",
+    "steps": [
+      {
+        "name": "c3_bg",
+        "template": "c3/bg_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG__b500m__r25m",
+        "sha256": "0ea1faad049db43504aa6f6fe23bb39ccb7443afb9301f17c366ec61b468cc59"
+      },
+      {
+        "name": "c3_tract_us",
+        "template": "c3/tract_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__TRACT_FARA__b500m__r25m",
+        "sha256": "01e704007cb8144596699eec6e91407e3d9340b108106764f97f01f2a7daa7fe"
+      },
+      {
+        "name": "c4_custom_18180893",
+        "template": "c4/custom_areal.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "558cbab03123a16da303506dc8e9a42d3109dc688d3ae2acb00f045aa8473b91"
+      },
+      {
+        "name": "c4_custom_00000001",
+        "template": "c4/custom_areal.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "9f939ac1ede5c0cd4a0fb48290fa4ced8a6403150a663f46ce1d2c031138a636"
+      },
+      {
+        "name": "c4_custom_00000004",
+        "template": "c4/custom_areal.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "53af8a895572bbfe20c7a17d886a674dee5c3a6851ef587657310060e4f87e85"
+      }
+    ]
+  },
+  {
+    "combo": "custom__bg-tract-bg_yearly__b500_r50",
+    "experiment": "custom",
+    "variables": [
+      "custom_18180893",
+      "custom_00000001",
+      "custom_00000004"
+    ],
+    "buffer_m": 500,
+    "raster_res_m": 50,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/custom__bg-tract-bg_yearly__b500_r50",
+    "steps": [
+      {
+        "name": "c3_bg",
+        "template": "c3/bg_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG__b500m__r50m",
+        "sha256": "88152a3f6f3173dc163fa882d39b9be977a6f723bedb52cf9a524e53ade94bec"
+      },
+      {
+        "name": "c3_tract_us",
+        "template": "c3/tract_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__TRACT_FARA__b500m__r50m",
+        "sha256": "5f94c6a98e5d1ae7d0e425cd288e95781b5f2c104b4d2c74a518eb077bc80692"
+      },
+      {
+        "name": "c4_custom_18180893",
+        "template": "c4/custom_areal.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "c0dec926875e9179450ceb2f62aa307a7209cd3d1c203eb694e4babb9ac4977b"
+      },
+      {
+        "name": "c4_custom_00000001",
+        "template": "c4/custom_areal.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "40c2a8212ca7701dd515c46680794181468e19eaaea3e19e6d7f5eb515cc9ce3"
+      },
+      {
+        "name": "c4_custom_00000004",
+        "template": "c4/custom_areal.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "c386ea22c38862932d1689243ffe5f361346e866707e14823dce42143d78f8d9"
+      }
+    ]
+  },
+  {
+    "combo": "custom__bg-tract-bg_yearly__b1000_r25",
+    "experiment": "custom",
+    "variables": [
+      "custom_18180893",
+      "custom_00000001",
+      "custom_00000004"
+    ],
+    "buffer_m": 1000,
+    "raster_res_m": 25,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/custom__bg-tract-bg_yearly__b1000_r25",
+    "steps": [
+      {
+        "name": "c3_bg",
+        "template": "c3/bg_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG__b1000m__r25m",
+        "sha256": "043f9766fee26781039a0da7391eb921e840ca5c112bba75a59cdfc7160bd5b0"
+      },
+      {
+        "name": "c3_tract_us",
+        "template": "c3/tract_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__TRACT_FARA__b1000m__r25m",
+        "sha256": "a95aaf9ac039e30c9febe5a826802d861c4d647990620315d0ddbbe0263a76b8"
+      },
+      {
+        "name": "c4_custom_18180893",
+        "template": "c4/custom_areal.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "339b3769a0ea3069c7a8ba00eeeadcbada8f4bf2de5a8d19fe63cad72fe0dae4"
+      },
+      {
+        "name": "c4_custom_00000001",
+        "template": "c4/custom_areal.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "c2e9fef7b8db3dbf4bcf4530a34ead6f49367d204c8cfc768f343f5e2e8e9b3a"
+      },
+      {
+        "name": "c4_custom_00000004",
+        "template": "c4/custom_areal.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "d3049cfe34ea3d8be36e547d98a757a6b1bc3b8c3db002f8dbd30dc7b09a5604"
+      }
+    ]
+  },
+  {
+    "combo": "custom__bg-tract-bg_yearly__b1000_r50",
+    "experiment": "custom",
+    "variables": [
+      "custom_18180893",
+      "custom_00000001",
+      "custom_00000004"
+    ],
+    "buffer_m": 1000,
+    "raster_res_m": 50,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/custom__bg-tract-bg_yearly__b1000_r50",
+    "steps": [
+      {
+        "name": "c3_bg",
+        "template": "c3/bg_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__BG__b1000m__r50m",
+        "sha256": "6964a1623bc26db7c49e458601cf77c509e6dffa4d102ee6a88b6cf8817319ad"
+      },
+      {
+        "name": "c3_tract_us",
+        "template": "c3/tract_us_demo.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__TRACT_FARA__b1000m__r50m",
+        "sha256": "0b96386daa442c7ff9ce230a3216136376e72d85eade92c44a937b2f54447a7d"
+      },
+      {
+        "name": "c4_custom_18180893",
+        "template": "c4/custom_areal.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "54bb781a8027f38ede5eff9ecd7c32765382e2d5f737f7eb21ca7e520c771a77"
+      },
+      {
+        "name": "c4_custom_00000001",
+        "template": "c4/custom_areal.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "1770f380bf1dad0b2285b3fbf8db031e9585075c64e45bdca6031cee099b1913"
+      },
+      {
+        "name": "c4_custom_00000004",
+        "template": "c4/custom_areal.yaml",
+        "is_c3": false,
+        "rendered": true,
+        "sha256": "d1521a449b2b6f7bff4d4755526fa123b0617a818c4f64c711401908b080421b"
+      }
+    ]
+  },
+  {
+    "combo": "custom__raster__b270_r25",
+    "experiment": "custom",
+    "variables": [
+      "custom_714c9715"
+    ],
+    "buffer_m": 270,
+    "raster_res_m": 25,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/custom__raster__b270_r25",
+    "steps": [
+      {
+        "name": "c3_customgrid_3940345e",
+        "template": "c3/custom_grid.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__CUSTOMGRID_3940345e__b270m",
+        "sha256": "774d5533c2343c5f594bcd248e8836acdaad36a6af72fc7ef4ba920cac13de18"
+      },
+      {
+        "name": "c4_custom_714c9715",
+        "template": "c4/custom_areal.yaml",
+        "is_c3": false,
+        "rendered": false
+      }
+    ]
+  },
+  {
+    "combo": "custom__raster__b270_r50",
+    "experiment": "custom",
+    "variables": [
+      "custom_714c9715"
+    ],
+    "buffer_m": 270,
+    "raster_res_m": 50,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/custom__raster__b270_r50",
+    "steps": [
+      {
+        "name": "c3_customgrid_3940345e",
+        "template": "c3/custom_grid.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__CUSTOMGRID_3940345e__b270m",
+        "sha256": "f8fef652aa3d194dc22e245c226e2c69c8371cb8b39222bebcd0add276eef262"
+      },
+      {
+        "name": "c4_custom_714c9715",
+        "template": "c4/custom_areal.yaml",
+        "is_c3": false,
+        "rendered": false
+      }
+    ]
+  },
+  {
+    "combo": "custom__raster__b500_r25",
+    "experiment": "custom",
+    "variables": [
+      "custom_714c9715"
+    ],
+    "buffer_m": 500,
+    "raster_res_m": 25,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/custom__raster__b500_r25",
+    "steps": [
+      {
+        "name": "c3_customgrid_3940345e",
+        "template": "c3/custom_grid.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__CUSTOMGRID_3940345e__b500m",
+        "sha256": "7218296afc2c4f44dc628ecba00f148ef34fb0b80c7ff3b10d58e72bdeb62654"
+      },
+      {
+        "name": "c4_custom_714c9715",
+        "template": "c4/custom_areal.yaml",
+        "is_c3": false,
+        "rendered": false
+      }
+    ]
+  },
+  {
+    "combo": "custom__raster__b500_r50",
+    "experiment": "custom",
+    "variables": [
+      "custom_714c9715"
+    ],
+    "buffer_m": 500,
+    "raster_res_m": 50,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/custom__raster__b500_r50",
+    "steps": [
+      {
+        "name": "c3_customgrid_3940345e",
+        "template": "c3/custom_grid.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__CUSTOMGRID_3940345e__b500m",
+        "sha256": "31e8e6e334f66bf71bafe9431996822c186d73a394e24351c7cbe66c2e3e914e"
+      },
+      {
+        "name": "c4_custom_714c9715",
+        "template": "c4/custom_areal.yaml",
+        "is_c3": false,
+        "rendered": false
+      }
+    ]
+  },
+  {
+    "combo": "custom__raster__b1000_r25",
+    "experiment": "custom",
+    "variables": [
+      "custom_714c9715"
+    ],
+    "buffer_m": 1000,
+    "raster_res_m": 25,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/custom__raster__b1000_r25",
+    "steps": [
+      {
+        "name": "c3_customgrid_3940345e",
+        "template": "c3/custom_grid.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__CUSTOMGRID_3940345e__b1000m",
+        "sha256": "b5692618f2aefa9fcd17bf88191623666349b5513df053820b775705f1ed5f43"
+      },
+      {
+        "name": "c4_custom_714c9715",
+        "template": "c4/custom_areal.yaml",
+        "is_c3": false,
+        "rendered": false
+      }
+    ]
+  },
+  {
+    "combo": "custom__raster__b1000_r50",
+    "experiment": "custom",
+    "variables": [
+      "custom_714c9715"
+    ],
+    "buffer_m": 1000,
+    "raster_res_m": 50,
+    "task_dir": "/app/data/tasks/tier2-golden-render/combos/custom__raster__b1000_r50",
+    "steps": [
+      {
+        "name": "c3_customgrid_3940345e",
+        "template": "c3/custom_grid.yaml",
+        "is_c3": true,
+        "rendered": true,
+        "cache_key": "12269dbe__CUSTOMGRID_3940345e__b1000m",
+        "sha256": "e6b31c4a11cb0a29c942703ef0395d9d6f6c173d50593f5f77fb837faad1a781"
+      },
+      {
+        "name": "c4_custom_714c9715",
+        "template": "c4/custom_areal.yaml",
+        "is_c3": false,
+        "rendered": false
+      }
+    ]
+  }
+]

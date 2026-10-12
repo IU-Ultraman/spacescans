@@ -1,0 +1,32 @@
+name: custom_areal_task_m_raster
+linkage_pattern: static_areal
+geometry_type: polygon
+source:
+  file: /app/data/tasks/tier2-golden-custom_raster/output/c3_customgrid_3940345e.parquet
+  join_col: grid_id
+buffer:
+  patient_file: /app/data/tasks/tier2-golden-custom_raster/input.parquet
+  patient_adapter: demo_conus
+  buffer_m: 270
+exposure:
+  file: /app/data/tasks/tier2-golden-custom_raster/output/values_custom_714c9715.parquet
+  join_col: grid_id
+  value_cols:
+  - l50dba_exi
+time:
+  years:
+  - 2013
+  - 2014
+  - 2015
+  - 2016
+  - 2017
+  - 2018
+  - 2019
+  temporal_resolution: yearly
+  temporal_mode: yearly
+  output_grouping: episode
+engine:
+  backend: duckdb
+output:
+  path: /app/data/tasks/tier2-golden-custom_raster/output/c4_custom_714c9715.parquet
+  format: parquet

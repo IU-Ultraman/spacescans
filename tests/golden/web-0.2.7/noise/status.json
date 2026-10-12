@@ -1,0 +1,22 @@
+{
+  "experiments": {
+    "noise": {
+      "status": "running",
+      "progress": 1.0,
+      "current_step": null,
+      "steps": [
+        "c3_noise",
+        "c4_noise"
+      ],
+      "pid": 4093,
+      "message": "Completed 2 pipeline steps"
+    }
+  },
+  "steps": [
+    "c3_noise",
+    "c4_noise"
+  ],
+  "current_step": null,
+  "total_steps": 2,
+  "progress": 1.0
+}

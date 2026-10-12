@@ -1,0 +1,12 @@
+[
+  {
+    "path": "manifest.json",
+    "bytes": 1098,
+    "sha256": "910e1753609578d8ea2530ca9d2872394ebcb44d0fea139781f1e371b21ef805"
+  },
+  {
+    "path": "values.csv",
+    "bytes": 4129912,
+    "sha256": "488875c9e30d8f946143510b684276bec63cf7a23200a27754886e76c9fc679f"
+  }
+]

@@ -1,0 +1,16 @@
+name: zcta5_us_demo_task_cta5_cbp
+linkage_pattern: boundary_overlap_fast
+geometry_type: polygon
+source:
+  file: ZCTA5/C3/tl_2010_us_zcta510/tl_2010_us_zcta510.shp
+  join_col: ZCTA5CE10
+buffer:
+  patient_file: /app/data/tasks/tier2-golden-zcta5_cbp/input.parquet
+  patient_adapter: demo_conus
+  buffer_m: 270
+  raster_res_m: 25
+engine:
+  backend: duckdb
+output:
+  path: /app/data/tasks/tier2-golden-zcta5_cbp/output/c3_zcta5.parquet
+  format: parquet

@@ -1,0 +1,40 @@
+{"ts": "2026-10-12T20:48:54.053239+00:00", "level": "info", "source": "runner", "msg": "spawning c3_bg: /opt/conda/bin/python /opt/conda/bin/spacescans run --data-dir /project /app/data/tasks/tier2-golden-bg_ndi_wi/pipeline_configs/c3_bg.yaml"}
+{"ts": "2026-10-12T20:49:06.954590+00:00", "level": "info", "source": "c3_bg", "msg": "[overlap_fast] processing 217740 boundaries \u00d7 1001 buffers via 13818 tiles (30 km each)"}
+{"ts": "2026-10-12T20:49:14.312379+00:00", "level": "info", "source": "c3_bg", "msg": "[overlap_fast] tile  6900/13818 ( 49.9%) elapsed=  0.12m  rate=938.0/s  ETA= 0.12m  tiles_with_work=152"}
+{"ts": "2026-10-12T20:49:32.737467+00:00", "level": "info", "source": "c3_bg", "msg": "[overlap_fast] tile 13800/13818 ( 99.9%) elapsed=  0.43m  rate=535.3/s  ETA= 0.00m  tiles_with_work=568"}
+{"ts": "2026-10-12T20:49:32.802405+00:00", "level": "info", "source": "c3_bg", "msg": "[overlap_fast] === SUMMARY ==="}
+{"ts": "2026-10-12T20:49:32.802593+00:00", "level": "info", "source": "c3_bg", "msg": "[overlap_fast]   rasterize        0.25m ( 57.7%)"}
+{"ts": "2026-10-12T20:49:32.802665+00:00", "level": "info", "source": "c3_bg", "msg": "[overlap_fast]   exact_extract    0.08m ( 18.9%)"}
+{"ts": "2026-10-12T20:49:32.802702+00:00", "level": "info", "source": "c3_bg", "msg": "[overlap_fast]   memfile          0.07m ( 15.1%)"}
+{"ts": "2026-10-12T20:49:32.802720+00:00", "level": "info", "source": "c3_bg", "msg": "[overlap_fast]   postprocess      0.03m (  7.4%)"}
+{"ts": "2026-10-12T20:49:32.802752+00:00", "level": "info", "source": "c3_bg", "msg": "[overlap_fast]   tile_index       0.00m (  0.7%)"}
+{"ts": "2026-10-12T20:49:32.802767+00:00", "level": "info", "source": "c3_bg", "msg": "[overlap_fast]   loop_other       0.00m (  0.1%)"}
+{"ts": "2026-10-12T20:49:32.802781+00:00", "level": "info", "source": "c3_bg", "msg": "[overlap_fast]   concat+norm      0.00m (  0.1%)"}
+{"ts": "2026-10-12T20:49:32.802794+00:00", "level": "info", "source": "c3_bg", "msg": "[overlap_fast]   total            0.43m"}
+{"ts": "2026-10-12T20:49:32.802814+00:00", "level": "info", "source": "c3_bg", "msg": "[overlap_fast]   tiles processed: 569 / 13818"}
+{"ts": "2026-10-12T20:49:33.246024+00:00", "level": "info", "source": "c3_bg", "msg": "Output: /app/data/tasks/tier2-golden-bg_ndi_wi/output/c3_bg.parquet"}
+{"ts": "2026-10-12T20:49:33.379079+00:00", "level": "info", "source": "runner", "msg": "step c3_bg exit code 0"}
+{"ts": "2026-10-12T20:49:33.381131+00:00", "level": "info", "source": "c3_bg", "msg": "cache write: 12269dbe__BG__b270m__r25m.parquet"}
+{"ts": "2026-10-12T20:49:33.539500+00:00", "level": "info", "source": "runner", "msg": "spawning c3_bg_2020: /opt/conda/bin/python /opt/conda/bin/spacescans run --data-dir /project /app/data/tasks/tier2-golden-bg_ndi_wi/pipeline_configs/c3_bg_2020.yaml"}
+{"ts": "2026-10-12T20:49:49.620931+00:00", "level": "info", "source": "c3_bg_2020", "msg": "[overlap_fast] processing 239781 boundaries \u00d7 1001 buffers via 13818 tiles (30 km each)"}
+{"ts": "2026-10-12T20:49:57.252350+00:00", "level": "info", "source": "c3_bg_2020", "msg": "[overlap_fast] tile  6900/13818 ( 49.9%) elapsed=  0.13m  rate=904.1/s  ETA= 0.13m  tiles_with_work=152"}
+{"ts": "2026-10-12T20:50:16.598371+00:00", "level": "info", "source": "c3_bg_2020", "msg": "[overlap_fast] tile 13800/13818 ( 99.9%) elapsed=  0.45m  rate=511.5/s  ETA= 0.00m  tiles_with_work=568"}
+{"ts": "2026-10-12T20:50:16.665440+00:00", "level": "info", "source": "c3_bg_2020", "msg": "[overlap_fast] === SUMMARY ==="}
+{"ts": "2026-10-12T20:50:16.665563+00:00", "level": "info", "source": "c3_bg_2020", "msg": "[overlap_fast]   rasterize        0.26m ( 58.4%)"}
+{"ts": "2026-10-12T20:50:16.665616+00:00", "level": "info", "source": "c3_bg_2020", "msg": "[overlap_fast]   exact_extract    0.08m ( 18.4%)"}
+{"ts": "2026-10-12T20:50:16.665650+00:00", "level": "info", "source": "c3_bg_2020", "msg": "[overlap_fast]   memfile          0.07m ( 15.1%)"}
+{"ts": "2026-10-12T20:50:16.665669+00:00", "level": "info", "source": "c3_bg_2020", "msg": "[overlap_fast]   postprocess      0.03m (  7.2%)"}
+{"ts": "2026-10-12T20:50:16.665709+00:00", "level": "info", "source": "c3_bg_2020", "msg": "[overlap_fast]   tile_index       0.00m (  0.7%)"}
+{"ts": "2026-10-12T20:50:16.665750+00:00", "level": "info", "source": "c3_bg_2020", "msg": "[overlap_fast]   loop_other       0.00m (  0.1%)"}
+{"ts": "2026-10-12T20:50:16.665773+00:00", "level": "info", "source": "c3_bg_2020", "msg": "[overlap_fast]   concat+norm      0.00m (  0.1%)"}
+{"ts": "2026-10-12T20:50:16.665787+00:00", "level": "info", "source": "c3_bg_2020", "msg": "[overlap_fast]   total            0.45m"}
+{"ts": "2026-10-12T20:50:16.665804+00:00", "level": "info", "source": "c3_bg_2020", "msg": "[overlap_fast]   tiles processed: 569 / 13818"}
+{"ts": "2026-10-12T20:50:17.026695+00:00", "level": "info", "source": "c3_bg_2020", "msg": "Output: /app/data/tasks/tier2-golden-bg_ndi_wi/output/c3_bg_2020.parquet"}
+{"ts": "2026-10-12T20:50:17.172612+00:00", "level": "info", "source": "runner", "msg": "step c3_bg_2020 exit code 0"}
+{"ts": "2026-10-12T20:50:17.174168+00:00", "level": "info", "source": "c3_bg_2020", "msg": "cache write: 12269dbe__BG2020__b270m__r25m.parquet"}
+{"ts": "2026-10-12T20:50:17.178991+00:00", "level": "info", "source": "runner", "msg": "spawning c4_ndi: /opt/conda/bin/python /opt/conda/bin/spacescans run --data-dir /project /app/data/tasks/tier2-golden-bg_ndi_wi/pipeline_configs/c4_ndi.yaml"}
+{"ts": "2026-10-12T20:50:23.105842+00:00", "level": "info", "source": "c4_ndi", "msg": "Output: /app/data/tasks/tier2-golden-bg_ndi_wi/output/c4_ndi.parquet"}
+{"ts": "2026-10-12T20:50:23.192932+00:00", "level": "info", "source": "runner", "msg": "step c4_ndi exit code 0"}
+{"ts": "2026-10-12T20:50:23.202084+00:00", "level": "info", "source": "runner", "msg": "spawning c4_wi: /opt/conda/bin/python /opt/conda/bin/spacescans run --data-dir /project /app/data/tasks/tier2-golden-bg_ndi_wi/pipeline_configs/c4_wi.yaml"}
+{"ts": "2026-10-12T20:50:24.101951+00:00", "level": "info", "source": "c4_wi", "msg": "Output: /app/data/tasks/tier2-golden-bg_ndi_wi/output/c4_wi.parquet"}
+{"ts": "2026-10-12T20:50:24.199238+00:00", "level": "info", "source": "runner", "msg": "step c4_wi exit code 0"}

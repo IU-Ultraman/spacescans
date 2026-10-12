@@ -1,0 +1,55 @@
+{
+  "name": "nhd_bluespace",
+  "experiment": "nhd_bluespace",
+  "variables": [
+    "nhd_bluespace"
+  ],
+  "task_dir": "/app/data/tasks/tier2-golden-nhd_bluespace",
+  "command": "cd /app && /opt/conda/bin/python -m app.experiments.nhd_bluespace run /app/data/tasks/tier2-golden-nhd_bluespace --variables nhd_bluespace",
+  "env_overrides": {
+    "C3_CACHE_DIR": "/app/data/tasks/tier2-golden-nhd_bluespace/golden_c3_cache"
+  },
+  "cache": "cold: private empty cache",
+  "note": "",
+  "attempts": [
+    {
+      "attempt": 1,
+      "waited_s": 0.0,
+      "started_utc": "2026-10-12T20:44:03+00:00",
+      "rc": 0,
+      "wall_s": 65.728,
+      "lock_refused": false
+    }
+  ],
+  "rc": 0,
+  "wall_s": 65.728,
+  "started_utc": "2026-10-12T20:44:03+00:00",
+  "ended_utc": "2026-10-12T20:45:09+00:00",
+  "started_eastern": "2026-10-12T16:44:03-04:00",
+  "ended_eastern": "2026-10-12T16:45:09-04:00",
+  "result_exists": true,
+  "success": true,
+  "fan_in": {
+    "fan_in": [
+      "nhd_bluespace"
+    ]
+  },
+  "log_span": {
+    "first_ts": "2026-10-12T20:44:04.200709+00:00",
+    "last_ts": "2026-10-12T20:45:09.261874+00:00",
+    "steps": {
+      "c3_nhd_bluespace": {
+        "spawn_ts": "2026-10-12T20:44:04.200709+00:00",
+        "exit_ts": "2026-10-12T20:45:08.447110+00:00",
+        "rc": 0,
+        "seconds": 64.246
+      },
+      "c4_nhd_bluespace": {
+        "spawn_ts": "2026-10-12T20:45:08.453389+00:00",
+        "exit_ts": "2026-10-12T20:45:09.261874+00:00",
+        "rc": 0,
+        "seconds": 0.808
+      }
+    }
+  }
+}

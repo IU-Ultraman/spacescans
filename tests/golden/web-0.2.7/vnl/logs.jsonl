@@ -1,0 +1,24 @@
+{"ts": "2026-10-12T20:43:41.611989+00:00", "level": "info", "source": "runner", "msg": "spawning c3_vnl: /opt/conda/bin/python /opt/conda/bin/spacescans run --data-dir /project /app/data/tasks/tier2-golden-vnl/pipeline_configs/c3_vnl.yaml"}
+{"ts": "2026-10-12T20:43:42.124040+00:00", "level": "info", "source": "c3_vnl", "msg": "[grid_weights] processing 1001 buffers \u00d7 raster=VNL_v21_npp_2013_global_vcmcfg_c202205302300.average_masked.dat.tif in 1 chunks of 5000"}
+{"ts": "2026-10-12T20:43:44.007360+00:00", "level": "info", "source": "c3_vnl", "msg": "[grid_weights]   1001/1001 (100.0%)  elapsed= 0.03m  rate=531.4/s  ETA= 0.00m"}
+{"ts": "2026-10-12T20:43:44.007642+00:00", "level": "info", "source": "c3_vnl", "msg": "[grid_weights] === SUMMARY (main loop + concat) ==="}
+{"ts": "2026-10-12T20:43:44.008094+00:00", "level": "info", "source": "c3_vnl", "msg": "[grid_weights]   exact_extract    0.03m ( 99.5%)"}
+{"ts": "2026-10-12T20:43:44.008191+00:00", "level": "info", "source": "c3_vnl", "msg": "[grid_weights]   postprocess      0.00m (  0.3%)"}
+{"ts": "2026-10-12T20:43:44.008227+00:00", "level": "info", "source": "c3_vnl", "msg": "[grid_weights]   raster_open      0.00m (  0.1%)"}
+{"ts": "2026-10-12T20:43:44.008274+00:00", "level": "info", "source": "c3_vnl", "msg": "[grid_weights]   loop_other       0.00m (  0.1%)"}
+{"ts": "2026-10-12T20:43:44.008305+00:00", "level": "info", "source": "c3_vnl", "msg": "[grid_weights]   pd.concat        0.00m (  0.0%)"}
+{"ts": "2026-10-12T20:43:44.008333+00:00", "level": "info", "source": "c3_vnl", "msg": "[grid_weights]   total            0.03m"}
+{"ts": "2026-10-12T20:43:44.029440+00:00", "level": "info", "source": "c3_vnl", "msg": "Output: /app/data/tasks/tier2-golden-vnl/output/c3_vnl.parquet"}
+{"ts": "2026-10-12T20:43:44.147706+00:00", "level": "info", "source": "runner", "msg": "step c3_vnl exit code 0"}
+{"ts": "2026-10-12T20:43:44.148515+00:00", "level": "info", "source": "c3_vnl", "msg": "cache write: 12269dbe__BG_VNL1__b270m.parquet"}
+{"ts": "2026-10-12T20:43:44.151296+00:00", "level": "info", "source": "runner", "msg": "spawning c4_vnl: /opt/conda/bin/python /opt/conda/bin/spacescans run --data-dir /project /app/data/tasks/tier2-golden-vnl/pipeline_configs/c4_vnl.yaml"}
+{"ts": "2026-10-12T20:43:44.608339+00:00", "level": "info", "source": "c4_vnl", "msg": "[vnl] processing 7 files"}
+{"ts": "2026-10-12T20:43:44.608454+00:00", "level": "info", "source": "c4_vnl", "msg": "[vnl]   1/7: VNL_v21_npp_2013_global_vcmcfg_c202205302300.average_masked.dat.tif"}
+{"ts": "2026-10-12T20:43:45.720013+00:00", "level": "info", "source": "c4_vnl", "msg": "[vnl]   2/7: VNL_v21_npp_2014_global_vcmslcfg_c202205302300.average_masked.dat.tif"}
+{"ts": "2026-10-12T20:43:46.752464+00:00", "level": "info", "source": "c4_vnl", "msg": "[vnl]   3/7: VNL_v21_npp_2015_global_vcmslcfg_c202205302300.average_masked.dat.tif"}
+{"ts": "2026-10-12T20:43:47.806563+00:00", "level": "info", "source": "c4_vnl", "msg": "[vnl]   4/7: VNL_v21_npp_2016_global_vcmslcfg_c202205302300.average_masked.dat.tif"}
+{"ts": "2026-10-12T20:43:49.093275+00:00", "level": "info", "source": "c4_vnl", "msg": "[vnl]   5/7: VNL_v21_npp_2017_global_vcmslcfg_c202205302300.average_masked.dat.tif"}
+{"ts": "2026-10-12T20:43:50.385948+00:00", "level": "info", "source": "c4_vnl", "msg": "[vnl]   6/7: VNL_v21_npp_2018_global_vcmslcfg_c202205302300.average_masked.dat.tif"}
+{"ts": "2026-10-12T20:43:51.624898+00:00", "level": "info", "source": "c4_vnl", "msg": "[vnl]   7/7: VNL_v21_npp_2019_global_vcmslcfg_c202205302300.average_masked.dat.tif"}
+{"ts": "2026-10-12T20:43:53.299655+00:00", "level": "info", "source": "c4_vnl", "msg": "Output: /app/data/tasks/tier2-golden-vnl/output/c4_vnl.parquet"}
+{"ts": "2026-10-12T20:43:53.449556+00:00", "level": "info", "source": "runner", "msg": "step c4_vnl exit code 0"}

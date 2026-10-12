@@ -1,0 +1,55 @@
+{
+  "name": "temis",
+  "experiment": "temis",
+  "variables": [
+    "temis"
+  ],
+  "task_dir": "/app/data/tasks/tier2-golden-temis",
+  "command": "cd /app && /opt/conda/bin/python -m app.experiments.temis run /app/data/tasks/tier2-golden-temis --variables temis",
+  "env_overrides": {
+    "C3_CACHE_DIR": "/app/data/tasks/tier2-golden-temis/golden_c3_cache"
+  },
+  "cache": "cold: private empty cache",
+  "note": "",
+  "attempts": [
+    {
+      "attempt": 1,
+      "waited_s": 0.0,
+      "started_utc": "2026-10-12T20:43:29+00:00",
+      "rc": 0,
+      "wall_s": 9.476,
+      "lock_refused": false
+    }
+  ],
+  "rc": 0,
+  "wall_s": 9.476,
+  "started_utc": "2026-10-12T20:43:29+00:00",
+  "ended_utc": "2026-10-12T20:43:40+00:00",
+  "started_eastern": "2026-10-12T16:43:29-04:00",
+  "ended_eastern": "2026-10-12T16:43:40-04:00",
+  "result_exists": true,
+  "success": true,
+  "fan_in": {
+    "fan_in": [
+      "temis"
+    ]
+  },
+  "log_span": {
+    "first_ts": "2026-10-12T20:43:30.065840+00:00",
+    "last_ts": "2026-10-12T20:43:38.966653+00:00",
+    "steps": {
+      "c3_temis": {
+        "spawn_ts": "2026-10-12T20:43:30.065840+00:00",
+        "exit_ts": "2026-10-12T20:43:31.197323+00:00",
+        "rc": 0,
+        "seconds": 1.131
+      },
+      "c4_temis": {
+        "spawn_ts": "2026-10-12T20:43:31.200894+00:00",
+        "exit_ts": "2026-10-12T20:43:38.966653+00:00",
+        "rc": 0,
+        "seconds": 7.766
+      }
+    }
+  }
+}

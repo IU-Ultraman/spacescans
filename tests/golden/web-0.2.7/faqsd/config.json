@@ -1,0 +1,1 @@
+{"experiment": "auto", "buffer": {"shape": "circle", "size": 270, "raster_res_m": 25}, "version": 1, "input_file": "input.csv", "variables": ["faqsd"]}

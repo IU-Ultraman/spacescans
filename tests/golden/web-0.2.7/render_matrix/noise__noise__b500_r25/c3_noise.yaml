@@ -1,0 +1,14 @@
+name: noise_grid_demo_task_b500_r25
+linkage_pattern: grid_weights
+geometry_type: raster
+source:
+  file: Noise/C3/CONUS_L50dBA_sumDay_exi.tif
+buffer:
+  patient_file: /app/data/tasks/tier2-golden-render/combos/noise__noise__b500_r25/input.parquet
+  patient_adapter: demo_conus
+  buffer_m: 500
+engine:
+  backend: duckdb
+output:
+  path: /app/data/tasks/tier2-golden-render/combos/noise__noise__b500_r25/output/c3_noise.parquet
+  format: parquet

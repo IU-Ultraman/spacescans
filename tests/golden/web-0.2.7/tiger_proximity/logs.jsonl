@@ -1,0 +1,24 @@
+{"ts": "2026-10-12T20:45:11.000216+00:00", "level": "info", "source": "runner", "msg": "spawning c3_tiger_roads: /opt/conda/bin/python /opt/conda/bin/spacescans run --data-dir /project /app/data/tasks/tier2-golden-tiger_proximity/pipeline_configs/c3_tiger_roads.yaml"}
+{"ts": "2026-10-12T20:45:12.564999+00:00", "level": "info", "source": "c3_tiger_roads", "msg": "[tiger_proximity] 1001 patients; 3221 counties available"}
+{"ts": "2026-10-12T20:45:12.566328+00:00", "level": "info", "source": "c3_tiger_roads", "msg": "[tiger_proximity] road cache: /project/cache/C3/tiger_roads_filtered"}
+{"ts": "2026-10-12T20:45:26.072182+00:00", "level": "info", "source": "c3_tiger_roads", "msg": "[tiger_proximity] year 2013 done in 0.23m  (2055 counties searched, 2053 with roads)"}
+{"ts": "2026-10-12T20:45:43.013610+00:00", "level": "info", "source": "c3_tiger_roads", "msg": "[tiger_proximity] year 2014 done in 0.28m  (2037 counties searched, 2035 with roads)"}
+{"ts": "2026-10-12T20:46:00.138009+00:00", "level": "info", "source": "c3_tiger_roads", "msg": "[tiger_proximity] year 2015 done in 0.29m  (2035 counties searched, 2033 with roads)"}
+{"ts": "2026-10-12T20:46:18.326352+00:00", "level": "info", "source": "c3_tiger_roads", "msg": "[tiger_proximity] year 2016 done in 0.30m  (2036 counties searched, 2034 with roads)"}
+{"ts": "2026-10-12T20:46:34.917168+00:00", "level": "info", "source": "c3_tiger_roads", "msg": "[tiger_proximity] year 2017 done in 0.28m  (2013 counties searched, 2011 with roads)"}
+{"ts": "2026-10-12T20:46:53.651650+00:00", "level": "info", "source": "c3_tiger_roads", "msg": "[tiger_proximity] year 2018 done in 0.31m  (1860 counties searched, 1858 with roads)"}
+{"ts": "2026-10-12T20:47:18.130898+00:00", "level": "info", "source": "c3_tiger_roads", "msg": "[tiger_proximity] year 2019 done in 0.41m  (1858 counties searched, 1856 with roads)"}
+{"ts": "2026-10-12T20:47:18.136043+00:00", "level": "info", "source": "c3_tiger_roads", "msg": "[tiger_proximity] === SUMMARY ==="}
+{"ts": "2026-10-12T20:47:18.136179+00:00", "level": "info", "source": "c3_tiger_roads", "msg": "[tiger_proximity]   sjoin_nearest      2.09m ( 98.8%)"}
+{"ts": "2026-10-12T20:47:18.136253+00:00", "level": "info", "source": "c3_tiger_roads", "msg": "[tiger_proximity]   load_filter        2.00m ( 94.9%)"}
+{"ts": "2026-10-12T20:47:18.136372+00:00", "level": "info", "source": "c3_tiger_roads", "msg": "[tiger_proximity]   county_resolve     0.02m (  0.9%)"}
+{"ts": "2026-10-12T20:47:18.136449+00:00", "level": "info", "source": "c3_tiger_roads", "msg": "[tiger_proximity]   concat             0.00m (  0.0%)"}
+{"ts": "2026-10-12T20:47:18.136471+00:00", "level": "info", "source": "c3_tiger_roads", "msg": "[tiger_proximity]   other              0.00m (  0.0%)"}
+{"ts": "2026-10-12T20:47:18.136496+00:00", "level": "info", "source": "c3_tiger_roads", "msg": "[tiger_proximity]   total              2.11m"}
+{"ts": "2026-10-12T20:47:18.136535+00:00", "level": "info", "source": "c3_tiger_roads", "msg": "[tiger_proximity]   road cache: hits=13894 misses=0 hit_rate=100.0%"}
+{"ts": "2026-10-12T20:47:18.230487+00:00", "level": "info", "source": "c3_tiger_roads", "msg": "Output: /app/data/tasks/tier2-golden-tiger_proximity/output/c3_tiger_roads.parquet"}
+{"ts": "2026-10-12T20:47:18.374443+00:00", "level": "info", "source": "runner", "msg": "step c3_tiger_roads exit code 0"}
+{"ts": "2026-10-12T20:47:18.379744+00:00", "level": "info", "source": "c3_tiger_roads", "msg": "cache write: 12269dbe__BG_TIGER2__b270m.parquet"}
+{"ts": "2026-10-12T20:47:18.390911+00:00", "level": "info", "source": "runner", "msg": "spawning c4_tiger_roads: /opt/conda/bin/python /opt/conda/bin/spacescans run --data-dir /project /app/data/tasks/tier2-golden-tiger_proximity/pipeline_configs/c4_tiger_roads.yaml"}
+{"ts": "2026-10-12T20:47:18.998039+00:00", "level": "info", "source": "c4_tiger_roads", "msg": "Output: /app/data/tasks/tier2-golden-tiger_proximity/output/c4_tiger_roads.parquet"}
+{"ts": "2026-10-12T20:47:19.097697+00:00", "level": "info", "source": "runner", "msg": "step c4_tiger_roads exit code 0"}

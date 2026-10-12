@@ -1,0 +1,26 @@
+{
+  "experiments": {
+    "bg_ndi_wi": {
+      "status": "running",
+      "progress": 1.0,
+      "current_step": null,
+      "steps": [
+        "c3_bg",
+        "c3_bg_2020",
+        "c4_ndi",
+        "c4_wi"
+      ],
+      "pid": 5830,
+      "message": "Completed 4 pipeline steps"
+    }
+  },
+  "steps": [
+    "c3_bg",
+    "c3_bg_2020",
+    "c4_ndi",
+    "c4_wi"
+  ],
+  "current_step": null,
+  "total_steps": 4,
+  "progress": 1.0
+}

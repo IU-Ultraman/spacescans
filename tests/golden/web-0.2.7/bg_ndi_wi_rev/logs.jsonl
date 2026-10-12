@@ -1,0 +1,8 @@
+{"ts": "2026-10-12T20:50:26.519942+00:00", "level": "info", "source": "c3_bg", "msg": "cache hit: 12269dbe__BG__b270m__r25m \u2014 skipping pipeline run"}
+{"ts": "2026-10-12T20:50:26.521184+00:00", "level": "info", "source": "c3_bg_2020", "msg": "cache hit: 12269dbe__BG2020__b270m__r25m \u2014 skipping pipeline run"}
+{"ts": "2026-10-12T20:50:26.524103+00:00", "level": "info", "source": "runner", "msg": "spawning c4_ndi: /opt/conda/bin/python /opt/conda/bin/spacescans run --data-dir /project /app/data/tasks/tier2-golden-bg_ndi_wi_rev/pipeline_configs/c4_ndi.yaml"}
+{"ts": "2026-10-12T20:50:31.951189+00:00", "level": "info", "source": "c4_ndi", "msg": "Output: /app/data/tasks/tier2-golden-bg_ndi_wi_rev/output/c4_ndi.parquet"}
+{"ts": "2026-10-12T20:50:32.069297+00:00", "level": "info", "source": "runner", "msg": "step c4_ndi exit code 0"}
+{"ts": "2026-10-12T20:50:32.072315+00:00", "level": "info", "source": "runner", "msg": "spawning c4_wi: /opt/conda/bin/python /opt/conda/bin/spacescans run --data-dir /project /app/data/tasks/tier2-golden-bg_ndi_wi_rev/pipeline_configs/c4_wi.yaml"}
+{"ts": "2026-10-12T20:50:33.067986+00:00", "level": "info", "source": "c4_wi", "msg": "Output: /app/data/tasks/tier2-golden-bg_ndi_wi_rev/output/c4_wi.parquet"}
+{"ts": "2026-10-12T20:50:33.160851+00:00", "level": "info", "source": "runner", "msg": "step c4_wi exit code 0"}

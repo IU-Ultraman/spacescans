@@ -1,0 +1,67 @@
+{
+  "name": "zcta5_cbp",
+  "experiment": "zcta5_cbp",
+  "variables": [
+    "cbp_zcta5"
+  ],
+  "task_dir": "/app/data/tasks/tier2-golden-zcta5_cbp",
+  "command": "cd /app && /opt/conda/bin/python -m app.experiments.zcta5_cbp run /app/data/tasks/tier2-golden-zcta5_cbp --variables cbp_zcta5",
+  "env_overrides": {
+    "C3_CACHE_DIR": "/app/data/tasks/tier2-golden-zcta5_cbp/golden_c3_cache"
+  },
+  "cache": "cold: private empty cache",
+  "note": "",
+  "attempts": [
+    {
+      "attempt": 1,
+      "waited_s": 0.0,
+      "started_utc": "2026-10-12T20:48:05+00:00",
+      "rc": 0,
+      "wall_s": 47.08,
+      "lock_refused": false
+    }
+  ],
+  "rc": 0,
+  "wall_s": 47.08,
+  "started_utc": "2026-10-12T20:48:05+00:00",
+  "ended_utc": "2026-10-12T20:48:52+00:00",
+  "started_eastern": "2026-10-12T16:48:05-04:00",
+  "ended_eastern": "2026-10-12T16:48:52-04:00",
+  "result_exists": true,
+  "success": true,
+  "fan_in": {
+    "fan_in": [
+      "zcta5_cbp"
+    ]
+  },
+  "log_span": {
+    "first_ts": "2026-10-12T20:48:05.434603+00:00",
+    "last_ts": "2026-10-12T20:48:51.819915+00:00",
+    "steps": {
+      "c3_zcta5": {
+        "spawn_ts": "2026-10-12T20:48:05.434603+00:00",
+        "exit_ts": "2026-10-12T20:48:33.210326+00:00",
+        "rc": 0,
+        "seconds": 27.776
+      },
+      "c3_county": {
+        "spawn_ts": "2026-10-12T20:48:33.250707+00:00",
+        "exit_ts": "2026-10-12T20:48:49.865054+00:00",
+        "rc": 0,
+        "seconds": 16.614
+      },
+      "c4_zcta5_cbp": {
+        "spawn_ts": "2026-10-12T20:48:49.869036+00:00",
+        "exit_ts": "2026-10-12T20:48:51.083588+00:00",
+        "rc": 0,
+        "seconds": 1.215
+      },
+      "c4_county_cbp": {
+        "spawn_ts": "2026-10-12T20:48:51.087336+00:00",
+        "exit_ts": "2026-10-12T20:48:51.819915+00:00",
+        "rc": 0,
+        "seconds": 0.733
+      }
+    }
+  }
+}

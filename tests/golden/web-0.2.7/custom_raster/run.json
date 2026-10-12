@@ -1,0 +1,55 @@
+{
+  "name": "custom_raster",
+  "experiment": "custom",
+  "variables": [
+    "custom_714c9715"
+  ],
+  "task_dir": "/app/data/tasks/tier2-golden-custom_raster",
+  "command": "cd /app && /opt/conda/bin/python -m app.experiments.custom run /app/data/tasks/tier2-golden-custom_raster --variables custom_714c9715",
+  "env_overrides": {
+    "C3_CACHE_DIR": "/app/data/tasks/tier2-golden-custom_raster/golden_c3_cache"
+  },
+  "cache": "cold: private empty cache",
+  "note": "the catalog noise GeoTIFF registered with app.custom_exposomes.create_raster",
+  "attempts": [
+    {
+      "attempt": 1,
+      "waited_s": 0.0,
+      "started_utc": "2026-10-12T20:54:43+00:00",
+      "rc": 0,
+      "wall_s": 2.666,
+      "lock_refused": false
+    }
+  ],
+  "rc": 0,
+  "wall_s": 2.666,
+  "started_utc": "2026-10-12T20:54:43+00:00",
+  "ended_utc": "2026-10-12T20:54:46+00:00",
+  "started_eastern": "2026-10-12T16:54:43-04:00",
+  "ended_eastern": "2026-10-12T16:54:46-04:00",
+  "result_exists": true,
+  "success": true,
+  "fan_in": {
+    "fan_in": [
+      "custom"
+    ]
+  },
+  "log_span": {
+    "first_ts": "2026-10-12T20:54:43.898569+00:00",
+    "last_ts": "2026-10-12T20:54:45.973048+00:00",
+    "steps": {
+      "c3_customgrid_3940345e": {
+        "spawn_ts": "2026-10-12T20:54:43.898569+00:00",
+        "exit_ts": "2026-10-12T20:54:45.290573+00:00",
+        "rc": 0,
+        "seconds": 1.392
+      },
+      "c4_custom_714c9715": {
+        "spawn_ts": "2026-10-12T20:54:45.436363+00:00",
+        "exit_ts": "2026-10-12T20:54:45.970379+00:00",
+        "rc": 0,
+        "seconds": 0.534
+      }
+    }
+  }
+}

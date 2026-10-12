@@ -1,0 +1,20 @@
+{"ts": "2026-10-12T20:50:35.352388+00:00", "level": "info", "source": "runner", "msg": "spawning c3_tract_us: /opt/conda/bin/python /opt/conda/bin/spacescans run --data-dir /project /app/data/tasks/tier2-golden-faqsd/pipeline_configs/c3_tract_us.yaml"}
+{"ts": "2026-10-12T20:50:41.450871+00:00", "level": "info", "source": "c3_tract_us", "msg": "[overlap_fast] processing 73057 boundaries \u00d7 1001 buffers via 13818 tiles (30 km each)"}
+{"ts": "2026-10-12T20:50:47.410875+00:00", "level": "info", "source": "c3_tract_us", "msg": "[overlap_fast] tile  6900/13818 ( 49.9%) elapsed=  0.10m  rate=1157.9/s  ETA= 0.10m  tiles_with_work=152"}
+{"ts": "2026-10-12T20:51:02.150181+00:00", "level": "info", "source": "c3_tract_us", "msg": "[overlap_fast] tile 13800/13818 ( 99.9%) elapsed=  0.34m  rate=666.7/s  ETA= 0.00m  tiles_with_work=568"}
+{"ts": "2026-10-12T20:51:02.213063+00:00", "level": "info", "source": "c3_tract_us", "msg": "[overlap_fast] === SUMMARY ==="}
+{"ts": "2026-10-12T20:51:02.213241+00:00", "level": "info", "source": "c3_tract_us", "msg": "[overlap_fast]   rasterize        0.17m ( 49.1%)"}
+{"ts": "2026-10-12T20:51:02.214900+00:00", "level": "info", "source": "c3_tract_us", "msg": "[overlap_fast]   exact_extract    0.08m ( 23.1%)"}
+{"ts": "2026-10-12T20:51:02.214936+00:00", "level": "info", "source": "c3_tract_us", "msg": "[overlap_fast]   memfile          0.06m ( 18.1%)"}
+{"ts": "2026-10-12T20:51:02.214955+00:00", "level": "info", "source": "c3_tract_us", "msg": "[overlap_fast]   postprocess      0.03m (  8.7%)"}
+{"ts": "2026-10-12T20:51:02.214970+00:00", "level": "info", "source": "c3_tract_us", "msg": "[overlap_fast]   tile_index       0.00m (  0.8%)"}
+{"ts": "2026-10-12T20:51:02.214989+00:00", "level": "info", "source": "c3_tract_us", "msg": "[overlap_fast]   loop_other       0.00m (  0.1%)"}
+{"ts": "2026-10-12T20:51:02.215008+00:00", "level": "info", "source": "c3_tract_us", "msg": "[overlap_fast]   concat+norm      0.00m (  0.1%)"}
+{"ts": "2026-10-12T20:51:02.215022+00:00", "level": "info", "source": "c3_tract_us", "msg": "[overlap_fast]   total            0.35m"}
+{"ts": "2026-10-12T20:51:02.215040+00:00", "level": "info", "source": "c3_tract_us", "msg": "[overlap_fast]   tiles processed: 569 / 13818"}
+{"ts": "2026-10-12T20:51:02.346883+00:00", "level": "info", "source": "c3_tract_us", "msg": "Output: /app/data/tasks/tier2-golden-faqsd/output/c3_tract_us.parquet"}
+{"ts": "2026-10-12T20:51:02.497698+00:00", "level": "info", "source": "runner", "msg": "step c3_tract_us exit code 0"}
+{"ts": "2026-10-12T20:51:02.499976+00:00", "level": "info", "source": "c3_tract_us", "msg": "cache write: 12269dbe__TRACT_FARA__b270m__r25m.parquet"}
+{"ts": "2026-10-12T20:51:02.504816+00:00", "level": "info", "source": "runner", "msg": "spawning c4_tract_faqsd: /opt/conda/bin/python /opt/conda/bin/spacescans run --data-dir /project /app/data/tasks/tier2-golden-faqsd/pipeline_configs/c4_tract_faqsd.yaml"}
+{"ts": "2026-10-12T20:54:40.755566+00:00", "level": "info", "source": "c4_tract_faqsd", "msg": "Output: /app/data/tasks/tier2-golden-faqsd/output/c4_tract_faqsd.parquet"}
+{"ts": "2026-10-12T20:54:40.953600+00:00", "level": "info", "source": "runner", "msg": "step c4_tract_faqsd exit code 0"}

@@ -1,0 +1,62 @@
+{
+  "name": "bg_ndi_wi_rev",
+  "experiment": "bg_ndi_wi",
+  "variables": [
+    "walkability",
+    "ndi"
+  ],
+  "task_dir": "/app/data/tasks/tier2-golden-bg_ndi_wi_rev",
+  "command": "cd /app && /opt/conda/bin/python -m app.experiments.bg_ndi_wi run /app/data/tasks/tier2-golden-bg_ndi_wi_rev --variables walkability,ndi",
+  "env_overrides": {
+    "C3_CACHE_DIR": "/app/data/tasks/tier2-golden-bg_ndi_wi/golden_c3_cache"
+  },
+  "cache": "warm: reuses bg_ndi_wi's private cache",
+  "note": "request order walkability,ndi (as runtime.py passes it); warm: reuses bg_ndi_wi's private C3 cache, so both C3 steps are cache hits and render no YAML",
+  "attempts": [
+    {
+      "attempt": 1,
+      "waited_s": 0.0,
+      "started_utc": "2026-10-12T20:50:26+00:00",
+      "rc": 0,
+      "wall_s": 7.35,
+      "lock_refused": false
+    }
+  ],
+  "rc": 0,
+  "wall_s": 7.35,
+  "started_utc": "2026-10-12T20:50:26+00:00",
+  "ended_utc": "2026-10-12T20:50:33+00:00",
+  "started_eastern": "2026-10-12T16:50:26-04:00",
+  "ended_eastern": "2026-10-12T16:50:33-04:00",
+  "result_exists": true,
+  "success": true,
+  "fan_in": {
+    "fan_in": [
+      "bg_ndi_wi"
+    ]
+  },
+  "log_span": {
+    "first_ts": "2026-10-12T20:50:26.519942+00:00",
+    "last_ts": "2026-10-12T20:50:33.160851+00:00",
+    "steps": {
+      "c3_bg": {
+        "cache_hit": "cache hit: 12269dbe__BG__b270m__r25m \u2014 skipping pipeline run"
+      },
+      "c3_bg_2020": {
+        "cache_hit": "cache hit: 12269dbe__BG2020__b270m__r25m \u2014 skipping pipeline run"
+      },
+      "c4_ndi": {
+        "spawn_ts": "2026-10-12T20:50:26.524103+00:00",
+        "exit_ts": "2026-10-12T20:50:32.069297+00:00",
+        "rc": 0,
+        "seconds": 5.545
+      },
+      "c4_wi": {
+        "spawn_ts": "2026-10-12T20:50:32.072315+00:00",
+        "exit_ts": "2026-10-12T20:50:33.160851+00:00",
+        "rc": 0,
+        "seconds": 1.089
+      }
+    }
+  }
+}
