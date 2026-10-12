@@ -54,7 +54,7 @@ def read_source(source: Source) -> bytes:
 
 def _normalise_header(name: str) -> str:
     """Trim and strip a UTF-8 BOM; otherwise leave the author's spelling."""
-    return name.strip().lstrip("﻿")
+    return name.strip().lstrip("\ufeff")
 
 
 def parse_csv(content: bytes) -> tuple[list[str], list[list[str]]]:

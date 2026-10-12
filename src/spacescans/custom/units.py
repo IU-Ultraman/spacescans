@@ -19,11 +19,11 @@ DEFAULT_UNIT = "unitless"
 # Symbols that appear in units and have a lossless ASCII spelling. Dropping
 # them instead would turn "µg/m³" into "g/m3", a different unit.
 _UNIT_ASCII = str.maketrans({
-    "µ": "u", "μ": "u",          # micro sign, Greek mu
-    "°": "deg",                        # degree
-    "²": "2", "³": "3",          # superscripts
-    "−": "-", "–": "-", "—": "-",
-    "×": "x", "·": "*",
+    "\u00b5": "u", "\u03bc": "u",          # micro sign, Greek mu
+    "\u00b0": "deg",                        # degree
+    "\u00b2": "2", "\u00b3": "3",          # superscripts
+    "\u2212": "-", "\u2013": "-", "\u2014": "-",
+    "\u00d7": "x", "\u00b7": "*",
 })
 
 
