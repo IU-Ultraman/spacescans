@@ -8,9 +8,16 @@ exist. Geometry here is synthetic, in metres (EPSG:5070).
 """
 from __future__ import annotations
 
-import geopandas as gpd
 import numpy as np
 import pytest
+
+# The [geo] stack is imported at module level below. Skip cleanly when it is
+# absent (base / rda / hdf4 CI jobs collect every module) instead of erroring
+# at collection.
+pytest.importorskip("geopandas")
+pytest.importorskip("shapely")
+
+import geopandas as gpd
 from shapely.geometry import LineString, Point, box
 
 pytestmark = pytest.mark.geo
