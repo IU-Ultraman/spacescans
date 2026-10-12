@@ -11,14 +11,17 @@ permissions:
 jobs:
   # Tests gate: the same workflows CI runs, on the same commit, so the gate
   # cannot drift from CI (base matrix on Linux and macOS, every extras job,
-  # and the macOS 14 arm64 geo job).
+  # the macOS 14 arm64 geo job, and R CMD check of the R package in r/,
+  # which ships with the same version and tag).
   test-base:
     uses: ./.github/workflows/test.yml
   test-extras:
     uses: ./.github/workflows/test-extras.yml
+  r-check:
+    uses: ./.github/workflows/r-check.yml
 
   build-and-publish:
-    needs: [test-base, test-extras]
+    needs: [test-base, test-extras, r-check]
     runs-on: ubuntu-latest
     permissions:
       id-token: write   # for PyPI Trusted Publishing (OIDC)
