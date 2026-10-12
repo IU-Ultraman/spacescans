@@ -1,0 +1,16 @@
+{
+  "experiment": "faqsd",
+  "variables": [
+    "faqsd"
+  ],
+  "parquet_map": {
+    "faqsd": "c4_tract_faqsd.parquet"
+  },
+  "renames": {
+    "o3": "faqsd_o3",
+    "pm25": "faqsd_pm25"
+  },
+  "rewrite_in_place": true,
+  "cohort": "iso",
+  "uses_overlay": false
+}

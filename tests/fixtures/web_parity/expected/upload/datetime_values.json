@@ -1,0 +1,12 @@
+{
+  "cohort": "datetime_values",
+  "filename": "datetime_values.csv",
+  "error": {
+    "type": "ValueError",
+    "message": "Unrecognized date format: '2009-01-01 00:00:00'. Dates must use one consistent format across startDate and endDate. Accepted: 2017-08-19 (ISO, preferred) or 8/19/2017",
+    "args0": "Unrecognized date format: '2009-01-01 00:00:00'. Dates must use one consistent format across startDate and endDate. Accepted: 2017-08-19 (ISO, preferred) or 8/19/2017"
+  },
+  "input_csv_exists": false,
+  "input_csv_changed": false,
+  "input_csv_text": null
+}

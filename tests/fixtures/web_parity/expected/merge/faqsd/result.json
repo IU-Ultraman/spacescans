@@ -1,0 +1,8 @@
+{
+  "case": "faqsd",
+  "partial": "result_faqsd.csv",
+  "rewritten": {
+    "c4_tract_faqsd.parquet": "148038f780cfd701e785d1511ec8138b118b616ade7485c133b39892ef9b1f81"
+  },
+  "warnings": []
+}

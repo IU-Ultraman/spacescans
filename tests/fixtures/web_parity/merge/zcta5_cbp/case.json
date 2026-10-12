@@ -1,0 +1,13 @@
+{
+  "experiment": "zcta5_cbp",
+  "variables": [
+    "cbp_zcta5"
+  ],
+  "parquet_map": {
+    "cbp_zcta5": "c4_county_cbp.parquet"
+  },
+  "renames": {},
+  "rewrite_in_place": false,
+  "cohort": "iso",
+  "uses_overlay": false
+}

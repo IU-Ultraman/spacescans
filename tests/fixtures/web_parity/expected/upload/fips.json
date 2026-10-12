@@ -1,0 +1,47 @@
+{
+  "cohort": "fips",
+  "filename": "fips.csv",
+  "summary": {
+    "row_count": 59,
+    "columns": [
+      "pid",
+      "startDate",
+      "endDate",
+      "longitude",
+      "latitude",
+      "state_fips",
+      "county_fips",
+      "tract_geoid",
+      "bg_geoid",
+      "zcta5"
+    ],
+    "date_range": {
+      "min": "2009-01-01",
+      "max": "2024-04-29"
+    },
+    "filename": "fips.csv"
+  },
+  "meta_data_summary": {
+    "row_count": 59,
+    "columns": [
+      "pid",
+      "startDate",
+      "endDate",
+      "longitude",
+      "latitude",
+      "state_fips",
+      "county_fips",
+      "tract_geoid",
+      "bg_geoid",
+      "zcta5"
+    ],
+    "date_range": {
+      "min": "2009-01-01",
+      "max": "2024-04-29"
+    },
+    "filename": "fips.csv"
+  },
+  "input_csv_exists": true,
+  "input_csv_changed": false,
+  "input_csv_text": null
+}

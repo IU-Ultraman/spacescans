@@ -1,0 +1,15 @@
+{
+  "experiment": "bg_ndi_wi",
+  "variables": [
+    "walkability",
+    "ndi"
+  ],
+  "parquet_map": {
+    "ndi": "c4_ndi.parquet",
+    "walkability": "c4_wi.parquet"
+  },
+  "renames": {},
+  "rewrite_in_place": false,
+  "cohort": "iso",
+  "uses_overlay": false
+}

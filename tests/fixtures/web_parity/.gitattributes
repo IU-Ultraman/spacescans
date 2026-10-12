@@ -1,0 +1,2 @@
+# Byte-exact parity fixtures: never convert line endings.
+* -text

@@ -1,0 +1,15 @@
+{
+  "experiment": "custom",
+  "variables": [
+    "custom_aaaa1111",
+    "custom_bbbb2222"
+  ],
+  "parquet_map": {
+    "custom_aaaa1111": "c4_custom_aaaa1111.parquet",
+    "custom_bbbb2222": "c4_custom_bbbb2222.parquet"
+  },
+  "renames": {},
+  "rewrite_in_place": false,
+  "cohort": "iso",
+  "uses_overlay": true
+}

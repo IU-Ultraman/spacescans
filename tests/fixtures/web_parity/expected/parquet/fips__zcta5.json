@@ -1,0 +1,53 @@
+{
+  "cohort": "fips",
+  "variant": "zcta5",
+  "sha256": "916bedf3db0a8601583ad90283ac11d971f0a087b9455fa26712d5102fad4fdf",
+  "blob": "blobs/916bedf3db0a8601.parquet",
+  "schema": [
+    [
+      "pid",
+      "large_string"
+    ],
+    [
+      "startDate",
+      "timestamp[us]"
+    ],
+    [
+      "endDate",
+      "timestamp[us]"
+    ],
+    [
+      "longitude",
+      "double"
+    ],
+    [
+      "latitude",
+      "double"
+    ],
+    [
+      "state_fips",
+      "large_string"
+    ],
+    [
+      "county_fips",
+      "large_string"
+    ],
+    [
+      "tract_geoid",
+      "large_string"
+    ],
+    [
+      "bg_geoid",
+      "large_string"
+    ],
+    [
+      "zcta5",
+      "large_string"
+    ],
+    [
+      "episode_id",
+      "int64"
+    ]
+  ],
+  "rows": 59
+}

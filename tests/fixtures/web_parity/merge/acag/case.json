@@ -1,0 +1,13 @@
+{
+  "experiment": "acag",
+  "variables": [
+    "acag"
+  ],
+  "parquet_map": {
+    "acag": "c4_acag.parquet"
+  },
+  "renames": {},
+  "rewrite_in_place": false,
+  "cohort": "iso",
+  "uses_overlay": false
+}

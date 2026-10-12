@@ -1,0 +1,31 @@
+{
+  "case": "iso_duplicate_keys",
+  "cohort": "iso",
+  "variables": [
+    "ndi",
+    "ndi"
+  ],
+  "with_input": true,
+  "result": {
+    "row_count": 59,
+    "variables": {
+      "ndi": {
+        "coverage_years": [
+          2012,
+          2022
+        ],
+        "patients_in_time_window": 53,
+        "patients_in_region": 54,
+        "patients_covered": 48,
+        "coverage_pct": 81.36,
+        "warnings": [
+          "10% of patients have episodes entirely outside 2012-2022",
+          "8% of patients fall outside the CONUS coverage region"
+        ],
+        "boundary": "BG",
+        "display_unit": "z-score",
+        "temporal": "yearly"
+      }
+    }
+  }
+}

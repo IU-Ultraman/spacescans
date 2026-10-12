@@ -1,0 +1,13 @@
+{
+  "case": "no_input",
+  "cohort": "iso",
+  "variables": [
+    "ndi"
+  ],
+  "with_input": false,
+  "error": {
+    "type": "FileNotFoundError",
+    "message": "No input uploaded",
+    "args0": "No input uploaded"
+  }
+}

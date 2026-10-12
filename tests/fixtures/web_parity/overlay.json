@@ -1,0 +1,71 @@
+{
+  "custom_aaaa1111": {
+    "label": "Synthetic custom A",
+    "boundary": "Tract",
+    "spatial_method": "areal",
+    "coverage_years": [
+      2014,
+      2018
+    ],
+    "coverage_region": "CONUS",
+    "experiment": "custom",
+    "temporal": "yearly",
+    "variable_type": "continuous",
+    "display_unit": "units",
+    "value_cols": [
+      "val",
+      "val_a"
+    ]
+  },
+  "custom_bbbb2222": {
+    "label": "Synthetic custom B",
+    "boundary": "BG",
+    "spatial_method": "areal",
+    "coverage_years": [
+      2013,
+      2019
+    ],
+    "coverage_region": "CONUS",
+    "experiment": "custom",
+    "temporal": "static",
+    "variable_type": "continuous",
+    "display_unit": "units",
+    "value_cols": [
+      "val",
+      "val_b"
+    ]
+  },
+  "custom_cccc3333": {
+    "label": "Synthetic global static",
+    "boundary": "Point",
+    "spatial_method": "grid",
+    "coverage_years": [
+      2013,
+      2019
+    ],
+    "coverage_region": "Global",
+    "experiment": "custom",
+    "temporal": "static",
+    "variable_type": "continuous",
+    "display_unit": "units",
+    "value_cols": [
+      "g"
+    ]
+  },
+  "custom_dddd4444": {
+    "label": "Synthetic yearly, no temporal key",
+    "boundary": "Point",
+    "spatial_method": "grid",
+    "coverage_years": [
+      2016,
+      2017
+    ],
+    "coverage_region": "Puerto Rico",
+    "experiment": "custom",
+    "variable_type": "continuous",
+    "display_unit": "units",
+    "value_cols": [
+      "h"
+    ]
+  }
+}

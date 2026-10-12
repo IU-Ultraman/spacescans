@@ -1,0 +1,33 @@
+{
+  "cohort": "episode_id_col",
+  "variant": "zcta5",
+  "sha256": "fe2740298d52326cb1a634a106d09d346d053264f269d17120ec4790629d127c",
+  "blob": "blobs/fe2740298d52326c.parquet",
+  "schema": [
+    [
+      "pid",
+      "large_string"
+    ],
+    [
+      "episode_id",
+      "int64"
+    ],
+    [
+      "startDate",
+      "timestamp[us]"
+    ],
+    [
+      "endDate",
+      "timestamp[us]"
+    ],
+    [
+      "longitude",
+      "double"
+    ],
+    [
+      "latitude",
+      "double"
+    ]
+  ],
+  "rows": 59
+}

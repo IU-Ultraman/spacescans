@@ -1,0 +1,12 @@
+{
+  "cohort": "bom",
+  "filename": "bom.csv",
+  "error": {
+    "type": "ValueError",
+    "message": "Missing required columns: pid (the patient id may be named pid or PATID)",
+    "args0": "Missing required columns: pid (the patient id may be named pid or PATID)"
+  },
+  "input_csv_exists": false,
+  "input_csv_changed": false,
+  "input_csv_text": null
+}

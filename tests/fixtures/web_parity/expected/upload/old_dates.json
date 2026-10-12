@@ -1,0 +1,37 @@
+{
+  "cohort": "old_dates",
+  "filename": "old_dates.csv",
+  "summary": {
+    "row_count": 26,
+    "columns": [
+      "pid",
+      "startDate",
+      "endDate",
+      "longitude",
+      "latitude"
+    ],
+    "date_range": {
+      "min": "2000-04-01",
+      "max": "2015-02-19"
+    },
+    "filename": "old_dates.csv"
+  },
+  "meta_data_summary": {
+    "row_count": 26,
+    "columns": [
+      "pid",
+      "startDate",
+      "endDate",
+      "longitude",
+      "latitude"
+    ],
+    "date_range": {
+      "min": "2000-04-01",
+      "max": "2015-02-19"
+    },
+    "filename": "old_dates.csv"
+  },
+  "input_csv_exists": true,
+  "input_csv_changed": false,
+  "input_csv_text": null
+}

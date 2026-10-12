@@ -1,0 +1,13 @@
+{
+  "experiment": "tiger_proximity",
+  "variables": [
+    "tiger_proximity"
+  ],
+  "parquet_map": {
+    "tiger_proximity": "c4_tiger_roads.parquet"
+  },
+  "renames": {},
+  "rewrite_in_place": false,
+  "cohort": "iso",
+  "uses_overlay": false
+}

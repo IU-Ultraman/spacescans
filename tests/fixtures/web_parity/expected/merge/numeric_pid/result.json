@@ -1,0 +1,9 @@
+{
+  "case": "numeric_pid",
+  "error": {
+    "type": "ValueError",
+    "message": "You are trying to merge on str and int64 columns for key 'pid'. If you wish to proceed you should use pd.concat",
+    "args0": "You are trying to merge on str and int64 columns for key 'pid'. If you wish to proceed you should use pd.concat"
+  },
+  "warnings": []
+}

@@ -1,0 +1,14 @@
+{
+  "case": "empty_unknown",
+  "cohort": "empty",
+  "variables": [
+    "ndi",
+    "nope"
+  ],
+  "with_input": true,
+  "error": {
+    "type": "KeyError",
+    "message": "'nope'",
+    "args0": "nope"
+  }
+}

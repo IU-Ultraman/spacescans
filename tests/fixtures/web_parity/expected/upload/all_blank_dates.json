@@ -1,0 +1,37 @@
+{
+  "cohort": "all_blank_dates",
+  "filename": "all_blank_dates.csv",
+  "summary": {
+    "row_count": 59,
+    "columns": [
+      "pid",
+      "startDate",
+      "endDate",
+      "longitude",
+      "latitude"
+    ],
+    "date_range": {
+      "min": null,
+      "max": null
+    },
+    "filename": "all_blank_dates.csv"
+  },
+  "meta_data_summary": {
+    "row_count": 59,
+    "columns": [
+      "pid",
+      "startDate",
+      "endDate",
+      "longitude",
+      "latitude"
+    ],
+    "date_range": {
+      "min": null,
+      "max": null
+    },
+    "filename": "all_blank_dates.csv"
+  },
+  "input_csv_exists": true,
+  "input_csv_changed": false,
+  "input_csv_text": null
+}

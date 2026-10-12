@@ -1,0 +1,33 @@
+{
+  "cohort": "patid_mixed",
+  "variant": "zcta5",
+  "sha256": "0a0d08852b612a548489720142d1cd96df88be3090997832f91bd8a03e0153a6",
+  "blob": "blobs/0a0d08852b612a54.parquet",
+  "schema": [
+    [
+      "PatID",
+      "large_string"
+    ],
+    [
+      "startDate",
+      "timestamp[us]"
+    ],
+    [
+      "endDate",
+      "timestamp[us]"
+    ],
+    [
+      "longitude",
+      "double"
+    ],
+    [
+      "latitude",
+      "double"
+    ],
+    [
+      "episode_id",
+      "int64"
+    ]
+  ],
+  "rows": 59
+}

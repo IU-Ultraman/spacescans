@@ -19,3 +19,5 @@ build/
 # local virtual environments (uv venv)
 .venv/
 .venv-*/
+# The web-parity fixtures mirror web task directories, which have output/.
+!tests/fixtures/web_parity/**/output/

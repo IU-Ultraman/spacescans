@@ -1,0 +1,29 @@
+{
+  "cohort": "missing_lat",
+  "variant": "bg_ndi_wi",
+  "sha256": "937509a1169a32d5db1e869199a82efb7c26f2484a487fbab8801820838fb3b0",
+  "blob": "blobs/937509a1169a32d5.parquet",
+  "schema": [
+    [
+      "pid",
+      "large_string"
+    ],
+    [
+      "startDate",
+      "timestamp[us]"
+    ],
+    [
+      "endDate",
+      "timestamp[us]"
+    ],
+    [
+      "longitude",
+      "double"
+    ],
+    [
+      "episode_id",
+      "int64"
+    ]
+  ],
+  "rows": 59
+}

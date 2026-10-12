@@ -1,0 +1,5 @@
+{
+  "case": "custom_dup_cols",
+  "partial": "result_custom.csv",
+  "warnings": []
+}

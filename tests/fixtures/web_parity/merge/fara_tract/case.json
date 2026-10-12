@@ -1,0 +1,13 @@
+{
+  "experiment": "fara_tract",
+  "variables": [
+    "fara_tract"
+  ],
+  "parquet_map": {
+    "fara_tract": "c4_tract_fara.parquet"
+  },
+  "renames": {},
+  "rewrite_in_place": false,
+  "cohort": "iso",
+  "uses_overlay": false
+}

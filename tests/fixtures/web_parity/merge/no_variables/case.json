@@ -1,0 +1,9 @@
+{
+  "experiment": "noise",
+  "variables": [],
+  "parquet_map": {},
+  "renames": {},
+  "rewrite_in_place": false,
+  "cohort": "iso",
+  "uses_overlay": false
+}
