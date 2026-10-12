@@ -2,7 +2,6 @@
 text-id path (pid_as_str=True) used by R and new callers."""
 from __future__ import annotations
 
-import datetime as dt
 import hashlib
 import json
 import logging

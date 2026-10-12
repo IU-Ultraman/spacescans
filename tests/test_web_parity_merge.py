@@ -45,10 +45,10 @@ def test_partial_matches_web(name, tmp_path):
     expected_dir = FIX / "expected" / "merge" / name
     want = json.loads((expected_dir / "result.json").read_text())
 
-    call = dict(run_dir=run_dir, experiment=spec["experiment"],
-                variables=spec["variables"], parquet_map=spec["parquet_map"],
-                value_cols=VALUE_COLS, renames=spec["renames"] or None,
-                rewrite_in_place=spec["rewrite_in_place"])
+    call = {"run_dir": run_dir, "experiment": spec["experiment"],
+            "variables": spec["variables"], "parquet_map": spec["parquet_map"],
+            "value_cols": VALUE_COLS, "renames": spec["renames"] or None,
+            "rewrite_in_place": spec["rewrite_in_place"]}
     if "error" in want:
         with pytest.raises(Exception) as e:
             merge.partial_from_dir(**call)

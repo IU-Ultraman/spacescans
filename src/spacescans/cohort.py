@@ -34,7 +34,7 @@ import io
 import logging
 import os
 from collections.abc import Iterable, Mapping, Sequence
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal, Union
 
@@ -45,15 +45,15 @@ _log = logging.getLogger(__name__)
 __all__ = [
     "ACCEPTED_DATE_EXAMPLES",
     "ACCEPTED_DATE_FORMATS",
+    "DATE_COLUMNS",
+    "FIPS_STR_COLS",
+    "REQUIRED",
+    "VARIANTS",
     "CohortError",
     "CohortInfo",
     "CohortReport",
-    "DATE_COLUMNS",
-    "FIPS_STR_COLS",
     "Issue",
-    "REQUIRED",
     "UploadCheck",
-    "VARIANTS",
     "check_upload",
     "csv_to_parquet",
     "detect_date_format",
@@ -122,7 +122,7 @@ class CohortError(ValueError):
     holds the structured findings when they come from :func:`validate`.
     """
 
-    def __init__(self, message: str, issues: Sequence["Issue"] = (), *,
+    def __init__(self, message: str, issues: Sequence[Issue] = (), *,
                  code: str | None = None):
         super().__init__(message)
         self.issues: tuple[Issue, ...] = tuple(issues)

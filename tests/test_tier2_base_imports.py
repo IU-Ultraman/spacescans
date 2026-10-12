@@ -54,7 +54,8 @@ def test_cohort_and_orchestrate_need_only_base_dependencies(tmp_path):
         print("BASE_OK")
         """
     )
-    r = subprocess.run([sys.executable, "-c", script], capture_output=True, text=True)
+    r = subprocess.run([sys.executable, "-c", script], capture_output=True,
+                       text=True, check=False)
     assert r.returncode == 0 and "BASE_OK" in r.stdout, (
         f"base-install import failed:\nstdout={r.stdout}\nstderr={r.stderr}"
     )
