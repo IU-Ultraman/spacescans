@@ -55,6 +55,12 @@ def add_data_parser(sub: Any) -> None:
     q.add_argument("--archive", action="append", default=[], metavar="PATH",
                    help="also check this downloaded archive against the manifest (repeatable)")
 
+    q = dsub.add_parser("adopt", help="Record receipts for mirror data already in place "
+                                      "(placed by the web app's script or upload page, or by hand)")
+    common(q)
+    q.add_argument("--dry-run", action="store_true",
+                   help="compare file counts and sizes only; hash and write nothing")
+
 
 def cmd_data(args: argparse.Namespace) -> int:
     try:
@@ -64,6 +70,8 @@ def cmd_data(args: argparse.Namespace) -> int:
             return _fetch(args)
         if args.data_cmd == "verify":
             return _verify(args)
+        if args.data_cmd == "adopt":
+            return _adopt(args)
     except UsageError as e:
         _print_error(e)
         return 2
@@ -283,4 +291,21 @@ def _verify(args: argparse.Namespace) -> int:
     for c in rep.archives:
         print(f"  archive {c.path}: {'ok' if c.ok else 'FAILED'} ({c.detail})")
     print("verify: ok" if rep.ok else "verify: FAILED (" + ", ".join(rep.corrupt) + ")")
+    return 0 if rep.ok else 1
+
+
+def _adopt(args: argparse.Namespace) -> int:
+    from spacescans.data._adopt import adopt
+
+    sel = _sel(args)
+    rep = adopt(sel["variables"], datasets=sel["datasets"], data_dir=sel["data_dir"],
+                dry_run=args.dry_run,
+                on_event=None if args.json else _progress_printer(quiet=False))
+    if args.json:
+        print(json.dumps(rep.to_dict(), indent=1))
+        return 0 if rep.ok else 1
+    print(f"data directory: {rep.data_dir}{' (dry run)' if rep.dry_run else ''}")
+    for i in rep.items:
+        extra = f"  {i.detail}" if i.detail else f"  ({i.files:,} files, {_gb(i.bytes)})" if i.files else ""
+        print(f"  {i.artifact:<60} {i.result}{extra}")
     return 0 if rep.ok else 1
