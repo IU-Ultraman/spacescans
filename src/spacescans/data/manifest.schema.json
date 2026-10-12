@@ -1,0 +1,273 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/IU-Ultraman/spacescans/src/spacescans/data/manifest.schema.json",
+  "title": "spacescans data manifest",
+  "description": "Where each exposure dataset comes from, how it is laid out under the data root, and which datasets each catalog variable needs. Metadata only; no data.",
+  "type": "object",
+  "required": ["schema_version", "data_release", "mirrors", "artifacts", "datasets", "variables"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {"const": 1},
+    "data_release": {"type": "string", "pattern": "^[0-9]{4}\\.[0-9]{2}$"},
+    "_comment": {"type": "string"},
+    "mirrors": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {"$ref": "#/$defs/mirror"}
+    },
+    "lists": {
+      "type": "object",
+      "additionalProperties": {"$ref": "#/$defs/values"}
+    },
+    "artifacts": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": {"$ref": "#/$defs/filename"},
+      "additionalProperties": {"$ref": "#/$defs/artifact"}
+    },
+    "datasets": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": {"$ref": "#/$defs/key"},
+      "additionalProperties": {"$ref": "#/$defs/dataset"}
+    },
+    "variables": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": {"$ref": "#/$defs/key"},
+      "additionalProperties": {
+        "type": "object",
+        "required": ["requires"],
+        "additionalProperties": false,
+        "properties": {
+          "requires": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "oneOf": [
+                {"$ref": "#/$defs/key"},
+                {
+                  "type": "object",
+                  "required": ["any_of"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "any_of": {"type": "array", "minItems": 2, "items": {"$ref": "#/$defs/key"}, "uniqueItems": true}
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    "boundaries": {
+      "type": "object",
+      "additionalProperties": {"$ref": "#/$defs/key"}
+    }
+  },
+  "$defs": {
+    "key": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
+    "filename": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$"},
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "relpath": {"type": "string", "pattern": "^[A-Za-z0-9_{}.@*?\\[\\]-][A-Za-z0-9_{}./@*?\\[\\]-]*$", "not": {"pattern": "(^|/)\\.\\.(/|$)"}},
+    "values": {
+      "oneOf": [
+        {"type": "string", "pattern": "^@[a-z0-9_]+$"},
+        {"type": "array", "minItems": 1, "items": {"type": ["string", "integer"]}},
+        {
+          "type": "object",
+          "required": ["range"],
+          "additionalProperties": false,
+          "properties": {
+            "range": {"type": "array", "prefixItems": [{"type": "integer"}, {"type": "integer"}], "minItems": 2, "maxItems": 2}
+          }
+        }
+      ]
+    },
+    "vars": {
+      "type": "object",
+      "propertyNames": {"pattern": "^[a-z][a-z0-9_]*$"},
+      "additionalProperties": {"$ref": "#/$defs/values"}
+    },
+    "bytes_map": {
+      "type": "object",
+      "additionalProperties": {"type": "integer", "minimum": 0}
+    },
+    "mirror": {
+      "type": "object",
+      "required": ["type", "url"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {"enum": ["sharepoint-share", "http", "file"]},
+        "url": {"type": "string", "minLength": 1},
+        "label": {"type": "string"},
+        "range": {"type": "boolean"},
+        "note": {"type": "string"}
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "required": ["kind", "status", "mirror", "sha256", "bytes"],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {"enum": ["tar", "bare"]},
+        "status": {"enum": ["available", "pending_upload"]},
+        "mirror": {"type": "string"},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "bytes": {"type": "integer", "minimum": 1},
+        "extracted_bytes": {"type": "integer", "minimum": 0},
+        "payload_bytes": {"type": "integer", "minimum": 0},
+        "files": {"type": "integer", "minimum": 1},
+        "roots": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/relpath"}},
+        "dest": {"$ref": "#/$defs/relpath"},
+        "note": {"type": "string"},
+        "interim": {"type": "string"}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"kind": {"const": "tar"}}},
+          "then": {"required": ["payload_bytes", "files", "roots"]}
+        },
+        {
+          "if": {"properties": {"kind": {"const": "bare"}}},
+          "then": {"required": ["dest"]}
+        },
+        {
+          "if": {"properties": {"status": {"const": "pending_upload"}}},
+          "then": {"required": ["interim"]}
+        }
+      ]
+    },
+    "terms": {
+      "type": "object",
+      "required": ["id", "url", "summary"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$"},
+        "url": {"type": "string"},
+        "license": {"type": "string"},
+        "account": {"type": "boolean"},
+        "summary": {"type": "string"}
+      }
+    },
+    "rule": {
+      "type": "object",
+      "required": ["rule"],
+      "properties": {
+        "rule": {"enum": ["files", "count", "one_per", "daily", "nonempty_dir"]}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"rule": {"const": "files"}}},
+          "then": {
+            "required": ["path"],
+            "additionalProperties": false,
+            "properties": {
+              "rule": true,
+              "path": {"$ref": "#/$defs/relpath"},
+              "vars": {"$ref": "#/$defs/vars"},
+              "bytes": {"$ref": "#/$defs/bytes_map"},
+              "reference_bytes": {"$ref": "#/$defs/bytes_map"}
+            }
+          }
+        },
+        {
+          "if": {"properties": {"rule": {"const": "count"}}},
+          "then": {
+            "required": ["dir", "glob", "expect"],
+            "additionalProperties": false,
+            "properties": {
+              "rule": true,
+              "dir": {"$ref": "#/$defs/relpath"},
+              "glob": {"type": "string"},
+              "vars": {"$ref": "#/$defs/vars"},
+              "expect": {
+                "oneOf": [
+                  {"type": "integer", "minimum": 1},
+                  {"type": "object", "additionalProperties": {"type": "integer", "minimum": 1}}
+                ]
+              },
+              "regex": {"type": "string"},
+              "magic": {"type": "string", "pattern": "^([0-9a-f]{2})+$"}
+            }
+          }
+        },
+        {
+          "if": {"properties": {"rule": {"const": "one_per"}}},
+          "then": {
+            "required": ["dir", "regex", "group", "values"],
+            "additionalProperties": false,
+            "properties": {
+              "rule": true,
+              "dir": {"$ref": "#/$defs/relpath"},
+              "regex": {"type": "string"},
+              "group": {"type": "string"},
+              "values": {"$ref": "#/$defs/values"},
+              "warn_other": {"type": "string"}
+            }
+          }
+        },
+        {
+          "if": {"properties": {"rule": {"const": "daily"}}},
+          "then": {
+            "required": ["path", "years"],
+            "additionalProperties": false,
+            "properties": {
+              "rule": true,
+              "path": {"$ref": "#/$defs/relpath"},
+              "vars": {"$ref": "#/$defs/vars"},
+              "years": {"$ref": "#/$defs/values"},
+              "known_gaps": {"type": "array", "items": {"type": "string", "pattern": "^[0-9]{8}$"}},
+              "magic": {"type": "string", "pattern": "^([0-9a-f]{2})+$"}
+            }
+          }
+        },
+        {
+          "if": {"properties": {"rule": {"const": "nonempty_dir"}}},
+          "then": {
+            "required": ["path"],
+            "additionalProperties": false,
+            "properties": {
+              "rule": true,
+              "path": {"$ref": "#/$defs/relpath"},
+              "vars": {"$ref": "#/$defs/vars"}
+            }
+          }
+        }
+      ]
+    },
+    "dataset": {
+      "type": "object",
+      "required": ["title", "acquire", "provider", "license", "redistribution", "attribution"],
+      "additionalProperties": false,
+      "properties": {
+        "title": {"type": "string"},
+        "acquire": {"enum": ["mirror", "provider-manual", "provider-scripted", "generated"]},
+        "artifacts": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/filename"}, "uniqueItems": true},
+        "provider": {"type": "string"},
+        "license": {"type": "string"},
+        "redistribution": {"type": "string"},
+        "attribution": {"type": "string"},
+        "source_url": {"type": "string"},
+        "terms": {"$ref": "#/$defs/terms"},
+        "instructions": {"type": "array", "items": {"type": "string"}},
+        "estimate": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "download_bytes": {"type": "integer", "minimum": 0},
+            "disk_bytes": {"type": "integer", "minimum": 0}
+          }
+        },
+        "layout": {"type": "array", "items": {"$ref": "#/$defs/rule"}}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"acquire": {"const": "mirror"}}},
+          "then": {"required": ["artifacts"]},
+          "else": {"required": ["instructions", "layout"]}
+        }
+      ]
+    }
+  }
+}

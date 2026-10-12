@@ -56,6 +56,7 @@ dev = [
     "pytest >= 7.0",
     "pytest-xdist",
     "ruff",
+    "jsonschema >= 4.21",
 ]
 
 [project.scripts]
@@ -81,6 +82,8 @@ spacescans = [
     "resources/data/*.dbf",
     "resources/data/*.prj",
     "resources/data/*.cpg",
+    "data/manifest.json",
+    "data/manifest.schema.json",
     "py.typed",
 ]
 
