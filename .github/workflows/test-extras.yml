@@ -1,6 +1,8 @@
 name: test (extras)
 on:
   push: {branches: [main]}
+  workflow_dispatch:  # run on any branch from the Actions tab
+  workflow_call:      # publish.yml runs this as its test gate
 
 jobs:
   test-geo:
@@ -11,6 +13,27 @@ jobs:
         with: {python-version: "3.12"}
       - run: pip install -e .[geo,dev]
       - run: pytest tests/ -v -m "geo" --tb=short
+
+  test-geo-macos-arm64:
+    # The R package's target platform: Apple Silicon, macOS 14 or later,
+    # CPython 3.12, PyPI wheels only. Wheels only also keeps pip from building
+    # an sdist whose wheels need a newer macOS (rasterio 1.5.2 needs macOS 15,
+    # so macOS 14 gets the 1.5.1 wheel).
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12"}
+      - name: Install with the geo extra, wheels only
+        run: |
+          pip install --only-binary=:all: -e ".[geo,dev]"
+      - name: Record the platform and the geo stack
+        run: |
+          sw_vers
+          test "$(uname -m)" = arm64
+          python -c "import platform, rasterio, pyproj, shapely, exactextract; print(platform.platform(), '| rasterio', rasterio.__version__, '| GDAL', rasterio.__gdal_version__, '| PROJ', pyproj.proj_version_str, '| GEOS', shapely.geos_version_string, '| exactextract', exactextract.__version__)"
+      # Base and geo tests; rda, hdf4 and nc tests need extras not installed here.
+      - run: pytest tests/ -v -m "not rda and not hdf4 and not nc" --tb=short
 
   test-rda:
     runs-on: ubuntu-latest

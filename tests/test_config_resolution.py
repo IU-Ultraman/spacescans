@@ -8,6 +8,16 @@ from spacescans.config_resolution import (
 )
 
 
+def test_caller_spacescans_env_does_not_reach_tests():
+    """tests/conftest.py hides the caller's SPACESCANS_* variables from each test.
+
+    Without that, an exported SPACESCANS_DATA_DIR wins over the data_dir
+    argument when ${SPACESCANS_DATA_DIR} is expanded, and
+    test_resolve_config_rewrites_all_path_fields fails.
+    """
+    assert [k for k in os.environ if k.startswith("SPACESCANS_")] == []
+
+
 # ---------- expand_path ----------
 
 def test_expand_path_absolute_returned_as_is(tmp_path):

@@ -5,20 +5,29 @@ name: publish
 on:
   workflow_dispatch:
 
+permissions:
+  contents: read  # the test gate; build-and-publish asks for more below
+
 jobs:
+  # Tests gate: the same workflows CI runs, on the same commit, so the gate
+  # cannot drift from CI (base matrix on Linux and macOS, every extras job,
+  # and the macOS 14 arm64 geo job).
+  test-base:
+    uses: ./.github/workflows/test.yml
+  test-extras:
+    uses: ./.github/workflows/test-extras.yml
+
   build-and-publish:
+    needs: [test-base, test-extras]
     runs-on: ubuntu-latest
     permissions:
       id-token: write   # for PyPI Trusted Publishing (OIDC)
       contents: write   # for gh release
     steps:
       - uses: actions/checkout@v4
-      - run: sudo apt-get update && sudo apt-get install -y libhdf4-dev
       - uses: actions/setup-python@v5
         with: {python-version: "3.12"}
-      - run: pip install -e .[all,dev] build twine
-      - name: Tests gate
-        run: pytest tests/ -v --tb=short
+      - run: pip install build twine
       - name: Build wheel + sdist
         run: python -m build
       - name: twine check

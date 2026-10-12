@@ -9,6 +9,10 @@ import pytest
 
 pytestmark = pytest.mark.geo
 
+# The scripts under test, found from this file so the tests do not depend on
+# the directory pytest is started from.
+SCRIPTS = Path(__file__).resolve().parents[1] / "scripts"
+
 
 def _make_fixture_buildings(out_path: Path, n: int = 1000) -> None:
     """Create a 1000-row fixture buildings parquet with synthetic coords inside Leon County FL."""
@@ -30,7 +34,7 @@ def _run_stage2(*, buildings, bg_shp, output, n=100, seed=42,
                 timeout=60) -> subprocess.CompletedProcess:
     return subprocess.run([
         sys.executable,
-        "scripts/sample_patients_from_buildings.py",
+        str(SCRIPTS / "sample_patients_from_buildings.py"),
         "--buildings", str(buildings),
         "--n", str(n),
         "--seed", str(seed),
