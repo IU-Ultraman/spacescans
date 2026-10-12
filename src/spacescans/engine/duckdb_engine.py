@@ -15,8 +15,32 @@ from spacescans.models.specs import (
 class DuckDBEngine:
     """In-memory DuckDB engine. Implements AggregationEngine protocol."""
 
-    def __init__(self):
-        self._conn = duckdb.connect()
+    def __init__(
+        self,
+        *,
+        threads: int | None = None,
+        memory_limit: str | None = None,
+        temp_directory: str | None = None,
+    ):
+        settings = {
+            key: value
+            for key, value in (
+                ("threads", threads),
+                ("memory_limit", memory_limit),
+                ("temp_directory", temp_directory),
+            )
+            if value is not None
+        }
+        # No settings: open the connection exactly as 0.2.7 did.
+        self._conn = duckdb.connect(config=settings) if settings else duckdb.connect()
+
+    def settings(self) -> dict[str, str]:
+        """Current DuckDB threads / memory_limit / temp_directory, as DuckDB reports them."""
+        row = self._conn.execute(
+            "SELECT current_setting('threads'), current_setting('memory_limit'), "
+            "current_setting('temp_directory')"
+        ).fetchone()
+        return {"threads": str(row[0]), "memory_limit": str(row[1]), "temp_directory": str(row[2])}
 
     # --- join ---
 
