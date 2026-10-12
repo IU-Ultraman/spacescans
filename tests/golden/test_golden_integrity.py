@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-import os
 import sys
 from pathlib import Path
 
@@ -21,8 +20,7 @@ sys.path.insert(0, str(HERE))
 import golden_compare as gc  # noqa: E402
 
 # SPACESCANS_GOLDEN_DIR points the checks at another collected copy (e.g. a fresh regeneration).
-ROOT = Path(os.environ.get("SPACESCANS_GOLDEN_DIR", HERE / "web-0.2.7"))
-MANIFEST = ROOT / "manifest.json"
+ROOT = gc.golden_root()
 
 
 def _sha(path: Path) -> str:
@@ -31,7 +29,7 @@ def _sha(path: Path) -> str:
 
 @pytest.fixture(scope="module")
 def manifest() -> dict:
-    return json.loads(MANIFEST.read_text())
+    return gc.load_manifest(ROOT)
 
 
 def test_manifest_shape(manifest):
@@ -153,12 +151,6 @@ def test_compare_accepts_within_and_rejects_beyond_tolerance(tmp_path):
 # the render-only matrix (A0/A2) agrees with what the runs rendered
 # ---------------------------------------------------------------------------
 
-def _normalise_yaml(text: str, task_dir: str) -> str:
-    """The A0 normalisation: task-dir prefix and the `_task_<last 8>` name suffix."""
-    import re
-    return re.sub(r"_task_\S{8}$", "_task_<S>", text.replace(task_dir, "<TASK>"), flags=re.M)
-
-
 def test_render_matrix_matches_the_runs(manifest):
     matrix = ROOT / "render_matrix"
     if not (matrix / "index.json").exists():
@@ -176,8 +168,8 @@ def test_render_matrix_matches_the_runs(manifest):
             if not rendered.exists():
                 assert y.stem.startswith("c4_custom_"), f"{name}: {y.name} missing from the matrix"
                 continue                               # raster C4 is not rendered (reads pixels)
-            assert _normalise_yaml(y.read_text(), run["remote_task_dir"]) == \
-                _normalise_yaml(rendered.read_text(), combo["task_dir"]), f"{name}: {y.name}"
+            assert gc.normalise_yaml(y.read_text(), run["remote_task_dir"]) == \
+                gc.normalise_yaml(rendered.read_text(), combo["task_dir"]), f"{name}: {y.name}"
             checked += 1
         if name != "bg_ndi_wi_rev":                    # a warm run writes no cache entries
             assert sorted(e["key"] for e in run["c3_cache_entries"]) == \

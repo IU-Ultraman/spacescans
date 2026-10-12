@@ -29,7 +29,10 @@ from __future__ import annotations
 
 import csv
 import io
+import json
 import math
+import os
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable, Sequence
@@ -57,6 +60,25 @@ SAME_ENV = Tolerance(rtol=1e-12, atol=1e-12,
 # Another environment (different GDAL/GEOS/PROJ, pandas, DuckDB builds): design section 6, gate B.
 CROSS_ENV = Tolerance(rtol=1e-9, atol=1e-9,
                       why="different native libraries: design gate B (weights abs 1e-9, values rel 1e-9)")
+
+
+# ---------------------------------------------------------------------------
+# locating the goldens, and the A0 YAML normalisation (stdlib only)
+# ---------------------------------------------------------------------------
+
+def golden_root() -> Path:
+    """tests/golden/web-0.2.7, or $SPACESCANS_GOLDEN_DIR (e.g. a fresh regeneration)."""
+    return Path(os.environ.get("SPACESCANS_GOLDEN_DIR", Path(__file__).resolve().parent / "web-0.2.7"))
+
+
+def load_manifest(root: Path | None = None) -> dict:
+    return json.loads(((root or golden_root()) / "manifest.json").read_text())
+
+
+def normalise_yaml(text: str, task_dir: str) -> str:
+    """Gate A0: replace the task-dir prefix with <TASK> and the `_task_<last 8 chars>` name
+    suffix with `_task_<S>`; what remains must be byte-identical."""
+    return re.sub(r"_task_\S{8}$", "_task_<S>", text.replace(task_dir, "<TASK>"), flags=re.M)
 
 
 # ---------------------------------------------------------------------------
