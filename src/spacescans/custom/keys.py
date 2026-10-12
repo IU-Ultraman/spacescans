@@ -11,8 +11,10 @@ from __future__ import annotations
 import hashlib
 import re
 
+from spacescans.catalog.recipes import CUSTOM_EXPERIMENT
+
 # The experiment every uploaded dataset belongs to, as the catalog records it.
-EXPERIMENT_KEY = "custom"
+EXPERIMENT_KEY = CUSTOM_EXPERIMENT
 # Key under which a web task's config.json records the definitions it selected.
 TASK_CUSTOM_KEY = "custom_variables"
 KEY_PREFIX = "custom_"

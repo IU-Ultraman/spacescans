@@ -1,8 +1,8 @@
 """Fixtures for the spacescans.custom tests.
 
-``templates/`` holds byte-identical copies of the six web templates the custom
-path renders (spacescans-web ``configs/`` at 3991c3b). Once the catalog ships
-its own copies, point ``load_template`` at ``spacescans.catalog.template``.
+``load_template`` reads the catalog's packaged templates (byte copies of
+spacescans-web ``configs/`` at 3991c3b, checked by tests/catalog), the ones the
+custom path renders in production.
 """
 from __future__ import annotations
 
@@ -10,9 +10,8 @@ from pathlib import Path
 
 import numpy as np
 import pytest
-import yaml
 
-TEMPLATES = Path(__file__).parent / "templates"
+from spacescans import catalog
 
 
 def _write_tif(path, array, *, west=-85.0, north=31.0, res=0.01, crs="EPSG:4326",
@@ -44,6 +43,4 @@ def write_tif():
 
 @pytest.fixture
 def load_template():
-    def _load(relpath: str) -> dict:
-        return yaml.safe_load((TEMPLATES / relpath).read_text())
-    return _load
+    return catalog.template
