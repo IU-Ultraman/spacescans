@@ -147,6 +147,41 @@ def collect_run(name: str, stage: Path, out_root: Path, cohort_sha: str) -> dict
     }
 
 
+# (upload run, its column, catalog run, catalog partial): the paper's upload-equivalence pairs
+UPLOAD_PAIRS = (("custom_raster", "l50dba_exi", "noise", "result_noise"),
+                ("custom_bg_csv", "NatWalkInd", "bg_ndi_wi", "result_bg_ndi_wi"))
+
+
+def cross_checks(out_root: Path, runs: dict) -> dict:
+    """Facts the goldens show across runs: C3 outputs shared between runners, and the
+    upload path against the catalog variable it re-uploads (gate C)."""
+    import numpy as np
+    import pandas as pd
+    by_sha: dict[str, list[str]] = {}
+    for name, run in runs.items():
+        for f in run.get("files", []):
+            if f["path"].startswith("output/c3_") and f["path"].endswith(".parquet"):
+                by_sha.setdefault(f["sha256"], []).append(f"{name}/{f['path']}")
+    shared = [v for v in by_sha.values() if len(v) > 1]
+    pairs = []
+    for up, col, cat, stem in UPLOAD_PAIRS:
+        if not (runs.get(up, {}).get("success") and runs.get(cat, {}).get("success")):
+            continue
+        a = pd.read_csv(out_root / up / "output" / "result_custom.sorted.csv")
+        b = pd.read_csv(out_root / cat / "output" / f"{stem}.sorted.csv")
+        m = a[["pid", "episode_id", col]].merge(b[["pid", "episode_id", col]],
+                                                on=["pid", "episode_id"], suffixes=("_upload", "_catalog"))
+        x, y = m[f"{col}_upload"].to_numpy(float), m[f"{col}_catalog"].to_numpy(float)
+        both = ~np.isnan(x) & ~np.isnan(y)
+        d = np.abs(x - y)[both]
+        pairs.append({"upload_run": up, "catalog_run": cat, "column": col, "episodes": len(m),
+                      "both_present": int(both.sum()),
+                      "missing_one_side": int((np.isnan(x) ^ np.isnan(y)).sum()),
+                      "identical": int((d == 0).sum()),
+                      "max_abs_diff": float(d.max()) if d.size else None})
+    return {"identical_c3_outputs": shared, "upload_vs_catalog": pairs}
+
+
 def cmd_collect(args) -> int:
     stage = Path(args.stage).resolve()
     out_root = Path(args.out).resolve()
@@ -192,6 +227,7 @@ def cmd_collect(args) -> int:
         "sort_rule": gc.SORT_RULE,
         "large_file_threshold_bytes": LARGE_BYTES,
         "runs": runs,
+        "cross_checks": cross_checks(out_root, runs),
     }
     (out_root / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
     bad = [n for n, r in runs.items() if not r.get("success")]
@@ -225,6 +261,13 @@ def _compare_case(name: str, a: Path, b: Path) -> dict:
             floats = [c for c in fa.columns if pd.api.types.is_float_dtype(fa[c])]
             rec["max_diffs"] = gc.max_diffs(fa, fb, floats) if len(fa) == len(fb) else "row count differs"
         out[pa.name] = rec
+    for fname in ("result.csv", "feature_dictionary.csv"):     # input order: compared as written
+        pa, pb = ta / fname, tb / fname
+        if pa.exists() and pb.exists():
+            rec = {"bytes_identical": pa.read_bytes() == pb.read_bytes()}
+            if not rec["bytes_identical"] and fname == "result.csv":
+                rec["problems_at_SAME_ENV"] = gc.compare_result_csv(pa, pb, canonical=False)
+            out[fname] = rec
     for pa in sorted(ta.glob("*.parquet")):
         pb = tb / pa.name
         if not pb.exists():
