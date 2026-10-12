@@ -39,6 +39,7 @@ __all__ = [
     "LOG_EXIT",
     "LOG_MERGE_FAILED",
     "LOG_RENDER_FAILED",
+    "LOG_REUSED",
     "LOG_SIGTERM",
     "LOG_SPAWN",
     "LOGS_FILE",
@@ -79,6 +80,10 @@ LOG_RENDER_FAILED = "render_yaml({step}) failed: {exc!r}"
 LOG_COHORT_FAILED = "csv_to_parquet failed: {exc!r}"
 #: Writing the partial result raised (bg_ndi_wi.py:614); level "error", source "runner".
 LOG_MERGE_FAILED = "merge_results failed: {exc!r}"
+#: A C3 step already computed earlier in the same link (orchestrate.link runs an identical
+#: C3 step once); level "info", source the step. Not a web string: a web runner never
+#: meets the same C3 step twice.
+LOG_REUSED = "reused {step}: computed earlier in this run — skipping pipeline run"
 #: The runner's SIGTERM handler (bg_ndi_wi.py:371); level "info", source "runner".
 LOG_SIGTERM = "received SIGTERM — task cancelled"
 
