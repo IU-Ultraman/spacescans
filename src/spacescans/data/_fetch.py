@@ -29,6 +29,7 @@ acceptance counts only for the call that passes it in ``accept_terms``.
 """
 from __future__ import annotations
 
+import errno
 import hashlib
 import http.client
 import json
@@ -50,6 +51,7 @@ from spacescans.data.errors import (
     NetworkError,
     NotOnMirrorError,
     TermsRequiredError,
+    TransientNetworkError,
     UsageError,
 )
 from spacescans.data.extract import copy_file_atomic, extract_archive, place_file
@@ -81,6 +83,12 @@ class _Retry(Exception):
     def __init__(self, message: str, retry_after: float | None = None) -> None:
         super().__init__(message)
         self.retry_after = retry_after
+
+
+def _local_file_error(e: OSError) -> bool:
+    """An error writing our own files, as opposed to a network failure."""
+    return bool(getattr(e, "filename", None)) or e.errno in (
+        errno.ENOSPC, errno.EDQUOT, errno.EROFS, errno.EACCES, errno.EPERM)
 
 
 def default_backoff(attempt: int) -> float:
@@ -350,44 +358,63 @@ def fetch(variables: Sequence[str] | str | None = None, *,
     override = _override(mirror, transport)
     cache: dict[str, Source] = {}
     if p.items:
-        root.mkdir(parents=True, exist_ok=True)
-        free = disk_usage(root).free
-        if free < p.disk_bytes + headroom_bytes:
-            raise DiskSpaceError(
-                f"not enough free space in {root}: the plan needs about "
-                f"{(p.disk_bytes + headroom_bytes) / 1e9:.1f} GB "
-                f"({p.download_bytes / 1e9:.1f} GB still to download, {p.disk_bytes / 1e9:.1f} GB peak, "
-                f"plus 1 GB headroom); {free / 1e9:.1f} GB available",
-                hint="free space or choose another data directory, then re-run",
-                details={"need_bytes": p.disk_bytes + headroom_bytes, "free_bytes": free,
-                         "plan": p.to_dict()})
-        with DataLock(root, purpose="fetch"):
-            for i, item in enumerate(p.items):
-                art = man.artifacts[item.artifact]
-                src = _choose_source(man, art, override, transport, cache)
-                emit({"ev": "artifact_start", "artifact": art.name, "i": i, "n": len(p.items),
-                      "bytes": art.bytes, "resume_from": item.resume_from})
-                t0 = time.monotonic()
-                result = ItemResult(artifact=art.name, outcome="failed")
-                report.items.append(result)
-                try:
-                    _fetch_one(man, root, art, src, transport, result, emit=emit,
-                               keep_archives=keep_archives, max_attempts=max_attempts,
-                               backoff=backoff, sleep=sleep, headroom_bytes=headroom_bytes,
-                               disk_usage=disk_usage)
-                except DataError as e:
-                    result.outcome = "failed"
-                    result.error = e.to_dict()
-                    result.seconds = time.monotonic() - t0
-                    emit({"ev": "artifact_end", "artifact": art.name, "ok": False,
-                          "error": e.kind, "message": e.message})
-                    e.report = report  # type: ignore[attr-defined]
-                    raise
-                result.seconds = time.monotonic() - t0
-                emit({"ev": "artifact_end", "artifact": art.name, "ok": True,
-                      "outcome": result.outcome, "seconds": round(result.seconds, 3)})
+        try:
+            _fetch_items(man, root, p, report, override, transport, cache, emit=emit,
+                         keep_archives=keep_archives, max_attempts=max_attempts, backoff=backoff,
+                         sleep=sleep, headroom_bytes=headroom_bytes, disk_usage=disk_usage)
+        except DataError:
+            raise
+        except OSError as e:  # the data directory itself is not writable, etc.
+            err = UsageError(f"cannot write to the data directory {root}: {e}",
+                             hint="choose a data directory you can write to",
+                             details={"data_dir": str(root)})
+            err.report = report  # type: ignore[attr-defined]
+            raise err from e
     report.status = status(variables, datasets=datasets, data_dir=root, manifest=man)
     return report
+
+
+def _fetch_items(man: Manifest, root: Path, p: FetchPlan, report: FetchReport,
+                 override: Source | None, transport: Transport, cache: dict[str, Source], *,
+                 emit: EventFn, keep_archives: bool, max_attempts: int,
+                 backoff: Callable[[int], float], sleep: Callable[[float], None],
+                 headroom_bytes: int, disk_usage: Callable[[Path], Any]) -> None:
+    root.mkdir(parents=True, exist_ok=True)
+    free = disk_usage(root).free
+    if free < p.disk_bytes + headroom_bytes:
+        raise DiskSpaceError(
+            f"not enough free space in {root}: the plan needs about "
+            f"{(p.disk_bytes + headroom_bytes) / 1e9:.1f} GB "
+            f"({p.download_bytes / 1e9:.1f} GB still to download, {p.disk_bytes / 1e9:.1f} GB peak, "
+            f"plus 1 GB headroom); {free / 1e9:.1f} GB available",
+            hint="free space or choose another data directory, then re-run",
+            details={"need_bytes": p.disk_bytes + headroom_bytes, "free_bytes": free,
+                     "plan": p.to_dict()})
+    with DataLock(root, purpose="fetch"):
+        for i, item in enumerate(p.items):
+            art = man.artifacts[item.artifact]
+            src = _choose_source(man, art, override, transport, cache)
+            emit({"ev": "artifact_start", "artifact": art.name, "i": i, "n": len(p.items),
+                  "bytes": art.bytes, "resume_from": item.resume_from})
+            t0 = time.monotonic()
+            result = ItemResult(artifact=art.name, outcome="failed")
+            report.items.append(result)
+            try:
+                _fetch_one(man, root, art, src, transport, result, emit=emit,
+                           keep_archives=keep_archives, max_attempts=max_attempts,
+                           backoff=backoff, sleep=sleep, headroom_bytes=headroom_bytes,
+                           disk_usage=disk_usage)
+            except DataError as e:
+                result.outcome = "failed"
+                result.error = e.to_dict()
+                result.seconds = time.monotonic() - t0
+                emit({"ev": "artifact_end", "artifact": art.name, "ok": False,
+                      "error": e.kind, "message": e.message})
+                e.report = report  # type: ignore[attr-defined]
+                raise
+            result.seconds = time.monotonic() - t0
+            emit({"ev": "artifact_end", "artifact": art.name, "ok": True,
+                  "outcome": result.outcome, "seconds": round(result.seconds, 3)})
 
 
 def _fetch_one(man: Manifest, root: Path, art: Artifact, src: Source | None, transport: Transport,
@@ -462,7 +489,16 @@ def _fetch_one(man: Manifest, root: Path, art: Artifact, src: Source | None, tra
                 emit({"ev": "extract_progress", "artifact": art.name, "files": n_done[0],
                       "total": art.files})
 
-        res = extract_archive(done, root, allowed_roots=art.roots, on_file=_on_file)
+        try:
+            res = extract_archive(done, root, allowed_roots=art.roots, on_file=_on_file)
+        except OSError as ex:
+            if ex.errno in (errno.ENOSPC, errno.EDQUOT):
+                raise DiskSpaceError(f"disk full while extracting {art.name}",
+                                     hint="free space and re-run; the archive is kept and re-extracted",
+                                     details={"artifact": art.name}) from ex
+            raise DataError(f"could not write while extracting {art.name}: {ex}",
+                            hint="check that the data directory is writable",
+                            details={"artifact": art.name}) from ex
         files, skipped = res.files, res.skipped
         result.files = res.count
         if art.files is not None and res.count != art.files:
@@ -517,10 +553,10 @@ def _download(transport: Transport, src: Source, art: Artifact, part: Path, meta
     while offset < art.bytes:
         attempts += 1
         tries += 1
-        write_json_atomic(meta, {"artifact": art.name, "sha256": art.sha256, "bytes": art.bytes,
-                                 "source": src.describe(), "attempts": attempts,
-                                 "offset": offset, "updated": time.strftime("%Y-%m-%dT%H:%M:%S%z")})
         try:
+            write_json_atomic(meta, {"artifact": art.name, "sha256": art.sha256, "bytes": art.bytes,
+                                     "source": src.describe(), "attempts": attempts, "offset": offset,
+                                     "updated": time.strftime("%Y-%m-%dT%H:%M:%S%z")})
             url = src.url(art)
             headers = {"Range": f"bytes={offset}-"} if offset else {}
             resp = transport.open(url, headers=headers)
@@ -592,27 +628,40 @@ def _download(transport: Transport, src: Source, art: Artifact, part: Path, meta
                     raise _Retry(f"connection closed after {offset:,} of {art.bytes:,} bytes")
             finally:
                 resp.close()
+            continue  # this attempt completed the download
+        except TransientNetworkError as e:
+            failure: BaseException = e
         except DataError:
             raise
+        except ssl.SSLCertVerificationError as e:
+            raise NetworkError(
+                f"the mirror's TLS certificate could not be verified: {e}",
+                hint="behind an institutional TLS proxy? `pip install truststore` (uses the "
+                     "system keychain) or set SSL_CERT_FILE to the proxy's CA bundle",
+                details={"artifact": art.name}) from e
         except (_Retry, *_RETRYABLE) as e:
-            if isinstance(e, OSError) and getattr(e, "errno", None) == 28:  # ENOSPC
+            failure = e
+        if isinstance(failure, OSError) and _local_file_error(failure):
+            if failure.errno in (errno.ENOSPC, errno.EDQUOT):
                 raise DiskSpaceError(f"disk full while downloading {art.name}",
                                      hint="free space and re-run; the download resumes",
-                                     details={"artifact": art.name}) from e
-            if tries >= max_attempts:
-                raise NetworkError(
-                    f"downloading {art.name} failed after {tries} attempts: {e}. "
-                    f"{offset:,} of {art.bytes:,} bytes are kept; re-run to resume",
-                    hint="re-run the same fetch command; it resumes",
-                    details={"artifact": art.name, "offset": offset, "bytes": art.bytes,
-                             "attempts": attempts}) from e
-            delay = backoff(tries)
-            if isinstance(e, _Retry) and e.retry_after is not None:
-                delay = min(max(delay, e.retry_after), 300.0)
-            emit({"ev": "retry", "artifact": art.name, "attempt": tries, "delay": delay,
-                  "reason": str(e), "offset": offset})
-            sleep(delay)
-            continue
+                                     details={"artifact": art.name}) from failure
+            raise DataError(f"cannot write the download of {art.name}: {failure}",
+                            hint="check that the data directory is writable",
+                            details={"artifact": art.name, "path": str(part)}) from failure
+        if tries >= max_attempts:
+            raise NetworkError(
+                f"downloading {art.name} failed after {tries} attempts: {failure}. "
+                f"{offset:,} of {art.bytes:,} bytes are kept; re-run to resume",
+                hint="re-run the same fetch command; it resumes",
+                details={"artifact": art.name, "offset": offset, "bytes": art.bytes,
+                         "attempts": attempts}) from failure
+        delay = backoff(tries)
+        if isinstance(failure, _Retry) and failure.retry_after is not None:
+            delay = min(max(delay, failure.retry_after), 300.0)
+        emit({"ev": "retry", "artifact": art.name, "attempt": tries, "delay": delay,
+              "reason": str(failure), "offset": offset})
+        sleep(delay)
     emit({"ev": "download", "artifact": art.name, "bytes": offset, "total": art.bytes,
           "rate": round(transferred / max(time.monotonic() - t_start, 1e-6))})
     if digest.hexdigest() != art.sha256:

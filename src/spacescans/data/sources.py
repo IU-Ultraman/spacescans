@@ -22,7 +22,7 @@ import os
 import urllib.parse
 from pathlib import Path
 
-from spacescans.data.errors import NetworkError, NotOnMirrorError
+from spacescans.data.errors import NetworkError, NotOnMirrorError, TransientNetworkError
 from spacescans.data.manifest import Artifact, Mirror
 from spacescans.data.transport import Transport
 
@@ -83,13 +83,15 @@ class SharePointShare(Source):
                     break
             finally:
                 resp.close()
+        if status == 429 or status >= 500:
+            raise TransientNetworkError(f"the mirror answered HTTP {status} for the share link")
         if status in (404, 410):
             raise NotOnMirrorError(
                 f"the mirror share link is gone (HTTP {status}): {self.share_url}",
                 hint=f"ask the project for a current mirror link; set {MIRROR_ENV} or pass --mirror",
             )
         if not location:
-            raise NetworkError(
+            raise TransientNetworkError(
                 f"could not resolve the share link (HTTP {status}, no redirect): {self.share_url}; "
                 "is it still shared with 'anyone with the link'?",
                 hint="re-run later; if it persists, the share may have been withdrawn",

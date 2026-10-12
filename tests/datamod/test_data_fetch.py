@@ -305,3 +305,66 @@ def test_force_downloads_again(mini_manifest, data_dir, h, server):
     n = len(server.downloads())
     rep = fetch(["tiger_proximity"], data_dir=data_dir, manifest=mini_manifest, force=True, **h.fast())
     assert rep.ok and len(server.downloads()) == n + 1
+
+
+def test_share_link_5xx_is_retried(share_manifest, data_dir, h, server):
+    orig = server.httpd.RequestHandlerClass._handle
+
+    def flaky(self, head):                         # the first share-link resolution gets a 503
+        if self.path.startswith("/:f:/") and not getattr(server, "_failed_once", False):
+            server._failed_once = True
+            self._send_simple(503, b"busy")
+            return
+        orig(self, head)
+
+    server.httpd.RequestHandlerClass._handle = flaky
+    try:
+        rep = fetch(["tiger_proximity"], data_dir=data_dir, manifest=share_manifest, **h.fast())
+    finally:
+        server.httpd.RequestHandlerClass._handle = orig
+    assert rep.ok and rep.items[0].attempts == 2
+
+
+def test_unwritable_download_folder_fails_fast(mini_manifest, data_dir, h, server):
+    from spacescans.data import DataError
+
+    dl = data_dir / ".spacescans" / "downloads"
+    dl.mkdir(parents=True)
+    dl.chmod(0o500)
+    try:
+        with pytest.raises(DataError) as e:
+            fetch(["tiger_proximity"], data_dir=data_dir, manifest=mini_manifest, **h.fast())
+    finally:
+        dl.chmod(0o755)
+    assert "writable" in e.value.hint
+    assert e.value.kind != "network"              # not retried as a network failure
+    assert len(server.downloads()) == 0
+
+
+def test_unwritable_data_dir_is_a_clear_error(mini_manifest, tmp_path, h, server):
+    ro = tmp_path / "ro"
+    ro.mkdir()
+    ro.chmod(0o500)
+    try:
+        with pytest.raises(UsageError, match="cannot write to the data directory"):
+            fetch(["tiger_proximity"], data_dir=ro / "ss-data", manifest=mini_manifest, **h.fast())
+    finally:
+        ro.chmod(0o755)
+
+
+def test_tls_verification_failure_is_not_retried(mini_manifest, data_dir, h, monkeypatch):
+    import ssl
+
+    from spacescans.data.transport import Transport
+
+    calls = []
+
+    class BadTLS(Transport):
+        def open(self, url, **kw):
+            calls.append(url)
+            raise ssl.SSLCertVerificationError("certificate verify failed: self-signed certificate")
+
+    with pytest.raises(NetworkError) as e:
+        fetch(["tiger_proximity"], data_dir=data_dir, manifest=mini_manifest, transport=BadTLS(),
+              **h.fast())
+    assert len(calls) == 1 and "truststore" in e.value.hint

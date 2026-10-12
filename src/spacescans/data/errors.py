@@ -75,6 +75,10 @@ class NetworkError(DataError):
     kind = "network"
 
 
+class TransientNetworkError(NetworkError):
+    """A failure worth retrying (5xx while resolving a share link, etc.)."""
+
+
 class DiskSpaceError(DataError):
     """Not enough free space in the data directory for the plan."""
 
