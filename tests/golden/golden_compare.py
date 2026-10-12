@@ -81,6 +81,33 @@ def normalise_yaml(text: str, task_dir: str) -> str:
     return re.sub(r"_task_\S{8}$", "_task_<S>", text.replace(task_dir, "<TASK>"), flags=re.M)
 
 
+_RUNNER_PREFIXES = ("cache hit: ", "cache write: ", "cache check failed", "cache write failed",
+                    "materialised ")
+
+
+def runner_log_lines(logs_jsonl: Path, task_dir: str) -> list[str]:
+    """The runner-authored lines of a logs.jsonl, which A4 requires verbatim (design section 5,
+    W2). Pipeline output lines are left out, since they carry timings. Each line is returned as
+    "level|source|msg" with the task dir replaced by <TASK>. Records written by
+    `_emit_log_warning` (no msg, an `event` key) are kept with their `ts` dropped.
+
+    Runner-authored means: source "runner" (spawn, exit code, errors), source "merge" (the
+    upload runner's linkage report), and step-sourced lines starting with "cache hit:",
+    "cache write:", "cache check failed", "cache write failed" or "materialised".
+    """
+    out = []
+    for line in Path(logs_jsonl).read_text().splitlines():
+        rec = json.loads(line)
+        if "msg" not in rec:
+            rec = {k: v for k, v in rec.items() if k != "ts"}
+            out.append("event|" + json.dumps(rec, sort_keys=True).replace(task_dir, "<TASK>"))
+            continue
+        msg, src = str(rec["msg"]), str(rec.get("source"))
+        if src in ("runner", "merge") or msg.startswith(_RUNNER_PREFIXES):
+            out.append(f"{rec.get('level')}|{src}|{msg}".replace(task_dir, "<TASK>"))
+    return out
+
+
 # ---------------------------------------------------------------------------
 # canonical row order (stdlib only)
 # ---------------------------------------------------------------------------

@@ -191,3 +191,19 @@ def test_render_matrix_files_match_the_index():
                 assert _sha(p) == s["sha256"], f"{p} changed"
     on_disk = set(matrix.rglob("*.yaml"))
     assert on_disk == listed
+
+
+def test_runner_log_lines_keep_the_spawn_contract(manifest):
+    """Every step either spawned `spacescans run` (and logged its exit code) or was a cache hit."""
+    for name, run in manifest["runs"].items():
+        if name == "fanin_all":
+            continue
+        lines = gc.runner_log_lines(ROOT / name / "logs.jsonl", run["remote_task_dir"])
+        for step, rec in run["steps"].items():
+            if rec.get("cache_hit"):
+                assert any(f"|{step}|cache hit: " in x for x in lines), (name, step)
+                continue
+            spawn = (f"info|runner|spawning {step}: /opt/conda/bin/python /opt/conda/bin/spacescans "
+                     f"run --data-dir /project <TASK>/pipeline_configs/{step}.yaml")
+            assert spawn in lines, (name, step)
+            assert f"info|runner|step {step} exit code 0" in lines, (name, step)
