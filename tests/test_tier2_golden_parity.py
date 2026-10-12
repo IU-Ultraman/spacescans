@@ -44,6 +44,11 @@ def _load_golden_compare():
 
 
 gc = _load_golden_compare()
+# Golden tests (tests/conftest.py): the goldens are not in git, so this module is skipped unless
+# SPACESCANS_GOLDEN_DIR names a copy; CI deselects the golden marker.
+pytestmark = pytest.mark.golden
+if gc.golden_dir() is None:
+    pytest.skip(gc.golden_unavailable_reason(), allow_module_level=True)
 ROOT = gc.golden_root()
 MANIFEST = gc.load_manifest(ROOT)
 COHORT_CSV = ROOT / "inputs" / "synth_1k.csv"

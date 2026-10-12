@@ -67,9 +67,39 @@ CROSS_ENV = Tolerance(rtol=1e-9, atol=1e-9,
 # locating the goldens, and the A0 YAML normalisation (stdlib only)
 # ---------------------------------------------------------------------------
 
+GOLDEN_ENV = "SPACESCANS_GOLDEN_DIR"
+# tests/conftest.py removes every SPACESCANS_* variable while each test runs, so the value the
+# caller exported is kept from the first import of this module (conftest imports it at startup).
+_CALLER_GOLDEN_DIR = os.environ.get(GOLDEN_ENV) or None
+
+
+def _golden_env() -> str | None:
+    return os.environ.get(GOLDEN_ENV) or _CALLER_GOLDEN_DIR
+
+
 def golden_root() -> Path:
-    """tests/golden/web-0.2.7, or $SPACESCANS_GOLDEN_DIR (e.g. a fresh regeneration)."""
-    return Path(os.environ.get("SPACESCANS_GOLDEN_DIR", Path(__file__).resolve().parent / "web-0.2.7"))
+    """$SPACESCANS_GOLDEN_DIR (e.g. a fresh regeneration), else tests/golden/web-0.2.7.
+
+    Tests must not rely on the fallback: goldens are kept out of git, so golden tests carry
+    the ``golden`` marker and are skipped unless ``golden_dir()`` names a copy.
+    """
+    env = _golden_env()
+    return Path(env) if env else Path(__file__).resolve().parent / "web-0.2.7"
+
+
+def golden_unavailable_reason() -> str | None:
+    """Why golden tests must skip, or None when $SPACESCANS_GOLDEN_DIR names a golden copy."""
+    env = _golden_env()
+    if not env:
+        return f"{GOLDEN_ENV} is not set (the goldens are not in git; see tests/golden/README.md)"
+    if not (Path(env) / "manifest.json").is_file():
+        return f"{GOLDEN_ENV} has no manifest.json: {env}"
+    return None
+
+
+def golden_dir() -> Path | None:
+    """The goldens named by $SPACESCANS_GOLDEN_DIR, or None when it is unset or holds none."""
+    return None if golden_unavailable_reason() else Path(_golden_env())
 
 
 def load_manifest(root: Path | None = None) -> dict:

@@ -101,4 +101,5 @@ markers = [
     "nc: tests requiring [nc] extra",
     "extras: any test requiring optional extras",
     "slow: tests > 5s",
+    "golden: needs the tier-2 golden references named by SPACESCANS_GOLDEN_DIR (not in git); skipped without them, deselected in CI",
 ]

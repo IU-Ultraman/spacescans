@@ -19,7 +19,8 @@ sys.path.insert(0, str(HERE))
 
 import golden_compare as gc  # noqa: E402
 
-# SPACESCANS_GOLDEN_DIR points the checks at another collected copy (e.g. a fresh regeneration).
+# The goldens are not in git: tests marked golden check the copy SPACESCANS_GOLDEN_DIR names and
+# are skipped without it (tests/conftest.py). The helper tests at the end need no goldens.
 ROOT = gc.golden_root()
 
 
@@ -32,6 +33,7 @@ def manifest() -> dict:
     return gc.load_manifest(ROOT)
 
 
+@pytest.mark.golden
 def test_manifest_shape(manifest):
     assert manifest["schema"] == 1
     assert manifest["environment"]["spacescans.__version__"] == "0.2.7"
@@ -42,12 +44,14 @@ def test_manifest_shape(manifest):
     assert manifest["sort_rule"] == gc.SORT_RULE
 
 
+@pytest.mark.golden
 def test_cohort_is_synth_1k(manifest):
     c = manifest["cohort"]
     assert _sha(ROOT / c["path"]) == c["sha256"]
     assert (c["episodes"], c["patients"]) == (1001, 510)
 
 
+@pytest.mark.golden
 def test_every_catalog_variable_is_covered(manifest):
     covered = {v for r in manifest["runs"].values() if r.get("success")
                for v in (r.get("variables") or [])}
@@ -60,6 +64,7 @@ def test_every_catalog_variable_is_covered(manifest):
     assert len(custom) == 2
 
 
+@pytest.mark.golden
 def test_listed_files_match_their_hashes(manifest):
     for name, run in manifest["runs"].items():
         for f in run.get("files", []):
@@ -69,6 +74,7 @@ def test_listed_files_match_their_hashes(manifest):
             assert _sha(p) == f["sha256"], f"{name}: {f['path']} content changed"
 
 
+@pytest.mark.golden
 def test_no_unlisted_files(manifest):
     for name, run in manifest["runs"].items():
         listed = {f["path"] for f in run.get("files", [])}
@@ -76,6 +82,7 @@ def test_no_unlisted_files(manifest):
         assert on_disk == listed, f"{name}: unlisted {sorted(on_disk - listed)}, missing {sorted(listed - on_disk)}"
 
 
+@pytest.mark.golden
 def test_partials_are_in_canonical_order(manifest):
     for name, run in manifest["runs"].items():
         for stem, info in (run.get("results") or {}).items():
@@ -88,6 +95,7 @@ def test_partials_are_in_canonical_order(manifest):
                                          ROOT / name / "output" / f"{stem}.sorted.csv") == []
 
 
+@pytest.mark.golden
 def test_rendered_configs_keep_the_web_contract(manifest):
     for name, run in manifest["runs"].items():
         cfg_dir = ROOT / name / "pipeline_configs"
@@ -104,6 +112,7 @@ def test_rendered_configs_keep_the_web_contract(manifest):
                 assert cfg["time"]["output_grouping"] == "episode"
 
 
+@pytest.mark.golden
 def test_cache_hits_render_no_yaml(manifest):
     warm = manifest["runs"].get("bg_ndi_wi_rev")
     if not warm or not warm.get("success"):
@@ -151,6 +160,7 @@ def test_compare_accepts_within_and_rejects_beyond_tolerance(tmp_path):
 # the render-only matrix (A0/A2) agrees with what the runs rendered
 # ---------------------------------------------------------------------------
 
+@pytest.mark.golden
 def test_render_matrix_matches_the_runs(manifest):
     matrix = ROOT / "render_matrix"
     if not (matrix / "index.json").exists():
@@ -177,6 +187,7 @@ def test_render_matrix_matches_the_runs(manifest):
     assert checked >= 25
 
 
+@pytest.mark.golden
 def test_render_matrix_files_match_the_index():
     matrix = ROOT / "render_matrix"
     if not (matrix / "index.json").exists():
@@ -193,6 +204,7 @@ def test_render_matrix_files_match_the_index():
     assert on_disk == listed
 
 
+@pytest.mark.golden
 def test_runner_log_lines_keep_the_spawn_contract(manifest):
     """Every step either spawned `spacescans run` (and logged its exit code) or was a cache hit."""
     for name, run in manifest["runs"].items():
