@@ -2,9 +2,11 @@
 
 No data ships with spacescans: this module knows where each dataset comes
 from (``manifest.json``), what a complete copy looks like on disk, and how to
-download the project-mirrored parts resumably. Provider datasets (VNL, TEMIS,
-ACAG, FAQSD) come with instructions and licence notes; their terms are never
-accepted on the user's behalf.
+download the project-mirrored parts resumably. Provider datasets come with
+instructions and licence notes; FAQSD (EPA), TEMIS (KNMI) and ACAG (WashU)
+are downloaded from their providers only when the call accepts their terms
+(``accept_terms``), never on the user's behalf. VNL needs an EOG login: it
+is imported from files the user downloaded (``import_files``).
 
 Standard library only: importing this module (and calling ``status``) works
 on a base install, without geopandas or rasterio.
@@ -13,14 +15,30 @@ on a base install, without geopandas or rasterio.
     data.status(["ndi", "walkability"], data_dir="~/ss-data")
     data.fetch(["ndi", "walkability"], data_dir="~/ss-data")
     data.verify(["ndi"], data_dir="~/ss-data")
+    data.requirements(["ndi", "faqsd"])            # datasets and artifacts, no data dir
+    data.fetch(["faqsd"], data_dir="~/ss-data", accept_terms=["epa-faqsd"])
 
-CLI: ``spacescans data status|fetch|verify|adopt|import``.
+CLI: ``spacescans data status|fetch|verify|adopt|import|requirements|prepare|mirror-check``.
 """
 from __future__ import annotations
 
 from spacescans.data._adopt import AdoptReport, adopt
 from spacescans.data._fetch import FetchPlan, FetchReport, fetch, plan
 from spacescans.data._import import ImportReport, import_files
+from spacescans.data._mirror import MirrorCheck, MirrorCheckReport, mirror_check
+from spacescans.data._prepare import (
+    TEMPLATES,
+    PrepareReport,
+    prepare_templates,
+    write_template,
+)
+from spacescans.data._providers import RemoteFile, parse_box_page, remote_files
+from spacescans.data._requirements import (
+    DatasetNeed,
+    Requirements,
+    VariableRequirements,
+    requirements,
+)
 from spacescans.data._status import (
     USABLE,
     DatasetStatus,
@@ -85,6 +103,7 @@ __all__ = [
     "DATASET_DIRS",
     "MANIFEST_PATH",
     "SCHEMA_PATH",
+    "TEMPLATES",
     "USABLE",
     "AdoptReport",
     "Artifact",
@@ -93,6 +112,7 @@ __all__ = [
     "DataLock",
     "DataMissingError",
     "Dataset",
+    "DatasetNeed",
     "DatasetStatus",
     "DiskSpaceError",
     "ExtractResult",
@@ -102,12 +122,18 @@ __all__ = [
     "LockedError",
     "Manifest",
     "ManifestError",
+    "MirrorCheck",
+    "MirrorCheckReport",
     "NetworkError",
     "NotOnMirrorError",
+    "PrepareReport",
+    "RemoteFile",
+    "Requirements",
     "StatusReport",
     "TermsRequiredError",
     "UnsafeArchiveError",
     "UsageError",
+    "VariableRequirements",
     "VariableStatus",
     "VerifyReport",
     "adopt",
@@ -119,10 +145,16 @@ __all__ = [
     "import_files",
     "is_macos_metadata",
     "load_manifest",
+    "mirror_check",
+    "parse_box_page",
     "plan",
+    "prepare_templates",
+    "remote_files",
+    "requirements",
     "resolve_data_dir",
     "status",
     "terms",
     "validate_member",
     "verify",
+    "write_template",
 ]

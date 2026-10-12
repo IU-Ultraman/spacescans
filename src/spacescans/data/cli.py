@@ -1,4 +1,5 @@
-"""``spacescans data status|fetch|verify`` (wired into ``spacescans.cli``).
+"""``spacescans data status|fetch|verify|adopt|import|requirements|prepare|mirror-check``
+(wired into ``spacescans.cli``).
 
 Exit codes: 0 = everything requested is usable / the fetch completed / no
 checksum failed; 1 = not ready, or a handled error (message and hint on
@@ -69,6 +70,29 @@ def add_data_parser(sub: Any) -> None:
     q.add_argument("--dry-run", action="store_true",
                    help="compare file counts and sizes only; hash and write nothing")
 
+    q = dsub.add_parser("requirements", help="Which datasets and mirror files each variable needs "
+                                             "(no data directory needed)")
+    q.add_argument("variables", nargs="*", metavar="VARIABLE", help="catalog variables (default: all)")
+    q.add_argument("--json", action="store_true", help="print the result as JSON")
+
+    q = dsub.add_parser("prepare", help="Generate files spacescans can build locally "
+                                        "(the ACAG and TEMIS grid template rasters)")
+    q.add_argument("what", choices=["templates"], help="what to generate")
+    q.add_argument("--data-dir", help="data directory (default: $SPACESCANS_DATA_DIR)")
+    q.add_argument("--force", action="store_true", help="regenerate even when in place")
+    q.add_argument("--json", action="store_true", help="print the report as JSON")
+
+    q = dsub.add_parser("mirror-check", help="Maintainers: check that pending_upload files are on the "
+                                             "live mirror (HEAD and range reads of at most 1 MB)")
+    q.add_argument("artifacts", nargs="*", metavar="ARTIFACT",
+                   help="artifact names (default: every pending_upload artifact)")
+    q.add_argument("--all", action="store_true", help="check available artifacts too")
+    q.add_argument("--mirror", metavar="URL_OR_DIR", help="check this mirror instead of the manifest's")
+    q.add_argument("--write-manifest", nargs="?", const=True, default=False, metavar="PATH",
+                   help="flip the artifacts that pass to 'available' in the manifest file "
+                        "(default: the packaged manifest.json)")
+    q.add_argument("--json", action="store_true", help="print the report as JSON")
+
 
 def cmd_data(args: argparse.Namespace) -> int:
     try:
@@ -82,12 +106,20 @@ def cmd_data(args: argparse.Namespace) -> int:
             return _adopt(args)
         if args.data_cmd == "import":
             return _import(args)
+        if args.data_cmd == "requirements":
+            return _requirements(args)
+        if args.data_cmd == "prepare":
+            return _prepare(args)
+        if args.data_cmd == "mirror-check":
+            return _mirror_check(args)
     except UsageError as e:
         _print_error(e)
         return 2
     except DataError as e:
         _print_error(e)
         report = getattr(e, "report", None)
+        if e.kind == "terms_required" and report is not None and not args.json:
+            _print_terms(report.plan.terms_required)
         if args.json:
             out = {"ok": False, "error": e.to_dict()}
             if report is not None:
@@ -98,6 +130,9 @@ def cmd_data(args: argparse.Namespace) -> int:
         print("\ninterrupted; partial downloads are kept and resume on the next fetch",
               file=sys.stderr)
         return 130
+    except ImportError as e:  # a missing optional extra (prepare needs geo)
+        print(f"error: {e}", file=sys.stderr)
+        return 1
     return 2  # pragma: no cover - argparse requires a command
 
 
@@ -230,6 +265,24 @@ def _progress_printer(*, quiet: bool, as_json: bool = False):
                       file=sys.stderr, flush=True)
         elif kind == "verify":
             print(f"  hashing {ev['file']} ({_gb(ev['bytes'])})", file=sys.stderr, flush=True)
+        elif kind == "provider_start":
+            print(f"{ev['dataset']}: downloading from the provider ({ev['source']}; "
+                  f"terms {ev['terms']} accepted for this call)", file=sys.stderr, flush=True)
+        elif kind == "provider_files":
+            print(f"  {ev['todo']:,} of {ev['files']:,} files to download "
+                  f"({ev['files'] - ev['todo']:,} already in place)", file=sys.stderr, flush=True)
+        elif kind == "provider_file":
+            print(f"  [{ev['i'] + 1}/{ev['n']}] {ev['file']}", file=sys.stderr, flush=True)
+        elif kind == "provider_file_failed":
+            print(f"\n  failed: {ev['file']}: {ev['message']}", file=sys.stderr, flush=True)
+        elif kind == "provider_end":
+            if ev.get("ok"):
+                print(f"  {ev['dataset']} done ({ev.get('downloaded', 0):,} downloaded, "
+                      f"{ev.get('skipped', 0):,} already in place)", file=sys.stderr, flush=True)
+        elif kind == "warning":
+            print(f"\n  warning: {ev.get('message')}", file=sys.stderr, flush=True)
+        elif kind == "prepare":
+            print(f"  generating {ev['target']}", file=sys.stderr, flush=True)
 
     return on_event
 
@@ -253,10 +306,14 @@ def _fetch(args: argparse.Namespace) -> int:
         for it in p.items:
             resume = f" (resume at {_gb(it.resume_from)})" if it.resume_from else ""
             print(f"  {it.artifact:<48} {_gb(it.remaining_bytes):>9}{resume}  for {', '.join(it.datasets)}")
+        for e in p.providers:
+            print(f"  {e['dataset']:<48} {_gb(e['download_bytes']):>9}  from the provider "
+                  f"({e['missing']:,} of {e['expected']:,} files missing; terms {e['terms']} accepted)")
         print(f"  download {_gb(p.download_bytes)}; needs about {_gb(p.disk_bytes)} free "
               f"(+1 GB headroom); free now {_gb(p.free_bytes)}")
         if p.already_usable:
             print(f"  already in place: {', '.join(p.already_usable)}")
+        _print_terms(p.terms_required)
     _print_manual(p.manual)
     if not args.dry_run and rep.status is not None:
         if rep.status.ready:
@@ -266,6 +323,15 @@ def _fetch(args: argparse.Namespace) -> int:
             if not_ready:
                 print("still not usable: " + ", ".join(not_ready))
     return 0 if rep.ok else 1
+
+
+def _print_terms(terms: Sequence[dict]) -> None:
+    if not terms:
+        return
+    print("provider downloads that need their terms accepted in the call "
+          "(read them, then add --accept-terms ID):")
+    for t in terms:
+        print(f"  {t['dataset']}: --accept-terms {t['id']}  {t['summary']} ({t['url']})")
 
 
 def _print_manual(manual: Sequence[dict]) -> None:
@@ -337,4 +403,53 @@ def _import(args: argparse.Namespace) -> int:
         print(f"{args.dataset}: {d.status} ({d.present:,} of {d.expected:,} present)")
         for m in d.missing[:5]:
             print(f"  missing: {m}")
+    return 0 if rep.ok else 1
+
+
+def _requirements(args: argparse.Namespace) -> int:
+    from spacescans.data._requirements import requirements
+
+    req = requirements(args.variables or None)
+    if args.json:
+        print(json.dumps(req.to_dict(), indent=1))
+        return 0
+    print(f"{'variable':<16} {'download':>9} {'disk':>9}  datasets (preferred alternative first)")
+    for v in req.values():
+        alts = ", ".join(" | ".join(r) for r in v.requires)
+        print(f"{v.variable:<16} {_gb(v.download_bytes):>9} {_gb(v.disk_bytes):>9}  {alts}")
+        if v.pending:
+            print(f"{'':<38}not on the mirror yet: {', '.join(v.pending)}")
+        if v.terms:
+            print(f"{'':<38}provider terms: {', '.join(v.terms)}")
+    return 0
+
+
+def _prepare(args: argparse.Namespace) -> int:
+    from spacescans.data._prepare import prepare_templates
+
+    rep = prepare_templates(args.data_dir, force=args.force,
+                            on_event=None if args.json else _progress_printer(quiet=False))
+    if args.json:
+        print(json.dumps(rep.to_dict(), indent=1))
+        return 0 if rep.ok else 1
+    for i in rep.items:
+        print(f"  {i.target:<32} {i.result}  sha256 {i.sha256[:16]}...")
+    return 0 if rep.ok else 1
+
+
+def _mirror_check(args: argparse.Namespace) -> int:
+    from spacescans.data._mirror import mirror_check
+
+    rep = mirror_check(args.artifacts or None, mirror=args.mirror, all_artifacts=args.all,
+                       write_manifest=args.write_manifest)
+    if args.json:
+        print(json.dumps(rep.to_dict(), indent=1))
+        return 0 if rep.ok else 1
+    print(f"mirror: {rep.mirror}")
+    for c in rep.checks:
+        print(f"  {c.artifact:<72} {'ok' if c.passed else 'NOT ON MIRROR'}  {c.detail}")
+    if rep.updated:
+        print(f"flipped to available in {rep.manifest_path}: {', '.join(rep.updated)}")
+    elif args.write_manifest:
+        print("manifest unchanged (nothing passed)")
     return 0 if rep.ok else 1
