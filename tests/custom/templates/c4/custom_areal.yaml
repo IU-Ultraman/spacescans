@@ -1,0 +1,41 @@
+# Template for a user-uploaded area-level exposure ("custom exposome").
+#
+# Unlike the shipped C4 configs this one is a skeleton: app/experiments/custom.py
+# overwrites linkage_pattern, source, exposure, time.years and output.path from
+# the dataset's manifest before every run. Only the fields that are the same for
+# every custom dataset are set here.
+#
+# linkage_pattern is rewritten to static_areal (no year column) or yearly_areal
+# (year column). Both read the uploaded CSV through spacescans.io.readers.read_table
+# because no `plugin:` is set — the same path Walkability and Community
+# Organization Density already take.
+name: custom_areal
+linkage_pattern: static_areal
+geometry_type: polygon
+
+source:                      # rewritten: the task's C3 weights parquet + its join col
+  file: PLACEHOLDER
+  join_col: GEOID10
+
+buffer:
+  patient_file: PLACEHOLDER  # rewritten: the task's input.parquet
+  patient_adapter: demo_conus
+  buffer_m: 270
+
+exposure:                    # rewritten: the uploaded CSV, its key col and value cols
+  file: PLACEHOLDER
+  join_col: PLACEHOLDER
+  value_cols: []
+
+time:
+  years: [2013, 2014, 2015, 2016, 2017, 2018, 2019]
+  temporal_resolution: yearly
+  temporal_mode: yearly
+  output_grouping: episode   # rewritten (always to episode) — see custom.py
+
+engine:
+  backend: duckdb
+
+output:
+  path: PLACEHOLDER
+  format: parquet
