@@ -123,7 +123,10 @@ def real_run(tmp_path_factory):
     stamp.touch()
     time.sleep(1.1)   # so a write in the stamp's second still counts as newer
     script = Path(sys.executable).parent / "spacescans"   # never resolve the venv symlink
-    executor = SubprocessExecutor(cmd_prefix=[sys.executable, str(script)])
+    # This module-scoped fixture runs before tests/conftest.py's per-test isolation, so drop
+    # the caller's SPACESCANS_* variables here (the executor then sets SPACESCANS_DATA_DIR).
+    executor = SubprocessExecutor(cmd_prefix=[sys.executable, str(script)],
+                                  env={k: None for k in os.environ if k.startswith("SPACESCANS_")})
     writer = LogWriter.for_run_dir(run_dir)
     events: list[Event] = []
     run = execute_step(executor, config, experiment="noise", step="c3_noise", data_dir=DATA,
