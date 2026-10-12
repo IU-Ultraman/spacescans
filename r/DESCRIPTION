@@ -1,0 +1,37 @@
+Package: spacescans
+Type: Package
+Title: Link Patient Residential Histories to Environmental Exposures
+Version: 0.2.7
+Authors@R: c(
+    person("Xuguang", "Ai", email = "xuguang.ai@outlook.com", role = c("aut", "cre")),
+    person("Regenstrief Institute", role = "aut"))
+Description: R client for the 'spacescans' Python pipeline, which links
+    patient residential histories to environmental exposures. The pipeline
+    runs in a separate Python process that the package talks to through JSON
+    request and result files and 'Parquet' tables, so a crash or an interrupt
+    in Python never takes the R session down. 'ss_install()' builds the
+    Python environment with 'uv'.
+License: Not yet licensed; all rights reserved until a license is chosen
+URL: https://github.com/IU-Ultraman/spacescans
+BugReports: https://github.com/IU-Ultraman/spacescans/issues
+Depends:
+    R (>= 4.1.0)
+Imports:
+    jsonlite,
+    nanoparquet,
+    processx,
+    tools,
+    utils
+Suggests:
+    arrow,
+    testthat (>= 3.0.0),
+    withr
+SystemRequirements: Python 3.12 with the 'spacescans-pipeline' package,
+    installed by ss_install() with 'uv' (<https://docs.astral.sh/uv/>);
+    macOS 14 or later on Apple silicon is the supported platform.
+Config/spacescans/version: 0.2.7
+Config/spacescans/protocol: 1
+Config/testthat/edition: 3
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+Config/roxygen2/version: 8.1.1

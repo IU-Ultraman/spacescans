@@ -1,0 +1,7 @@
+^\.Rlib$
+^.*\.Rproj$
+^\.Rproj\.user$
+^tools/build-wheel\.sh$
+^README\.md$
+^.*\.Rcheck$
+^spacescans_.*\.tar\.gz$
