@@ -51,10 +51,11 @@ class Tolerance:
     why: str
 
 
-# Same image, same data root. web-0.2.7/determinism.json measures how much two cold passes of
-# the 0.2.7 runners differ, which is the floor any reimplementation can be held to. The slack
-# is for multi-threaded DuckDB sums, whose order may differ between engines (design section 6,
-# A4: accept rel <= 1e-12 once the difference is traced to summation order).
+# Same image, same data root. Two cold passes of the 0.2.7 runners themselves differ by up to
+# 1.4e-14 absolute (2.5e-14 relative) in temis, vnl, zcta5_cbp, bg_ndi_wi and acag values, which
+# is consistent with multi-threaded sums (web-0.2.7/determinism.json). That is the floor any
+# reimplementation can be held to. All 71 files compared between the passes pass at 1e-12,
+# and the absolute term alone is 70 times the largest difference (design section 6, A4).
 SAME_ENV = Tolerance(rtol=1e-12, atol=1e-12,
                      why="same frozen image and data: exact expected; slack covers summation order")
 # Another environment (different GDAL/GEOS/PROJ, pandas, DuckDB builds): design section 6, gate B.
