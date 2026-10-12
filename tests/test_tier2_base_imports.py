@@ -7,6 +7,7 @@ are exercised there too, not just imported.
 """
 from __future__ import annotations
 
+import os
 import subprocess
 import sys
 import textwrap
@@ -54,8 +55,14 @@ def test_cohort_and_orchestrate_need_only_base_dependencies(tmp_path):
         print("BASE_OK")
         """
     )
+    # Import the spacescans this test session uses (installed or src/).
+    import spacescans
+    env = dict(os.environ)
+    env["PYTHONPATH"] = os.pathsep.join(
+        [str(Path(spacescans.__file__).parents[1])]
+        + ([env["PYTHONPATH"]] if env.get("PYTHONPATH") else []))
     r = subprocess.run([sys.executable, "-c", script], capture_output=True,
-                       text=True, check=False)
+                       text=True, check=False, env=env)
     assert r.returncode == 0 and "BASE_OK" in r.stdout, (
         f"base-install import failed:\nstdout={r.stdout}\nstderr={r.stderr}"
     )

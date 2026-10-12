@@ -3,7 +3,10 @@
 Expected partials, result.csv files and low-match warnings come from the
 web's own _merge.py (and faqsd.merge_results for the in-place rename) run
 on synthetic C4 outputs with the real column names and dtypes; see
-fixtures/web_parity/generate.py. CSV outputs are compared byte for byte.
+fixtures/web_parity/generate.py. CSV outputs are compared byte for byte in
+every environment. The rewritten FAQSD parquet and pandas' error wording
+("str" in pandas 3, "object" in pandas 2) are compared exactly only under
+the generator's pandas major version.
 """
 from __future__ import annotations
 
@@ -24,6 +27,7 @@ FIX = Path(__file__).parent / "fixtures" / "web_parity"
 MANIFEST = json.loads((FIX / "manifest.json").read_text())
 SAME_ENV = (pd.__version__, pyarrow.__version__) == (MANIFEST["pandas"],
                                                      MANIFEST["pyarrow"])
+SAME_PANDAS_MAJOR = pd.__version__.split(".")[0] == MANIFEST["pandas"].split(".")[0]
 CATALOG = {**json.loads((FIX / "variable_metadata.json").read_text())["variables"],
            **json.loads((FIX / "overlay.json").read_text())}
 VALUE_COLS = {k: v["value_cols"] for k, v in CATALOG.items()}
@@ -53,7 +57,10 @@ def test_partial_matches_web(name, tmp_path):
         with pytest.raises(Exception) as e:
             merge.partial_from_dir(**call)
         assert type(e.value).__name__ == want["error"]["type"]
-        assert str(e.value) == want["error"]["message"]
+        message = str(e.value)
+        if not SAME_PANDAS_MAJOR:
+            message = message.replace("on object and", "on str and")
+        assert message == want["error"]["message"]
         return
 
     merged, stats = merge.partial_from_dir(**call)
@@ -69,7 +76,12 @@ def test_partial_matches_web(name, tmp_path):
 
     for fname, sha in want.get("rewritten", {}).items():
         got_t = pq.read_table(run_dir / "output" / fname)
-        assert got_t.equals(pq.read_table(expected_dir / fname))
+        want_t = pq.read_table(expected_dir / fname)
+        assert got_t.column_names == want_t.column_names
+        pd.testing.assert_frame_equal(got_t.to_pandas(), want_t.to_pandas(),
+                                      check_dtype=False)
+        if SAME_PANDAS_MAJOR:
+            assert got_t.equals(want_t)
         if SAME_ENV:
             got_sha = hashlib.sha256((run_dir / "output" / fname).read_bytes()).hexdigest()
             assert got_sha == sha

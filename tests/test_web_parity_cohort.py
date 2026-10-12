@@ -2,9 +2,16 @@
 
 Expected outputs come from running the web's own functions (commit in
 fixtures/web_parity/manifest.json) on the synthetic cohorts in
-fixtures/web_parity/cohorts; see generate.py there. Parquet bytes are
-compared when pandas and pyarrow match the generating versions; otherwise
-the decoded tables and arrow schemas are compared.
+fixtures/web_parity/cohorts; see generate.py there.
+
+Parity is defined within one environment, so the strength of the parquet
+check depends on how close this one is to the generator's:
+
+* always: column names, row count, arrow type family and every value;
+* same pandas major version: the exact arrow schema and pandas metadata
+  (pandas 3 stores text as large_string, pandas 2 as string);
+* same pandas and pyarrow versions: the sha256 of the file bytes, which the
+  legacy C3 cache key is built from.
 """
 from __future__ import annotations
 
@@ -23,6 +30,7 @@ FIX = Path(__file__).parent / "fixtures" / "web_parity"
 MANIFEST = json.loads((FIX / "manifest.json").read_text())
 SAME_ENV = (pd.__version__, pyarrow.__version__) == (MANIFEST["pandas"],
                                                      MANIFEST["pyarrow"])
+SAME_PANDAS_MAJOR = pd.__version__.split(".")[0] == MANIFEST["pandas"].split(".")[0]
 
 PARQUET_CASES = sorted((FIX / "expected" / "parquet").glob("*.json"))
 UPLOAD_CASES = sorted((FIX / "expected" / "upload").glob("*.json"))
@@ -32,19 +40,41 @@ def _sha256(p: Path) -> str:
     return hashlib.sha256(p.read_bytes()).hexdigest()
 
 
+def _family(type_name: str) -> str:
+    """Arrow type up to what differs between pandas majors."""
+    if type_name in ("string", "large_string"):
+        return "string"
+    if type_name.startswith("timestamp"):
+        return "timestamp"
+    return type_name
+
+
+def _values(t: pyarrow.Table) -> pd.DataFrame:
+    """Decoded table with datetimes in one unit (pandas 2: ns, pandas 3: us)."""
+    df = t.to_pandas()
+    for c in df.columns:
+        if pd.api.types.is_datetime64_dtype(df[c]):
+            df[c] = df[c].astype("datetime64[ns]")
+    return df
+
+
 def assert_parquet_like_web(actual: Path, rec: dict) -> None:
     expected = FIX / "expected" / "parquet" / rec["blob"]
     got_t, want_t = pq.read_table(actual), pq.read_table(expected)
-    assert [[f.name, str(f.type)] for f in got_t.schema] == rec["schema"]
     assert got_t.num_rows == rec["rows"]
-    assert got_t.equals(want_t)
-    # pandas' own metadata (dtypes, index) must match too, version aside.
-    got_md = json.loads(got_t.schema.metadata[b"pandas"])
-    want_md = json.loads(want_t.schema.metadata[b"pandas"])
-    for md in (got_md, want_md):
-        md.pop("creator", None)
-        md.pop("pandas_version", None)
-    assert got_md == want_md
+    assert [[f.name, _family(str(f.type))] for f in got_t.schema] == \
+        [[n, _family(t)] for n, t in rec["schema"]]
+    pd.testing.assert_frame_equal(_values(got_t), _values(want_t), check_dtype=False)
+    if SAME_PANDAS_MAJOR:
+        assert [[f.name, str(f.type)] for f in got_t.schema] == rec["schema"]
+        assert got_t.equals(want_t)
+        # pandas' own metadata (dtypes, index) must match too, version aside.
+        got_md = json.loads(got_t.schema.metadata[b"pandas"])
+        want_md = json.loads(want_t.schema.metadata[b"pandas"])
+        for md in (got_md, want_md):
+            md.pop("creator", None)
+            md.pop("pandas_version", None)
+        assert got_md == want_md
     if SAME_ENV:
         assert _sha256(actual) == rec["sha256"]
 
@@ -83,9 +113,11 @@ def test_variants_differ_only_on_zcta5(tmp_path):
     src = FIX / "cohorts" / "fips.csv"
     a = cohort.read_upload_csv(src, variant="bg_ndi_wi")
     b = cohort.read_upload_csv(src, variant="zcta5")
-    assert not pd.api.types.is_string_dtype(a["zcta5"])
-    assert pd.api.types.is_string_dtype(b["zcta5"])
+    assert pd.api.types.is_integer_dtype(a["zcta5"].dropna().astype("Int64")) \
+        and not b["zcta5"].dropna().map(type).eq(int).any()
+    assert b["zcta5"].dropna().map(type).eq(str).all()
     assert b["zcta5"].dropna().str.len().eq(5).all()
+    assert (b["zcta5"].dropna().str[0] == "0").any()     # zeros kept
     for c in ("state_fips", "county_fips", "tract_geoid", "bg_geoid"):
         assert a[c].equals(b[c])
 
