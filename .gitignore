@@ -16,3 +16,12 @@ __pycache__/
 .pytest_cache/
 dist/
 build/
+# local Python env (uv venv)
+.venv/
+# R package: private dev library, check/build artefacts, bundled wheel (built by r/tools/build-wheel.sh)
+r/.Rlib/
+r/..Rcheck/
+r/*.Rcheck/
+r/spacescans_*.tar.gz
+r/inst/python/*.whl
+r/inst/python/pin.json
