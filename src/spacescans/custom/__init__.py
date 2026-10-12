@@ -11,6 +11,23 @@ Everything imports with the base install; the raster functions need the
 """
 from __future__ import annotations
 
+from spacescans.custom.definition import (
+    CATALOG_FIELDS,
+    MAX_DESCRIPTION,
+    MAX_LABEL,
+    MAX_RASTER_YEARS,
+    RESERVED_RASTER_COLS,
+    STATIC_COVERAGE_YEARS,
+    catalog_entry,
+    check_band_columns,
+    check_label,
+    default_band_columns,
+    define_polygon,
+    define_raster,
+    is_raster,
+    preview_raster,
+    raster_bands,
+)
 from spacescans.custom.errors import CustomExposomeError, RasterError
 from spacescans.custom.keys import (
     EXPERIMENT_KEY,
@@ -49,4 +66,8 @@ __all__ = [
     "clean_unit", "unit_as_typed", "summarise_units",
     "CONUS_BBOX", "MAX_BANDS_LISTED", "FULL_READ_MAX_CELLS", "inspect_raster",
     "grid_hash", "same_grid", "extract_values", "extract_bands",
+    "CATALOG_FIELDS", "MAX_LABEL", "MAX_DESCRIPTION", "MAX_RASTER_YEARS",
+    "RESERVED_RASTER_COLS", "STATIC_COVERAGE_YEARS", "catalog_entry", "check_label",
+    "check_band_columns", "default_band_columns", "define_polygon", "define_raster",
+    "preview_raster", "is_raster", "raster_bands",
 ]
