@@ -18,8 +18,9 @@ import os
 import platform
 import sys
 import zipfile
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
 # The extras declared in pyproject.toml and the modules each one must provide.
 EXTRAS: dict[str, tuple[str, ...]] = {
@@ -63,7 +64,7 @@ def _package_root() -> Path:
     return Path(__file__).resolve().parent
 
 
-@functools.lru_cache(maxsize=None)
+@functools.cache
 def code_fingerprint(root: str | os.PathLike | None = None) -> str:
     """Fingerprint of every ``.py`` file under the installed ``spacescans`` package.
 
