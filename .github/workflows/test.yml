@@ -2,6 +2,8 @@ name: test (base)
 on:
   push: {branches: [main]}
   pull_request: {branches: [main]}
+  workflow_dispatch:  # run on any branch from the Actions tab
+  workflow_call:      # publish.yml runs this as its test gate
 
 jobs:
   test-base:
@@ -9,11 +11,21 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest]
-        python: ["3.10", "3.11", "3.12"]
+        python: ["3.10", "3.11", "3.12", "3.13"]
     runs-on: ${{ matrix.os }}
+    env:
+      # Base install only: deselect everything that needs an optional extra.
+      BASE_MARKERS: not extras and not geo and not rda and not hdf4 and not nc and not slow
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: {python-version: "${{ matrix.python }}"}
       - run: pip install -e .[dev]
-      - run: pytest tests/ -v -m "not extras and not geo and not rda and not hdf4 and not nc and not slow" --tb=short
+      - run: pytest tests/ -v -m "$BASE_MARKERS" --tb=short
+      - name: Tests ignore the caller's SPACESCANS_* variables
+        # tests/conftest.py removes them for every test; this run proves it.
+        if: matrix.os == 'ubuntu-latest' && matrix.python == '3.12'
+        env:
+          SPACESCANS_DATA_DIR: /nonexistent/spacescans-data
+          SPACESCANS_OUTPUT_DIR: /nonexistent/spacescans-output
+        run: pytest tests/ -q -m "$BASE_MARKERS" --tb=short
