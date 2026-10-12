@@ -1,5 +1,8 @@
 # Running `python -m spacescans.bridge`: request/result files, an interruptible
-# processx poll loop, streamed events and crash detection.
+# processx poll loop, streamed events and crash detection. Short commands use
+# .ss_bridge() (events through a pipe); long ones (link, data-fetch) run as
+# jobs (job.R) whose events go to run_dir/events.jsonl. Both share the
+# request, launch, event and outcome helpers below.
 
 # Environment variables the child must not inherit: they would redirect the
 # interpreter (PYTHON*) or the GDAL/PROJ data of the wheels, or load R's own
@@ -9,9 +12,14 @@
   "GDAL_DATA", "PROJ_DATA", "PROJ_LIB", "DYLD_FALLBACK_LIBRARY_PATH", "DYLD_LIBRARY_PATH"
 )
 
-.ss_child_env <- function() {
+.ss_child_env <- function(extra = NULL) {
   env <- Sys.getenv()
-  env[setdiff(names(env), .ss_drop_env)]
+  env <- env[setdiff(names(env), .ss_drop_env)]
+  if (length(extra)) {
+    extra <- extra[!vapply(extra, is.null, logical(1))]
+    env[names(extra)] <- vapply(extra, as.character, character(1))
+  }
+  env
 }
 
 .ss_named <- function(x) {
@@ -61,27 +69,90 @@
   if (as.character(sig) %in% names(known)) known[[as.character(sig)]] else paste0("signal ", sig)
 }
 
-# A minimal console progress display (no cli dependency).
+.ss_format_bytes <- function(x) {
+  x <- suppressWarnings(as.numeric(x))
+  if (!length(x) || is.na(x)) return("?")
+  units <- c("B", "KB", "MB", "GB", "TB")
+  i <- if (x <= 0) 1L else min(length(units), floor(log(x, 1000)) + 1L)
+  if (i == 1L) sprintf("%.0f B", x) else sprintf("%.1f %s", x / 1000^(i - 1L), units[i])
+}
+
+# A minimal console progress display (no cli dependency). update() redraws one
+# line; note() prints a line of its own.
 .ss_progress_ui <- function(enabled) {
   state <- new.env(parent = emptyenv())
   state$shown <- FALSE
+  state$width <- 0L
+  draw <- function(text) {
+    pad <- max(0L, state$width - nchar(text))
+    cat("\r", text, strrep(" ", pad), sep = "", file = stderr())
+    state$width <- nchar(text)
+    state$shown <- TRUE
+  }
   list(
-    update = function(step, frac) {
+    update = function(step, frac, overall = NULL, text = NULL) {
       if (!enabled) return(invisible())
-      pct <- if (is.numeric(frac) && length(frac) == 1L) round(100 * frac) else NA
+      pct <- if (is.numeric(frac) && length(frac) == 1L && !is.na(frac)) round(100 * frac) else NA
       label <- if (is.character(step) && length(step) == 1L) step else "spacescans"
-      cat(sprintf("\r%s %s", label, if (is.na(pct)) "" else sprintf("%3d%%", pct)), file = stderr())
-      state$shown <- TRUE
+      line <- sprintf("%s %s", label, if (is.na(pct)) "" else sprintf("%3d%%", pct))
+      if (is.numeric(overall) && length(overall) == 1L && !is.na(overall)) {
+        line <- sprintf("[%3d%% overall] %s", round(100 * overall), line)
+      }
+      if (!is.null(text)) line <- paste(line, text)
+      draw(line)
+    },
+    status = function(text) {
+      if (!enabled) return(invisible())
+      draw(text)
     },
     note = function(text) {
       if (!enabled) return(invisible())
       if (state$shown) cat("\n", file = stderr())
       state$shown <- FALSE
+      state$width <- 0L
       cat(text, "\n", sep = "", file = stderr())
     },
     done = function() {
       if (enabled && state$shown) cat("\n", file = stderr())
       state$shown <- FALSE
+      state$width <- 0L
+    }
+  )
+}
+
+# The request object every command sends.
+.ss_request <- function(command, args = list(), verbose = FALSE) {
+  list(
+    protocol = .ss_protocol,
+    command = command,
+    client = list(name = "spacescans-r", version = .ss_pkg_version(),
+                  protocol_range = I(c(.ss_protocol, .ss_protocol))),
+    verbose = isTRUE(verbose),
+    args = .ss_named(args)
+  )
+}
+
+.ss_paths <- function(run_dir) {
+  list(request = file.path(run_dir, "request.json"), result = file.path(run_dir, "result.json"),
+       log = file.path(run_dir, "bridge.log"), events = file.path(run_dir, "events.jsonl"),
+       job = file.path(run_dir, "job.json"))
+}
+
+# Start the bridge for `command` in `run_dir` (request already written).
+# stdout: "|" for a pipe, or a file path. cleanup: kill the process (tree)
+# when its handle is garbage collected or R exits.
+.ss_spawn <- function(py, command, run_dir, stdout = "|", cleanup = TRUE, env = NULL) {
+  p <- .ss_paths(run_dir)
+  tryCatch(
+    processx::process$new(
+      py,
+      c("-I", "-u", "-X", "utf8", "-m", "spacescans.bridge", command,
+        "--request", p$request, "--result", p$result),
+      stdout = stdout, stderr = p$log, wd = run_dir, env = env %||% .ss_child_env(),
+      cleanup = cleanup, cleanup_tree = cleanup
+    ),
+    error = function(e) {
+      .ss_abort("python", sprintf("Cannot start Python (%s): %s", py, conditionMessage(e)))
     }
   )
 }
@@ -97,112 +168,106 @@
   })
 }
 
-# Run one bridge command and return its `value`, or raise a spacescans_error.
-#
-# progress: show a progress line; verbose: print raw pipeline lines;
-# on_event: function(event) called for every event; run_dir: use this
-# directory (kept) instead of a fresh temporary one; keep: keep the fresh
-# directory; keep_on_error: keep it when the command fails.
-.ss_bridge <- function(command, args = list(), python = NULL, progress = FALSE, verbose = FALSE,
-                       on_event = NULL, run_dir = NULL, keep = FALSE, keep_on_error = FALSE,
-                       check_version = TRUE) {
-  py <- python %||% ss_python()$path
-  if (check_version && is.null(python)) .ss_hello()
-  own_dir <- is.null(run_dir)
-  if (own_dir) run_dir <- .ss_new_run_dir()
-  req_path <- file.path(run_dir, "request.json")
-  res_path <- file.path(run_dir, "result.json")
-  log_path <- file.path(run_dir, "bridge.log")
-  unlink(res_path)
-  request <- list(
-    protocol = .ss_protocol,
-    command = command,
-    client = list(name = "spacescans-r", version = .ss_pkg_version(),
-                  protocol_range = I(c(.ss_protocol, .ss_protocol))),
-    verbose = isTRUE(verbose),
-    args = .ss_named(args)
-  )
-  writeLines(.ss_to_json(request), req_path, useBytes = TRUE)
-
-  ok <- FALSE
-  proc <- NULL
-  on.exit({
-    if (!is.null(proc) && proc$is_alive()) try(proc$kill_tree(), silent = TRUE)
-    if (own_dir && !keep && (ok || !keep_on_error)) unlink(run_dir, recursive = TRUE)
-  }, add = TRUE)
-
-  proc <- tryCatch(
-    processx::process$new(
-      py,
-      c("-I", "-u", "-X", "utf8", "-m", "spacescans.bridge", command,
-        "--request", req_path, "--result", res_path),
-      stdout = "|", stderr = log_path, wd = run_dir, env = .ss_child_env(),
-      cleanup = TRUE, cleanup_tree = TRUE
-    ),
-    error = function(e) {
-      .ss_abort("python", sprintf("Cannot start Python (%s): %s", py, conditionMessage(e)))
-    }
-  )
-
-  ui <- .ss_progress_ui(isTRUE(progress))
-  py_warnings <- list()
-  handle <- function(line) {
-    ev <- tryCatch(jsonlite::parse_json(line, simplifyVector = FALSE), error = function(e) NULL)
+# An event consumer: keeps the latest step / fraction / overall fraction,
+# collects warning events, drives the progress display and calls on_event.
+.ss_event_state <- function(ui, verbose = FALSE, on_event = NULL) {
+  st <- new.env(parent = emptyenv())
+  st$step <- NULL
+  st$frac <- NA_real_
+  st$overall <- NA_real_
+  st$n_events <- 0L
+  st$warnings <- list()
+  st$last <- NULL
+  st$handle <- function(ev) {
     if (!is.list(ev) || is.null(ev$ev)) return(invisible())
+    st$n_events <- st$n_events + 1L
+    st$last <- ev
     if (is.function(on_event)) on_event(ev)
+    num <- function(x) if (is.numeric(x) && length(x) == 1L) as.numeric(x) else NA_real_
     switch(ev$ev,
-      progress = ui$update(ev$step, ev$frac),
-      line = if (isTRUE(verbose)) ui$note(ev$text),
-      step_start = if (isTRUE(verbose)) ui$note(sprintf("step %s (%s)", ev$step, ev$pattern %||% "")),
-      warning = { py_warnings[[length(py_warnings) + 1L]] <<- ev },
+      step_start = {
+        st$step <- ev$step
+        st$frac <- 0
+        if (!is.na(num(ev$overall))) st$overall <- num(ev$overall)
+        if (isTRUE(verbose)) {
+          ui$note(sprintf("step %s%s", ev$step %||% "",
+                          if (!is.null(ev$pattern)) sprintf(" (%s)", ev$pattern) else ""))
+        } else {
+          ui$update(st$step, st$frac, st$overall)
+        }
+      },
+      progress = {
+        if (!is.null(ev$step)) st$step <- ev$step
+        st$frac <- num(ev$frac)
+        if (!is.na(num(ev$overall))) st$overall <- num(ev$overall)
+        ui$update(st$step, st$frac, st$overall)
+      },
+      cache_hit = ui$update(ev$step, 1, st$overall, "(cached)"),
+      step_end = {
+        if (!is.na(num(ev$overall))) st$overall <- num(ev$overall)
+        if (isTRUE(verbose)) {
+          ui$note(sprintf("step %s finished (%s s)", ev$step %||% "", format(ev$seconds %||% NA)))
+        }
+      },
+      download = {
+        total <- num(ev$total)
+        got <- num(ev$bytes)
+        frac <- if (!is.na(total) && total > 0 && !is.na(got)) got / total else NA_real_
+        ui$update(ev$artifact %||% "download", frac, NULL,
+                  sprintf("%s of %s", .ss_format_bytes(got), .ss_format_bytes(total)))
+      },
+      verify = ui$status(sprintf("verifying %s", ev$artifact %||% ev$file %||% "")),
+      line = if (isTRUE(verbose)) ui$note(ev$text %||% ""),
+      warning = { st$warnings[[length(st$warnings) + 1L]] <- ev },
       NULL
     )
     invisible()
   }
+  st
+}
 
-  poll_ms <- as.integer(getOption("spacescans.poll_ms", 200L))
-  interrupted <- FALSE
-  tryCatch({
-    repeat {
-      proc$poll_io(poll_ms)
-      for (line in proc$read_output_lines()) handle(line)
-      if (!proc$is_alive()) break
-    }
-    for (line in proc$read_all_output_lines()) handle(line)
-  }, interrupt = function(e) {
-    interrupted <<- TRUE
-    .ss_interrupt_child(proc, getOption("spacescans.interrupt_grace", 5))
-  })
-  ui$done()
-  proc$wait()
-  status <- proc$get_exit_status()
-  result <- if (file.exists(res_path)) {
-    tryCatch(jsonlite::read_json(res_path, simplifyVector = FALSE), error = function(e) NULL)
-  }
-  stderr_tail <- .ss_tail(log_path)
-  kept <- if (own_dir && !keep && !keep_on_error) NULL else run_dir
+.ss_parse_event <- function(line) {
+  ev <- tryCatch(jsonlite::parse_json(line, simplifyVector = FALSE), error = function(e) NULL)
+  if (is.list(ev) && !is.null(ev$ev)) ev else NULL
+}
 
+.ss_read_result_file <- function(path) {
+  if (!file.exists(path)) return(NULL)
+  tryCatch(jsonlite::read_json(path, simplifyVector = FALSE), error = function(e) NULL)
+}
+
+# Turn the end of a bridge process into its value, or raise the matching
+# spacescans_error. `kept` is the run directory to report (NULL when it is
+# about to be removed).
+.ss_outcome <- function(status, result, stderr_tail, kept = NULL, interrupted = FALSE,
+                        emit_warnings = TRUE) {
   if (interrupted) {
-    .ss_abort("interrupted", "Interrupted; the spacescans Python process was stopped.",
-              exit_status = status, run_dir = kept, result = result, stderr = stderr_tail)
+    .ss_abort("interrupted", paste0(
+      "Interrupted; the spacescans Python process was stopped.",
+      if (!is.null(kept)) paste0("\nRun directory kept at ", kept, "; remove it with unlink(\"",
+                                 kept, "\", recursive = TRUE).")),
+      exit_status = status, run_dir = kept, result = result, stderr = stderr_tail)
   }
-  if (is.list(result) && isTRUE(result$ok) && identical(status, 0L)) {
-    ok <- TRUE
-    for (w in result$warnings) {
-      if (!is.null(w$message)) warning(paste0("spacescans: ", w$message), call. = FALSE)
+  if (is.list(result) && isTRUE(result$ok) && identical(as.integer(status), 0L)) {
+    if (emit_warnings) {
+      for (w in result$warnings) {
+        if (!is.null(w$message)) warning(paste0("spacescans: ", w$message), call. = FALSE)
+      }
     }
-    attr_val <- result$value
-    if (is.list(attr_val)) attr(attr_val, "spacescans") <- result$spacescans
-    return(attr_val)
+    val <- result$value
+    if (is.list(val)) attr(val, "spacescans") <- result$spacescans
+    return(val)
   }
   if (is.list(result) && identical(result$ok, FALSE) && is.list(result$error)) {
     err <- result$error
     kind <- if (is.character(err$kind) && length(err$kind) == 1L) err$kind else "internal"
     msg <- err$message %||% "the spacescans bridge reported an error"
+    details <- err$details %||% list()
+    if (identical(kind, "step_failed")) msg <- .ss_step_message(msg, details)
     if (!is.null(kept)) msg <- paste0(msg, "\nRun directory kept at ", kept,
                                       "; remove it with unlink(\"", kept, "\", recursive = TRUE).")
-    .ss_abort(kind, msg, hint = .ss_r_hint(kind, err$details %||% list(), err$hint),
-              details = err$details, py_type = err$type, py_traceback = err$traceback,
+    .ss_abort(kind, msg, hint = .ss_r_hint(kind, details, err$hint),
+              details = details, py_type = err$type, py_traceback = err$traceback,
               exit_status = status, run_dir = kept, stderr = stderr_tail, result = result)
   }
   # No (valid) result: the process crashed.
@@ -218,5 +283,108 @@
     hint <- NULL
   }
   if (length(stderr_tail)) msg <- paste0(msg, "\nLast lines of its log:\n", paste(stderr_tail, collapse = "\n"))
+  if (!is.null(kept)) msg <- paste0(msg, "\nRun directory kept at ", kept, ".")
   .ss_abort("crashed", msg, hint = hint, exit_status = status, run_dir = kept, stderr = stderr_tail)
+}
+
+# A failed step: name the step, its exit code and the last lines of its log.
+.ss_step_message <- function(msg, details) {
+  tail <- unlist(details$log_tail %||% details$tail)
+  if (length(tail)) {
+    msg <- paste0(msg, "\nLast lines of the step's log:\n", paste(utils::tail(tail, 20), collapse = "\n"))
+  }
+  msg
+}
+
+# Run one bridge command and return its `value`, or raise a spacescans_error.
+#
+# progress: show a progress line; verbose: print raw pipeline lines;
+# on_event: function(event) called for every event; run_dir: use this
+# directory (kept) instead of a fresh temporary one; keep: keep the fresh
+# directory; keep_on_error: keep it when the command fails; env: extra
+# environment variables for the bridge process.
+.ss_bridge <- function(command, args = list(), python = NULL, progress = FALSE, verbose = FALSE,
+                       on_event = NULL, run_dir = NULL, keep = FALSE, keep_on_error = FALSE,
+                       check_version = TRUE, env = NULL) {
+  py <- python %||% ss_python()$path
+  if (check_version && is.null(python)) .ss_hello()
+  own_dir <- is.null(run_dir)
+  if (own_dir) run_dir <- .ss_new_run_dir()
+  p <- .ss_paths(run_dir)
+  unlink(p$result)
+  writeLines(.ss_to_json(.ss_request(command, args, verbose)), p$request, useBytes = TRUE)
+
+  ok <- FALSE
+  proc <- NULL
+  on.exit({
+    if (!is.null(proc) && proc$is_alive()) try(proc$kill_tree(), silent = TRUE)
+    if (own_dir && !keep && (ok || !keep_on_error)) unlink(run_dir, recursive = TRUE)
+  }, add = TRUE)
+
+  proc <- .ss_spawn(py, command, run_dir, stdout = "|", cleanup = TRUE, env = .ss_child_env(env))
+  ui <- .ss_progress_ui(isTRUE(progress))
+  evs <- .ss_event_state(ui, verbose = verbose, on_event = on_event)
+  handle <- function(line) evs$handle(.ss_parse_event(line))
+
+  poll_ms <- as.integer(getOption("spacescans.poll_ms", 200L))
+  interrupted <- FALSE
+  tryCatch({
+    repeat {
+      proc$poll_io(poll_ms)
+      for (line in proc$read_output_lines()) handle(line)
+      if (!proc$is_alive()) break
+    }
+    for (line in proc$read_all_output_lines()) handle(line)
+  }, interrupt = function(e) {
+    interrupted <<- TRUE
+    .ss_interrupt_child(proc, getOption("spacescans.interrupt_grace", 10))
+  })
+  ui$done()
+  proc$wait()
+  status <- proc$get_exit_status()
+  result <- .ss_read_result_file(p$result)
+  stderr_tail <- .ss_tail(p$log)
+  kept <- if (own_dir && !keep && !keep_on_error) NULL else run_dir
+  value <- .ss_outcome(status, result, stderr_tail, kept = kept, interrupted = interrupted)
+  ok <- TRUE
+  value
+}
+
+# Data-frame helpers for bridge values -------------------------------------
+
+# A list of records (JSON objects) as a data frame. Scalar fields become
+# columns; array fields are joined with ", " (or kept as list columns with
+# list_cols); missing fields are NA.
+.ss_records_df <- function(rows, list_cols = character(), first = character()) {
+  if (is.null(rows) || !length(rows)) return(data.frame())
+  if (!is.null(names(rows)) && all(nzchar(names(rows))) &&
+      all(vapply(rows, is.list, logical(1)))) {
+    # an object keyed by id: {key: {...}} -> records with the key as first field
+    keys <- names(rows)
+    rows <- lapply(seq_along(rows), function(i) c(list(.key = keys[i]), rows[[i]]))
+  }
+  fields <- unique(unlist(lapply(rows, names)))
+  fields <- c(intersect(first, fields), setdiff(fields, first))
+  cols <- lapply(fields, function(f) {
+    vals <- lapply(rows, function(r) r[[f]])
+    if (f %in% list_cols) return(I(lapply(vals, function(v) unlist(v) %||% character())))
+    scalar <- vapply(vals, function(v) is.null(v) || (is.atomic(v) && length(v) <= 1L), logical(1))
+    if (all(scalar)) {
+      vals <- lapply(vals, function(v) if (is.null(v) || !length(v)) NA else v)
+      types <- unique(vapply(vals[!vapply(vals, function(v) length(v) == 1L && is.na(v), logical(1))],
+                             function(v) class(v)[1], character(1)))
+      out <- unlist(vals)
+      if (length(types) == 1L && types == "integer") out <- as.integer(out)
+      return(out)
+    }
+    vapply(vals, function(v) {
+      if (is.null(v) || !length(v)) return(NA_character_)
+      flat <- unlist(v)
+      if (is.null(flat)) NA_character_ else paste(as.character(flat), collapse = ", ")
+    }, character(1))
+  })
+  names(cols) <- fields
+  df <- as.data.frame(cols, stringsAsFactors = FALSE, optional = TRUE)
+  names(df) <- fields
+  df
 }
