@@ -10,6 +10,10 @@ import pytest
 
 pytestmark = pytest.mark.geo
 
+# The scripts under test, found from this file so the tests do not depend on
+# the directory pytest is started from.
+SCRIPTS = Path(__file__).resolve().parents[1] / "scripts"
+
 
 def _make_mock_tile(path: Path) -> None:
     """Create a 10-building mock tile as gzipped GeoJSONL.
@@ -63,7 +67,7 @@ def _write_mock_index(idx_path: Path, quadkeys: list[str]) -> None:
 def _run_stage1(*, index, boundary, tiles_dir, output, force=False) -> subprocess.CompletedProcess:
     cmd = [
         sys.executable,
-        "scripts/build_county_buildings.py",
+        str(SCRIPTS / "build_county_buildings.py"),
         "--county-fips", "12073",
         "--state-fips", "12",
         "--index", str(index),
@@ -88,7 +92,7 @@ def test_stage1_smoke(tmp_path):
         pytest.skip("FL county shapefile not present locally")
 
     # Compute the ACTUAL Leon quadkeys via mercantile so the mock index covers them.
-    import sys; sys.path.insert(0, "scripts")
+    import sys; sys.path.insert(0, str(SCRIPTS))
     from _building_utils import quadkeys_for_bbox
     import geopandas as gpd
     fl = gpd.read_file(boundary).query("STATEFP10 == '12' and COUNTYFP10 == '073'")
@@ -129,7 +133,7 @@ def test_stage1_reproducible(tmp_path):
     if not boundary.exists():
         pytest.skip("FL county shapefile not present locally")
 
-    import sys; sys.path.insert(0, "scripts")
+    import sys; sys.path.insert(0, str(SCRIPTS))
     from _building_utils import quadkeys_for_bbox
     import geopandas as gpd
     fl = gpd.read_file(boundary).query("STATEFP10 == '12' and COUNTYFP10 == '073'")
