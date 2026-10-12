@@ -25,6 +25,10 @@ def main(argv: list[str] | None = None) -> int:
     p_ic = sub.add_parser("init-config", help="Copy template configs to a directory")
     p_ic.add_argument("--out", required=True, help="Target directory for templates")
 
+    # `data` (spacescans.data: status / fetch / verify; standard library only)
+    from spacescans.data.cli import add_data_parser
+    add_data_parser(sub)
+
     args = parser.parse_args(argv)
     if args.cmd == "run":
         from spacescans.cli._run import cmd_run
@@ -35,6 +39,9 @@ def main(argv: list[str] | None = None) -> int:
     if args.cmd == "init-config":
         from spacescans.cli._init_config import cmd_init_config
         return cmd_init_config(args)
+    if args.cmd == "data":
+        from spacescans.data.cli import cmd_data
+        return cmd_data(args)
     parser.print_help()
     return 1
 

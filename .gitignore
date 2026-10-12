@@ -2,6 +2,8 @@ data/
 data_full/
 # Allow bundled sample data shipped in the wheel
 !src/spacescans/resources/data/
+# spacescans.data (the data-acquisition module) is code, not data
+!src/spacescans/data/
 output/
 output_modularized/
 cache/

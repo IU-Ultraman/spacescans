@@ -85,6 +85,8 @@ spacescans = [
     "catalog/*.json",
     "catalog/templates/c3/*.yaml",
     "catalog/templates/c4/*.yaml",
+    "data/manifest.json",
+    "data/manifest.schema.json",
     "py.typed",
 ]
 
