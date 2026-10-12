@@ -40,13 +40,13 @@ test_that("invalid configs are config errors with field locations", {
 test_that("templates can be listed and fetched", {
   skip_if_no_python()
   local_clean_state()
-  tpl <- ss_templates()
+  tpl <- ss_templates(kind = "init")
   expect_s3_class(tpl, "data.frame")
   expect_true(all(c("c3/county", "c4/zbp", "quickstart/end_to_end") %in% tpl$name))
-  zbp <- ss_templates("c4/zbp")
+  zbp <- ss_templates("c4/zbp", kind = "init")
   expect_equal(zbp$linkage_pattern, "yearly_areal")
   expect_match(attr(zbp, "text"), "^name: zcta5_zbp")
-  expect_error(ss_templates("c3/nope"), class = "spacescans_error_config")
+  expect_error(ss_templates("c3/nope", kind = "init"), class = "spacescans_error_config")
 })
 
 test_that("configs round-trip through YAML", {

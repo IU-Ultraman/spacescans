@@ -32,9 +32,28 @@ test_that("R hints are built from bridge details", {
   expect_equal(spacescans:::.ss_r_hint("runtime", list(), "py hint"), "py hint")
 })
 
-test_that("phase B functions raise not_implemented", {
-  for (f in list(ss_link, ss_catalog, ss_data_status, ss_fetch)) {
-    expect_error(f(), class = "spacescans_error_not_implemented")
+test_that("R hints name the R call that fixes the problem", {
+  h <- spacescans:::.ss_r_hint
+  expect_equal(h("data_missing", list(variables = c("ndi", "vnl")), NULL),
+               'Run ss_fetch(c("ndi", "vnl")) to download the missing data.')
+  expect_equal(h("data_missing", list(datasets = "bg_boundaries"), NULL),
+               'Run ss_fetch(datasets = "bg_boundaries") to download the missing data.')
+  expect_match(h("data_corrupt", list(dataset = "vnl"), NULL), 'ss_data_verify(datasets = "vnl", deep = TRUE)', fixed = TRUE)
+  expect_match(h("terms_required", list(terms = "epa-faqsd", dataset = "faqsd"), NULL),
+               'ss_fetch(datasets = "faqsd", accept_terms = "epa-faqsd")', fixed = TRUE)
+  expect_match(h("step_failed", list(step = "c3_bg", rc = 137L), NULL), "ran out of memory")
+  expect_false(grepl("memory", h("step_failed", list(step = "c3_bg", rc = 1L), NULL)))
+  expect_match(h("disk_space", list(required_bytes = 2e9, free_bytes = 1e9), NULL), "2.0 GB, 1.0 GB free")
+  expect_match(h("network", list(), NULL), "resume")
+  expect_equal(h("missing_extra", list(extra = c("geo", "hdf4")), NULL),
+               'ss_install(extras = c("geo", "hdf4")) adds the missing Python extra.')
+})
+
+test_that("cohort, network, locked and step kinds get their design classes", {
+  for (k in c("cohort", "network", "locked")) {
+    expect_s3_class(tryCatch(spacescans:::.ss_abort(k, "x"), error = identity), paste0("spacescans_error_", k))
   }
-  expect_error(ss_link(data.frame(), "ndi"), "available in phase B")
+  e <- tryCatch(spacescans:::.ss_abort("step_failed", "x"), error = identity)
+  expect_s3_class(e, "spacescans_error_step")
+  expect_s3_class(e, "spacescans_error")
 })

@@ -4,23 +4,29 @@
 \alias{ss_templates}
 \title{Config templates shipped with the Python package}
 \usage{
-ss_templates(name = NULL)
+ss_templates(name = NULL, kind = c("catalog", "init"))
 }
 \arguments{
 \item{name}{\code{NULL} (default) to list the templates, or a template name
 such as \code{"c3/county"} to get that template.}
+
+\item{kind}{\code{"catalog"} or \code{"init"}.}
 }
 \value{
-Without \code{name}, a data frame with columns \code{name}, \code{kind}, \code{file},
-\code{config_name} and \code{linkage_pattern}. With \code{name}, the template as a
-list (attribute \code{text} holds the YAML text).
+Without \code{name}, a data frame with one row per template (\code{name},
+\code{kind}, \code{file}, and for catalog templates \code{sha256}, ...). With \code{name},
+the template as a list (attribute \code{text} holds the YAML text).
 }
 \description{
-Config templates shipped with the Python package
+Two sets exist: the 25 catalog templates that \code{\link[=ss_link]{ss_link()}} renders for the
+catalog variables (\code{kind = "catalog"}, the default; listed with their
+SHA-256), and the 5 starter configs for writing your own C3/C4 configs
+for \code{\link[=ss_run]{ss_run()}} (\code{kind = "init"}).
 }
 \examples{
 \dontrun{
 ss_templates()
-cfg <- ss_templates("c4/zbp")
+ss_templates(kind = "init")
+cfg <- ss_templates("c4/zbp", kind = "init")
 }
 }

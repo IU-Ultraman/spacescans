@@ -20,12 +20,17 @@ Imports:
     jsonlite,
     nanoparquet,
     processx,
+    ps,
+    stats,
     tools,
     utils
 Suggests:
     arrow,
+    knitr,
+    markdown,
     testthat (>= 3.0.0),
     withr
+VignetteBuilder: knitr
 SystemRequirements: Python 3.12 with the 'spacescans-pipeline' package,
     installed by ss_install() with 'uv' (<https://docs.astral.sh/uv/>);
     macOS 14 or later on Apple silicon is the supported platform.

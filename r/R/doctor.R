@@ -4,11 +4,13 @@
 #' `warn` or `fail`: which interpreter is used and why, versions and protocol,
 #' Python extras, GDAL/GEOS/PROJ, macOS version and architecture, memory,
 #' machine-wide `PROJ_*`/`GDAL_DATA` variables (they are not passed to
-#' Python), and whether the data, environment or temporary directories sit in
-#' a cloud-synced folder. Data checks (`ss_data_status()`) join in phase B.
+#' Python), whether the data, cache, environment or temporary directories sit
+#' in a cloud-synced folder, free disk space, and (when a data directory is
+#' known) how many catalog variables have their data in place
+#' ([ss_data_status()]).
 #'
-#' @param data_dir Data directory to check. Default: the `SPACESCANS_DATA_DIR`
-#'   environment variable, if set.
+#' @param data_dir Data directory to check. Default: [ss_data_dir()] when
+#'   it is set.
 #' @return Invisibly, a data frame of class `ss_doctor` with columns `check`,
 #'   `status` and `message`; it is printed.
 #' @examples
@@ -74,19 +76,38 @@ ss_doctor <- function(data_dir = NULL) {
     if (length(unavailable)) add("patterns", "warn", sprintf("%d optional module(s) unavailable: %s",
                                                             length(unavailable), paste(basename(gsub(".", "/", unavailable, fixed = TRUE)), collapse = ", ")))
   }
-  data_dir <- data_dir %||% (if (nzchar(Sys.getenv("SPACESCANS_DATA_DIR"))) Sys.getenv("SPACESCANS_DATA_DIR"))
-  dirs <- list(`data directory` = data_dir, `Python environment` = .ss_envdir(), `temporary directory` = tempdir())
+  data_dir <- data_dir %||% .ss_data_dir_or_null()
+  dirs <- list(`data directory` = data_dir, `cache directory` = .ss_cache_root(),
+               `Python environment` = .ss_envdir(), `temporary directory` = tempdir())
   for (label in names(dirs)) {
     d <- dirs[[label]]
     if (is.null(d)) {
-      add(label, "warn", "not set (ss_data_dir() arrives in phase B; set SPACESCANS_DATA_DIR)")
+      add(label, "warn", "not set; use ss_data_dir(\"~/ss-data\") or the SPACESCANS_DATA_DIR environment variable")
       next
     }
     if (.ss_is_cloud_synced(d)) {
       add(label, "warn", sprintf("%s is in a cloud-synced folder; keep data, caches and run files local", d))
     } else {
-      add(label, if (dir.exists(d) || label == "Python environment") "ok" else "warn",
-          sprintf("%s%s", d, if (dir.exists(d)) "" else " (does not exist)"))
+      optional <- label %in% c("Python environment", "cache directory")
+      add(label, if (dir.exists(d) || optional) "ok" else "warn",
+          sprintf("%s%s", d, if (dir.exists(d)) "" else if (optional) " (created on first use)" else " (does not exist)"))
+    }
+  }
+  if (!is.null(data_dir) && dir.exists(data_dir)) {
+    free <- .ss_free_bytes(data_dir)
+    if (!is.na(free)) add("disk space", if (free >= 50e9) "ok" else "warn",
+                          sprintf("%s free in the data directory%s", .ss_format_bytes(free),
+                                  if (free < 50e9) "; the full catalog needs about 50 GB or more" else ""))
+  }
+  if (!is.null(caps) && !is.null(data_dir) && "data-status" %in% unlist(caps$commands)) {
+    st <- tryCatch(ss_data_status(data_dir = data_dir), error = function(e) e)
+    if (inherits(st, "error")) {
+      add("data", "warn", conditionMessage(st))
+    } else {
+      ready <- sum(st$usable %in% TRUE)
+      add("data", if (ready == nrow(st)) "ok" else "warn",
+          sprintf("%d of %d catalog variables have their data in place%s", ready, nrow(st),
+                  if (ready < nrow(st)) "; ss_data_status() lists the rest" else ""))
     }
   }
   out <- do.call(rbind, rows)
@@ -102,4 +123,13 @@ print.ss_doctor <- function(x, ...) {
     cat(mark[[x$status[i]]], " ", format(x$check[i], width = 20), " ", x$message[i], "\n", sep = "")
   }
   invisible(x)
+}
+
+.ss_free_bytes <- function(path) {
+  out <- tryCatch(system2("df", c("-k", shQuote(path)), stdout = TRUE, stderr = FALSE),
+                  error = function(e) character(), warning = function(w) character())
+  if (length(out) < 2L) return(NA_real_)
+  fields <- strsplit(trimws(out[length(out)]), "[[:space:]]+")[[1]]
+  avail <- suppressWarnings(as.numeric(fields[4]))
+  if (is.na(avail)) NA_real_ else avail * 1024
 }
