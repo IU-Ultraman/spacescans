@@ -128,6 +128,29 @@ spacescans run ./configs/c4/cbp_fallback.yaml   # depends on C3 county + C4 zbp
 Paths resolve in three tiers: **CLI flag > `$SPACESCANS_DATA_DIR` > YAML `base_dir:`**,
 with `${SPACESCANS_DATA_DIR}` expansion inside YAML paths.
 
+## Getting the exposure data
+
+No exposure data ships with spacescans. `spacescans data` knows where each catalog
+variable's data comes from and what a complete copy looks like under the data directory
+(`spacescans/data/manifest.json`); it needs no extras.
+
+```bash
+spacescans data status ndi walkability --data-dir ~/ss-data   # present, missing, sizes, next step
+spacescans data fetch noise tiger_proximity --data-dir ~/ss-data --dry-run
+spacescans data fetch noise tiger_proximity --data-dir ~/ss-data   # resumable; re-run after a drop
+spacescans data verify --data-dir ~/ss-data                   # sha256 of everything placed
+spacescans data adopt --data-dir /existing/web/pipeline-data  # receipts for data placed earlier
+```
+
+- Project-mirrored files download from the project's OneDrive mirror (or `--mirror URL|DIR`,
+  `$SPACESCANS_DATA_MIRROR`), resume after interruptions, are checked against their published
+  sha256, and are recorded in `<data-dir>/.spacescans/receipts/`.
+- Provider datasets (VIIRS nighttime lights, KNMI TEMIS, WashU ACAG, EPA FAQSD) are not
+  downloaded for you: `status` prints the provider's instructions, licence and attribution.
+  Provider terms are never accepted on your behalf.
+- The same functions are available from Python: `spacescans.data.status()`, `fetch()`,
+  `verify()`, `adopt()`, `terms()`.
+
 ## Project layout
 
 ```text
