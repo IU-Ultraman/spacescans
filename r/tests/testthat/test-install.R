@@ -33,3 +33,25 @@ test_that("uv is looked up in the documented places", {
   withr::local_envvar(SPACESCANS_UV = fake)
   expect_equal(spacescans:::.ss_find_uv(), normalizePath(fake))
 })
+
+test_that("the lock is filtered to the base install plus the requested extras", {
+  d <- withr::local_tempdir()
+  lock <- file.path(d, "macos-arm64-py312.txt")
+  writeLines(c(
+    "numpy==2.5.4 \\", "    --hash=sha256:aa \\", "    --hash=sha256:bb",
+    "PyYAML==6.0.3 \\", "    --hash=sha256:cc",
+    "rasterio==1.5.1 \\", "    --hash=sha256:dd",
+    "pyhdf==0.11.6 \\", "    --hash=sha256:ee",
+    "typing_extensions==4.16.0 \\", "    --hash=sha256:ff"
+  ), lock)
+  jsonlite::write_json(list(base = c("numpy", "pyyaml", "typing-extensions"), geo = "rasterio", hdf4 = "pyhdf"),
+                       file.path(d, "macos-arm64-py312.groups.json"))
+  out <- readLines(spacescans:::.ss_lock_requirements(lock, "geo", file.path(d, "req.txt")))
+  expect_equal(out, c("numpy==2.5.4 \\", "    --hash=sha256:aa \\", "    --hash=sha256:bb",
+                      "PyYAML==6.0.3 \\", "    --hash=sha256:cc", "rasterio==1.5.1 \\", "    --hash=sha256:dd",
+                      "typing_extensions==4.16.0 \\", "    --hash=sha256:ff"))
+  all <- readLines(spacescans:::.ss_lock_requirements(lock, "all", file.path(d, "req2.txt")))
+  expect_true(any(startsWith(all, "pyhdf==")))
+  expect_error(spacescans:::.ss_lock_requirements(lock, "nc", file.path(d, "req3.txt")),
+               class = "spacescans_error_install")
+})

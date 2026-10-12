@@ -85,7 +85,9 @@ ss_install <- function(extras = c("geo", "rda", "nc"), python = "3.12", envdir =
   common <- c("pip", "install", "--python", py, "--only-binary", ":all:", "--compile-bytecode", net)
   lock <- .ss_lock_file()
   if (!is.null(lock)) {
-    run_uv(c(common, "--require-hashes", "-r", lock))
+    reqs <- .ss_lock_requirements(lock, extras, file.path(tempdir(), "spacescans-requirements.txt"))
+    on.exit(unlink(reqs), add = TRUE)
+    run_uv(c(common, "--require-hashes", "-r", reqs))
     run_uv(c(common, "--no-deps", whl))
   } else {
     spec <- if (length(extras)) sprintf("%s[%s]", whl, paste(extras, collapse = ",")) else whl
@@ -130,7 +132,33 @@ ss_install <- function(extras = c("geo", "rda", "nc"), python = "3.12", envdir =
 .ss_lock_file <- function() {
   if (!identical(Sys.info()[["sysname"]], "Darwin") || !identical(R.version$arch, "aarch64")) return(NULL)
   path <- system.file("python", "locks", "macos-arm64-py312.txt", package = "spacescans")
-  if (nzchar(path)) path else NULL
+  if (nzchar(path) && file.exists(sub("\\.txt$", ".groups.json", path))) path else NULL
+}
+
+.ss_norm_pkg <- function(x) gsub("[_.]+", "-", tolower(x))
+
+# Write the lock entries (requirement line plus its --hash lines) for the base
+# install and the requested extras to `dest`. The groups file next to the lock
+# (written by tools/lock.sh) says which packages each extra adds.
+.ss_lock_requirements <- function(lock, extras, dest) {
+  groups <- jsonlite::read_json(sub("\\.txt$", ".groups.json", lock), simplifyVector = TRUE)
+  if ("all" %in% extras) extras <- setdiff(names(groups), "base")
+  unknown <- setdiff(extras, names(groups))
+  if (length(unknown)) {
+    .ss_abort("install", sprintf("The lock has no group for extra(s): %s.", paste(unknown, collapse = ", ")))
+  }
+  wanted <- .ss_norm_pkg(unique(unlist(groups[c("base", extras)], use.names = FALSE)))
+  lines <- readLines(lock, warn = FALSE)
+  starts <- grep("^[A-Za-z0-9]", lines)
+  block <- findInterval(seq_along(lines), starts)
+  keep_block <- .ss_norm_pkg(sub("[=<>!~ ;\\[].*$", "", lines[starts])) %in% wanted
+  keep <- block > 0 & keep_block[pmax(block, 1L)]
+  found <- .ss_norm_pkg(sub("[=<>!~ ;\\[].*$", "", lines[starts][keep_block]))
+  if (length(missing <- setdiff(wanted, found))) {
+    .ss_abort("install", sprintf("The lock lacks pinned entries for: %s.", paste(missing, collapse = ", ")))
+  }
+  writeLines(lines[keep], dest)
+  dest
 }
 
 .ss_find_wheel <- function(wheel = NULL, wheelhouse = NULL, offline = FALSE) {

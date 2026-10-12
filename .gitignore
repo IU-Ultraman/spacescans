@@ -25,3 +25,4 @@ r/*.Rcheck/
 r/spacescans_*.tar.gz
 r/inst/python/*.whl
 r/inst/python/pin.json
+r/inst/python/locks/

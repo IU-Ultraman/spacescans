@@ -45,10 +45,22 @@ versions. The wheel and pin.json are not committed; the release job runs the
 script at the release commit (with `--url` of the wheel attached to the
 GitHub release) before `R CMD build r`.
 
+## The dependency lock
+
+`tools/lock.sh` writes `inst/python/locks/macos-arm64-py312.txt` (every
+dependency of every extra, with sha256 hashes, resolved for CPython 3.12 on
+Apple silicon with a macOS 14 floor: rasterio 1.5.1, pyhdf 0.11.6) and a
+`.groups.json` naming the packages of the base install and of each extra.
+When both are present, `ss_install()` installs the base packages plus those
+of the requested extras with `--require-hashes`, then the wheel with
+`--no-deps`; without them it lets uv resolve `wheel[extras]`. Like the wheel,
+the lock is produced by the release job, not committed.
+
 ## Development
 
 ```sh
 r/tools/build-wheel.sh                          # bundle the wheel
+r/tools/lock.sh                                 # optional: the hashed lock
 R CMD build r && R CMD check --no-manual spacescans_*.tar.gz
 ```
 
