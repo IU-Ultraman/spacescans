@@ -26,15 +26,40 @@ EXIT_NO_RESULT = 3       # the result file could not be written
 EXIT_SIGINT = 130
 EXIT_SIGTERM = 143
 
+# Design section 3.5. Clients must accept kinds they do not know (additive
+# changes keep protocol 1). Phase A's "data" is now "data_missing" (a file
+# that is not there or not readable) and "runtime" is "internal".
 ERROR_KINDS = (
-    "protocol",       # bad request, unsupported protocol, unknown command
-    "config",         # invalid arguments or pipeline config
-    "data",           # an input file is missing or unreadable
-    "missing_extra",  # a pattern/reader needs an extra that is not installed
-    "runtime",        # the pipeline raised
-    "interrupted",    # SIGINT / SIGTERM
-    "internal",       # a bug in the bridge itself
+    "protocol",        # bad request, unsupported protocol, unknown command
+    "config",          # invalid arguments, unknown variable, bad pipeline config
+    "cohort",          # missing columns, unparseable dates, NA or out-of-range coordinates
+    "data_missing",    # data not in the data directory, or an input file not there
+    "data_corrupt",    # checksum or size mismatch, truncated file
+    "terms_required",  # a provider download needs the user's explicit acceptance
+    "missing_extra",   # a pattern/reader needs an extra that is not installed
+    "network",         # a download failed after retries (re-running resumes)
+    "disk_space",      # not enough free space for the plan
+    "locked",          # another process holds the data directory's download lock
+    "step_failed",     # a pipeline step exited with rc != 0
+    "interrupted",     # SIGINT / SIGTERM
+    "internal",        # a bug: anything not classified above
 )
+
+
+def write_bytes_atomic(path: Path, write) -> None:
+    """Call ``write(tmp_path)`` on a temporary file next to ``path``, then rename it into place."""
+    path = Path(path)
+    fd, tmp = tempfile.mkstemp(prefix=f".{path.name}.", suffix=".tmp", dir=str(path.parent))
+    os.close(fd)
+    try:
+        write(Path(tmp))
+        os.replace(tmp, path)
+    except BaseException:
+        try:
+            os.unlink(tmp)
+        except OSError:
+            pass
+        raise
 
 
 def runtime_info() -> dict[str, Any]:

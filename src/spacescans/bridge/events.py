@@ -51,14 +51,20 @@ class EventStream:
                 self._stream = None
 
     def progress(self, frac: float, *, step: str | None = None, text: str | None = None,
-                 force: bool = False) -> None:
-        """At most one progress event per step every ``progress_interval_s`` (4/s by default)."""
+                 force: bool = False, overall: float | None = None, **fields: Any) -> bool:
+        """At most one progress event per step every ``progress_interval_s`` (4/s by default).
+
+        ``overall`` is the whole command's fraction; a one-step command passes
+        none and gets ``frac``. Returns whether an event was emitted.
+        """
         now = time.monotonic()
         last = self._last_progress.get(step)
         if not force and frac < 1.0 and last is not None and now - last < self._interval:
-            return
+            return False
         self._last_progress[step] = now
-        self.emit("progress", step=step, frac=round(frac, 4), text=text)
+        self.emit("progress", step=step, frac=round(frac, 4),
+                  overall=round(frac if overall is None else overall, 4), text=text, **fields)
+        return True
 
     def line(self, text: str, *, step: str | None = None) -> None:
         if self.verbose:
