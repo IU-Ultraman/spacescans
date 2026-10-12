@@ -55,6 +55,14 @@ def add_data_parser(sub: Any) -> None:
     q.add_argument("--archive", action="append", default=[], metavar="PATH",
                    help="also check this downloaded archive against the manifest (repeatable)")
 
+    q = dsub.add_parser("import", help="Place provider files you downloaded by hand "
+                                       "(e.g. VNL .tif.gz) where the readers look")
+    q.add_argument("dataset", help="a provider dataset, e.g. vnl, faqsd, temis_uv_raw")
+    q.add_argument("paths", nargs="+", metavar="PATH", help="downloaded files (.gz is unpacked)")
+    q.add_argument("--data-dir", help="data directory (default: $SPACESCANS_DATA_DIR)")
+    q.add_argument("--move", action="store_true", help="delete each source once it is placed")
+    q.add_argument("--json", action="store_true", help="print the report as JSON")
+
     q = dsub.add_parser("adopt", help="Record receipts for mirror data already in place "
                                       "(placed by the web app's script or upload page, or by hand)")
     common(q)
@@ -72,6 +80,8 @@ def cmd_data(args: argparse.Namespace) -> int:
             return _verify(args)
         if args.data_cmd == "adopt":
             return _adopt(args)
+        if args.data_cmd == "import":
+            return _import(args)
     except UsageError as e:
         _print_error(e)
         return 2
@@ -308,4 +318,23 @@ def _adopt(args: argparse.Namespace) -> int:
     for i in rep.items:
         extra = f"  {i.detail}" if i.detail else f"  ({i.files:,} files, {_gb(i.bytes)})" if i.files else ""
         print(f"  {i.artifact:<60} {i.result}{extra}")
+    return 0 if rep.ok else 1
+
+
+def _import(args: argparse.Namespace) -> int:
+    from spacescans.data._import import import_files
+
+    rep = import_files(args.dataset, args.paths, data_dir=args.data_dir, move=args.move)
+    if args.json:
+        print(json.dumps(rep.to_dict(), indent=1))
+        return 0 if rep.ok else 1
+    for i in rep.items:
+        where = f" -> {i.target}" if i.target else ""
+        detail = f" ({i.detail})" if i.detail else ""
+        print(f"  {i.source}{where}: {i.result}{detail}")
+    d = rep.status.dataset(args.dataset) if rep.status else None
+    if d is not None:
+        print(f"{args.dataset}: {d.status} ({d.present:,} of {d.expected:,} present)")
+        for m in d.missing[:5]:
+            print(f"  missing: {m}")
     return 0 if rep.ok else 1

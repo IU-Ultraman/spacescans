@@ -14,12 +14,13 @@ on a base install, without geopandas or rasterio.
     data.fetch(["ndi", "walkability"], data_dir="~/ss-data")
     data.verify(["ndi"], data_dir="~/ss-data")
 
-CLI: ``spacescans data status|fetch|verify|adopt``.
+CLI: ``spacescans data status|fetch|verify|adopt|import``.
 """
 from __future__ import annotations
 
 from spacescans.data._adopt import AdoptReport, adopt
 from spacescans.data._fetch import FetchPlan, FetchReport, fetch, plan
+from spacescans.data._import import ImportReport, import_files
 from spacescans.data._status import (
     USABLE,
     DatasetStatus,
@@ -97,6 +98,7 @@ __all__ = [
     "ExtractResult",
     "FetchPlan",
     "FetchReport",
+    "ImportReport",
     "LockedError",
     "Manifest",
     "ManifestError",
@@ -114,6 +116,7 @@ __all__ = [
     "extract_archive",
     "extract_tar",
     "fetch",
+    "import_files",
     "is_macos_metadata",
     "load_manifest",
     "plan",
