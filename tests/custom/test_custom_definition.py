@@ -412,3 +412,98 @@ def test_raster_bands_refuses_a_band_column_mismatch():
     d = {"value_cols": ["no2", "pm25"], "bands": [1], "band_nodata": [None]}
     with pytest.raises(ValueError, match="1 band\\(s\\) for 2 value column"):
         custom.raster_bands(d)
+
+
+# --------------------------------------------------------------------------
+# definitions handed back from outside (R, JSON)
+# --------------------------------------------------------------------------
+
+def _unboxed(d):
+    """What R's jsonlite (auto_unbox = TRUE) makes of a definition: one-element
+    lists become scalars, empty objects become [], NULL becomes {}."""
+    import json
+    out = json.loads(json.dumps(d))
+    for k, v in list(out.items()):
+        if isinstance(v, list) and len(v) == 1 and not isinstance(v[0], dict):
+            out[k] = v[0]
+        elif v == {}:
+            out[k] = []
+        elif v is None:
+            out[k] = {}
+    return out
+
+
+def test_a_definition_survives_a_json_round_trip_through_r(tmp_path):
+    p = tmp_path / "values.csv"
+    p.write_bytes(_yearly_csv())
+    d = custom.define_polygon(p, boundary="Tract", key_col="tract", value_cols=["greenness"],
+                              year_col="year")
+    back = custom.check_definition(_unboxed(d), key=d["variable_key"], deep=True)
+    assert back == d
+    q = tmp_path / "static.csv"
+    q.write_bytes(_static_csv())
+    static = custom.define_polygon(q, boundary="Tract", key_col="tract",
+                                   value_cols=["greenness"])
+    back = custom.check_definition(_unboxed(static))
+    assert back == static and back["year_col"] is None and back["value_units"] == {}
+
+
+def test_check_definition_finds_a_missing_or_changed_file(tmp_path):
+    p = tmp_path / "values.csv"
+    p.write_bytes(_static_csv())
+    d = custom.define_polygon(p, boundary="Tract", key_col="tract", value_cols=["greenness"])
+    custom.check_definition(d, deep=True)
+    p.write_bytes(_static_csv() + b"12073001300,0.5,80\n")
+    custom.check_definition(d)                              # still there
+    with pytest.raises(CustomExposomeError, match="has changed since the dataset was defined"):
+        custom.check_definition(d, deep=True)
+    p.unlink()
+    with pytest.raises(CustomExposomeError, match="file not found"):
+        custom.check_definition(d)
+    assert custom.check_definition(d, files=False)["values_path"] == str(p)
+
+
+@pytest.mark.parametrize("change,match", [
+    ({"geometry": "line"}, "geometry must be 'polygon' or 'raster'"),
+    ({"boundary": "Parcel"}, "unknown boundary"),
+    ({"join_col": "GEOID"}, "joins on 'GEOID10'"),
+    ({"value_cols": []}, "value_cols must be a non-empty list"),
+    ({"values_path": None}, "values_path is missing"),
+    ({"coverage_years": [2013]}, "coverage_years must be"),
+])
+def test_check_definition_rejects_a_broken_polygon(change, match):
+    d = {**_define(values_path="/x/values.csv"), **change}
+    with pytest.raises(CustomExposomeError, match=match):
+        custom.check_definition(d, files=False)
+
+
+def test_check_definition_checks_the_key():
+    d = _define(values_path="/x/values.csv")
+    custom.check_definition(d, key=d["variable_key"], files=False)
+    with pytest.raises(CustomExposomeError, match="holds the definition of"):
+        custom.check_definition(d, key="custom_00000000", files=False)
+    with pytest.raises(CustomExposomeError, match="not a custom dataset key"):
+        custom.check_definition(d, key="ndvi", files=False)
+
+
+@pytest.mark.geo
+def test_a_raster_definition_survives_a_json_round_trip_through_r(tif):
+    p = tif("p.tif", _stack(), nodata=-9999)
+    for bands, cols in (([2], ["no2"]), ([3, 1], ["a", "b"])):
+        d = custom.define_raster([(p, None)], label="x", bands=bands, value_cols=cols)
+        assert custom.check_definition(_unboxed(d), key=d["variable_key"], deep=True) == d
+    yearly = custom.define_raster([(tif("a.tif", _cells()), 2016), (tif("b.tif", _cells()), 2017)],
+                                  label="y")
+    assert custom.check_definition(_unboxed(yearly), deep=True) == yearly
+
+
+@pytest.mark.geo
+def test_check_definition_rejects_a_broken_raster(tif):
+    d = custom.define_raster([(tif("p.tif", _stack()), None)], label="x", bands=[1, 2],
+                             value_cols=["a", "b"])
+    for change, match in (({"bands": [1]}, "1 band\\(s\\) for 2 value column"),
+                          ({"grid_hash": "xyz"}, "grid_hash must be 8 hex"),
+                          ({"rasters": []}, "rasters must list each file"),
+                          ({"year_col": "year"}, "year_col must be 'year' exactly when")):
+        with pytest.raises(CustomExposomeError, match=match):
+            custom.check_definition({**d, **change}, files=False)

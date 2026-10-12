@@ -468,3 +468,129 @@ def raster_bands(definition: Mapping[str, Any]) -> tuple[list[str], list[int], l
     if not nodata or len(nodata) != len(bands):
         nodata = [(definition.get("grid") or {}).get("nodata")] * len(bands)
     return cols, bands, list(nodata)
+
+
+# --------------------------------------------------------------------------
+# definitions handed back from outside (R, JSON)
+# --------------------------------------------------------------------------
+
+# Fields JSON writers turn into scalars when they hold one element (R's
+# jsonlite with auto_unbox=TRUE), and fields they turn into [] or {} when empty
+# or NULL. check_definition undoes both.
+_LIST_FIELDS = ("value_cols", "bands", "band_nodata", "coverage_years")
+_MAP_FIELDS = ("value_labels", "value_units")
+_NULLABLE_FIELDS = ("year_col", "values_path", "owner_uid")
+
+
+def _sha256_path(path: str) -> str:
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(1 << 20), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def check_definition(definition: Mapping[str, Any], *, key: str | None = None,
+                     files: bool = True, deep: bool = False) -> dict[str, Any]:
+    """A definition received from outside, checked and normalised for the steps.
+
+    For definitions that travelled through JSON and another language (the R
+    package hands back what ``define_*`` returned). Undoes the usual JSON
+    round-trip damage: a one-element list written as a scalar, ``[]`` for an
+    empty object, ``{}`` for null. Then checks the fields the C3/C4 steps read,
+    that ``key`` (when given) is the definition's own ``custom_<id>`` key, and,
+    with ``files``, that the values file or every raster exists; ``deep`` also
+    compares their sha256 with the recorded one, catching a file edited since
+    it was defined. Returns a new dict; raises :class:`CustomExposomeError`.
+    """
+    from spacescans.custom.keys import is_custom_key
+
+    if not isinstance(definition, Mapping):
+        raise CustomExposomeError("a custom dataset definition must be an object")
+    d = dict(definition)
+    for f in _LIST_FIELDS:
+        if f in d and d[f] is not None and not isinstance(d[f], (list, tuple)):
+            d[f] = [d[f]]
+        elif isinstance(d.get(f), tuple):
+            d[f] = list(d[f])
+    for f in _MAP_FIELDS:
+        if d.get(f) in (None, [], ()):
+            d[f] = {}
+    for f in _NULLABLE_FIELDS:
+        if f in d and d[f] in ({}, [], ""):
+            d[f] = None
+    if "band_nodata" in d and d["band_nodata"] is None:   # [null], unboxed
+        d["band_nodata"] = [None]
+    if isinstance(d.get("rasters"), Mapping):            # one raster, unboxed
+        d["rasters"] = [d["rasters"]]
+    if isinstance(d.get("rasters"), list):
+        d["rasters"] = [{**r, "year": None} if isinstance(r, Mapping) and r.get("year") in ({}, [])
+                        else r for r in d["rasters"]]
+    if isinstance(d.get("grid"), Mapping) and d["grid"].get("nodata") in ({}, []):
+        d["grid"] = {**d["grid"], "nodata": None}
+
+    name = d.get("variable_key") or key or "custom dataset"
+    if key is not None:
+        if not is_custom_key(key):
+            raise CustomExposomeError(f"{key!r} is not a custom dataset key (custom_<8 hex>)")
+        if d.get("variable_key") not in (None, key):
+            raise CustomExposomeError(
+                f"{key!r} holds the definition of {d['variable_key']!r}; pass each "
+                "definition under its own variable_key")
+
+    cols = d.get("value_cols")
+    if not cols or not all(isinstance(c, str) and c for c in cols):
+        raise CustomExposomeError(f"{name}: value_cols must be a non-empty list of column names")
+    if len(cols) > MAX_VALUE_COLS:
+        raise CustomExposomeError(f"{name}: {len(cols)} value columns exceeds the limit of {MAX_VALUE_COLS}")
+    years = d.get("coverage_years")
+    if years is not None:
+        if len(years) != 2 or not all(isinstance(y, (int, float)) and not isinstance(y, bool)
+                                      and float(y).is_integer() for y in years):
+            raise CustomExposomeError(f"{name}: coverage_years must be [first, last]")
+        d["coverage_years"] = [int(y) for y in years]
+
+    geometry = d.get("geometry")
+    if geometry == "polygon":
+        boundary = d.get("boundary")
+        if boundary not in BOUNDARY_SPEC:
+            raise CustomExposomeError(
+                f"{name}: unknown boundary {boundary!r}; expected one of {sorted(BOUNDARY_SPEC)}")
+        if d.get("join_col") != BOUNDARY_SPEC[boundary]["join_col"]:
+            raise CustomExposomeError(
+                f"{name}: a {boundary} dataset joins on {BOUNDARY_SPEC[boundary]['join_col']!r}, "
+                f"not {d.get('join_col')!r}")
+        if not isinstance(d.get("key_col"), str) or not d["key_col"]:
+            raise CustomExposomeError(f"{name}: key_col is missing")
+        path = d.get("values_path")
+        if not isinstance(path, str) or not path:
+            raise CustomExposomeError(f"{name}: values_path is missing; define it from a file path")
+        checks = [(path, d.get("sha256"))]
+    elif geometry == "raster":
+        if not (isinstance(d.get("grid_hash"), str) and re.fullmatch(r"[0-9a-f]{8}", d["grid_hash"])):
+            raise CustomExposomeError(f"{name}: grid_hash must be 8 hex characters")
+        if d.get("join_col") != "grid_id" or d.get("key_col") != "grid_id":
+            raise CustomExposomeError(f"{name}: a raster dataset joins on grid_id")
+        rasters = d.get("rasters")
+        if not rasters or not all(isinstance(r, Mapping) and isinstance(r.get("path"), str)
+                                  and r["path"] for r in rasters):
+            raise CustomExposomeError(f"{name}: rasters must list each file's path")
+        yearly = any(r.get("year") is not None for r in rasters)
+        if yearly != bool(d.get("year_col")):
+            raise CustomExposomeError(f"{name}: year_col must be 'year' exactly when the rasters carry years")
+        try:
+            raster_bands(d)
+        except ValueError as exc:
+            raise CustomExposomeError(str(exc)) from None
+        checks = [(r["path"], r.get("sha256")) for r in rasters]
+    else:
+        raise CustomExposomeError(f"{name}: geometry must be 'polygon' or 'raster', not {geometry!r}")
+
+    if files or deep:
+        for path, sha in checks:
+            if not os.path.isfile(path):
+                raise CustomExposomeError(f"{name}: file not found: {path}")
+            if deep and sha and _sha256_path(path) != sha:
+                raise CustomExposomeError(
+                    f"{name}: {path} has changed since the dataset was defined; define it again")
+    return d
