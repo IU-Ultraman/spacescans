@@ -12,8 +12,9 @@ on a base install, without geopandas or rasterio.
     from spacescans import data
     data.status(["ndi", "walkability"], data_dir="~/ss-data")
     data.fetch(["ndi", "walkability"], data_dir="~/ss-data")
+    data.verify(["ndi"], data_dir="~/ss-data")
 
-CLI: ``spacescans data status|fetch``.
+CLI: ``spacescans data status|fetch|verify``.
 """
 from __future__ import annotations
 
@@ -28,6 +29,7 @@ from spacescans.data.manifest import (Artifact, Dataset, Manifest, load_manifest
                                       SCHEMA_PATH)
 from spacescans.data.paths import cloud_sync_warning, resolve_data_dir
 from spacescans.data._status import USABLE, DatasetStatus, StatusReport, VariableStatus, status
+from spacescans.data._verify import VerifyReport, verify
 
 
 def terms(dataset: str, *, manifest=None) -> dict:
@@ -50,11 +52,11 @@ def boundary_datasets(*, manifest=None) -> dict[str, str]:
 
 
 __all__ = [
-    "status", "plan", "fetch", "terms", "boundary_datasets", "resolve_data_dir",
+    "status", "plan", "fetch", "verify", "terms", "boundary_datasets", "resolve_data_dir",
     "load_manifest", "extract_archive", "extract_tar", "is_macos_metadata", "validate_member",
     "cloud_sync_warning",
     "StatusReport", "DatasetStatus", "VariableStatus", "FetchPlan", "FetchReport",
-    "ExtractResult", "Manifest", "Artifact", "Dataset", "DataLock",
+    "VerifyReport", "ExtractResult", "Manifest", "Artifact", "Dataset", "DataLock",
     "USABLE", "DATASET_DIRS", "MANIFEST_PATH", "SCHEMA_PATH",
     "DataError", "UsageError", "ManifestError", "DataMissingError", "NotOnMirrorError",
     "DataCorruptError", "UnsafeArchiveError", "TermsRequiredError", "NetworkError",

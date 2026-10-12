@@ -291,10 +291,10 @@ def fetch(variables: Sequence[str] | str | None = None, *,
           manifest: Any = None,
           transport: Transport | None = None,
           max_attempts: int = 10,
-          backoff: Callable[[int], float] = default_backoff,
-          sleep: Callable[[float], None] = time.sleep,
-          headroom_bytes: int = HEADROOM,
-          disk_usage: Callable[[Path], Any] = shutil.disk_usage) -> FetchReport:
+          backoff: Callable[[int], float] | None = None,
+          sleep: Callable[[float], None] | None = None,
+          headroom_bytes: int | None = None,
+          disk_usage: Callable[[Path], Any] | None = None) -> FetchReport:
     """Download and place the mirrored data the variables/datasets need.
 
     Returns a :class:`FetchReport`. Raises (with ``.report`` set to what was
@@ -307,6 +307,11 @@ def fetch(variables: Sequence[str] | str | None = None, *,
     root = resolve_data_dir(data_dir)
     transport = transport or Transport()
     emit = on_event or (lambda e: None)
+    # Resolved per call (not as defaults) so tests and callers can patch them.
+    backoff = backoff or default_backoff
+    sleep = sleep or time.sleep
+    headroom_bytes = HEADROOM if headroom_bytes is None else headroom_bytes
+    disk_usage = disk_usage or shutil.disk_usage
     p = plan(variables, datasets=datasets, data_dir=root, accept_terms=accept_terms,
              force=force, keep_archives=keep_archives, mirror=mirror, manifest=man,
              _transport=transport)
