@@ -46,8 +46,8 @@ def test_cohort_and_orchestrate_need_only_base_dependencies(tmp_path):
                                           pid_as_str=True)
         assert info.rows == 59
         assert cohort.validate(cohort.read_upload_csv(fix / "cohorts" / "iso.csv")).ok
-        import json
-        cat = json.loads((fix / "variable_metadata.json").read_text())["variables"]
+        from spacescans import catalog
+        cat = catalog.payload()["variables"]
         cov = orch.compute_coverage(fix / "cohorts" / "iso.csv", ["ndi"], cat)
         assert cov["row_count"] == 59
         leaked = sorted(m for m in sys.modules if m.split(".")[0] in _BLOCKED)

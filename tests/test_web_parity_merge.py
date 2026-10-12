@@ -21,6 +21,7 @@ import pyarrow
 import pyarrow.parquet as pq
 import pytest
 
+from spacescans import catalog
 from spacescans.orchestrate import merge
 
 FIX = Path(__file__).parent / "fixtures" / "web_parity"
@@ -28,7 +29,7 @@ MANIFEST = json.loads((FIX / "manifest.json").read_text())
 SAME_ENV = (pd.__version__, pyarrow.__version__) == (MANIFEST["pandas"],
                                                      MANIFEST["pyarrow"])
 SAME_PANDAS_MAJOR = pd.__version__.split(".")[0] == MANIFEST["pandas"].split(".")[0]
-CATALOG = {**json.loads((FIX / "variable_metadata.json").read_text())["variables"],
+CATALOG = {**catalog.payload()["variables"],   # the package catalog (the fixture keeps no copy)
            **json.loads((FIX / "overlay.json").read_text())}
 VALUE_COLS = {k: v["value_cols"] for k, v in CATALOG.items()}
 
