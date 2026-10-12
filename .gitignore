@@ -23,3 +23,11 @@ build/
 .venv-*/
 # The web-parity fixtures mirror web task directories, which have output/.
 !tests/fixtures/web_parity/**/output/
+# R package: private dev library, check/build artefacts, bundled wheel (built by r/tools/build-wheel.sh)
+r/.Rlib/
+r/..Rcheck/
+r/*.Rcheck/
+r/spacescans_*.tar.gz
+r/inst/python/*.whl
+r/inst/python/pin.json
+r/inst/python/locks/

@@ -26,7 +26,10 @@ def __getattr__(name: str):
     if name == "resolve_config":
         from spacescans.config_resolution import resolve_config
         return resolve_config
+    if name == "capabilities":
+        from spacescans._capabilities import capabilities
+        return capabilities
     raise AttributeError(f"module 'spacescans' has no attribute {name!r}")
 
 
-__all__ = ["Pipeline", "resolve_config", "__version__"]
+__all__ = ["Pipeline", "resolve_config", "capabilities", "__version__"]

@@ -1,0 +1,4 @@
+This directory receives the spacescans wheel and pin.json written by
+tools/build-wheel.sh (see that script). ss_install() installs the wheel it
+finds here after checking its SHA-256 against pin.json. Neither file is
+committed to git on ordinary commits.

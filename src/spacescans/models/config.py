@@ -104,6 +104,12 @@ class EngineConfig(BaseModel):
     backend: str = "duckdb"
     missing_policy: str = "skip"
     weight_col: str = "weight"
+    # DuckDB resource settings. None (the default) leaves DuckDB's own defaults,
+    # which is the 0.2.7 behaviour. They cap DuckDB only: C3 patterns and the
+    # pandas-based readers (FAQSD, TEMIS) do not run inside DuckDB.
+    threads: int | None = Field(default=None, ge=1)
+    memory_limit: str | None = None      # DuckDB syntax, e.g. "4GB"
+    temp_directory: str | None = None    # where DuckDB spills; default is ./.tmp
 
 
 class OutputConfig(BaseModel):
