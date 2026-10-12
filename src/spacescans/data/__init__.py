@@ -12,3 +12,5 @@ from spacescans.data.errors import (DataCorruptError, DataError, DataMissingErro
 from spacescans.data.manifest import (Artifact, Dataset, Manifest, load_manifest, MANIFEST_PATH,
                                       SCHEMA_PATH)
 from spacescans.data.paths import cloud_sync_warning, resolve_data_dir
+from spacescans.data.extract import (DATASET_DIRS, ExtractResult, extract_archive, extract_tar,
+                                     is_macos_metadata, validate_member)
