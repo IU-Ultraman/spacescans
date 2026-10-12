@@ -56,6 +56,7 @@ dev = [
     "pytest >= 7.0",
     "pytest-xdist",
     "ruff",
+    "jsonschema >= 4.21",
 ]
 
 [project.scripts]
