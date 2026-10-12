@@ -1,0 +1,33 @@
+{
+  "cohort": "empty",
+  "variant": "bg_ndi_wi",
+  "sha256": "6e8fa5c2ff12512316065d1f932e3b0c044b726d0f148a7daef9a8f5a60d24bc",
+  "blob": "blobs/6e8fa5c2ff125123.parquet",
+  "schema": [
+    [
+      "pid",
+      "null"
+    ],
+    [
+      "startDate",
+      "timestamp[ms]"
+    ],
+    [
+      "endDate",
+      "timestamp[ms]"
+    ],
+    [
+      "longitude",
+      "null"
+    ],
+    [
+      "latitude",
+      "null"
+    ],
+    [
+      "episode_id",
+      "int64"
+    ]
+  ],
+  "rows": 0
+}

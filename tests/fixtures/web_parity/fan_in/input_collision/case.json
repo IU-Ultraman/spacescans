@@ -1,0 +1,7 @@
+{
+  "cohort": "extra_cols",
+  "experiments": [
+    "vnl",
+    "bg_ndi_wi"
+  ]
+}

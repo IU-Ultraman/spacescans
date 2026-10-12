@@ -1,0 +1,13 @@
+{
+  "case": "bad_format",
+  "cohort": "bad_format",
+  "variables": [
+    "ndi"
+  ],
+  "with_input": true,
+  "error": {
+    "type": "ValueError",
+    "message": "Unrecognized date format: '19/8/2017'. Dates must use one consistent format across startDate and endDate. Accepted: 2017-08-19 (ISO, preferred) or 8/19/2017",
+    "args0": "Unrecognized date format: '19/8/2017'. Dates must use one consistent format across startDate and endDate. Accepted: 2017-08-19 (ISO, preferred) or 8/19/2017"
+  }
+}

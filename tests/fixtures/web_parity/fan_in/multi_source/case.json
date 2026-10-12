@@ -1,0 +1,10 @@
+{
+  "cohort": "iso",
+  "experiments": [
+    "bg_ndi_wi",
+    "faqsd",
+    "acag",
+    "custom",
+    "noise"
+  ]
+}

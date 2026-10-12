@@ -1,0 +1,12 @@
+{
+  "cohort": "missing_lat",
+  "filename": "missing_lat.csv",
+  "error": {
+    "type": "ValueError",
+    "message": "Missing required columns: latitude",
+    "args0": "Missing required columns: latitude"
+  },
+  "input_csv_exists": false,
+  "input_csv_changed": false,
+  "input_csv_text": null
+}

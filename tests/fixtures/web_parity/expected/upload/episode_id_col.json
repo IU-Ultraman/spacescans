@@ -1,0 +1,39 @@
+{
+  "cohort": "episode_id_col",
+  "filename": "episode_id_col.csv",
+  "summary": {
+    "row_count": 59,
+    "columns": [
+      "pid",
+      "episode_id",
+      "startDate",
+      "endDate",
+      "longitude",
+      "latitude"
+    ],
+    "date_range": {
+      "min": "2009-01-01",
+      "max": "2024-04-29"
+    },
+    "filename": "episode_id_col.csv"
+  },
+  "meta_data_summary": {
+    "row_count": 59,
+    "columns": [
+      "pid",
+      "episode_id",
+      "startDate",
+      "endDate",
+      "longitude",
+      "latitude"
+    ],
+    "date_range": {
+      "min": "2009-01-01",
+      "max": "2024-04-29"
+    },
+    "filename": "episode_id_col.csv"
+  },
+  "input_csv_exists": true,
+  "input_csv_changed": false,
+  "input_csv_text": null
+}

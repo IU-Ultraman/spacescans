@@ -1,0 +1,33 @@
+{
+  "cohort": "missing_pid",
+  "variant": "zcta5",
+  "sha256": "cd1a370621e7e69330b0d66f235a227b2847087635c6f87acb10a722a8c9100a",
+  "blob": "blobs/cd1a370621e7e693.parquet",
+  "schema": [
+    [
+      "subject",
+      "large_string"
+    ],
+    [
+      "startDate",
+      "timestamp[us]"
+    ],
+    [
+      "endDate",
+      "timestamp[us]"
+    ],
+    [
+      "longitude",
+      "double"
+    ],
+    [
+      "latitude",
+      "double"
+    ],
+    [
+      "episode_id",
+      "int64"
+    ]
+  ],
+  "rows": 59
+}

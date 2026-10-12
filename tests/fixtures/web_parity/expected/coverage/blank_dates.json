@@ -1,0 +1,274 @@
+{
+  "case": "blank_dates",
+  "cohort": "blank_dates",
+  "variables": [
+    "ndi",
+    "walkability",
+    "cbp_zcta5",
+    "tiger_proximity",
+    "nhd_bluespace",
+    "noise",
+    "vnl",
+    "temis",
+    "fara_tract",
+    "acag",
+    "faqsd",
+    "custom_aaaa1111",
+    "custom_bbbb2222",
+    "custom_cccc3333",
+    "custom_dddd4444"
+  ],
+  "with_input": true,
+  "result": {
+    "row_count": 59,
+    "variables": {
+      "ndi": {
+        "coverage_years": [
+          2012,
+          2022
+        ],
+        "patients_in_time_window": 50,
+        "patients_in_region": 53,
+        "patients_covered": 45,
+        "coverage_pct": 76.27,
+        "warnings": [
+          "15% of patients have episodes entirely outside 2012-2022",
+          "10% of patients fall outside the CONUS coverage region"
+        ],
+        "boundary": "BG",
+        "display_unit": "z-score",
+        "temporal": "yearly"
+      },
+      "walkability": {
+        "coverage_years": [
+          2016,
+          2016
+        ],
+        "patients_in_time_window": 59,
+        "patients_in_region": 53,
+        "patients_covered": 53,
+        "coverage_pct": 89.83,
+        "warnings": [
+          "10% of patients fall outside the CONUS coverage region"
+        ],
+        "boundary": "BG",
+        "display_unit": "1-20 index",
+        "temporal": "static"
+      },
+      "cbp_zcta5": {
+        "coverage_years": [
+          2013,
+          2019
+        ],
+        "patients_in_time_window": 41,
+        "patients_in_region": 53,
+        "patients_covered": 37,
+        "coverage_pct": 62.71,
+        "warnings": [
+          "31% of patients have episodes entirely outside 2013-2019",
+          "10% of patients fall outside the CONUS coverage region"
+        ],
+        "boundary": "ZCTA5",
+        "display_unit": "establishments / 1k residents",
+        "temporal": "yearly"
+      },
+      "tiger_proximity": {
+        "coverage_years": [
+          2013,
+          2019
+        ],
+        "patients_in_time_window": 41,
+        "patients_in_region": 53,
+        "patients_covered": 37,
+        "coverage_pct": 62.71,
+        "warnings": [
+          "31% of patients have episodes entirely outside 2013-2019",
+          "10% of patients fall outside the CONUS coverage region"
+        ],
+        "boundary": "Point",
+        "display_unit": "meters",
+        "temporal": "yearly"
+      },
+      "nhd_bluespace": {
+        "coverage_years": [
+          2024,
+          2024
+        ],
+        "patients_in_time_window": 59,
+        "patients_in_region": 53,
+        "patients_covered": 53,
+        "coverage_pct": 89.83,
+        "warnings": [
+          "10% of patients fall outside the CONUS coverage region"
+        ],
+        "boundary": "Point",
+        "display_unit": "meters",
+        "temporal": "static"
+      },
+      "noise": {
+        "coverage_years": [
+          2020,
+          2020
+        ],
+        "patients_in_time_window": 59,
+        "patients_in_region": 53,
+        "patients_covered": 53,
+        "coverage_pct": 89.83,
+        "warnings": [
+          "10% of patients fall outside the CONUS coverage region"
+        ],
+        "boundary": "Point",
+        "display_unit": "dBA",
+        "temporal": "static"
+      },
+      "vnl": {
+        "coverage_years": [
+          2013,
+          2019
+        ],
+        "patients_in_time_window": 41,
+        "patients_in_region": 53,
+        "patients_covered": 37,
+        "coverage_pct": 62.71,
+        "warnings": [
+          "31% of patients have episodes entirely outside 2013-2019",
+          "10% of patients fall outside the CONUS coverage region"
+        ],
+        "boundary": "Point",
+        "display_unit": "radiance",
+        "temporal": "yearly"
+      },
+      "temis": {
+        "coverage_years": [
+          2013,
+          2019
+        ],
+        "patients_in_time_window": 41,
+        "patients_in_region": 53,
+        "patients_covered": 37,
+        "coverage_pct": 62.71,
+        "warnings": [
+          "31% of patients have episodes entirely outside 2013-2019",
+          "10% of patients fall outside the CONUS coverage region"
+        ],
+        "boundary": "Point",
+        "display_unit": "UV index",
+        "temporal": "yearly"
+      },
+      "fara_tract": {
+        "coverage_years": [
+          2013,
+          2019
+        ],
+        "patients_in_time_window": 41,
+        "patients_in_region": 53,
+        "patients_covered": 37,
+        "coverage_pct": 62.71,
+        "warnings": [
+          "31% of patients have episodes entirely outside 2013-2019",
+          "10% of patients fall outside the CONUS coverage region"
+        ],
+        "boundary": "Tract",
+        "display_unit": "binary flags",
+        "temporal": "yearly"
+      },
+      "acag": {
+        "coverage_years": [
+          2013,
+          2019
+        ],
+        "patients_in_time_window": 41,
+        "patients_in_region": 53,
+        "patients_covered": 37,
+        "coverage_pct": 62.71,
+        "warnings": [
+          "31% of patients have episodes entirely outside 2013-2019",
+          "10% of patients fall outside the CONUS coverage region"
+        ],
+        "boundary": "Point",
+        "display_unit": "ug/m3",
+        "temporal": "yearly"
+      },
+      "faqsd": {
+        "coverage_years": [
+          2013,
+          2019
+        ],
+        "patients_in_time_window": 41,
+        "patients_in_region": 53,
+        "patients_covered": 37,
+        "coverage_pct": 62.71,
+        "warnings": [
+          "31% of patients have episodes entirely outside 2013-2019",
+          "10% of patients fall outside the CONUS coverage region"
+        ],
+        "boundary": "Tract",
+        "display_unit": "ppb / ug/m3",
+        "temporal": "yearly"
+      },
+      "custom_aaaa1111": {
+        "coverage_years": [
+          2014,
+          2018
+        ],
+        "patients_in_time_window": 27,
+        "patients_in_region": 53,
+        "patients_covered": 25,
+        "coverage_pct": 42.37,
+        "warnings": [
+          "54% of patients have episodes entirely outside 2014-2018",
+          "10% of patients fall outside the CONUS coverage region"
+        ],
+        "boundary": "Tract",
+        "display_unit": "units",
+        "temporal": "yearly"
+      },
+      "custom_bbbb2222": {
+        "coverage_years": [
+          2013,
+          2019
+        ],
+        "patients_in_time_window": 59,
+        "patients_in_region": 53,
+        "patients_covered": 53,
+        "coverage_pct": 89.83,
+        "warnings": [
+          "10% of patients fall outside the CONUS coverage region"
+        ],
+        "boundary": "BG",
+        "display_unit": "units",
+        "temporal": "static"
+      },
+      "custom_cccc3333": {
+        "coverage_years": [
+          2013,
+          2019
+        ],
+        "patients_in_time_window": 59,
+        "patients_in_region": 59,
+        "patients_covered": 59,
+        "coverage_pct": 100.0,
+        "warnings": [],
+        "boundary": "Point",
+        "display_unit": "units",
+        "temporal": "static"
+      },
+      "custom_dddd4444": {
+        "coverage_years": [
+          2016,
+          2017
+        ],
+        "patients_in_time_window": 12,
+        "patients_in_region": 59,
+        "patients_covered": 12,
+        "coverage_pct": 20.34,
+        "warnings": [
+          "80% of patients have episodes entirely outside 2016-2017"
+        ],
+        "boundary": "Point",
+        "display_unit": "units",
+        "temporal": "yearly"
+      }
+    }
+  }
+}

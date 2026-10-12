@@ -1,0 +1,14 @@
+{
+  "case": "noise_low_match",
+  "partial": "result_noise.csv",
+  "warnings": [
+    {
+      "level": "warning",
+      "experiment_key": "noise",
+      "event": "merge_partial_low_match_pct",
+      "match_pct": 67.8,
+      "cohort_n": 59,
+      "matched_n": 40
+    }
+  ]
+}

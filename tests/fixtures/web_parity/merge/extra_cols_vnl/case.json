@@ -1,0 +1,13 @@
+{
+  "experiment": "vnl",
+  "variables": [
+    "vnl"
+  ],
+  "parquet_map": {
+    "vnl": "c4_vnl.parquet"
+  },
+  "renames": {},
+  "rewrite_in_place": false,
+  "cohort": "extra_cols",
+  "uses_overlay": false
+}

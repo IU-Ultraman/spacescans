@@ -1,0 +1,24 @@
+{
+  "generator": "tests/fixtures/web_parity/generate.py",
+  "web_repo": "spacescans-web",
+  "web_commit": "3991c3bc26ff2d198cad250a3820cc97fb851a13",
+  "web_files_sha256": {
+    "backend/app/cohort_dates.py": "9d5041970946fb0c12e2adfff18248e5f5e2d60a4cf6d228e8037a3edf9e3428",
+    "backend/app/experiments/_merge.py": "ef2c17c3a9d6cee54d0cb6449f57f0c8ceb6ba5309d8081ac765fa6ae8b4bab2",
+    "backend/app/experiments/bg_ndi_wi.py": "03bfcdcadce22790c3a6266c33ef412ff946242235c88bb4335eaf2f304f56e1",
+    "backend/app/experiments/zcta5_cbp.py": "8c484db7202221abd08b328e17201c51be21b3a3fee01cea8899f139ee489c25",
+    "backend/app/experiments/faqsd.py": "ee8a8bd602fd910bedd852f80771118da83a07dc78936e8fc31b36d4f15ed3ae",
+    "backend/app/task_manager.py": "ff6040307577626d3206a85333516f3245f895c13d49535b832247f150c48fcb",
+    "backend/app/variable_registry.py": "c2f06828d5bb32bf29cd8136327f1fb1e91869c8bf82bda454b8bf8da7bc88cc",
+    "backend/app/feature_dictionary.py": "09e31ca18a969b824774cf44a8b6114edb24347a30e44840ec7b619e4fb3cfc3",
+    "backend/app/data/variable_metadata.json": "d5782c2cef24cf60764eb794cc814c4d6b4c2990a306603f41825c99b922b6d2",
+    "backend/app/data/variable_metadata.schema.json": "77b63ae2749138f868c5d0d94e3e2ae5e8503de058902dec8a3ef53792bca132"
+  },
+  "python": "3.12.13",
+  "pandas": "3.0.6",
+  "pyarrow": "26.0.0",
+  "numpy": "2.5.4",
+  "seed": 20261012,
+  "generated_at": "2026-10-12T16:49:44-04:00",
+  "note": "All values are synthetic. Parquet bytes are comparable only with the same pandas and pyarrow versions."
+}

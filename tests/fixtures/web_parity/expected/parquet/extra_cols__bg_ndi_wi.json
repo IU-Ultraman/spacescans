@@ -1,0 +1,49 @@
+{
+  "cohort": "extra_cols",
+  "variant": "bg_ndi_wi",
+  "sha256": "e5be4290612dc77f83d233f84e5996ae0dca77fef08eb7f693e766fb8111ce22",
+  "blob": "blobs/e5be4290612dc77f.parquet",
+  "schema": [
+    [
+      "pid",
+      "large_string"
+    ],
+    [
+      "startDate",
+      "timestamp[us]"
+    ],
+    [
+      "endDate",
+      "timestamp[us]"
+    ],
+    [
+      "longitude",
+      "double"
+    ],
+    [
+      "latitude",
+      "double"
+    ],
+    [
+      "age",
+      "int64"
+    ],
+    [
+      "sex",
+      "large_string"
+    ],
+    [
+      "notes",
+      "large_string"
+    ],
+    [
+      "ndi",
+      "double"
+    ],
+    [
+      "episode_id",
+      "int64"
+    ]
+  ],
+  "rows": 59
+}

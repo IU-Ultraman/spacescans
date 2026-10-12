@@ -1,0 +1,15 @@
+{
+  "case": "unknown_keys",
+  "cohort": "iso",
+  "variables": [
+    "pm25",
+    "ndi",
+    "foo"
+  ],
+  "with_input": true,
+  "error": {
+    "type": "KeyError",
+    "message": "'pm25, foo'",
+    "args0": "pm25, foo"
+  }
+}

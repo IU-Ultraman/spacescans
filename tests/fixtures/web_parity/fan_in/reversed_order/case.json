@@ -1,0 +1,7 @@
+{
+  "cohort": "iso",
+  "experiments": [
+    "noise",
+    "bg_ndi_wi"
+  ]
+}

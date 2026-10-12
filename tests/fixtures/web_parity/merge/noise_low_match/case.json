@@ -1,0 +1,13 @@
+{
+  "experiment": "noise",
+  "variables": [
+    "noise"
+  ],
+  "parquet_map": {
+    "noise": "c4_noise.parquet"
+  },
+  "renames": {},
+  "rewrite_in_place": false,
+  "cohort": "iso",
+  "uses_overlay": false
+}

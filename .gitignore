@@ -17,3 +17,5 @@ __pycache__/
 dist/
 build/
 .venv/
+# The web-parity fixtures mirror web task directories, which have output/.
+!tests/fixtures/web_parity/**/output/

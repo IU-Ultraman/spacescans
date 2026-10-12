@@ -1,0 +1,7 @@
+{
+  "cohort": "iso",
+  "experiments": [
+    "noise",
+    "noise2"
+  ]
+}

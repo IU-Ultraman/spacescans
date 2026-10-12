@@ -1,0 +1,14 @@
+{
+  "case": "extra_cols_vnl",
+  "partial": "result_vnl.csv",
+  "warnings": [
+    {
+      "level": "warning",
+      "experiment_key": "vnl",
+      "event": "merge_partial_low_match_pct",
+      "match_pct": 84.75,
+      "cohort_n": 59,
+      "matched_n": 50
+    }
+  ]
+}

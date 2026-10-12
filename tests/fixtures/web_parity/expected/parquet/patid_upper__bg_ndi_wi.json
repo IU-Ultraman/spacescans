@@ -1,0 +1,33 @@
+{
+  "cohort": "patid_upper",
+  "variant": "bg_ndi_wi",
+  "sha256": "8d10cd4e9e8257a9a9f3b66cc41fcf53894d948ee0e5646c60d419085087628e",
+  "blob": "blobs/8d10cd4e9e8257a9.parquet",
+  "schema": [
+    [
+      "PATID",
+      "large_string"
+    ],
+    [
+      "startDate",
+      "timestamp[us]"
+    ],
+    [
+      "endDate",
+      "timestamp[us]"
+    ],
+    [
+      "longitude",
+      "double"
+    ],
+    [
+      "latitude",
+      "double"
+    ],
+    [
+      "episode_id",
+      "int64"
+    ]
+  ],
+  "rows": 59
+}

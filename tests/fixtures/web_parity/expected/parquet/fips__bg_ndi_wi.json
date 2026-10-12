@@ -1,0 +1,53 @@
+{
+  "cohort": "fips",
+  "variant": "bg_ndi_wi",
+  "sha256": "d6602a6475c4af638c217147d17ec2d404a0f4bcb295a81db186b3d1c4a4a5e8",
+  "blob": "blobs/d6602a6475c4af63.parquet",
+  "schema": [
+    [
+      "pid",
+      "large_string"
+    ],
+    [
+      "startDate",
+      "timestamp[us]"
+    ],
+    [
+      "endDate",
+      "timestamp[us]"
+    ],
+    [
+      "longitude",
+      "double"
+    ],
+    [
+      "latitude",
+      "double"
+    ],
+    [
+      "state_fips",
+      "large_string"
+    ],
+    [
+      "county_fips",
+      "large_string"
+    ],
+    [
+      "tract_geoid",
+      "large_string"
+    ],
+    [
+      "bg_geoid",
+      "large_string"
+    ],
+    [
+      "zcta5",
+      "double"
+    ],
+    [
+      "episode_id",
+      "int64"
+    ]
+  ],
+  "rows": 59
+}
