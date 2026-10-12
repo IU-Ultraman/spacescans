@@ -1,0 +1,65 @@
+test_that("ss_config_schema() returns the DatasetConfig schema", {
+  skip_if_no_python()
+  local_clean_state()
+  s <- ss_config_schema()
+  expect_true(all(c("name", "linkage_pattern", "buffer", "engine") %in% names(s$properties)))
+  expect_true("threads" %in% names(s$`$defs`$EngineConfig$properties))
+  expect_true(jsonlite::validate(ss_config_schema(as = "json")))
+})
+
+test_that("ss_validate() resolves paths, accepts R scalars and reports unknown keys", {
+  skip_if_no_python()
+  local_clean_state()
+  d <- withr::local_tempdir()
+  cfg <- c4_fixture(d)
+  cfg$buffer$bufer_m <- 300
+  expect_warning(out <- ss_validate(cfg, data_dir = d, output_dir = file.path(d, "out")),
+                 "unknown config key 'buffer.bufer_m'")
+  expect_equal(out$exposure$value_cols, "v")
+  expect_equal(out$time$years, c(2017L, 2018L))
+  expect_equal(out$source$file, file.path(normalizePath(d), "weights.parquet"))
+  expect_equal(out$buffer$buffer_m, 270L)
+  expect_null(out$engine$threads)
+  expect_equal(attr(out, "unknown_keys"), "buffer.bufer_m")
+  expect_error(suppressWarnings(ss_validate(cfg, data_dir = d, strict = TRUE)), class = "spacescans_error_config")
+})
+
+test_that("invalid configs are config errors with field locations", {
+  skip_if_no_python()
+  local_clean_state()
+  d <- withr::local_tempdir()
+  cfg <- c4_fixture(d)
+  cfg$buffer$buffer_m <- 270.5
+  e <- tryCatch(ss_validate(cfg, data_dir = d), error = identity)
+  expect_s3_class(e, "spacescans_error_config")
+  expect_equal(e$details$errors[[1]]$loc, "buffer.buffer_m")
+  expect_error(ss_validate(list(1, 2)), class = "spacescans_error_config")
+  expect_error(ss_validate(file.path(d, "missing.yaml")), class = "spacescans_error_config")
+})
+
+test_that("templates can be listed and fetched", {
+  skip_if_no_python()
+  local_clean_state()
+  tpl <- ss_templates()
+  expect_s3_class(tpl, "data.frame")
+  expect_true(all(c("c3/county", "c4/zbp", "quickstart/end_to_end") %in% tpl$name))
+  zbp <- ss_templates("c4/zbp")
+  expect_equal(zbp$linkage_pattern, "yearly_areal")
+  expect_match(attr(zbp, "text"), "^name: zcta5_zbp")
+  expect_error(ss_templates("c3/nope"), class = "spacescans_error_config")
+})
+
+test_that("configs round-trip through YAML", {
+  skip_if_no_python()
+  local_clean_state()
+  d <- withr::local_tempdir()
+  cfg <- c4_fixture(d)
+  path <- file.path(d, "cfg", "c4.yaml")
+  text <- ss_write_config(cfg, path)
+  expect_true(file.exists(path))
+  expect_match(text, "value_cols:\n  - v", fixed = TRUE)
+  back <- ss_read_config(path)
+  expect_equal(back$name, "c4_fixture")
+  expect_equal(back$exposure$value_cols, "v")
+  expect_equal(names(back), names(cfg))
+})
