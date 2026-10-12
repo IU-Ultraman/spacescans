@@ -231,7 +231,8 @@ class RangeServer:
         self.httpd.files = {}
         self.httpd.requests = []
         self.httpd.behaviour = Behaviour()
-        self.thread = threading.Thread(target=self.httpd.serve_forever, daemon=True)
+        self.thread = threading.Thread(target=self.httpd.serve_forever, kwargs={"poll_interval": 0.02},
+                                       daemon=True)
         self.thread.start()
 
     @property

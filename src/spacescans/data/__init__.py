@@ -14,3 +14,4 @@ from spacescans.data.manifest import (Artifact, Dataset, Manifest, load_manifest
 from spacescans.data.paths import cloud_sync_warning, resolve_data_dir
 from spacescans.data.extract import (DATASET_DIRS, ExtractResult, extract_archive, extract_tar,
                                      is_macos_metadata, validate_member)
+from spacescans.data.status import USABLE, DatasetStatus, StatusReport, VariableStatus, status
