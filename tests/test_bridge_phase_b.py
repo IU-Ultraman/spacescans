@@ -655,6 +655,10 @@ def test_link_interrupt_kills_steps_and_leaves_no_process(tmp_path, mode, sig, c
     [json.loads(line) for line in out.splitlines()]               # still JSON Lines
     result = json.loads(res.read_text())
     assert result["ok"] is False and result["error"]["kind"] == "interrupted"
+    if mode == "hang_ignore":     # the grace period is waited out, then the sweep kills the child
+        assert elapsed >= 0.9 and "still running" in err and "killed 1 leftover" in err, err
+    else:                         # the orchestrator stopped its own step; nothing left to sweep
+        assert "worker stopped" in err and "killed 0 leftover" in err, err
     deadline = time.monotonic() + 3
     while (_alive(child) or _marked(mark)) and time.monotonic() < deadline:
         time.sleep(0.1)

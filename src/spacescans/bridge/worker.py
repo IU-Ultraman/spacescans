@@ -44,24 +44,34 @@ def warning_records(caught: list) -> list[dict]:
     return out
 
 
-def _start(fn: Callable[[], Any], on_line: Callable[[str], None]) -> tuple[threading.Thread, dict, LineSink]:
+def _start(fn: Callable[[], Any], on_line: Callable[[str], None]) -> tuple[threading.Event, dict, LineSink]:
+    """Start ``fn`` on a daemon thread. Returns (done, box, sink).
+
+    Callers wait on ``done``, not on ``Thread.join``/``is_alive``: in CPython
+    3.12 a KeyboardInterrupt that lands inside ``join()`` marks the thread as
+    stopped while it is still running, so ``is_alive()`` is False afterwards.
+    """
     sink = LineSink(on_line)
     box: dict[str, Any] = {"warnings": []}
+    done = threading.Event()
 
     def target() -> None:
-        with _warnings.catch_warnings(record=True) as caught:
-            _warnings.simplefilter("default")
-            try:
-                with contextlib.redirect_stdout(sink):
-                    box["value"] = fn()
-            except BaseException as e:
-                box["error"] = e
-            finally:
-                box["warnings"] = list(caught)
+        try:
+            with _warnings.catch_warnings(record=True) as caught:
+                _warnings.simplefilter("default")
+                try:
+                    with contextlib.redirect_stdout(sink):
+                        box["value"] = fn()
+                except BaseException as e:
+                    box["error"] = e
+                finally:
+                    box["warnings"] = list(caught)
+        finally:
+            done.set()
 
     worker = threading.Thread(target=target, name="spacescans-bridge-worker", daemon=True)
     worker.start()
-    return worker, box, sink
+    return done, box, sink
 
 
 def _finish(box: dict, sink: LineSink) -> tuple[Any, list]:
@@ -83,9 +93,9 @@ def run_captured(fn: Callable[[], Any], on_line: Callable[[str], None]) -> tuple
     interrupt in the main thread propagates at once (the worker is a daemon
     thread; the bridge exits with ``os._exit``).
     """
-    worker, box, sink = _start(fn, on_line)
-    while worker.is_alive():
-        worker.join(0.1)
+    done, box, sink = _start(fn, on_line)
+    while not done.wait(0.1):
+        pass
     return _finish(box, sink)
 
 
@@ -98,22 +108,24 @@ def run_cancellable(fn: Callable[[], Any], on_line: Callable[[str], None], *,
     thread): ignore further signals, set ``cancel``, wait up to ``grace_s``
     for the worker, kill whatever child process is left, then re-raise.
     """
-    worker, box, sink = _start(fn, on_line)
+    done, box, sink = _start(fn, on_line)
     try:
-        while worker.is_alive():
-            worker.join(0.1)
+        while not done.wait(0.1):
+            pass
     except BaseException:
         with contextlib.suppress(ValueError, OSError):  # only the main thread may set handlers
             signal.signal(signal.SIGINT, signal.SIG_IGN)
             signal.signal(signal.SIGTERM, signal.SIG_IGN)
         cancel.set()
-        deadline = time.monotonic() + max(0.0, grace_s)
-        while worker.is_alive() and time.monotonic() < deadline:
-            worker.join(0.1)
+        t0 = time.monotonic()
+        deadline = t0 + max(0.0, grace_s)
+        while not done.is_set() and time.monotonic() < deadline:
+            done.wait(0.1)
         killed = kill_descendants()
         if log is not None:
-            state = "stopped" if not worker.is_alive() else "still running"
-            log(f"cancelled: worker {state}; killed {len(killed)} leftover process(es)")
+            state = "stopped" if done.is_set() else "still running"
+            log(f"cancelled: worker {state} after {time.monotonic() - t0:.1f}s; "
+                f"killed {len(killed)} leftover process(es)")
         raise
     return _finish(box, sink)
 
