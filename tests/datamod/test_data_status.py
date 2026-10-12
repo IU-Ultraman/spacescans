@@ -1,4 +1,4 @@
-"""spacescans.data.status: layout rules, receipts and next steps, offline."""
+"""spacescans.data.status(): layout rules, receipts and next steps, offline."""
 from __future__ import annotations
 
 import os

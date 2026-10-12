@@ -224,9 +224,14 @@ class _Handler(http.server.BaseHTTPRequestHandler):
         self.wfile.write(body)
 
 
+class _QuietServer(http.server.ThreadingHTTPServer):
+    def handle_error(self, request, client_address):  # client hung up mid-body: expected
+        pass
+
+
 class RangeServer:
     def __init__(self) -> None:
-        self.httpd = http.server.ThreadingHTTPServer(("127.0.0.1", 0), _Handler)
+        self.httpd = _QuietServer(("127.0.0.1", 0), _Handler)
         self.httpd.daemon_threads = True
         self.httpd.files = {}
         self.httpd.requests = []
@@ -394,3 +399,22 @@ def h() -> _Helpers:
     """Helper functions and constants (importable test helpers do not work
     under --import-mode=importlib, so they come as a fixture)."""
     return _Helpers()
+
+
+@pytest.fixture(autouse=True)
+def no_real_network(monkeypatch):
+    """Refuse any connection that is not to the loopback test server."""
+    real = socket.create_connection
+
+    def guarded(address, *args, **kwargs):
+        host = address[0]
+        if host not in ("127.0.0.1", "localhost", "::1"):
+            raise AssertionError(f"test tried to reach the network: {address!r}")
+        return real(address, *args, **kwargs)
+
+    monkeypatch.setattr(socket, "create_connection", guarded)
+    monkeypatch.delenv("https_proxy", raising=False)
+    monkeypatch.delenv("HTTPS_PROXY", raising=False)
+    monkeypatch.delenv("http_proxy", raising=False)
+    monkeypatch.delenv("HTTP_PROXY", raising=False)
+    yield

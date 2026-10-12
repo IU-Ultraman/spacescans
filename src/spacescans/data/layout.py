@@ -18,7 +18,7 @@ exact names, counts and sizes:
 ``nonempty_dir`` the folder exists and is not empty
 
 Only names, sizes and (with ``deep``) magic bytes are checked here; sha256
-checks against receipts live in :mod:`spacescans.data.status`.
+checks against receipts live in :mod:`spacescans.data._status`.
 """
 from __future__ import annotations
 
