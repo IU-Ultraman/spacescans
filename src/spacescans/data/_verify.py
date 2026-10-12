@@ -7,12 +7,13 @@ archive files a user downloaded by hand against the manifest.
 from __future__ import annotations
 
 import os
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Sequence
+from typing import Any
 
-from spacescans.data.manifest import coerce_manifest
 from spacescans.data._status import StatusReport, sha256_file, status
+from spacescans.data.manifest import coerce_manifest
 
 
 @dataclass

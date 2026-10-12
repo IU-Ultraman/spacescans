@@ -11,7 +11,8 @@ import argparse
 import json
 import sys
 import time
-from typing import Any, Sequence
+from collections.abc import Sequence
+from typing import Any
 
 from spacescans.data.errors import DataError, UsageError
 
@@ -219,11 +220,10 @@ def _fetch(args: argparse.Namespace) -> int:
     from spacescans.data._fetch import fetch
 
     sel = _sel(args)
-    kwargs = dict(datasets=sel["datasets"], data_dir=sel["data_dir"],
-                  accept_terms=list(args.accept_terms), keep_archives=args.keep_archives,
-                  dry_run=args.dry_run, mirror=args.mirror, force=args.force,
-                  on_event=_progress_printer(quiet=False, as_json=args.json))
-    rep = fetch(sel["variables"], **kwargs)
+    rep = fetch(sel["variables"], datasets=sel["datasets"], data_dir=sel["data_dir"],
+                accept_terms=list(args.accept_terms), keep_archives=args.keep_archives,
+                dry_run=args.dry_run, mirror=args.mirror, force=args.force,
+                on_event=_progress_printer(quiet=False, as_json=args.json))
     if args.json:
         print(json.dumps(rep.to_dict(), indent=1))
         return 0 if rep.ok else 1

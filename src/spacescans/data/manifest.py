@@ -20,10 +20,11 @@ import itertools
 import json
 import re
 import string
+from collections.abc import Iterable, Iterator, Mapping, Sequence
 from dataclasses import dataclass, field
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, Iterable, Iterator, Mapping, Sequence
+from typing import Any
 
 from spacescans.data.errors import ManifestError, UsageError
 
@@ -239,7 +240,7 @@ def _packaged_manifest() -> Manifest:
     return parse_manifest(json.loads(MANIFEST_PATH.read_text(encoding="utf-8")), path=MANIFEST_PATH)
 
 
-def coerce_manifest(manifest: "Manifest | str | Path | Mapping[str, Any] | None") -> Manifest:
+def coerce_manifest(manifest: Manifest | str | Path | Mapping[str, Any] | None) -> Manifest:
     """Accept a Manifest, a path, a raw dict or None (packaged)."""
     if manifest is None or isinstance(manifest, (str, Path)):
         return load_manifest(manifest)

@@ -26,9 +26,9 @@ import os
 import shutil
 import tarfile
 import zlib
+from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path, PurePosixPath
-from typing import Callable, Iterable, Sequence
 
 from spacescans.data.errors import DataCorruptError, UnsafeArchiveError
 

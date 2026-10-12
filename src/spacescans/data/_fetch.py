@@ -37,20 +37,37 @@ import shutil
 import socket
 import ssl
 import time
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Sequence
+from typing import Any
 
-from spacescans.data.errors import (DataCorruptError, DataError, DiskSpaceError, NetworkError,
-                                    NotOnMirrorError, TermsRequiredError, UsageError)
+from spacescans.data._status import StatusReport, sha256_file, status
+from spacescans.data.errors import (
+    DataCorruptError,
+    DataError,
+    DiskSpaceError,
+    NetworkError,
+    NotOnMirrorError,
+    TermsRequiredError,
+    UsageError,
+)
 from spacescans.data.extract import copy_file_atomic, extract_archive, place_file
 from spacescans.data.lock import DataLock
 from spacescans.data.manifest import Artifact, Manifest, coerce_manifest, select
 from spacescans.data.paths import archives_dir, downloads_dir, resolve_data_dir
-from spacescans.data.receipts import (record_acknowledgement, remove_receipt, write_json_atomic,
-                                      write_receipt)
-from spacescans.data.sources import MIRROR_ENV, FolderMirror, SharePointShare, Source, source_for
-from spacescans.data._status import StatusReport, sha256_file, status
+from spacescans.data.receipts import (
+    record_acknowledgement,
+    remove_receipt,
+    write_json_atomic,
+    write_receipt,
+)
+from spacescans.data.sources import (
+    MIRROR_ENV,
+    FolderMirror,
+    Source,
+    source_for,
+)
 from spacescans.data.transport import Transport, parse_content_range
 
 CHUNK = 1024 * 1024
@@ -215,7 +232,7 @@ def plan(variables: Sequence[str] | str | None = None, *,
     transport = _transport or Transport()
     override = _override(mirror, transport)
     rep = status(variables, datasets=datasets, data_dir=root, manifest=man)
-    var_keys, ds_keys = select(man, variables, datasets)
+    _, ds_keys = select(man, variables, datasets)
     in_use = list(dict.fromkeys([k for v in rep.variables for k in v.chosen] + ds_keys))
 
     items: list[PlanItem] = []

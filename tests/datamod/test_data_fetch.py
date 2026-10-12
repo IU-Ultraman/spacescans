@@ -6,8 +6,18 @@ import stat
 
 import pytest
 
-from spacescans.data import (DataCorruptError, DataLock, DiskSpaceError, LockedError, NetworkError,
-                             NotOnMirrorError, UsageError, fetch, plan, status)
+from spacescans.data import (
+    DataCorruptError,
+    DataLock,
+    DiskSpaceError,
+    LockedError,
+    NetworkError,
+    NotOnMirrorError,
+    UsageError,
+    fetch,
+    plan,
+    status,
+)
 from spacescans.data.receipts import read_receipt
 
 

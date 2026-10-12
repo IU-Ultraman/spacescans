@@ -29,7 +29,7 @@ class DataLock:
         self.info_path = state_dir(self.root) / "lock.json"
         self._fh = None
 
-    def acquire(self) -> "DataLock":
+    def acquire(self) -> DataLock:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         fh = open(self.path, "a+b")
         try:
@@ -72,7 +72,7 @@ class DataLock:
         except (OSError, ValueError):
             return None
 
-    def __enter__(self) -> "DataLock":
+    def __enter__(self) -> DataLock:
         return self.acquire()
 
     def __exit__(self, *exc) -> None:

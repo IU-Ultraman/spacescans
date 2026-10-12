@@ -13,8 +13,9 @@ import os
 import socket
 import tempfile
 import time
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
 from spacescans.data.paths import receipts_dir, state_dir
 

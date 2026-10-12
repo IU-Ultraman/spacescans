@@ -1,12 +1,17 @@
 """spacescans.data.status(): layout rules, receipts and next steps, offline."""
 from __future__ import annotations
 
-import os
 from pathlib import Path
 
 import pytest
 
-from spacescans.data import UsageError, cloud_sync_warning, load_manifest, resolve_data_dir, status
+from spacescans.data import (
+    UsageError,
+    cloud_sync_warning,
+    load_manifest,
+    resolve_data_dir,
+    status,
+)
 from spacescans.data.receipts import write_receipt
 
 

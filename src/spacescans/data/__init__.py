@@ -18,18 +18,46 @@ CLI: ``spacescans data status|fetch|verify``.
 """
 from __future__ import annotations
 
-from spacescans.data.errors import (DataCorruptError, DataError, DataMissingError, DiskSpaceError,
-                                    LockedError, ManifestError, NetworkError, NotOnMirrorError,
-                                    TermsRequiredError, UnsafeArchiveError, UsageError)
-from spacescans.data.extract import (DATASET_DIRS, ExtractResult, extract_archive, extract_tar,
-                                     is_macos_metadata, validate_member)
 from spacescans.data._fetch import FetchPlan, FetchReport, fetch, plan
-from spacescans.data.lock import DataLock
-from spacescans.data.manifest import (Artifact, Dataset, Manifest, load_manifest, MANIFEST_PATH,
-                                      SCHEMA_PATH)
-from spacescans.data.paths import cloud_sync_warning, resolve_data_dir
-from spacescans.data._status import USABLE, DatasetStatus, StatusReport, VariableStatus, status
+from spacescans.data._status import (
+    USABLE,
+    DatasetStatus,
+    StatusReport,
+    VariableStatus,
+    status,
+)
 from spacescans.data._verify import VerifyReport, verify
+from spacescans.data.errors import (
+    DataCorruptError,
+    DataError,
+    DataMissingError,
+    DiskSpaceError,
+    LockedError,
+    ManifestError,
+    NetworkError,
+    NotOnMirrorError,
+    TermsRequiredError,
+    UnsafeArchiveError,
+    UsageError,
+)
+from spacescans.data.extract import (
+    DATASET_DIRS,
+    ExtractResult,
+    extract_archive,
+    extract_tar,
+    is_macos_metadata,
+    validate_member,
+)
+from spacescans.data.lock import DataLock
+from spacescans.data.manifest import (
+    MANIFEST_PATH,
+    SCHEMA_PATH,
+    Artifact,
+    Dataset,
+    Manifest,
+    load_manifest,
+)
+from spacescans.data.paths import cloud_sync_warning, resolve_data_dir
 
 
 def terms(dataset: str, *, manifest=None) -> dict:
@@ -52,13 +80,43 @@ def boundary_datasets(*, manifest=None) -> dict[str, str]:
 
 
 __all__ = [
-    "status", "plan", "fetch", "verify", "terms", "boundary_datasets", "resolve_data_dir",
-    "load_manifest", "extract_archive", "extract_tar", "is_macos_metadata", "validate_member",
+    "DATASET_DIRS",
+    "MANIFEST_PATH",
+    "SCHEMA_PATH",
+    "USABLE",
+    "Artifact",
+    "DataCorruptError",
+    "DataError",
+    "DataLock",
+    "DataMissingError",
+    "Dataset",
+    "DatasetStatus",
+    "DiskSpaceError",
+    "ExtractResult",
+    "FetchPlan",
+    "FetchReport",
+    "LockedError",
+    "Manifest",
+    "ManifestError",
+    "NetworkError",
+    "NotOnMirrorError",
+    "StatusReport",
+    "TermsRequiredError",
+    "UnsafeArchiveError",
+    "UsageError",
+    "VariableStatus",
+    "VerifyReport",
+    "boundary_datasets",
     "cloud_sync_warning",
-    "StatusReport", "DatasetStatus", "VariableStatus", "FetchPlan", "FetchReport",
-    "VerifyReport", "ExtractResult", "Manifest", "Artifact", "Dataset", "DataLock",
-    "USABLE", "DATASET_DIRS", "MANIFEST_PATH", "SCHEMA_PATH",
-    "DataError", "UsageError", "ManifestError", "DataMissingError", "NotOnMirrorError",
-    "DataCorruptError", "UnsafeArchiveError", "TermsRequiredError", "NetworkError",
-    "DiskSpaceError", "LockedError",
+    "extract_archive",
+    "extract_tar",
+    "fetch",
+    "is_macos_metadata",
+    "load_manifest",
+    "plan",
+    "resolve_data_dir",
+    "status",
+    "terms",
+    "validate_member",
+    "verify",
 ]

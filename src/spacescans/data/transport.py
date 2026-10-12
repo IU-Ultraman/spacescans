@@ -22,8 +22,8 @@ import http.client
 import ssl
 import urllib.parse
 import urllib.request
+from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Mapping
 
 from spacescans.data.errors import NetworkError
 
@@ -67,7 +67,7 @@ class Response:
         finally:
             self._conn.close()
 
-    def __enter__(self) -> "Response":
+    def __enter__(self) -> Response:
         return self
 
     def __exit__(self, *exc) -> None:

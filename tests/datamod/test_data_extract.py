@@ -7,7 +7,12 @@ import tarfile
 
 import pytest
 
-from spacescans.data import DataCorruptError, UnsafeArchiveError, extract_archive, extract_tar
+from spacescans.data import (
+    DataCorruptError,
+    UnsafeArchiveError,
+    extract_archive,
+    extract_tar,
+)
 from spacescans.data.extract import is_macos_metadata
 
 

@@ -27,12 +27,19 @@ from __future__ import annotations
 import hashlib
 import os
 import shutil
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Mapping, Sequence
+from typing import Any
 
 from spacescans.data.layout import LayoutResult, check_layout
-from spacescans.data.manifest import Artifact, Dataset, Manifest, coerce_manifest, select
+from spacescans.data.manifest import (
+    Artifact,
+    Dataset,
+    Manifest,
+    coerce_manifest,
+    select,
+)
 from spacescans.data.paths import cloud_sync_warning, resolve_data_dir
 from spacescans.data.receipts import read_receipt
 
