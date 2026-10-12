@@ -196,7 +196,7 @@ def test_unknown_boundary_is_rejected():
 
 
 def test_bom_in_the_header_is_stripped():
-    content = "﻿tract,v\n12073001100,0.4\n".encode("utf-8")
+    content = "﻿tract,v\n12073001100,0.4\n".encode()
     _validate(content)
 
 

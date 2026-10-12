@@ -39,7 +39,7 @@ def grid_ids_of(c3_parquet: str | Path) -> np.ndarray:
     return np.sort(weights["grid_id"].dropna().astype("int64").unique())
 
 
-def value_table(definition: Mapping[str, Any], grid_ids: np.ndarray) -> "pd.DataFrame":
+def value_table(definition: Mapping[str, Any], grid_ids: np.ndarray) -> pd.DataFrame:
     """``(grid_id, <col>...[, year])`` for the given grid ids, one block per raster."""
     import pandas as pd
 

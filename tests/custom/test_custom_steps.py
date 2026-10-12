@@ -293,6 +293,7 @@ def _c3_weights(run_dir, grid_ids, name="c3_customgrid_abcd1234"):
         run_dir / "output" / f"{name}.parquet", index=False)
 
 
+@pytest.mark.geo
 def test_plan_gives_a_raster_its_own_c3_named_by_grid(tmp_path, write_tif):
     steps = custom.plan([R], {R: _raster_def(tmp_path, write_tif)})
     assert _names(steps) == ["c3_customgrid_abcd1234", f"c4_{R}"]
@@ -300,6 +301,7 @@ def test_plan_gives_a_raster_its_own_c3_named_by_grid(tmp_path, write_tif):
     assert steps[0].cache_tag == "CUSTOMGRID_abcd1234" and not steps[0].uses_raster_res
 
 
+@pytest.mark.geo
 def test_two_rasters_on_one_grid_share_the_c3(tmp_path, write_tif):
     other = f"{R}b"
     defs = {R: _raster_def(tmp_path, write_tif), other: _raster_def(tmp_path, write_tif, col="heat")}
@@ -307,12 +309,14 @@ def test_two_rasters_on_one_grid_share_the_c3(tmp_path, write_tif):
         ["c3_customgrid_abcd1234", f"c4_{R}", f"c4_{other}"]
 
 
+@pytest.mark.geo
 def test_raster_and_polygon_get_separate_c3s(tmp_path, write_tif):
     defs = {R: _raster_def(tmp_path, write_tif), A: TRACT_DEF}
     assert _names(custom.plan([R, A], defs)) == \
         ["c3_customgrid_abcd1234", "c3_tract_us", f"c4_{R}", f"c4_{A}"]
 
 
+@pytest.mark.geo
 def test_grid_cache_tag_and_key_have_no_rasterisation_suffix(tmp_path, write_tif):
     """grid_weights does not rasterise the buffer; like temis/vnl, no __r part."""
     step = custom.c3_step_for(_raster_def(tmp_path, write_tif))
@@ -323,6 +327,7 @@ def test_grid_cache_tag_and_key_have_no_rasterisation_suffix(tmp_path, write_tif
     assert key != custom.legacy_cache_key(p, "CUSTOMGRID_ffff0000", buffer_m=270)
 
 
+@pytest.mark.geo
 def test_c3_raster_render_points_at_the_uploaded_tif(rendered, tmp_path, write_tif):
     d = _raster_def(tmp_path, write_tif)
     cfg, run_dir = rendered(custom.c3_step_for(d), [R], {R: d})
@@ -344,6 +349,7 @@ def test_c3_raster_render_needs_a_raster_in_the_selection(tmp_path, load_templat
                       definitions={A: TRACT_DEF})
 
 
+@pytest.mark.geo
 def test_c4_raster_render_materialises_the_value_table(rendered, tmp_path, write_tif):
     """The pixels under the C3 grid ids become (grid_id, col); C4 then reads
     that parquet with no plugin, exactly like a polygon CSV."""
@@ -364,6 +370,7 @@ def test_c4_raster_render_materialises_the_value_table(rendered, tmp_path, write
     assert "year" not in values.columns
 
 
+@pytest.mark.geo
 def test_prepare_step_returns_the_webs_log_line(tmp_path, write_tif):
     d = _raster_def(tmp_path, write_tif, years=(2016, 2017))
     run_dir = tmp_path / "task-abcdef12"
@@ -377,6 +384,7 @@ def test_prepare_step_returns_the_webs_log_line(tmp_path, write_tif):
     assert custom.prepare_step(custom.c4_step_for(A), ctx, definitions={A: TRACT_DEF}) == []
 
 
+@pytest.mark.geo
 def test_c4_yearly_raster_render_stacks_one_table_per_year(rendered, tmp_path, write_tif):
     import pandas as pd
     d = _raster_def(tmp_path, write_tif, years=(2016, 2017))
@@ -404,6 +412,7 @@ def _multi_band_def(tmp_path, write_tif, *, years=(None,)):
     return d
 
 
+@pytest.mark.geo
 def test_c4_multi_band_raster_writes_one_column_per_band(rendered, tmp_path, write_tif):
     import pandas as pd
     d = _multi_band_def(tmp_path, write_tif)
@@ -418,6 +427,7 @@ def test_c4_multi_band_raster_writes_one_column_per_band(rendered, tmp_path, wri
     assert values["pm25"].tolist() == [0.0, 4.0, 23.0]      # band 1 keeps its (0,0)
 
 
+@pytest.mark.geo
 def test_c4_yearly_multi_band_raster_stacks_every_band_per_year(rendered, tmp_path, write_tif):
     import pandas as pd
     d = _multi_band_def(tmp_path, write_tif, years=(2016, 2017))
@@ -429,6 +439,7 @@ def test_c4_yearly_multi_band_raster_stacks_every_band_per_year(rendered, tmp_pa
         [2016, 2023.0, 23.0], [2017, 2123.0, 123.0]]
 
 
+@pytest.mark.geo
 def test_a_definition_from_before_multi_band_reads_as_one_band(tmp_path, write_tif):
     d = _raster_def(tmp_path, write_tif)
     d.pop("bands", None)
@@ -482,6 +493,7 @@ def test_diagnosis_never_raises(tmp_path):
     assert msg.startswith(f"{A}: could not compare geographies")
 
 
+@pytest.mark.geo
 def test_raster_diagnosis_reports_nodata_share(tmp_path, write_tif):
     import pandas as pd
     d = _raster_def(tmp_path, write_tif)
@@ -494,6 +506,7 @@ def test_raster_diagnosis_reports_nodata_share(tmp_path, write_tif):
     assert "has no data where this cohort lives" in msg
 
 
+@pytest.mark.geo
 def test_raster_diagnosis_reports_each_columns_nodata_share(tmp_path, write_tif):
     import pandas as pd
     d = _multi_band_def(tmp_path, write_tif)

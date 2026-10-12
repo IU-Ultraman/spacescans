@@ -14,8 +14,8 @@ pytestmark = pytest.mark.geo
 rasterio = pytest.importorskip("rasterio")
 from rasterio.transform import from_origin  # noqa: E402
 
-from spacescans.custom import raster as rv  # noqa: E402
 from spacescans.custom import RasterError  # noqa: E402
+from spacescans.custom import raster as rv  # noqa: E402
 
 
 def _grid(rows=4, cols=5):

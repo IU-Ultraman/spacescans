@@ -202,6 +202,7 @@ def tif(tmp_path, write_tif):
     return _make
 
 
+@pytest.mark.geo
 def test_raster_static(tif):
     p = tif("s.tif", _cells())
     m = custom.define_raster([("ndvi.tif", p.read_bytes(), None)], label="My raster",
@@ -225,6 +226,7 @@ def test_raster_static(tif):
     assert "ontology_id" not in m
 
 
+@pytest.mark.geo
 def test_raster_paths_are_used_in_place(tif):
     p = tif("ndvi_static.tif", _cells())
     m = custom.define_raster([(p, None)], value_cols=["ndvi"], bands=[1])
@@ -235,6 +237,7 @@ def test_raster_paths_are_used_in_place(tif):
     assert m["sha256"] == hashlib.sha256(p.read_bytes()).hexdigest()
 
 
+@pytest.mark.geo
 def test_raster_ids_match_for_bytes_and_paths(tif):
     """The id hashes the files' bytes however they were handed in."""
     a, b = tif("2016.tif", _cells()), tif("2017.tif", _cells(offset=100))
@@ -245,6 +248,7 @@ def test_raster_ids_match_for_bytes_and_paths(tif):
     assert by_path["sha256"] == by_bytes["sha256"]
 
 
+@pytest.mark.geo
 def test_raster_yearly_shares_one_grid(tif):
     m = custom.define_raster([("a.tif", tif("y16.tif", _cells()).read_bytes(), 2016),
                               ("b.tif", tif("y17.tif", _cells(offset=100)).read_bytes(), 2017)],
@@ -257,6 +261,7 @@ def test_raster_yearly_shares_one_grid(tif):
     assert m["description"] == "User-uploaded 0.01° raster, 2016–2017."
 
 
+@pytest.mark.geo
 def test_rasters_are_listed_by_year(tif):
     m = custom.define_raster([(tif("b.tif", _cells()), 2017), (tif("a.tif", _cells()), 2016)],
                              label="x")
@@ -264,24 +269,28 @@ def test_rasters_are_listed_by_year(tif):
     assert m["data_source"] == "Uploaded by user: a.tif, b.tif"
 
 
+@pytest.mark.geo
 def test_raster_rejects_a_grid_mismatch_between_years(tif):
     with pytest.raises(CustomExposomeError, match="different grid"):
         custom.define_raster([(tif("a.tif", _cells()), 2016),
                               (tif("b.tif", _cells(), res=0.02), 2017)], label="x")
 
 
+@pytest.mark.geo
 def test_raster_rejects_duplicate_years(tif):
     with pytest.raises(CustomExposomeError, match="same year"):
         custom.define_raster([(tif("a.tif", _cells()), 2016), (tif("b.tif", _cells()), 2016)],
                              label="x")
 
 
+@pytest.mark.geo
 def test_raster_requires_a_year_on_every_file_when_several(tif):
     with pytest.raises(CustomExposomeError, match="assign a year to every file"):
         custom.define_raster([(tif("a.tif", _cells()), 2016), (tif("b.tif", _cells()), None)],
                              label="x")
 
 
+@pytest.mark.geo
 def test_raster_rejects_an_unusable_year(tif):
     with pytest.raises(CustomExposomeError, match="unusable year"):
         custom.define_raster([(tif("a.tif", _cells()), 1850), (tif("b.tif", _cells()), 2016)],
@@ -293,22 +302,26 @@ def test_raster_needs_at_least_one_file():
         custom.define_raster([], label="x")
 
 
+@pytest.mark.geo
 def test_raster_rejects_a_bad_column_name(tif):
     with pytest.raises(CustomExposomeError, match="value column name"):
         custom.define_raster([(tif("a.tif", _cells()), None)], label="x", value_col="my value!")
 
 
+@pytest.mark.geo
 def test_raster_rejects_a_missing_band(tif):
     with pytest.raises(CustomExposomeError, match="band 2 does not exist"):
         custom.define_raster([(tif("a.tif", _cells()), None)], label="x", band=2)
 
 
+@pytest.mark.geo
 def test_raster_surfaces_the_inspection_error_with_the_filename(tif):
     content = tif("s.tif", _cells(), bottom_up=True).read_bytes()
     with pytest.raises(CustomExposomeError, match=r"south\.tif: .*bottom-up"):
         custom.define_raster([("south.tif", content, None)], label="x")
 
 
+@pytest.mark.geo
 def test_raster_with_several_bands_names_one_column_each(tif):
     p = tif("p.tif", _stack(), nodata=-9999)
     m = custom.define_raster(
@@ -325,12 +338,14 @@ def test_raster_with_several_bands_names_one_column_each(tif):
     assert m["display_unit"] == "ppb / ug/m3"
 
 
+@pytest.mark.geo
 def test_band_columns_default_when_unnamed(tif):
     p = tif("p.tif", _stack())
     assert custom.define_raster([(p, None)], bands=[2])["value_cols"] == ["value"]
     assert custom.define_raster([(p, None)], bands=[3, 1])["value_cols"] == ["band3", "band1"]
 
 
+@pytest.mark.geo
 def test_the_single_band_arguments_still_work(tif):
     p = tif("a.tif", _stack(2))
     m = custom.define_raster([("a.tif", p.read_bytes(), None)], label="x",
@@ -340,6 +355,7 @@ def test_the_single_band_arguments_still_work(tif):
     assert m["value_labels"] == {"ndvi": "Greenness"} and m["value_units"] == {"ndvi": "index"}
 
 
+@pytest.mark.geo
 @pytest.mark.parametrize("bands,cols,match", [
     ([], [], "select at least one band"),
     ([1, 1], ["a", "b"], "a band is selected twice"),
@@ -358,6 +374,7 @@ def test_raster_rejects_bad_band_selections(tif, bands, cols, match):
                              bands=bands, value_cols=cols)
 
 
+@pytest.mark.geo
 def test_every_yearly_file_must_have_every_selected_band(tif):
     with pytest.raises(CustomExposomeError, match=r"2017\.tif: band 3 does not exist"):
         custom.define_raster([("2016.tif", tif("a.tif", _stack(3)).read_bytes(), 2016),
@@ -377,6 +394,7 @@ def test_too_many_files_is_refused():
         custom.define_raster([(f"{y}.tif", b"x", y) for y in range(1990, 2021)], label="x")
 
 
+@pytest.mark.geo
 def test_preview_raster_reports_a_user_error(tif):
     with pytest.raises(CustomExposomeError, match="bottom-up") as exc:
         custom.preview_raster(tif("s.tif", _cells(), bottom_up=True).read_bytes())
