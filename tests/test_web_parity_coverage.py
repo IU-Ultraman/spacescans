@@ -15,11 +15,13 @@ from typing import Any
 import pandas as pd
 import pytest
 
-from spacescans import cohort
+from spacescans import catalog, cohort
 from spacescans.orchestrate import coverage
 
 FIX = Path(__file__).parent / "fixtures" / "web_parity"
-CATALOG = {**json.loads((FIX / "variable_metadata.json").read_text())["variables"],
+# The web catalog the expected results came from is the package's (same sha256,
+# fixtures/web_parity/manifest.json); the fixture keeps no copy of it.
+CATALOG = {**catalog.payload()["variables"],
            **json.loads((FIX / "overlay.json").read_text())}
 CASES = sorted((FIX / "expected" / "coverage").glob("*.json"))
 

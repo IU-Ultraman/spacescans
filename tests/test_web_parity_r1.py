@@ -23,12 +23,12 @@ from pathlib import Path
 
 import pytest
 
+from spacescans import catalog
 from spacescans.orchestrate import merge
 
 R1 = os.environ.get("SPACESCANS_R1_DIR")
 COHORT = os.environ.get("SPACESCANS_R1_COHORT")
-CATALOG = json.loads((Path(__file__).parent / "fixtures" / "web_parity"
-                      / "variable_metadata.json").read_text())["variables"]
+CATALOG = catalog.payload()["variables"]
 
 pytestmark = pytest.mark.skipif(
     not (R1 and COHORT), reason="set SPACESCANS_R1_DIR and SPACESCANS_R1_COHORT")

@@ -347,7 +347,7 @@ def test_plan_and_rendered_yaml_match_the_web(web, selection, monkeypatch, tmp_p
         log.unlink(missing_ok=True)
         web_yaml = web.runner.render_yaml(web_step, task_dir, config).read_text()
         web_logs = [json.loads(line) for line in log.read_text().splitlines()] if log.exists() else []
-        values = custom.values_path(ctx, step.variable or "")
+        values = custom.values_path(ctx, "" if step.is_c3 else step.dataset)
         web_values = values.read_bytes() if values.exists() else None
 
         records = custom.prepare_step(step, ctx, definitions=selection)

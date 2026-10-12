@@ -56,7 +56,8 @@ def test_plan_emits_one_c3_then_one_c4_per_variable():
     steps = custom.plan([A], {A: TRACT_DEF})
     assert _names(steps) == ["c3_tract_us", f"c4_{A}"]
     assert [s.is_c3 for s in steps] == [True, False]
-    assert steps[1].variable == A and steps[1].source_step == "c3_tract_us"
+    # one Step model (catalog.Step): the C4 names its dataset and binds the C3 weights
+    assert steps[1].dataset == A and steps[1].bind["source.file"] == "c3_tract_us"
     assert steps[1].template == steps[1].template_relpath == "c4/custom_areal.yaml"
 
 
@@ -113,11 +114,11 @@ def test_parquet_map_matches_the_c4_step_names():
 
 
 def test_every_template_the_path_renders_is_listed():
+    from spacescans import catalog
     assert set(custom.TEMPLATES) == {
         "c3/tract_us_demo.yaml", "c3/bg_us_demo.yaml", "c3/zcta5_us_demo.yaml",
         "c3/county_us_demo.yaml", "c3/custom_grid.yaml", "c4/custom_areal.yaml"}
-    templates = Path(__file__).parent / "templates"
-    assert all((templates / t).is_file() for t in custom.TEMPLATES)
+    assert set(custom.TEMPLATES) <= set(catalog.templates())
 
 
 # --------------------------------------------------------------------------
@@ -343,7 +344,8 @@ def test_c3_raster_render_points_at_the_uploaded_tif(rendered, tmp_path, write_t
 
 def test_c3_raster_render_needs_a_raster_in_the_selection(tmp_path, load_template):
     ctx = custom.Context(run_dir=tmp_path, cohort_parquet=tmp_path / "input.parquet")
-    step = custom.Step(name="c3_customgrid_ffff0000", template=custom.C3_GRID_TEMPLATE, kind="c3")
+    step = custom.Step(name="c3_customgrid_ffff0000", template=custom.C3_GRID_TEMPLATE, kind="c3",
+                       cache_tag="CUSTOMGRID_ffff0000")
     with pytest.raises(ValueError, match="no raster dataset in the selection renders"):
         custom.render(step, load_template(step.template), ctx, variables=[A],
                       definitions={A: TRACT_DEF})
