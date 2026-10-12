@@ -163,8 +163,9 @@
       "sha256": "5530456d10d2888745c158bce81b8eade3315338ead847d8112950fc0d15cc6e",
       "bytes": 233766,
       "dest": "ACAG/C3",
-      "note": "Grid definition only (all zeros): 0.01 degree, 11,800 x 5,400 cells, north-up, EPSG:4326. Contains no ACAG values. Can be regenerated with spacescans-web backend/scripts/make_acag_template.py.",
-      "interim": "Not on the mirror yet. Until it is, copy pipeline-data/ACAG/C3/acag_template.tif from a spacescans-web checkout into <data_dir>/ACAG/C3/, or pass --mirror <folder holding it>."
+      "note": "Grid definition only (all zeros): 0.01 degree, 11,800 x 5,400 cells, north-up, EPSG:4326. Contains no ACAG values. spacescans data prepare templates regenerates it byte for byte (a port of spacescans-web backend/scripts/make_acag_template.py).",
+      "interim": "Not on the mirror yet. Until it is, run spacescans data prepare templates (needs the geo extra), copy pipeline-data/ACAG/C3/acag_template.tif from a spacescans-web checkout into <data_dir>/ACAG/C3/, or pass --mirror <folder holding it>.",
+      "generate": "templates"
     },
     "temis_template.tif": {
       "kind": "bare",
@@ -173,8 +174,9 @@
       "sha256": "49fcbfe28ffb95f4b476f1481cdccce1fd678ed53fd365ad1a62875f125d2847",
       "bytes": 2076126,
       "dest": "TEMIS/C3",
-      "note": "Grid definition only (all zeros); contains no TEMIS UV values. An earlier version with real UV values is in spacescans-web history (c186b94); never mirror that one.",
-      "interim": "Not on the mirror yet. Until it is, copy pipeline-data/TEMIS/C3/temis_template.tif from a spacescans-web checkout into <data_dir>/TEMIS/C3/, or pass --mirror <folder holding it>."
+      "note": "Grid definition only (all zeros): 0.25 degree, 1,440 x 720 cells, int16, north-up, EPSG:4326; contains no TEMIS UV values. spacescans data prepare templates regenerates it byte for byte. An earlier version with real UV values is in spacescans-web history (c186b94); never mirror that one.",
+      "interim": "Not on the mirror yet. Until it is, run spacescans data prepare templates (needs the geo extra), copy pipeline-data/TEMIS/C3/temis_template.tif from a spacescans-web checkout into <data_dir>/TEMIS/C3/, or pass --mirror <folder holding it>.",
+      "generate": "templates"
     }
   },
   "datasets": {
@@ -392,7 +394,7 @@
     },
     "temis_uv_raw": {
       "title": "KNMI TEMIS daily UV (uvief, uvdec, uvdvc, uvddc), raw HDF4 files, 2013-2019",
-      "acquire": "provider-manual",
+      "acquire": "provider-scripted",
       "provider": "KNMI / ESA, Tropospheric Emission Monitoring Internet Service (TEMIS)",
       "license": "Free use with credits; redistribution not granted",
       "redistribution": "not granted: neither the raw HDF files nor the converted parquet may be redistributed; every site downloads and converts its own copy",
@@ -406,12 +408,15 @@
         "summary": "Download from KNMI yourself; do not share the files or values derived from them without KNMI's permission."
       },
       "instructions": [
+        "spacescans data fetch --dataset temis_uv_raw --accept-terms knmi-temis downloads them for you (one file at a time from KNMI's CloudFront mirror; already present days are skipped). Or by hand:",
         "Download the daily files {var}YYYYMMDD.hdf for var in uvief, uvdec, uvdvc, uvddc and the years 2013-2019 (about 10,220 files, about 31.6 GB) from the KNMI archive; the mirror https://d1qb6yzwaaq4he.cloudfront.net/uvradiation/v2.0/{year}/{mm}/{var}YYYYMMDD.hdf serves the same files.",
         "Place them as <data_dir>/TEMIS/C4/raw/{var}/{year}/{var}YYYYMMDD.hdf.",
         "2016-02-29 is missing upstream for all four variables; that gap is expected.",
         "Reading needs the hdf4 extra (pyhdf). The first run converts the files to <data_dir>/TEMIS/C4/converted/, so the data directory must be writable then."
       ],
       "estimate": {"download_bytes": 31580000000, "disk_bytes": 31580000000},
+      "download": {"method": "daily", "url": "https://d1qb6yzwaaq4he.cloudfront.net/uvradiation/v2.0/{year}/{mm}/{var}{yyyymmdd}.hdf", "range": true, "magic": "0e031301",
+                   "note": "KNMI's CloudFront distribution of the TEMIS UV archive v2.0; Range is honoured."},
       "layout": [
         {"rule": "daily", "path": "TEMIS/C4/raw/{var}/{year}/{var}{yyyymmdd}.hdf", "vars": {"var": "@temis_vars"}, "years": "@years_2013_2019", "known_gaps": ["20160229"], "magic": "0e031301"}
       ]
@@ -433,7 +438,7 @@
     },
     "acag": {
       "title": "ACAG V5.NA.05 / V5.NA.05.02 surface PM2.5 and composition, biweekly 0.01 degree NetCDF, 2013-2019 (plain and FromBiomass)",
-      "acquire": "provider-manual",
+      "acquire": "provider-scripted",
       "provider": "Atmospheric Composition Analysis Group (ACAG), Washington University in St. Louis",
       "license": "Not stated for the North American V5.NA.05 product; ACAG states CC BY 4.0 for its global product only",
       "redistribution": "not confirmed for this product: do not redistribute until ACAG confirms the licence; every site downloads its own copy",
@@ -447,19 +452,33 @@
         "summary": "Download from WashU ACAG yourself and cite the product paper. Do not redistribute the North American files."
       },
       "instructions": [
+        "spacescans data fetch --dataset acag --accept-terms acag-v5na05 downloads them for you from the four WashU Box shares, one file at a time; already present files are skipped. Or by hand:",
         "From the ACAG surface PM2.5 page, download V5.NA.05 (total PM2.5) and V5.NA.05.02 (BC, DUST, NH4, NO3, OM, SO4, SS), biweekly NetCDF, years 2013-2019, each in the plain and the FromBiomass variant: 16 folders x 182 files = 2,912 files, about 27.4 GB.",
         "The four WashU Box shares do not allow folder downloads; files are fetched one by one (spacescans-web pipeline-data/ACAG/README.md lists the share IDs and the method).",
-        "Place plain files in <data_dir>/ACAG/C4/xNorthAmerica/{SPECIES}/BiWeekly/ and FromBiomass files in <data_dir>/ACAG/C4/xNorthAmerica/{SPECIES}_bm/BiWeekly/, SPECIES in PM25, BC, DUST, NH4, NO3, OM, SO4, SS.",
+        "Place plain files in <data_dir>/ACAG/C4/xNorthAmerica/{SPECIES}/BiWeekly/ and FromBiomass files in <data_dir>/ACAG/C4/xNorthAmerica/{SPECIES}_bm/BiWeekly/, SPECIES in PM25, BC, DUST, NH4, NO3, OM, SO4, SS; spacescans data import acag <files or folders> sorts them by name.",
         "Reading needs the nc extra (xarray, netCDF4)."
       ],
       "estimate": {"download_bytes": 27360000000, "disk_bytes": 27360000000},
+      "import": [
+        {"regex": "^V5NA05(?:\\.02)?\\.Hybrid(?P<species>PM25|BC|DUST|NH4|NO3|OM|SO4|SS)(?:-(?P=species))?(?P<variant>\\.FromBiomass)?\\.xNorthAmerica\\.(?P<year>\\d{4})\\d{3}-\\d{7}\\.nc$",
+         "target": "ACAG/C4/xNorthAmerica/{species}{variant}/BiWeekly/{name}", "map": {"variant": {"": "", ".FromBiomass": "_bm"}},
+         "years": "@years_2013_2019", "year_group": "year", "magic": "894844460d0a1a0a"}
+      ],
+      "download": {"method": "box", "base": "https://wustl.box.com", "range": true, "magic": "894844460d0a1a0a", "page_size": 20,
+                   "note": "Box's folder API rejects anonymous calls and folder download is disabled: each folder's HTML page is paged with ?page=N and files are fetched one by one via index.php?rm=box_download_shared_file. Every listed .nc is routed by the import rule; other years are skipped.",
+                   "shares": [
+                     {"name": "c3lmvqrvbjcrfpqoxb68nwl9tqhkl81g", "label": "V5.NA.05 total PM2.5", "paths": ["GWRPM25/xNorthAmerica/BiWeekly"]},
+                     {"name": "i15cm0rgyjvbmwwjtomo5tmdmoyekl6g", "label": "V5.NA.05.02 components", "paths": ["NetCDF/GWR{species}/xNorthAmerica/BiWeekly"], "vars": {"species": ["BC", "DUST", "NH4", "NO3", "OM", "SO4", "SS"]}},
+                     {"name": "mfw4pr02b31bnp25jlwn402c93vyfjbq", "label": "V5.NA.05 total PM2.5, FromBiomass", "paths": ["PM25/xNorthAmerica/BiWeekly"]},
+                     {"name": "1zjqdwwcto5huijiluk26qyrmzazhe29", "label": "V5.NA.05.02 components, FromBiomass", "paths": ["NetCDF/{species}/xNorthAmerica/BiWeekly"], "vars": {"species": ["BC", "DUST", "NH4", "NO3", "OM", "SO4", "SS"]}}
+                   ]},
       "layout": [
         {"rule": "count", "dir": "ACAG/C4/xNorthAmerica/{dir}/BiWeekly", "glob": "*.nc", "vars": {"dir": "@acag_dirs"}, "expect": 182, "regex": "\\.(\\d{7})-(\\d{7})\\.nc$", "magic": "894844460d0a1a0a"}
       ]
     },
     "faqsd": {
       "title": "US EPA FAQSD daily ozone (8-hour maximum) and PM2.5 (daily average) by 2010 census tract, 2013-2019",
-      "acquire": "provider-manual",
+      "acquire": "provider-scripted",
       "provider": "US EPA, Fused Air Quality Surfaces Using Downscaling (FAQSD), via RSIG",
       "license": "US federal public domain",
       "redistribution": "allowed",
@@ -473,11 +492,24 @@
         "summary": "Public domain. Downloads come from EPA's server, which does not support resuming and streams at about 0.25 MB/s."
       },
       "instructions": [
+        "spacescans data fetch --dataset faqsd --accept-terms epa-faqsd downloads them for you: one unbroken connection per file (no overall time cap), size and gzip checks, then gunzip into place; already present files are skipped. Or by hand:",
         "Download https://ofmpub.epa.gov/rsig/rsigserver?data/FAQSD/outputs/{year}_{kind}.txt.gz for year 2013-2019 and kind ozone_daily_8hour_maximum, pm25_daily_average (14 files, about 6.5 GB compressed).",
         "EPA's server ignores Range requests and streams at about 0.25 MB/s, so each 470 MB file needs one unbroken connection of about 30 minutes; never cap a download below about 3 hours.",
         "gunzip each file into <data_dir>/FAQSD/C4/{year}_{kind}.txt and keep the names exactly as published (about 23.3 GB unpacked)."
       ],
       "estimate": {"download_bytes": 6500000000, "disk_bytes": 23332000000},
+      "download": {"method": "files", "url": "https://ofmpub.epa.gov/rsig/rsigserver?data/FAQSD/outputs/{year}_{kind}.txt.gz", "range": false, "gunzip": true, "magic": "1f8b",
+                   "note": "EPA's rsigserver ignores Range and streams at about 0.25 MB/s: every attempt starts from byte 0 on one long connection. reference_download_bytes are the Content-Length values seen on 2026-09-15.",
+                   "reference_download_bytes": {
+                     "FAQSD/C4/2016_ozone_daily_8hour_maximum.txt": 477113499,
+                     "FAQSD/C4/2016_pm25_daily_average.txt": 470578491,
+                     "FAQSD/C4/2017_ozone_daily_8hour_maximum.txt": 467295166,
+                     "FAQSD/C4/2017_pm25_daily_average.txt": 459887896,
+                     "FAQSD/C4/2018_ozone_daily_8hour_maximum.txt": 467215780,
+                     "FAQSD/C4/2018_pm25_daily_average.txt": 459925401,
+                     "FAQSD/C4/2019_ozone_daily_8hour_maximum.txt": 466650018,
+                     "FAQSD/C4/2019_pm25_daily_average.txt": 458994968
+                   }},
       "layout": [
         {"rule": "files", "path": "FAQSD/C4/{year}_{kind}.txt", "vars": {"year": "@years_2013_2019", "kind": "@faqsd_kinds"},
          "reference_bytes": {

@@ -121,7 +121,8 @@
         "roots": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/relpath"}},
         "dest": {"$ref": "#/$defs/relpath"},
         "note": {"type": "string"},
-        "interim": {"type": "string"}
+        "interim": {"type": "string"},
+        "generate": {"enum": ["templates"]}
       },
       "allOf": [
         {
@@ -259,14 +260,68 @@
             "disk_bytes": {"type": "integer", "minimum": 0}
           }
         },
-        "layout": {"type": "array", "items": {"$ref": "#/$defs/rule"}}
+        "layout": {"type": "array", "items": {"$ref": "#/$defs/rule"}},
+        "import": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/import_rule"}},
+        "download": {"$ref": "#/$defs/download"}
       },
       "allOf": [
         {
           "if": {"properties": {"acquire": {"const": "mirror"}}},
           "then": {"required": ["artifacts"]},
           "else": {"required": ["instructions", "layout"]}
+        },
+        {
+          "if": {"properties": {"acquire": {"const": "provider-scripted"}}},
+          "then": {"required": ["download", "terms"]}
         }
+      ]
+    },
+    "import_rule": {
+      "type": "object",
+      "required": ["regex", "target"],
+      "additionalProperties": false,
+      "properties": {
+        "regex": {"type": "string"},
+        "target": {"type": "string"},
+        "map": {"type": "object", "additionalProperties": {"type": "object", "additionalProperties": {"type": "string"}}},
+        "years": {"$ref": "#/$defs/values"},
+        "year_group": {"type": "string"},
+        "magic": {"type": "string", "pattern": "^([0-9a-f]{2})+$"}
+      }
+    },
+    "download": {
+      "type": "object",
+      "required": ["method"],
+      "additionalProperties": false,
+      "properties": {
+        "method": {"enum": ["files", "daily", "box"]},
+        "url": {"type": "string", "pattern": "^https?://"},
+        "base": {"type": "string", "pattern": "^https?://"},
+        "range": {"type": "boolean"},
+        "gunzip": {"type": "boolean"},
+        "magic": {"type": "string", "pattern": "^([0-9a-f]{2})+$"},
+        "page_size": {"type": "integer", "minimum": 1},
+        "note": {"type": "string"},
+        "reference_download_bytes": {"$ref": "#/$defs/bytes_map"},
+        "shares": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["name", "paths"],
+            "additionalProperties": false,
+            "properties": {
+              "name": {"type": "string", "pattern": "^[A-Za-z0-9]+$"},
+              "label": {"type": "string"},
+              "paths": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+              "vars": {"$ref": "#/$defs/vars"}
+            }
+          }
+        }
+      },
+      "allOf": [
+        {"if": {"properties": {"method": {"enum": ["files", "daily"]}}}, "then": {"required": ["url"]}},
+        {"if": {"properties": {"method": {"const": "box"}}}, "then": {"required": ["base", "shares"]}}
       ]
     }
   }

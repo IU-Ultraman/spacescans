@@ -36,6 +36,8 @@ ARTIFACT_STATUSES = ("available", "pending_upload")
 ACQUIRE_MODES = ("mirror", "provider-manual", "provider-scripted", "generated")
 RULE_TYPES = ("files", "count", "one_per", "daily", "nonempty_dir")
 MIRROR_TYPES = ("sharepoint-share", "http", "file")
+DOWNLOAD_METHODS = ("files", "daily", "box")
+GENERATORS = ("templates",)
 _SHA256 = re.compile(r"^[0-9a-f]{64}$")
 
 
@@ -64,6 +66,7 @@ class Artifact:
     dest: str | None = None            # bare: folder (relative to the data root)
     note: str = ""
     interim: str = ""                  # pending_upload: how to get it meanwhile
+    generate: str | None = None        # can be regenerated locally: ``spacescans data prepare <generate>``
 
     @property
     def available(self) -> bool:
@@ -96,6 +99,60 @@ class Terms:
 
 
 @dataclass(frozen=True)
+class Download:
+    """How ``fetch()`` downloads a provider-scripted dataset (never without its terms).
+
+    ``files``: one URL per expansion of the dataset's ``files`` layout rule
+    (``url`` is formatted with the same bindings). ``daily``: one URL per
+    calendar day of the dataset's ``daily`` layout rule, minus known gaps
+    (``url`` may use ``{year}``, ``{mm}``, ``{dd}``, ``{yyyymmdd}`` and the
+    rule's vars). ``box``: files listed from WashU Box shared folders
+    (``base``, ``shares``) and routed to their folders by the dataset's
+    ``import`` rules.
+    """
+
+    method: str
+    url: str = ""
+    base: str = ""
+    range: bool = True                 # the server honours Range (resume within a call)
+    gunzip: bool = False               # the download is .gz; unpack it into place
+    magic: str = ""                    # hex signature the downloaded bytes start with
+    shares: tuple[Mapping[str, Any], ...] = ()
+    page_size: int = 20
+    reference_download_bytes: Mapping[str, int] = field(default_factory=dict)  # target -> bytes
+    note: str = ""
+
+
+@dataclass(frozen=True)
+class ImportRule:
+    """Route a provider file to its folder by its name (ACAG: species and variant).
+
+    ``target`` is formatted with the regex's named groups (after ``map``
+    rewrites, a missing optional group counting as ``""``) and ``name``.
+    With ``years``, the ``year_group`` must be one of those years.
+    """
+
+    regex: str
+    target: str
+    map: Mapping[str, Mapping[str, str]] = field(default_factory=dict)
+    years: Any = None
+    year_group: str = "year"
+    magic: str = ""
+
+    def route(self, name: str, years: Sequence[str] | None) -> tuple[str | None, str]:
+        """(relative target or None, reason when None)."""
+        m = re.match(self.regex, name)
+        if not m:
+            return None, "name does not match"
+        groups = {k: (v or "") for k, v in m.groupdict().items()}
+        if years is not None and groups.get(self.year_group) not in years:
+            return None, f"year {groups.get(self.year_group)} is outside {years[0]}-{years[-1]}"
+        for key, table in self.map.items():
+            groups[key] = table.get(groups.get(key, ""), groups.get(key, ""))
+        return self.target.format(**groups, name=name), ""
+
+
+@dataclass(frozen=True)
 class Dataset:
     key: str
     title: str
@@ -110,11 +167,19 @@ class Dataset:
     instructions: tuple[str, ...] = ()
     estimate: Mapping[str, int] = field(default_factory=dict)
     layout: tuple[Mapping[str, Any], ...] = ()
+    download: Download | None = None
+    imports: tuple[ImportRule, ...] = ()
 
     @property
     def fetchable(self) -> bool:
         """True when ``fetch()`` can download it from the mirror."""
         return self.acquire == "mirror"
+
+    @property
+    def scripted(self) -> bool:
+        """True when ``fetch()`` can download it from the provider, once its
+        terms are accepted in that call."""
+        return self.acquire == "provider-scripted" and self.download is not None
 
 
 @dataclass(frozen=True)
@@ -314,11 +379,14 @@ def parse_manifest(raw: Mapping[str, Any], *, path: Path | None = None) -> Manif
                 raise ManifestError(f"{where}: a bare artifact needs 'dest' (a relative folder)")
         if status_ == "pending_upload" and not a.get("interim"):
             raise ManifestError(f"{where}: a pending_upload artifact needs 'interim' instructions")
+        generate = a.get("generate")
+        if generate is not None and (generate not in GENERATORS or kind != "bare"):
+            raise ManifestError(f"{where}: 'generate' must be one of {GENERATORS} on a bare artifact")
         artifacts[name] = Artifact(
             name=name, kind=kind, status=status_, mirror=mirror, sha256=sha, bytes=size,
             extracted_bytes=a.get("extracted_bytes"), payload_bytes=a.get("payload_bytes"),
             files=a.get("files"), roots=roots, dest=dest, note=a.get("note", ""),
-            interim=a.get("interim", ""),
+            interim=a.get("interim", ""), generate=generate,
         )
 
     datasets: dict[str, Dataset] = {}
@@ -348,6 +416,13 @@ def parse_manifest(raw: Mapping[str, Any], *, path: Path | None = None) -> Manif
         layout = tuple(d.get("layout") or ())
         for i, rule in enumerate(layout):
             _check_rule(rule, f"{where} layout[{i}]", lists)
+        imports = tuple(_parse_import(r, f"{where} import[{i}]", lists)
+                        for i, r in enumerate(d.get("import") or ()))
+        download = _parse_download(d.get("download"), where, layout, imports) if d.get("download") else None
+        if acquire == "provider-scripted" and (download is None or terms is None):
+            raise ManifestError(f"{where}: a provider-scripted dataset needs 'download' and 'terms'")
+        if download is not None and acquire != "provider-scripted":
+            raise ManifestError(f"{where}: only a provider-scripted dataset may have 'download'")
         datasets[key] = Dataset(
             key=key, title=_req(d, "title", str, where), acquire=acquire,
             provider=_req(d, "provider", str, where), license=_req(d, "license", str, where),
@@ -356,6 +431,7 @@ def parse_manifest(raw: Mapping[str, Any], *, path: Path | None = None) -> Manif
             source_url=d.get("source_url", ""), terms=terms,
             instructions=tuple(d.get("instructions") or ()),
             estimate=dict(d.get("estimate") or {}), layout=layout,
+            download=download, imports=imports,
         )
     orphans = sorted(set(artifacts) - set(used_artifacts))
     if orphans:
@@ -389,6 +465,60 @@ def parse_manifest(raw: Mapping[str, Any], *, path: Path | None = None) -> Manif
     return Manifest(schema_version=1, data_release=release, mirrors=mirrors, lists=lists,
                     artifacts=artifacts, datasets=datasets, variables=variables,
                     boundaries=boundaries, path=path)
+
+
+def _parse_import(r: Mapping[str, Any], where: str, lists: Mapping[str, Any]) -> ImportRule:
+    regex = _req(r, "regex", str, where)
+    target = _req(r, "target", str, where)
+    try:
+        rx = re.compile(regex)
+    except re.error as e:
+        raise ManifestError(f"{where}: bad regex: {e}") from None
+    if not _relpath_ok(target.replace("{name}", "x")):
+        raise ManifestError(f"{where}: target {target!r} must be a relative path without '..'")
+    fields = {n for _, n, _, _ in string.Formatter().parse(target) if n}
+    unknown = fields - set(rx.groupindex) - {"name"}
+    if unknown:
+        raise ManifestError(f"{where}: target uses {sorted(unknown)}, which the regex does not capture")
+    years = r.get("years")
+    if years is not None:
+        _resolve_values(years, lists, set())
+    group = r.get("year_group", "year")
+    if years is not None and group not in rx.groupindex:
+        raise ManifestError(f"{where}: year_group {group!r} is not a group of the regex")
+    return ImportRule(regex=regex, target=target, map=dict(r.get("map") or {}), years=years,
+                      year_group=group, magic=r.get("magic", ""))
+
+
+def _parse_download(raw: Mapping[str, Any], where: str, layout: Sequence[Mapping[str, Any]],
+                    imports: Sequence[ImportRule]) -> Download:
+    where = f"{where} download"
+    method = _req(raw, "method", str, where)
+    if method not in DOWNLOAD_METHODS:
+        raise ManifestError(f"{where}: method must be one of {DOWNLOAD_METHODS}")
+    magic = raw.get("magic", "")
+    if magic and not re.fullmatch(r"(?:[0-9a-f]{2})+", magic):
+        raise ManifestError(f"{where}: magic must be lowercase hex")
+    if method in ("files", "daily"):
+        url = _req(raw, "url", str, where)
+        if not url.startswith(("https://", "http://")):
+            raise ManifestError(f"{where}: url must be http(s)")
+        if not any(rule.get("rule") == method for rule in layout):
+            raise ManifestError(f"{where}: method {method!r} needs a {method!r} layout rule")
+    shares: tuple[Mapping[str, Any], ...] = ()
+    if method == "box":
+        _req(raw, "base", str, where)
+        shares = tuple(_req(raw, "shares", list, where))
+        for i, sh in enumerate(shares):
+            _req(sh, "name", str, f"{where} shares[{i}]")
+            _req(sh, "paths", list, f"{where} shares[{i}]")
+        if not imports:
+            raise ManifestError(f"{where}: method 'box' routes files by the dataset's 'import' rules")
+    return Download(method=method, url=raw.get("url", ""), base=raw.get("base", ""),
+                    range=bool(raw.get("range", True)), gunzip=bool(raw.get("gunzip", False)),
+                    magic=magic, shares=shares, page_size=int(raw.get("page_size", 20)),
+                    reference_download_bytes=dict(raw.get("reference_download_bytes") or {}),
+                    note=raw.get("note", ""))
 
 
 def _check_rule(rule: Mapping[str, Any], where: str, lists: Mapping[str, Any]) -> None:
