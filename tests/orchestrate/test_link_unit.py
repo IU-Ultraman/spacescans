@@ -497,6 +497,9 @@ def test_two_custom_datasets_with_one_column_name_keep_both(tmp_path, no_data_ch
     assert cov.loc[kb, "pct"] == 75.0
     renamed = [w for w in res.warnings if w["code"] == "renamed"]
     assert [(w["variable"], w["column"], w["renamed_to"]) for w in renamed] == [(kb, "pm25", dup)]
+    # dictionary rows follow the name before the rename, as the web's name lookup does
+    assert list(res.features["feature_name"]) == ["pm25", dup]
+    assert res.features["short_description"].nunique() == 1
     from spacescans.orchestrate.run import clash_renames
     assert clash_renames("custom", [ka, kb], {ka: da, kb: db}) == {kb: {"pm25": dup}}
     assert clash_renames("bg_ndi_wi", ["walkability", "ndi"]) == {}

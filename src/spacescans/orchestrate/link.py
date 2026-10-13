@@ -453,44 +453,63 @@ def _fan_in(cohort_keys: pd.DataFrame, partials: Mapping[str, pd.DataFrame],
     return fanned[["episode_id"] + cols].reset_index(drop=True), names
 
 
-def _features(columns: Sequence[str], base: Mapping[str, str] | None = None) -> pd.DataFrame:
-    """Feature-dictionary rows of ``columns``; a renamed column is looked up by
-    ``base[column]`` (its catalog name) and listed under its new name."""
+def _features(columns: Sequence[str],
+              origins: Mapping[str, tuple[str, str | None, str]] | None = None) -> pd.DataFrame:
+    """Feature-dictionary rows of ``columns``.
+
+    A column is looked up by its name before any rename (``origins[column]``
+    is ``(experiment, variable, that name)``), as the web looks up a result
+    column (gate A4 holds the rows to the web's), so a renamed column keeps
+    its row under its new name.
+    """
     import pandas as pd
 
     from spacescans import catalog
 
     rows = []
     for col in columns:
-        for row in catalog.feature_rows([(base or {}).get(col, col)]):
+        _exp, _var, name = (origins or {}).get(col, (None, None, col))
+        for row in catalog.feature_rows([name]):
             rows.append({**row, "feature_name": col})
     return pd.DataFrame(rows, columns=list(catalog.FEATURE_FIELDNAMES))
 
 
+def _column_origins(names: Sequence[tuple[str, str, str]], groups: Mapping[str, Sequence[str]],
+                    within: Mapping[str, Mapping[str, Mapping[str, str]]],
+                    overlay: Mapping[str, dict] | None) -> dict[str, tuple[str, str | None, str]]:
+    """``{result column: (experiment, variable, catalog name)}`` for every result column."""
+    from spacescans import catalog
+
+    by_partial: dict[tuple[str, str], tuple[str, str]] = {}
+    for exp, keys in groups.items():
+        own = within.get(exp, {})
+        for key in keys:
+            for col in catalog.variable(key, overlay=overlay or None).value_cols:
+                part = dict(own.get(key, {})).get(col, col)
+                by_partial.setdefault((exp, part), (key, col))
+    out: dict[str, tuple[str, str | None, str]] = {}
+    for exp, part, final in names:
+        var, name = by_partial.get((exp, part), (None, part))
+        out[final] = (exp, var, name)
+    return out
+
+
 def _rename_warnings(names: Sequence[tuple[str, str, str]],
-                     within: Mapping[str, Mapping[str, Mapping[str, str]]]
-                     ) -> tuple[dict[str, str], list[dict]]:
-    """The catalog name of every result column, and a ``renamed`` warning per renamed one."""
-    origin: dict[tuple[str, str], tuple[str, str]] = {}   # (exp, partial col) -> (variable, base)
-    for exp, per_var in within.items():
-        for var, renames in per_var.items():
-            for col, new in renames.items():
-                origin[(exp, new)] = (var, col)
-    base: dict[str, str] = {}
+                     origins: Mapping[str, tuple[str, str | None, str]]) -> list[dict]:
+    """A ``renamed`` warning for every result column whose name is not its catalog name."""
     warnings: list[dict] = []
-    for exp, col, final in names:
-        var, name = origin.get((exp, col), (None, col))
-        base[final] = name
+    for exp, part, final in names:
+        _exp, var, name = origins.get(final, (exp, None, part))
         if final == name:
             continue
-        if var is not None and final == col:
+        if final == part:      # renamed within its source only
             why = f"another variable of the {exp} source already has a column {name}"
         else:
             why = "the name is already taken (a cohort column, reserved_names or an earlier source)"
         warnings.append({"code": "renamed", "experiment": exp, "variable": var, "column": name,
                          "renamed_to": final,
                          "message": f"{var or exp}: column {name} renamed to {final}; {why}"})
-    return base, warnings
+    return warnings
 
 
 def _error_entry(exc: BaseException, exp: str, keys: list[str]) -> dict[str, Any]:
@@ -665,8 +684,8 @@ def link(cohort: pd.DataFrame | str | os.PathLike, variables: Sequence[str], *,
     cohort_keys = pd.read_parquet(rdir / COHORT_FILE, columns=["pid", "episode_id"])
     exposures, names = _fan_in(cohort_keys, partials, taken)
     columns = [c for c in exposures.columns if c != "episode_id"]
-    base_names, rename_warnings = _rename_warnings(names, within)
-    warnings.extend(rename_warnings)
+    origins = _column_origins(names, groups, within, overlay)
+    warnings.extend(_rename_warnings(names, origins))
     coverage = coverage_table(partials, groups, cohort_keys, overlay, col_renames=within)
     ended = datetime.now(timezone.utc)
     prov = _provenance.build(
@@ -675,7 +694,7 @@ def link(cohort: pd.DataFrame | str | os.PathLike, variables: Sequence[str], *,
         on_error=on_error, data_summary=data_summary, cohort_info=info,
         started=started, ended=ended, seconds=time.monotonic() - t0,
         failed=failed, skipped=skipped, columns=columns)
-    return LinkResult(exposures=exposures, features=_features(columns, base_names),
+    return LinkResult(exposures=exposures, features=_features(columns, origins),
                       coverage=coverage,
                       steps=steps, failed=failed, skipped=skipped, warnings=warnings,
                       provenance=prov, run_dir=rdir, partials=partials, errors=errors)
