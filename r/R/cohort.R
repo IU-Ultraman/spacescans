@@ -34,26 +34,38 @@
   .ss_abort("cohort", "`cohort` must be a data frame or the path of a CSV or Parquet file.")
 }
 
-# INT64 columns (ids above 2^53 among them) are read as bit64::integer64, so
-# no id is rounded; without bit64 a file whose INT64 values a double cannot
-# hold exactly is refused.
+# INT64 columns must reach R exactly: ids above 2^53 would otherwise collapse.
+# nanoparquet reads an INT64 column annotated INT(64) as bit64::integer64, but
+# an unannotated one (as pyarrow, pandas and Spark write them) as double,
+# exact only up to 2^53; such a column holding larger values is read again
+# with arrow (integer64), or refused when arrow is not installed.
 .ss_read_cohort_parquet <- function(path) {
-  if (requireNamespace("bit64", quietly = TRUE)) {
-    opts <- nanoparquet::parquet_options(read_int64_type = "integer64")
-    return(as.data.frame(nanoparquet::read_parquet(path, options = opts), stringsAsFactors = FALSE))
+  opts <- if (requireNamespace("bit64", quietly = TRUE)) {
+    nanoparquet::parquet_options(read_int64_type = "integer64")
+  } else {
+    nanoparquet::parquet_options()
   }
-  df <- as.data.frame(nanoparquet::read_parquet(path), stringsAsFactors = FALSE)
+  df <- as.data.frame(nanoparquet::read_parquet(path, options = opts), stringsAsFactors = FALSE)
   schema <- nanoparquet::read_parquet_schema(path)
   int64 <- intersect(schema$name[schema$type %in% "INT64"], names(df))
-  big <- int64[vapply(int64, function(c) any(abs(df[[c]]) > 2^53, na.rm = TRUE), logical(1))]
-  if (length(big)) {
-    .ss_abort("cohort", sprintf(paste0(
-      "Column(s) %s of %s hold 64-bit integers too large to read exactly without the bit64 package."),
-      paste(big, collapse = ", "), basename(path)),
-      hint = 'install.packages("bit64"), or read the file yourself and pass a data frame.')
+  lossy <- int64[vapply(int64, function(col) {
+    x <- df[[col]]
+    is.double(x) && !inherits(x, c("integer64", "POSIXt", "Date", "difftime", "hms")) &&
+      any(abs(x) >= 2^53, na.rm = TRUE)
+  }, logical(1))]
+  if (!length(lossy)) return(df)
+  if (.ss_has_arrow()) {
+    exact <- arrow::read_parquet(path, as_data_frame = FALSE)    # an Arrow Table
+    for (col in lossy) df[[col]] <- as.vector(exact[[col]])
+    return(df)
   }
-  df
+  .ss_abort("cohort", sprintf(paste0(
+    "Column(s) %s of %s hold 64-bit integers beyond 2^53, which R cannot read exactly ",
+    "without the arrow package."), paste(lossy, collapse = ", "), basename(path)),
+    hint = 'install.packages("arrow"), store the ids as text, or read the file yourself and pass a data frame.')
 }
+
+.ss_has_arrow <- function() requireNamespace("arrow", quietly = TRUE)
 
 # Ids, dates and FIPS/GEOID codes stay text; every other column is inferred
 # as utils::read.csv() does, except that a column of zero-padded digit codes

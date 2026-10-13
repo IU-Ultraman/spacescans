@@ -141,6 +141,24 @@ test_that("Parquet INT64 ids above 2^53 are read exactly (review rux F1)", {
   expect_equal(out$n_patients, 20L)
   expect_equal(out$df$pid[1], "9007199254740993")
   expect_equal(length(unique(out$df$pid)), 20L)
+
+  # INT64 without the INT(64) annotation, as pyarrow and pandas write it: nanoparquet
+  # reads a double, so the column is read again with arrow, or refused without it.
+  plain <- file.path(d, "plain.parquet")
+  nanoparquet::write_parquet(df[, c("pid", "startDate", "endDate", "longitude", "latitude")], plain,
+                             schema = nanoparquet::parquet_schema(pid = "INT64"))
+  expect_type(nanoparquet::read_parquet(plain)$pid, "double")
+  local({
+    testthat::local_mocked_bindings(.ss_has_arrow = function() FALSE)
+    e <- tryCatch(spacescans:::.ss_cohort_input(plain), error = identity)
+    expect_s3_class(e, "spacescans_error_cohort")
+    expect_match(conditionMessage(e), "pid of plain.parquet hold 64-bit integers", fixed = TRUE)
+    expect_no_match(conditionMessage(e), "900719925474")
+  })
+  skip_if_not_installed("arrow")
+  y <- spacescans:::.ss_cohort_input(plain)
+  expect_s3_class(y$pid, "integer64")
+  expect_equal(prep(y)$n_patients, 20L)
 })
 
 test_that("CSV columns of zero-padded codes keep their zeros; others are inferred (review rux F9)", {
