@@ -14,8 +14,9 @@ jobs:
         python: ["3.10", "3.11", "3.12", "3.13"]
     runs-on: ${{ matrix.os }}
     env:
-      # Base install only: deselect everything that needs an optional extra.
-      BASE_MARKERS: not extras and not geo and not rda and not hdf4 and not nc and not slow
+      # Base install only: deselect everything that needs an optional extra, and the
+      # golden tests (their references are not in git; they skip without them anyway).
+      BASE_MARKERS: not extras and not geo and not rda and not hdf4 and not nc and not slow and not golden
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

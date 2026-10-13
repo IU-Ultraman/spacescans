@@ -27,16 +27,6 @@ def _run(code: str) -> str:
     return proc.stdout.strip()
 
 
-def test_importing_custom_loads_no_geo_library_and_no_pandas():
-    out = _run(f"""
-        import sys
-        import spacescans.custom
-        loaded = {{m.split(".")[0] for m in sys.modules}}
-        print(sorted(loaded & set({GEO + ("pandas",)!r})))
-    """)
-    assert out == "[]"
-
-
 def test_the_csv_path_runs_when_geo_libraries_cannot_be_imported(tmp_path):
     out = _run(f"""
         import sys

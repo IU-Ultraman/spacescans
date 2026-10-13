@@ -10,6 +10,27 @@ are in design §6, and critique #1, #2 and #4 apply.
 - **Coverage:** all 11 catalog variables, plus the upload path with one block-group CSV and one GeoTIFF.
 - **Times:** US Eastern.
 
+## Running the golden tests
+
+The goldens are kept out of git (decision of 2026-10-12). The complete copy (13 MB, with the
+`output/` directories) lives outside the repository; point `SPACESCANS_GOLDEN_DIR` at it:
+
+```sh
+SPACESCANS_GOLDEN_DIR=/Users/xai/Desktop/spacescans-all/tier2-artifacts/goldens/web-0.2.7 \
+  .venv/bin/python -m pytest -q -m golden
+```
+
+- Tests that need the goldens carry the `golden` marker, or request the `golden_dir` fixture
+  (which adds the marker). `tests/conftest.py` skips them, without failing, unless
+  `SPACESCANS_GOLDEN_DIR` names a directory with a `manifest.json`. The `web-0.2.7/` copy in
+  this tree is incomplete and is never used implicitly.
+- CI deselects them with `-m "not golden"`.
+- A copy that is named but incomplete fails the integrity tests; that is a broken copy, not a
+  missing one.
+- `golden_compare` keeps the value the caller exported, so `gc.golden_root()` and
+  `gc.golden_dir()` still see it inside a test, after `tests/conftest.py` has removed the
+  `SPACESCANS_*` variables for that test.
+
 > **Do not push these files to a public remote yet.** They hold exposure values linked from
 > licensed sources (TEMIS, VNL, ACAG, FAQSD and others), computed on a synthetic cohort.
 > Critique #6 asks for a licensing ruling (D3/D4) before such derived values are shared.
@@ -164,25 +185,29 @@ python3 tests/golden/tools/inventory.py --web ../spacescans-web --out tests/gold
 Use `golden_compare.py`; do not write a separate comparison. A parity test looks like this:
 
 ```python
-import sys
-from pathlib import Path
-sys.path.insert(0, str(Path(__file__).parents[N] / "tests" / "golden"))   # wherever the test lives
-import golden_compare as gc
+import golden_compare as gc       # tests/conftest.py has imported it; no sys.path change needed
 
-GOLDEN = gc.golden_root()                       # tests/golden/web-0.2.7, or $SPACESCANS_GOLDEN_DIR
-run = gc.load_manifest()["runs"]["noise"]
+# Requesting golden_dir marks the test golden and skips it when SPACESCANS_GOLDEN_DIR is unset.
+# Load the manifest inside the test or a fixture, never at import: without the goldens a
+# module-level read fails at collection.
 
-def test_noise_partial_matches_the_web_runner(tmp_path):
+def test_noise_partial_matches_the_web_runner(golden_dir, tmp_path):
     new_csv = ...                               # result_noise.csv written by the new code
-    assert gc.compare_result_csv(GOLDEN / "noise/output/result_noise.as_written.csv", new_csv,
-                                 tol=gc.SAME_ENV) == []
+    assert gc.compare_result_csv(golden_dir / "noise/output/result_noise.as_written.csv", new_csv,
+                                 tol=gc.CROSS_ENV) == []   # SAME_ENV inside the frozen image
 
-def test_noise_yaml_matches(tmp_path):
-    for y in (GOLDEN / "noise/pipeline_configs").glob("*.yaml"):
+def test_noise_yaml_matches(golden_dir, tmp_path):
+    run = gc.load_manifest(golden_dir)["runs"]["noise"]
+    for y in (golden_dir / "noise/pipeline_configs").glob("*.yaml"):
         new_yaml = ...                          # the new render() output for step y.stem, as text
         assert gc.normalise_yaml(new_yaml, str(tmp_path)) == gc.normalise_yaml(
             y.read_text(), run["remote_task_dir"])
 ```
+
+A module whose parametrisation needs the manifest at import (as `tests/test_tier2_golden_parity.py`
+does) sets `pytestmark = pytest.mark.golden` and first calls
+`pytest.skip(gc.golden_unavailable_reason(), allow_module_level=True)` when `gc.golden_dir()` is
+None.
 
 1. **Rows sorted.**
    - Per-experiment partials (`result_<exp>.csv`) are compared in canonical order. Rows are

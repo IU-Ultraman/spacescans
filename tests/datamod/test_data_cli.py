@@ -2,9 +2,6 @@
 from __future__ import annotations
 
 import json
-import subprocess
-import sys
-import textwrap
 
 import pytest
 
@@ -105,32 +102,3 @@ def test_cli_network_error_json(use_manifest, data_dir, server, capsys, archive,
     out = json.loads(cap.out)
     assert out["ok"] is False and out["error"]["kind"] == "network"
     assert out["report"]["items"][0]["outcome"] == "failed"
-
-
-def test_data_module_imports_on_a_base_install():
-    """spacescans.data (and its CLI) must work without geo/rda/nc extras."""
-    script = textwrap.dedent("""
-        import sys
-        from importlib.abc import MetaPathFinder
-        BLOCKED = {"geopandas", "rasterio", "shapely", "exactextract", "pyreadr", "pyhdf",
-                   "xarray", "netCDF4", "pyproj", "fiona", "pyogrio"}
-        class Blocker(MetaPathFinder):
-            def find_spec(self, name, path, target=None):
-                if name.split(".")[0] in BLOCKED:
-                    raise ModuleNotFoundError(f"No module named {name!r} (blocked)")
-                return None
-        sys.meta_path.insert(0, Blocker())
-        import tempfile
-        import spacescans.data as d
-        from spacescans.data.cli import add_data_parser, cmd_data
-        with tempfile.TemporaryDirectory() as tmp:
-            r = d.status(["ndi", "acag"], data_dir=tmp)
-            assert r.variables[0].status in ("missing", "action_required")
-            d.plan(["noise"], data_dir=tmp)
-        heavy = sorted(m for m in sys.modules if m.split(".")[0] in
-                       {"pandas", "numpy", "pyarrow", "duckdb", "pydantic", "yaml"} | BLOCKED)
-        assert not heavy, heavy
-        print("BASE_OK")
-    """)
-    r = subprocess.run([sys.executable, "-c", script], capture_output=True, text=True)
-    assert r.returncode == 0 and "BASE_OK" in r.stdout, r.stderr

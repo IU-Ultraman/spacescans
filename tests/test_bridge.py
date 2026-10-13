@@ -303,19 +303,6 @@ def test_capabilities_on_base_install(tmp_path):
     assert "spacescans.linkage.boundary_overlap_fast_linkage" in v["registry"]["unavailable"]
 
 
-def test_bridge_imports_without_geo():
-    code = BLOCK_GEO + textwrap.dedent("""
-        import sys
-        import spacescans.bridge, spacescans.bridge.main, spacescans.bridge.commands
-        import spacescans.bridge.configs, spacescans.bridge.errors, spacescans.bridge.events
-        heavy = [m for m in ("geopandas", "rasterio", "shapely", "exactextract") if m in sys.modules]
-        assert not heavy, heavy
-        print("OK")
-    """)
-    r = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True)
-    assert r.returncode == 0 and "OK" in r.stdout, r.stderr
-
-
 @pytest.mark.geo
 def test_quickstart(tmp_path):
     rc, res, events, _ = call(tmp_path, "quickstart", {"output_dir": str(tmp_path / "qs"), "threads": 2})

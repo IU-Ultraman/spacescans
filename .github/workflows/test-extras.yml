@@ -12,7 +12,7 @@ jobs:
       - uses: actions/setup-python@v5
         with: {python-version: "3.12"}
       - run: pip install -e .[geo,dev]
-      - run: pytest tests/ -v -m "geo" --tb=short
+      - run: pytest tests/ -v -m "geo and not golden" --tb=short
 
   test-geo-macos-arm64:
     # The R package's target platform: Apple Silicon, macOS 14 or later,
@@ -33,7 +33,7 @@ jobs:
           test "$(uname -m)" = arm64
           python -c "import platform, rasterio, pyproj, shapely, exactextract; print(platform.platform(), '| rasterio', rasterio.__version__, '| GDAL', rasterio.__gdal_version__, '| PROJ', pyproj.proj_version_str, '| GEOS', shapely.geos_version_string, '| exactextract', exactextract.__version__)"
       # Base and geo tests; rda, hdf4 and nc tests need extras not installed here.
-      - run: pytest tests/ -v -m "not rda and not hdf4 and not nc" --tb=short
+      - run: pytest tests/ -v -m "not rda and not hdf4 and not nc and not golden" --tb=short
 
   test-rda:
     runs-on: ubuntu-latest
@@ -42,7 +42,7 @@ jobs:
       - uses: actions/setup-python@v5
         with: {python-version: "3.12"}
       - run: pip install -e .[rda,dev]
-      - run: pytest tests/ -v -m "rda" --tb=short
+      - run: pytest tests/ -v -m "rda and not golden" --tb=short
 
   test-hdf4:
     runs-on: ubuntu-latest  # macOS HDF4 too painful for CI; documented only.
@@ -52,7 +52,7 @@ jobs:
       - uses: actions/setup-python@v5
         with: {python-version: "3.12"}
       - run: pip install -e .[hdf4,dev]
-      - run: pytest tests/ -v -m "hdf4" --tb=short
+      - run: pytest tests/ -v -m "hdf4 and not golden" --tb=short
 
   test-nc:
     runs-on: ubuntu-latest
@@ -61,7 +61,7 @@ jobs:
       - uses: actions/setup-python@v5
         with: {python-version: "3.12"}
       - run: pip install -e .[nc,geo,dev]
-      - run: pytest tests/ -v -m "nc" --tb=short
+      - run: pytest tests/ -v -m "nc and not golden" --tb=short
 
   test-all:
     runs-on: ubuntu-latest
@@ -71,4 +71,5 @@ jobs:
       - uses: actions/setup-python@v5
         with: {python-version: "3.12"}
       - run: pip install -e .[all,dev]
-      - run: pytest tests/ -v --tb=short
+      # Golden tests need references kept out of git (tests/golden/README.md).
+      - run: pytest tests/ -v -m "not golden" --tb=short
