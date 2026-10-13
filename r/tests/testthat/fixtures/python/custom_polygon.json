@@ -1,0 +1,34 @@
+{
+ "label": "Fixture",
+ "description": "User-uploaded Tract values.",
+ "boundary": "Tract",
+ "spatial_method": "areal",
+ "coverage_years": [
+  2013,
+  2019
+ ],
+ "coverage_region": "CONUS",
+ "experiment": "custom",
+ "data_source": "Uploaded by user: tract_values.csv",
+ "temporal": "static",
+ "variable_type": "continuous",
+ "display_unit": "unitless",
+ "value_cols": [
+  "score"
+ ],
+ "geometry": "polygon",
+ "dataset_id": "a976d4b7",
+ "variable_key": "custom_a976d4b7",
+ "owner_uid": null,
+ "join_col": "GEOID10",
+ "key_col": "GEOID",
+ "year_col": null,
+ "value_labels": {},
+ "value_units": {},
+ "values_path": "/tmp/ss/tract_values.csv",
+ "row_count": 2,
+ "distinct_keys": 2,
+ "sha256": "b87103b6327c6327de5fa8d9af7f56fe611cd87561feb0f79582c482fa191487",
+ "uploaded_filename": "tract_values.csv",
+ "created_at": "2026-10-12T00:00:00Z"
+}

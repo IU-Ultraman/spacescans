@@ -1,0 +1,39 @@
+{
+ "row_count": 3,
+ "variables": {
+  "ndi": {
+   "coverage_years": [
+    2012,
+    2022
+   ],
+   "patients_in_time_window": 2,
+   "patients_in_region": 2,
+   "patients_covered": 2,
+   "coverage_pct": 66.67,
+   "warnings": [
+    "33% of patients have episodes entirely outside 2012-2022",
+    "33% of patients fall outside the CONUS coverage region"
+   ],
+   "boundary": "BG",
+   "display_unit": "z-score",
+   "temporal": "yearly"
+  },
+  "temis": {
+   "coverage_years": [
+    2013,
+    2019
+   ],
+   "patients_in_time_window": 2,
+   "patients_in_region": 2,
+   "patients_covered": 2,
+   "coverage_pct": 66.67,
+   "warnings": [
+    "33% of patients have episodes entirely outside 2013-2019",
+    "33% of patients fall outside the CONUS coverage region"
+   ],
+   "boundary": "Point",
+   "display_unit": "UV index",
+   "temporal": "yearly"
+  }
+ }
+}

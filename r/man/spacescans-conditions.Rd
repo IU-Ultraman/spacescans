@@ -13,21 +13,26 @@ class for its kind, so callers can catch exactly what they expect:
    \code{protocol} \tab \code{spacescans_error_protocol} \tab versions or protocol do not match, malformed request \cr
    \code{python} \tab \code{spacescans_error_python} \tab no usable Python interpreter \cr
    \code{install} \tab \code{spacescans_error_install} \tab \code{\link[=ss_install]{ss_install()}} failed \cr
-   \code{config} \tab \code{spacescans_error_config} \tab invalid arguments or pipeline config \cr
+   \code{config} \tab \code{spacescans_error_config} \tab invalid arguments, unknown variable, invalid pipeline config \cr
+   \code{cohort} \tab \code{spacescans_error_cohort} \tab a required column is missing, a date cannot be parsed, a coordinate is missing or out of range (the message gives row numbers, never values) \cr
    \code{data} \tab \code{spacescans_error_data} \tab an input file is missing or unreadable \cr
-   \code{data_missing}, \code{data_corrupt} \tab \code{spacescans_error_data_missing}, \code{..._data_corrupt} (both also \code{spacescans_error_data}) \tab phase B data checks \cr
-   \code{missing_extra} \tab \code{spacescans_error_missing_extra} \tab a pattern needs a Python extra that is not installed \cr
+   \code{data_missing} \tab \code{spacescans_error_data_missing} (also \code{spacescans_error_data}) \tab the data a variable needs is not in the data directory; the hint is the \code{\link[=ss_fetch]{ss_fetch()}} call to run \cr
+   \code{data_corrupt} \tab \code{spacescans_error_data_corrupt} (also \code{spacescans_error_data}) \tab a checksum or size does not match; see \code{\link[=ss_data_verify]{ss_data_verify()}} \cr
+   \code{terms_required} \tab \code{spacescans_error_terms} \tab a provider's terms must be accepted with \code{ss_fetch(accept_terms = )} \cr
+   \code{missing_extra} \tab \code{spacescans_error_missing_extra} \tab a pattern needs a Python extra that is not installed; the hint is the \code{\link[=ss_install]{ss_install()}} call \cr
+   \code{network} \tab \code{spacescans_error_network} \tab a download failed after retries; running it again resumes \cr
+   \code{disk_space} \tab \code{spacescans_error_disk} \tab not enough free space for a download \cr
+   \code{locked} \tab \code{spacescans_error_locked} \tab another download holds the data directory's lock \cr
+   \code{step_failed} \tab \code{spacescans_error_step} \tab a pipeline step exited with a non-zero code (\code{details} has \code{step}, \code{rc} and the log tail) \cr
    \code{runtime} \tab \code{spacescans_error_runtime} \tab the pipeline raised an error \cr
    \code{interrupted} \tab \code{spacescans_error_interrupted} \tab Ctrl-C, SIGINT or SIGTERM \cr
    \code{crashed} \tab \code{spacescans_error_crashed} \tab the Python process died without a result \cr
-   \code{internal} \tab \code{spacescans_error_internal} \tab a bug in the bridge \cr
-   \code{not_implemented} \tab \code{spacescans_error_not_implemented} \tab a phase B function \cr
+   \code{internal} \tab \code{spacescans_error_internal} \tab a bug in the bridge or the package \cr
 }
 
 
-Kinds added later by the bridge map to \verb{spacescans_error_<kind>}; the design
-names \code{terms_required}, \code{disk_space} and \code{step_failed} as
-\code{spacescans_error_terms}, \code{spacescans_error_disk} and \code{spacescans_error_step}.
+Kinds added later by the bridge map to \verb{spacescans_error_<kind>}
+automatically.
 
 The condition object carries \code{kind}, \code{hint}, \code{details} (from Python),
 \code{py_type} and \code{py_traceback} (the Python exception), \code{stderr} (the last

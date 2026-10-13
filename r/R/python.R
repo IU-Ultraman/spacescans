@@ -88,8 +88,15 @@ ss_python <- function() {
 .ss_absolute <- function(path) {
   path <- path.expand(path)
   if (!startsWith(path, "/")) path <- file.path(getwd(), path)
-  if (dir.exists(dirname(path))) path <- file.path(normalizePath(dirname(path)), basename(path))
-  path
+  # Canonicalise the deepest directory that exists (macOS: /var -> /private/var)
+  # and keep the rest, including the last component, as given.
+  parent <- dirname(path)
+  tail <- basename(path)
+  while (!dir.exists(parent) && dirname(parent) != parent) {
+    tail <- c(basename(parent), tail)
+    parent <- dirname(parent)
+  }
+  do.call(file.path, as.list(c(normalizePath(parent), tail)))
 }
 
 # Paths inside iCloud Drive, OneDrive, Dropbox, Box or Google Drive folders.

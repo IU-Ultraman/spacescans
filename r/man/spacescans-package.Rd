@@ -12,20 +12,27 @@ request and reads back a JSON result (tables travel as Parquet files), so a
 crash or an interrupt in Python never takes down the R session.
 }
 \details{
-Getting started:
+Getting started (see \code{vignette("getting-started", package = "spacescans")}):
 \itemize{
 \item \code{\link[=ss_install]{ss_install()}} builds a private Python environment with \code{uv};
 \code{\link[=ss_use_python]{ss_use_python()}} or the \code{SPACESCANS_PYTHON} environment variable point
-the package at an existing one instead.
-\item \code{\link[=ss_doctor]{ss_doctor()}} checks the setup; \code{\link[=ss_version]{ss_version()}} reports versions.
+the package at an existing one instead. \code{\link[=ss_doctor]{ss_doctor()}} checks the setup;
+\code{\link[=ss_version]{ss_version()}} reports versions.
+\item \code{\link[=ss_catalog]{ss_catalog()}} and \code{\link[=ss_features]{ss_features()}} describe the catalog variables and
+the columns they produce.
+\item \code{\link[=ss_data_dir]{ss_data_dir()}} sets the data directory; \code{\link[=ss_data_status]{ss_data_status()}} says what
+is missing; \code{\link[=ss_fetch]{ss_fetch()}} downloads it (resumably); \code{\link[=ss_data_verify]{ss_data_verify()}},
+\code{\link[=ss_data_import]{ss_data_import()}} and \code{\link[=ss_data_terms]{ss_data_terms()}} manage it.
+\item \code{\link[=ss_coverage]{ss_coverage()}} estimates coverage before a run; \code{\link[=ss_link]{ss_link()}} links a
+cohort to variables and returns it with the exposure columns; with
+\code{wait = FALSE} it returns a job (\code{\link[=ss_job_status]{ss_job_status()}}).
+\item \code{\link[=ss_custom_polygon]{ss_custom_polygon()}} and \code{\link[=ss_custom_raster]{ss_custom_raster()}} bring your own data.
+\item \code{\link[=ss_cache_info]{ss_cache_info()}} and \code{\link[=ss_cache_clear]{ss_cache_clear()}} manage the C3 weight cache.
 \item \code{\link[=ss_run]{ss_run()}} runs one pipeline config (a YAML file or an R list);
-\code{\link[=ss_quickstart]{ss_quickstart()}} runs the bundled demo.
-\item \code{\link[=ss_config_schema]{ss_config_schema()}}, \code{\link[=ss_validate]{ss_validate()}} and \code{\link[=ss_templates]{ss_templates()}} help write
-configs; \code{\link[=ss_read_result]{ss_read_result()}} reads pipeline output.
+\code{\link[=ss_quickstart]{ss_quickstart()}} runs the bundled demo; \code{\link[=ss_config_schema]{ss_config_schema()}},
+\code{\link[=ss_validate]{ss_validate()}} and \code{\link[=ss_templates]{ss_templates()}} help write configs;
+\code{\link[=ss_read_result]{ss_read_result()}} reads pipeline output.
 }
-
-\code{ss_link()}, \code{ss_catalog()}, \code{ss_data_status()} and \code{ss_fetch()} arrive in
-phase B.
 
 Options:
 \itemize{
@@ -34,7 +41,11 @@ package to have exactly the version this R package was released with;
 \code{"warn"} accepts the same minor version with a warning; \code{"off"} skips
 the check (development only).
 \item \code{spacescans.interrupt_grace}: seconds to wait for the bridge to stop
-after Ctrl-C before its process tree is killed (default 5).
+after Ctrl-C before its process tree is killed (default 10).
+\item \code{spacescans.poll_ms}: how often progress events are read (default 200).
+\item \code{spacescans.data_dir}: the data directory (set by \code{\link[=ss_data_dir]{ss_data_dir()}}).
+\item \code{spacescans.cache_dir}: the C3 cache root (default
+\code{tools::R_user_dir("spacescans", "cache")}).
 \item \code{spacescans.envdir}: where \code{\link[=ss_install]{ss_install()}} puts the Python environment.
 }
 }

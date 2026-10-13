@@ -1,0 +1,454 @@
+{
+ "data_dir": "/tmp/ss/ss-data",
+ "data_release": "2026.07",
+ "deep": false,
+ "ready": false,
+ "variables": [
+  {
+   "variable": "ndi",
+   "status": "action_required",
+   "usable": false,
+   "datasets": [
+    "bg_boundaries",
+    "ndi_panel"
+   ],
+   "chosen": [
+    "bg_boundaries",
+    "ndi_panel"
+   ],
+   "not_usable": [
+    "bg_boundaries",
+    "ndi_panel"
+   ],
+   "download_bytes": 1336811339,
+   "disk_bytes": 2302368439,
+   "next": "spacescans data fetch ndi; then manual step for dataset ndi_panel (see its instructions)"
+  },
+  {
+   "variable": "walkability",
+   "status": "action_required",
+   "usable": false,
+   "datasets": [
+    "bg_boundaries",
+    "walkability_panel"
+   ],
+   "chosen": [
+    "bg_boundaries",
+    "walkability_panel"
+   ],
+   "not_usable": [
+    "bg_boundaries",
+    "walkability_panel"
+   ],
+   "download_bytes": 1336811339,
+   "disk_bytes": 2289413165,
+   "next": "spacescans data fetch walkability; then manual step for dataset walkability_panel (see its instructions)"
+  },
+  {
+   "variable": "temis",
+   "status": "action_required",
+   "usable": false,
+   "datasets": [
+    "temis_template",
+    "temis_uv_raw",
+    "temis_uv_converted"
+   ],
+   "chosen": [
+    "temis_template",
+    "temis_uv_raw"
+   ],
+   "not_usable": [
+    "temis_template",
+    "temis_uv_raw"
+   ],
+   "download_bytes": 31580000000,
+   "disk_bytes": 31582076126,
+   "next": "manual step for dataset temis_template, temis_uv_raw (see its instructions)"
+  }
+ ],
+ "datasets": [
+  {
+   "dataset": "bg_boundaries",
+   "status": "missing",
+   "usable": false,
+   "title": "Census block-group boundaries, 2010 vintage (TIGER/Line 2010) and 2020 vintage (TIGER/Line 2024)",
+   "acquire": "mirror",
+   "provider": "US Census Bureau, TIGER/Line Shapefiles",
+   "license": "US federal public domain",
+   "redistribution": "allowed",
+   "attribution": "Credit the US Census Bureau (TIGER/Line Shapefiles).",
+   "source_url": "https://www2.census.gov/geo/tiger/",
+   "terms": null,
+   "artifacts": [
+    {
+     "name": "bg_boundaries_v1.tar.gz",
+     "kind": "tar",
+     "mirror_status": "available",
+     "bytes": 1336811339,
+     "disk_bytes": 2262929328,
+     "state": "missing",
+     "receipt": false,
+     "problems": [],
+     "notes": [],
+     "files_checked": 0,
+     "bytes_checked": 0
+    }
+   ],
+   "expected": 408,
+   "present": 0,
+   "present_bytes": 0,
+   "missing": [
+    "BG/C3/tiger2010_bg10_states/tl_2010_01_bg10/tl_2010_01_bg10.shp",
+    "BG/C3/tiger2010_bg10_states/tl_2010_01_bg10/tl_2010_01_bg10.shx",
+    "BG/C3/tiger2010_bg10_states/tl_2010_01_bg10/tl_2010_01_bg10.dbf",
+    "BG/C3/tiger2010_bg10_states/tl_2010_01_bg10/tl_2010_01_bg10.prj",
+    "BG/C3/tiger2010_bg10_states/tl_2010_02_bg10/tl_2010_02_bg10.shp",
+    "BG/C3/tiger2010_bg10_states/tl_2010_02_bg10/tl_2010_02_bg10.shx",
+    "BG/C3/tiger2010_bg10_states/tl_2010_02_bg10/tl_2010_02_bg10.dbf",
+    "BG/C3/tiger2010_bg10_states/tl_2010_02_bg10/tl_2010_02_bg10.prj",
+    "BG/C3/tiger2010_bg10_states/tl_2010_04_bg10/tl_2010_04_bg10.shp",
+    "BG/C3/tiger2010_bg10_states/tl_2010_04_bg10/tl_2010_04_bg10.shx",
+    "BG/C3/tiger2010_bg10_states/tl_2010_04_bg10/tl_2010_04_bg10.dbf",
+    "BG/C3/tiger2010_bg10_states/tl_2010_04_bg10/tl_2010_04_bg10.prj",
+    "BG/C3/tiger2010_bg10_states/tl_2010_05_bg10/tl_2010_05_bg10.shp",
+    "BG/C3/tiger2010_bg10_states/tl_2010_05_bg10/tl_2010_05_bg10.shx",
+    "BG/C3/tiger2010_bg10_states/tl_2010_05_bg10/tl_2010_05_bg10.dbf",
+    "BG/C3/tiger2010_bg10_states/tl_2010_05_bg10/tl_2010_05_bg10.prj",
+    "BG/C3/tiger2010_bg10_states/tl_2010_06_bg10/tl_2010_06_bg10.shp",
+    "BG/C3/tiger2010_bg10_states/tl_2010_06_bg10/tl_2010_06_bg10.shx",
+    "BG/C3/tiger2010_bg10_states/tl_2010_06_bg10/tl_2010_06_bg10.dbf",
+    "BG/C3/tiger2010_bg10_states/tl_2010_06_bg10/tl_2010_06_bg10.prj"
+   ],
+   "missing_count": 408,
+   "problems": [],
+   "warnings": [],
+   "download_bytes": 1336811339,
+   "disk_bytes": 2262929328,
+   "fetchable": true,
+   "fetch_helps": true,
+   "needed_artifacts": [
+    "bg_boundaries_v1.tar.gz"
+   ],
+   "instructions": [],
+   "next": "spacescans data fetch --dataset bg_boundaries"
+  },
+  {
+   "dataset": "ndi_panel",
+   "status": "action_required",
+   "usable": false,
+   "title": "Neighborhood Deprivation Index, block-group panel (ACS 5-year 2008-2012 to 2020-2024)",
+   "acquire": "mirror",
+   "provider": "SPACESCANS project (built from US Census ACS 5-year summary files)",
+   "license": "Project-built derived table; inputs are US federal public domain",
+   "redistribution": "allowed",
+   "attribution": "Cite SPACESCANS; credit the US Census Bureau (American Community Survey).",
+   "source_url": "https://www.census.gov/programs-surveys/acs",
+   "terms": null,
+   "artifacts": [
+    {
+     "name": "ndi_bg_acs5_2008_2012_to_2020_2024_nationwide_summaryfile_xgboost.rds",
+     "kind": "bare",
+     "mirror_status": "pending_upload",
+     "bytes": 39439111,
+     "disk_bytes": 39439111,
+     "state": "missing",
+     "receipt": false,
+     "problems": [],
+     "notes": [],
+     "files_checked": 0,
+     "bytes_checked": 0
+    }
+   ],
+   "expected": 1,
+   "present": 0,
+   "present_bytes": 0,
+   "missing": [
+    "NDI/C4/ndi_bg_acs5_2008_2012_to_2020_2024_nationwide_summaryfile_xgboost.rds"
+   ],
+   "missing_count": 1,
+   "problems": [],
+   "warnings": [],
+   "download_bytes": 0,
+   "disk_bytes": 39439111,
+   "fetchable": false,
+   "fetch_helps": false,
+   "needed_artifacts": [
+    "ndi_bg_acs5_2008_2012_to_2020_2024_nationwide_summaryfile_xgboost.rds"
+   ],
+   "instructions": [
+    "ndi_bg_acs5_2008_2012_to_2020_2024_nationwide_summaryfile_xgboost.rds: Not on the mirror yet. Until it is, copy pipeline-data/NDI/C4/<this file> from a spacescans-web checkout into <data_dir>/NDI/C4/, or pass --mirror <folder holding it>."
+   ],
+   "next": "not yet on the mirror: ndi_bg_acs5_2008_2012_to_2020_2024_nationwide_summaryfile_xgboost.rds; see instructions (or fetch with --mirror DIR)"
+  },
+  {
+   "dataset": "walkability_panel",
+   "status": "action_required",
+   "usable": false,
+   "title": "EPA National Walkability Index, block-group panel 2016 and 2021",
+   "acquire": "mirror",
+   "provider": "Converted from the US EPA Smart Location Database",
+   "license": "US federal public domain (derived)",
+   "redistribution": "allowed",
+   "attribution": "Credit the US EPA (Smart Location Database, National Walkability Index).",
+   "source_url": "https://www.epa.gov/smartgrowth/smart-location-mapping",
+   "terms": null,
+   "artifacts": [
+    {
+     "name": "epawalkind_nationwide_2016_2021.Rda",
+     "kind": "bare",
+     "mirror_status": "pending_upload",
+     "bytes": 26483837,
+     "disk_bytes": 26483837,
+     "state": "missing",
+     "receipt": false,
+     "problems": [],
+     "notes": [],
+     "files_checked": 0,
+     "bytes_checked": 0
+    }
+   ],
+   "expected": 1,
+   "present": 0,
+   "present_bytes": 0,
+   "missing": [
+    "Walkability/C4/epawalkind_nationwide_2016_2021.Rda"
+   ],
+   "missing_count": 1,
+   "problems": [],
+   "warnings": [],
+   "download_bytes": 0,
+   "disk_bytes": 26483837,
+   "fetchable": false,
+   "fetch_helps": false,
+   "needed_artifacts": [
+    "epawalkind_nationwide_2016_2021.Rda"
+   ],
+   "instructions": [
+    "epawalkind_nationwide_2016_2021.Rda: Not on the mirror yet. Until it is, copy pipeline-data/Walkability/C4/<this file> from a spacescans-web checkout into <data_dir>/Walkability/C4/, or pass --mirror <folder holding it>."
+   ],
+   "next": "not yet on the mirror: epawalkind_nationwide_2016_2021.Rda; see instructions (or fetch with --mirror DIR)"
+  },
+  {
+   "dataset": "temis_template",
+   "status": "action_required",
+   "usable": false,
+   "title": "TEMIS UV grid template raster (grid only, no values)",
+   "acquire": "mirror",
+   "provider": "SPACESCANS project",
+   "license": "Project-generated grid definition; contains no provider values",
+   "redistribution": "allowed",
+   "attribution": "None required.",
+   "source_url": "",
+   "terms": null,
+   "artifacts": [
+    {
+     "name": "temis_template.tif",
+     "kind": "bare",
+     "mirror_status": "pending_upload",
+     "bytes": 2076126,
+     "disk_bytes": 2076126,
+     "state": "missing",
+     "receipt": false,
+     "problems": [],
+     "notes": [],
+     "files_checked": 0,
+     "bytes_checked": 0
+    }
+   ],
+   "expected": 1,
+   "present": 0,
+   "present_bytes": 0,
+   "missing": [
+    "TEMIS/C3/temis_template.tif"
+   ],
+   "missing_count": 1,
+   "problems": [],
+   "warnings": [],
+   "download_bytes": 0,
+   "disk_bytes": 2076126,
+   "fetchable": false,
+   "fetch_helps": false,
+   "needed_artifacts": [
+    "temis_template.tif"
+   ],
+   "instructions": [
+    "temis_template.tif: Not on the mirror yet. Until it is, copy pipeline-data/TEMIS/C3/temis_template.tif from a spacescans-web checkout into <data_dir>/TEMIS/C3/, or pass --mirror <folder holding it>."
+   ],
+   "next": "not yet on the mirror: temis_template.tif; see instructions (or fetch with --mirror DIR)"
+  },
+  {
+   "dataset": "temis_uv_raw",
+   "status": "action_required",
+   "usable": false,
+   "title": "KNMI TEMIS daily UV (uvief, uvdec, uvdvc, uvddc), raw HDF4 files, 2013-2019",
+   "acquire": "provider-manual",
+   "provider": "KNMI / ESA, Tropospheric Emission Monitoring Internet Service (TEMIS)",
+   "license": "Free use with credits; redistribution not granted",
+   "redistribution": "not granted: neither the raw HDF files nor the converted parquet may be redistributed; every site downloads and converts its own copy",
+   "attribution": "Credit KNMI/ESA TEMIS (https://www.temis.nl/).",
+   "source_url": "https://www.temis.nl/uvradiation/UVarchive.php",
+   "terms": {
+    "id": "knmi-temis",
+    "url": "https://www.temis.nl/uvradiation/UVarchive.php",
+    "summary": "Download from KNMI yourself; do not share the files or values derived from them without KNMI's permission.",
+    "license": "TEMIS data policy (credit KNMI/ESA); no redistribution grant",
+    "account": false
+   },
+   "artifacts": [],
+   "expected": 10220,
+   "present": 0,
+   "present_bytes": 0,
+   "missing": [
+    "TEMIS/C4/raw/uvddc/2013/: no files (365 expected)",
+    "TEMIS/C4/raw/uvddc/2014/: no files (365 expected)",
+    "TEMIS/C4/raw/uvddc/2015/: no files (365 expected)",
+    "TEMIS/C4/raw/uvddc/2016/: no files (365 expected)",
+    "TEMIS/C4/raw/uvddc/2017/: no files (365 expected)",
+    "TEMIS/C4/raw/uvddc/2018/: no files (365 expected)",
+    "TEMIS/C4/raw/uvddc/2019/: no files (365 expected)",
+    "TEMIS/C4/raw/uvdec/2013/: no files (365 expected)",
+    "TEMIS/C4/raw/uvdec/2014/: no files (365 expected)",
+    "TEMIS/C4/raw/uvdec/2015/: no files (365 expected)",
+    "TEMIS/C4/raw/uvdec/2016/: no files (365 expected)",
+    "TEMIS/C4/raw/uvdec/2017/: no files (365 expected)",
+    "TEMIS/C4/raw/uvdec/2018/: no files (365 expected)",
+    "TEMIS/C4/raw/uvdec/2019/: no files (365 expected)",
+    "TEMIS/C4/raw/uvdvc/2013/: no files (365 expected)",
+    "TEMIS/C4/raw/uvdvc/2014/: no files (365 expected)",
+    "TEMIS/C4/raw/uvdvc/2015/: no files (365 expected)",
+    "TEMIS/C4/raw/uvdvc/2016/: no files (365 expected)",
+    "TEMIS/C4/raw/uvdvc/2017/: no files (365 expected)",
+    "TEMIS/C4/raw/uvdvc/2018/: no files (365 expected)"
+   ],
+   "missing_count": 10220,
+   "problems": [],
+   "warnings": [],
+   "download_bytes": 31580000000,
+   "disk_bytes": 31580000000,
+   "fetchable": false,
+   "fetch_helps": false,
+   "needed_artifacts": [],
+   "instructions": [
+    "Download the daily files {var}YYYYMMDD.hdf for var in uvief, uvdec, uvdvc, uvddc and the years 2013-2019 (about 10,220 files, about 31.6 GB) from the KNMI archive; the mirror https://d1qb6yzwaaq4he.cloudfront.net/uvradiation/v2.0/{year}/{mm}/{var}YYYYMMDD.hdf serves the same files.",
+    "Place them as <data_dir>/TEMIS/C4/raw/{var}/{year}/{var}YYYYMMDD.hdf.",
+    "2016-02-29 is missing upstream for all four variables; that gap is expected.",
+    "Reading needs the hdf4 extra (pyhdf). The first run converts the files to <data_dir>/TEMIS/C4/converted/, so the data directory must be writable then."
+   ],
+   "next": "manual download from the provider; see instructions"
+  },
+  {
+   "dataset": "temis_uv_converted",
+   "status": "action_required",
+   "usable": false,
+   "title": "KNMI TEMIS daily UV converted to parquet (produced locally from temis_uv_raw)",
+   "acquire": "generated",
+   "provider": "Generated on this machine by the TEMIS reader (spacescans.tools.temis_convert) from temis_uv_raw",
+   "license": "Derived from TEMIS; redistribution not granted",
+   "redistribution": "not granted",
+   "attribution": "Credit KNMI/ESA TEMIS (https://www.temis.nl/).",
+   "source_url": "",
+   "terms": null,
+   "artifacts": [],
+   "expected": 29,
+   "present": 0,
+   "present_bytes": 0,
+   "missing": [
+    "TEMIS/C4/converted/manifest.json",
+    "TEMIS/C4/converted/uvddc_2013.parquet",
+    "TEMIS/C4/converted/uvddc_2014.parquet",
+    "TEMIS/C4/converted/uvddc_2015.parquet",
+    "TEMIS/C4/converted/uvddc_2016.parquet",
+    "TEMIS/C4/converted/uvddc_2017.parquet",
+    "TEMIS/C4/converted/uvddc_2018.parquet",
+    "TEMIS/C4/converted/uvddc_2019.parquet",
+    "TEMIS/C4/converted/uvdec_2013.parquet",
+    "TEMIS/C4/converted/uvdec_2014.parquet",
+    "TEMIS/C4/converted/uvdec_2015.parquet",
+    "TEMIS/C4/converted/uvdec_2016.parquet",
+    "TEMIS/C4/converted/uvdec_2017.parquet",
+    "TEMIS/C4/converted/uvdec_2018.parquet",
+    "TEMIS/C4/converted/uvdec_2019.parquet",
+    "TEMIS/C4/converted/uvdvc_2013.parquet",
+    "TEMIS/C4/converted/uvdvc_2014.parquet",
+    "TEMIS/C4/converted/uvdvc_2015.parquet",
+    "TEMIS/C4/converted/uvdvc_2016.parquet",
+    "TEMIS/C4/converted/uvdvc_2017.parquet"
+   ],
+   "missing_count": 29,
+   "problems": [],
+   "warnings": [],
+   "download_bytes": 0,
+   "disk_bytes": 0,
+   "fetchable": false,
+   "fetch_helps": false,
+   "needed_artifacts": [],
+   "instructions": [
+    "Produced automatically by the first TEMIS run (about 2 minutes) from the raw HDF files; nothing to download."
+   ],
+   "next": "produced on first use; see instructions"
+  }
+ ],
+ "download_bytes": 32916811339,
+ "disk_bytes": 33910928402,
+ "free_bytes": 267389431808,
+ "next_steps": [
+  {
+   "action": "fetch",
+   "variables": [
+    "ndi",
+    "walkability"
+   ],
+   "datasets": [],
+   "command": "spacescans data fetch ndi walkability"
+  },
+  {
+   "action": "manual",
+   "dataset": "ndi_panel",
+   "status": "action_required",
+   "terms": null,
+   "instructions": [
+    "ndi_bg_acs5_2008_2012_to_2020_2024_nationwide_summaryfile_xgboost.rds: Not on the mirror yet. Until it is, copy pipeline-data/NDI/C4/<this file> from a spacescans-web checkout into <data_dir>/NDI/C4/, or pass --mirror <folder holding it>."
+   ]
+  },
+  {
+   "action": "manual",
+   "dataset": "walkability_panel",
+   "status": "action_required",
+   "terms": null,
+   "instructions": [
+    "epawalkind_nationwide_2016_2021.Rda: Not on the mirror yet. Until it is, copy pipeline-data/Walkability/C4/<this file> from a spacescans-web checkout into <data_dir>/Walkability/C4/, or pass --mirror <folder holding it>."
+   ]
+  },
+  {
+   "action": "manual",
+   "dataset": "temis_template",
+   "status": "action_required",
+   "terms": null,
+   "instructions": [
+    "temis_template.tif: Not on the mirror yet. Until it is, copy pipeline-data/TEMIS/C3/temis_template.tif from a spacescans-web checkout into <data_dir>/TEMIS/C3/, or pass --mirror <folder holding it>."
+   ]
+  },
+  {
+   "action": "manual",
+   "dataset": "temis_uv_raw",
+   "status": "action_required",
+   "terms": {
+    "id": "knmi-temis",
+    "url": "https://www.temis.nl/uvradiation/UVarchive.php",
+    "summary": "Download from KNMI yourself; do not share the files or values derived from them without KNMI's permission.",
+    "license": "TEMIS data policy (credit KNMI/ESA); no redistribution grant",
+    "account": false
+   },
+   "instructions": [
+    "Download the daily files {var}YYYYMMDD.hdf for var in uvief, uvdec, uvdvc, uvddc and the years 2013-2019 (about 10,220 files, about 31.6 GB) from the KNMI archive; the mirror https://d1qb6yzwaaq4he.cloudfront.net/uvradiation/v2.0/{year}/{mm}/{var}YYYYMMDD.hdf serves the same files.",
+    "Place them as <data_dir>/TEMIS/C4/raw/{var}/{year}/{var}YYYYMMDD.hdf.",
+    "2016-02-29 is missing upstream for all four variables; that gap is expected.",
+    "Reading needs the hdf4 extra (pyhdf). The first run converts the files to <data_dir>/TEMIS/C4/converted/, so the data directory must be writable then."
+   ]
+  }
+ ],
+ "warnings": [
+  "data directory /tmp/ss/ss-data does not exist yet; fetch creates it"
+ ],
+ "requested_datasets": []
+}

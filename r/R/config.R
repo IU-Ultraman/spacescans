@@ -74,26 +74,32 @@ ss_validate <- function(config, data_dir = NULL, output_dir = NULL, strict = FAL
 
 #' Config templates shipped with the Python package
 #'
+#' Two sets exist: the 25 catalog templates that [ss_link()] renders for the
+#' catalog variables (`kind = "catalog"`, the default; listed with their
+#' SHA-256), and the 5 starter configs for writing your own C3/C4 configs
+#' for [ss_run()] (`kind = "init"`).
+#'
 #' @param name `NULL` (default) to list the templates, or a template name
 #'   such as `"c3/county"` to get that template.
-#' @return Without `name`, a data frame with columns `name`, `kind`, `file`,
-#'   `config_name` and `linkage_pattern`. With `name`, the template as a
-#'   list (attribute `text` holds the YAML text).
+#' @param kind `"catalog"` or `"init"`.
+#' @return Without `name`, a data frame with one row per template (`name`,
+#'   `kind`, `file`, and for catalog templates `sha256`, ...). With `name`,
+#'   the template as a list (attribute `text` holds the YAML text).
 #' @examples
 #' \dontrun{
 #' ss_templates()
-#' cfg <- ss_templates("c4/zbp")
+#' ss_templates(kind = "init")
+#' cfg <- ss_templates("c4/zbp", kind = "init")
 #' }
 #' @export
-ss_templates <- function(name = NULL) {
+ss_templates <- function(name = NULL, kind = c("catalog", "init")) {
+  kind <- match.arg(kind)
   if (is.null(name)) {
-    rows <- .ss_bridge("templates")$templates
-    col <- function(field) vapply(rows, function(r) as.character(r[[field]] %||% NA_character_), character(1))
-    return(data.frame(name = col("name"), kind = col("kind"), file = col("file"),
-                      config_name = col("config_name"), linkage_pattern = col("linkage_pattern"),
-                      stringsAsFactors = FALSE))
+    rows <- .ss_bridge("templates", list(kind = kind))$templates
+    df <- .ss_records_df(rows, first = c("name", "kind", "file", "config_name", "linkage_pattern", "sha256"))
+    return(df)
   }
-  value <- .ss_bridge("templates", list(name = name))
+  value <- .ss_bridge("templates", list(name = name, kind = kind))
   out <- .ss_simplify(value$config)
   attr(out, "text") <- value$text
   out

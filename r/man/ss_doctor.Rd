@@ -7,8 +7,8 @@
 ss_doctor(data_dir = NULL)
 }
 \arguments{
-\item{data_dir}{Data directory to check. Default: the \code{SPACESCANS_DATA_DIR}
-environment variable, if set.}
+\item{data_dir}{Data directory to check. Default: \code{\link[=ss_data_dir]{ss_data_dir()}} when
+it is set.}
 }
 \value{
 Invisibly, a data frame of class \code{ss_doctor} with columns \code{check},
@@ -19,8 +19,10 @@ Runs local checks and one bridge handshake, and reports each as \code{ok},
 \code{warn} or \code{fail}: which interpreter is used and why, versions and protocol,
 Python extras, GDAL/GEOS/PROJ, macOS version and architecture, memory,
 machine-wide \verb{PROJ_*}/\code{GDAL_DATA} variables (they are not passed to
-Python), and whether the data, environment or temporary directories sit in
-a cloud-synced folder. Data checks (\code{ss_data_status()}) join in phase B.
+Python), whether the data, cache, environment or temporary directories sit
+in a cloud-synced folder, free disk space, and (when a data directory is
+known) how many catalog variables have their data in place
+(\code{\link[=ss_data_status]{ss_data_status()}}).
 }
 \examples{
 \dontrun{
