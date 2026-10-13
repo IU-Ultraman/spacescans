@@ -35,7 +35,9 @@ A renderer turns a :class:`Step` plus ``run_dir``, ``cohort_parquet``,
 
 Setting an existing key keeps its place and a new key is appended, which is
 why the order matters. The web checks the C3 cache before rendering and
-writes no YAML on a hit.
+writes no YAML on a hit. :func:`render_config` implements these rules;
+:func:`spacescans.orchestrate.render.render` applies it to a step and a
+``RunContext``, and ``spacescans.custom.render`` to a custom step.
 
 Legacy C3 cache (the web's ``c3_cache``)
 ----------------------------------------
@@ -45,6 +47,8 @@ Only ``kind == "c3"`` steps are cached, under :func:`legacy_cache_key`:
 sidecar records ``boundary = step.meta_boundary`` (``"BG"`` for the
 ``BG2020`` step, as bg_ndi_wi writes it) and carries ``raster_res_m`` only
 when ``step.meta_raster_res`` (bg_ndi_wi and zcta5_cbp).
+``spacescans.orchestrate.cache.WeightCache(root, key_format="legacy-v1")``
+reads and writes these entries.
 
 Merge
 -----
@@ -536,10 +540,83 @@ def legacy_cache_key(step: Step, input_sha256: str, *, buffer_m: Any, raster_res
     ``input_sha256`` is the hex sha256 of the task's ``input.parquet`` bytes;
     ``buffer_m``/``raster_res_m`` are formatted as given (the web formats the
     config's JSON values, so ``270`` and ``270.0`` give different keys).
+
+    A thin wrapper: the format is defined once, in
+    :func:`spacescans.orchestrate.cache.legacy_key` (``WeightCache("legacy-v1")``).
     """
+    from spacescans.orchestrate.cache import legacy_key
+
     if not step.is_c3 or not step.cache_tag:
         raise ValueError(f"step {step.name!r} is not a cached C3 step")
-    key = f"{input_sha256[:8]}__{step.cache_tag}__b{buffer_m}m"
+    return legacy_key(step.cache_tag, input_sha256, buffer_m=buffer_m,
+                      raster_res_m=raster_res_m, uses_raster_res=step.uses_raster_res)
+
+
+# ---------------------------------------------------------------------------
+# render (the contract in the module docstring, as code)
+# ---------------------------------------------------------------------------
+
+#: ``engine`` keys a renderer may set (EngineConfig's DuckDB resource caps).
+ENGINE_KEYS: tuple[str, ...] = ("threads", "memory_limit", "temp_directory")
+
+
+def _set_path(cfg: dict, dotted: str, value: Any, *, create: bool, step: Step) -> None:
+    *parents, leaf = dotted.split(".")
+    node = cfg
+    for part in parents:
+        child = node.get(part)
+        if not isinstance(child, dict):
+            if not create:
+                raise ValueError(f"step {step.name!r}: template {step.template!r} has no mapping "
+                                 f"{part!r} for {dotted!r}")
+            child = node[part] = {}
+        node = child
+    node[leaf] = value
+
+
+def render_config(step: Step, template: Mapping[str, Any], *, run_dir: Any, cohort_parquet: Any,
+                  buffer_m: Any, raster_res_m: Any, name_suffix: str = "",
+                  engine: Mapping[str, Any] | None = None) -> dict[str, Any]:
+    """Apply the render contract (module docstring, rules 1-9) to a parsed template.
+
+    Pure: ``template`` is not modified and nothing is read or written.
+    ``yaml.safe_dump(result, sort_keys=False)`` is the web's YAML byte for byte
+    when ``engine`` is None. ``engine`` (R only) sets ``engine.threads`` /
+    ``memory_limit`` / ``temp_directory`` for every value that is not None.
+    Raises ``ValueError`` when the template lacks a mapping a ``bind`` path
+    needs (the web raised for a missing ``source``/``exposure``).
+    """
+    from pathlib import Path
+
+    run_dir = Path(run_dir)
+    cfg = copy.deepcopy(dict(template))
+    for top in ("buffer", "output"):
+        if not isinstance(cfg.get(top), dict):
+            raise ValueError(  # noqa: TRY004  (a template error, like the bind check below)
+                f"step {step.name!r}: template {step.template!r} has no {top!r} mapping")
+    cfg["name"] = f"{cfg['name']}{name_suffix}"
+    cfg["buffer"]["patient_file"] = str(cohort_parquet)
+    cfg["buffer"]["buffer_m"] = buffer_m
     if step.uses_raster_res:
-        key += f"__r{raster_res_m}m"
-    return key
+        cfg["buffer"]["raster_res_m"] = raster_res_m
+    for path, producer in step.bind.items():
+        _set_path(cfg, path, str(run_dir / "output" / f"{producer}.parquet"), create=False,
+                  step=step)
+    for path, value in step.fill.items():
+        _set_path(cfg, path, copy.deepcopy(value), create=True, step=step)
+    if step.time_block == "always":
+        cfg.setdefault("time", {})
+    if "time" in cfg:
+        cfg["time"]["output_grouping"] = "episode"
+    if engine:
+        unknown = sorted(set(engine) - set(ENGINE_KEYS))
+        if unknown:
+            raise ValueError(f"unknown engine option(s) {unknown}; allowed: {list(ENGINE_KEYS)}")
+        settings = {k: engine[k] for k in ENGINE_KEYS if engine.get(k) is not None}
+        if settings:
+            block = cfg.get("engine")
+            if not isinstance(block, dict):
+                block = cfg["engine"] = {}
+            block.update(settings)
+    cfg["output"]["path"] = str(run_dir / "output" / f"{step.name}.parquet")
+    return cfg

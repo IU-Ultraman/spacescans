@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import io
-import re
 import sys
 import threading
 import time
@@ -11,21 +10,15 @@ from typing import Any, TextIO
 
 from spacescans.bridge.protocol import dumps
 
-# The C3 patterns' progress lines (same regex as spacescans-web's runners):
-#   [overlap_fast] tile 7460/14938 ( 49.9%) ...   [overlap]   1600/3221 ( 49.7%)
-#   [nhd_proximity] tile 5/100 ( 5.0%) elapsed=0.50m
-_PROGRESS_RE = re.compile(r"\[(?:overlap|overlap_fast|nhd_proximity)\]\s+(?:tile\s+)?(\d+)/(\d+)")
 
-
-def parse_progress(line: str) -> float | None:
-    """Progress fraction in [0, 1] for a tile/iteration line, else None."""
-    m = _PROGRESS_RE.search(line)
-    if not m:
-        return None
-    cur, total = int(m.group(1)), int(m.group(2))
-    if total <= 0:
-        return None
-    return min(max(cur / total, 0.0), 1.0)
+def __getattr__(name: str) -> Any:
+    # parse_progress lives in spacescans.orchestrate.events (phase-A mismatch #14).
+    # Re-exported lazily: importing spacescans.orchestrate loads pandas, which
+    # bridge commands that run no pipeline should not pay for.
+    if name == "parse_progress":
+        from spacescans.orchestrate.events import parse_progress
+        return parse_progress
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
 class EventStream:
@@ -115,6 +108,8 @@ class LineSink(io.TextIOBase):
 
 def pipeline_line_handler(events: EventStream, step: str | None) -> Callable[[str], None]:
     """Echo a pipeline output line to stderr and turn it into line/progress events."""
+    from spacescans.orchestrate.events import parse_progress
+
     def handle(line: str) -> None:
         try:
             sys.__stderr__.write(line + "\n")

@@ -10,6 +10,8 @@ What is in it (all package data; no exposure data):
   :func:`templates`, :func:`template`.
 * :mod:`spacescans.catalog.recipes`: each experiment's steps, cache tags,
   render fields and merge table as data; :func:`plan`, :func:`recipe`.
+* :func:`coverage`: the pre-run coverage estimate by catalog key (a thin
+  wrapper over ``spacescans.orchestrate.compute_coverage``; needs pandas).
 
 Everything here imports with the base install (no geo stack, no pandas).
 The JSON files and templates are byte-for-byte copies of spacescans-web
@@ -18,6 +20,7 @@ result.
 """
 from __future__ import annotations
 
+from spacescans.catalog._coverage import coverage
 from spacescans.catalog._features import (
     FEATURE_FIELDNAMES,
     Feature,
@@ -61,6 +64,7 @@ __all__ = [
     "Step",
     "Variable",
     "all_recipes",
+    "coverage",
     "experiments",
     "feature_rows",
     "features",

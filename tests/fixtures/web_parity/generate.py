@@ -21,7 +21,8 @@ real exposure data and no derived values from licensed sources.
 
 What is produced (all paths relative to this directory):
   cohorts/*.csv                  edge-case cohorts (inputs)
-  variable_metadata.json         the web catalog the runs used (copy)
+  (no catalog copy: the web catalog the runs used is the package's
+   spacescans/catalog/variables.json; manifest.json records its sha256)
   overlay.json                   synthetic custom entries (task overlay)
   merge/<case>/                  input.csv, output/*.parquet, case.json
   fan_in/<case>/                 input.csv, output/result_<exp>.csv, case.json
@@ -380,8 +381,6 @@ def main(argv=None):
 
     web_app = args.web_backend / "app"
     meta = json.loads((web_app / "data" / "variable_metadata.json").read_text())
-    shutil.copyfile(web_app / "data" / "variable_metadata.json",
-                    out / "variable_metadata.json")
 
     # Synthetic task overlay: two custom polygons, one static dataset with a
     # region other than CONUS (the web never makes one; it exercises the

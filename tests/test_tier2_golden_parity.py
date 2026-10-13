@@ -1,14 +1,19 @@
 """The merged tier-2 modules against the golden web 0.2.7 runs on synth_1k.
 
 The goldens (tests/golden/web-0.2.7, or $SPACESCANS_GOLDEN_DIR, read at import) were captured
-by tier2/golden from the frozen web backend. Here the catalog, custom and cohort tracks
-reproduce them together:
+by tier2/golden from the frozen web backend. Here the catalog, orchestrate, custom and cohort
+modules reproduce them together:
 
-* A0 render: every ``pipeline_configs/<step>.yaml`` a runner wrote equals the catalog's render
-  contract (the reference renderer in tests/catalog/conftest.py) applied to
-  ``catalog.plan(...)``; for the custom runs ``custom.render`` gives the same text.
-* A2 cache: the legacy key of every C3 step that ran cold names a ``c3_cache/<key>.meta.json``
-  whose ``boundary`` and ``raster_res_m`` follow ``Step.meta_boundary``/``meta_raster_res``.
+* A0 render: every ``pipeline_configs/<step>.yaml`` a runner wrote, and every YAML of the
+  render matrix (126 runner x variables x buffer x raster combinations, 306 files), equals
+  ``orchestrate.render`` of ``catalog.plan(...)``: byte for byte in the golden's own task dir,
+  and after the A0 normalisation in another run dir. The catalog's reference renderer
+  (tests/catalog/conftest.py) and, for the custom runs, ``custom.render`` give the same text.
+* A2 cache: ``WeightCache(key_format="legacy-v1")`` names all 14 cold C3 entries
+  (``c3_cache/<key>.meta.json``) and every key of the render matrix; storing the golden C3
+  output writes that meta file byte for byte (its ``created_at`` and the step's seconds taken
+  from the golden) and the cached parquet the manifest records, and fetching it back returns
+  the same bytes. The store needs the golden ``output/`` directories.
 * A1 cohort: ``cohort.csv_to_parquet(inputs/synth_1k.csv)`` equals the runners'
   ``input.parquet``: byte for byte under the golden's pandas version; elsewhere the files
   differ only in the pandas version they embed.
@@ -18,6 +23,7 @@ reproduce them together:
 """
 from __future__ import annotations
 
+import copy
 import hashlib
 import importlib.util
 import json
@@ -28,7 +34,10 @@ from pathlib import Path
 import pytest
 
 from spacescans import catalog, cohort, custom
-from spacescans.catalog import recipes
+from spacescans.orchestrate import cache as orch_cache
+from spacescans.orchestrate.cache import WeightCache
+from spacescans.orchestrate.context import RunContext
+from spacescans.orchestrate.render import render_text
 
 REPO = Path(__file__).resolve().parents[1]
 
@@ -68,6 +77,14 @@ def _overlay(run: dict, config: dict):
     return config.get("custom_variables") if run["experiment"] == "custom" else None
 
 
+def _ctx(run: dict, config: dict, task_dir: Path, **kw) -> RunContext:
+    """The context the web runner had: its task dir layout and its config's buffer values."""
+    return RunContext.from_task_dir(task_dir, data_dir="/project",
+                                    buffer_m=config["buffer"]["size"],
+                                    raster_res_m=config["buffer"].get("raster_res_m", 25),
+                                    overlay=_overlay(run, config), **kw)
+
+
 def _render_reference():
     spec = importlib.util.spec_from_file_location(
         "_catalog_conftest_for_golden_parity", REPO / "tests" / "catalog" / "conftest.py")
@@ -76,46 +93,184 @@ def _render_reference():
     return module.render_reference
 
 
+# ---------------------------------------------------------------------------------------------
+# A0: render
+# ---------------------------------------------------------------------------------------------
+
 @pytest.mark.parametrize("name", RUNS)
-def test_runner_yamls_follow_the_catalog_render_contract(name):
+def test_render_reproduces_the_runner_yamls(name, tmp_path):
     import yaml
 
     run, config = _run(name)
     keys, task_dir = run["variables"], Path(run["task_dir"])
-    buffer_m, res = config["buffer"]["size"], config["buffer"].get("raster_res_m", 25)
-    overlay = _overlay(run, config)
-    steps = catalog.plan(run["experiment"], keys, overlay=overlay)
+    ctx = _ctx(run, config, task_dir)
+    elsewhere = _ctx(run, config, tmp_path / "tasks" / f"task-{name[-8:]:0>8}")
+    steps = catalog.plan(run["experiment"], keys, overlay=ctx.overlay)
     written = {p.stem: p.read_text() for p in (ROOT / name / "pipeline_configs").glob("*.yaml")}
-    assert set(written) <= {s.name for s in steps}
-    render = _render_reference()
-    suffix = f"_task_{task_dir.name[-8:]}"
+    assert written and set(written) <= {s.name for s in steps}
+    reference = _render_reference()
     for step in steps:
         if step.name not in written:      # a cache hit renders nothing
             continue
-        assert render(step, run_dir=task_dir, buffer_m=buffer_m, raster_res_m=res,
-                      name_suffix=suffix) == written[step.name], step.name
-        if overlay is not None:
-            ctx = custom.Context(run_dir=task_dir, cohort_parquet=task_dir / "input.parquet",
-                                 buffer_m=buffer_m, raster_res_m=res, name_suffix=suffix)
+        text = render_text(step, ctx)
+        assert text == written[step.name], step.name
+        assert gc.normalise_yaml(render_text(step, elsewhere), str(elsewhere.run_dir)) == \
+            gc.normalise_yaml(written[step.name], str(task_dir)), step.name
+        assert reference(step, run_dir=task_dir, buffer_m=ctx.buffer_m,
+                         raster_res_m=ctx.raster_res_m, name_suffix=ctx.name_suffix) == text
+        if ctx.overlay is not None:
             cfg = custom.render(step, catalog.template(step.template), ctx, variables=keys,
-                                definitions=overlay)
-            assert yaml.safe_dump(cfg, sort_keys=False) == written[step.name], step.name
+                                definitions=ctx.overlay)
+            assert yaml.safe_dump(cfg, sort_keys=False) == text, step.name
+
+
+MATRIX = ROOT / "render_matrix"
+COMBOS = (json.loads((MATRIX / "index.json").read_text())
+          if (MATRIX / "index.json").exists() else [])
+needs_matrix = pytest.mark.skipif(not COMBOS, reason="no golden render matrix")
+
+
+def _matrix_overlay(combo: dict):
+    """The upload definitions tests/golden/tools/render_matrix.py used: the two real ones, plus
+    the Tract, ZCTA5, County and yearly ones it synthesised from the BG one."""
+    if combo["experiment"] != "custom":
+        return None
+    bg = json.loads((ROOT / "custom_bg_csv" / "custom_definition.json").read_text())
+    raster = json.loads((ROOT / "custom_raster" / "custom_definition.json").read_text())
+
+    def synth(boundary: str, n: int, yearly: bool = False) -> dict:
+        d = copy.deepcopy(bg)
+        d["dataset_id"] = f"0000000{n}"
+        d["variable_key"] = custom.variable_key(d["dataset_id"])
+        d["boundary"] = boundary
+        d["join_col"] = custom.BOUNDARY_SPEC[boundary]["join_col"]
+        d["values_path"] = f"/app/data/custom_exposomes/user-9997/{d['dataset_id']}/values.csv"
+        if yearly:
+            d["year_col"], d["coverage_years"], d["temporal"] = "year", [2014, 2017], "yearly"
+        return d
+
+    defs = {"bg": bg, "tract": synth("Tract", 1), "zcta5": synth("ZCTA5", 2),
+            "county": synth("County", 3), "bg_yearly": synth("BG", 4, yearly=True),
+            "tract_yearly": synth("Tract", 5, yearly=True), "raster": raster}
+    overlay = {defs[p]["variable_key"]: defs[p] for p in combo["combo"].split("__")[1].split("-")}
+    assert list(overlay) == combo["variables"]
+    return overlay
+
+
+@needs_matrix
+def test_render_matrix_is_complete():
+    assert len(COMBOS) == 126
+    assert sum(1 for c in COMBOS for s in c["steps"] if s.get("rendered")) == 306
+
+
+@needs_matrix
+@pytest.mark.parametrize("combo", COMBOS, ids=[c["combo"] for c in COMBOS])
+def test_render_reproduces_the_render_matrix(combo, tmp_path):
+    overlay = _matrix_overlay(combo)
+    task_dir = Path(combo["task_dir"])
+    kw = {"data_dir": "/project", "buffer_m": combo["buffer_m"],
+          "raster_res_m": combo["raster_res_m"], "overlay": overlay}
+    ctx = RunContext.from_task_dir(task_dir, **kw)
+    elsewhere = RunContext.from_task_dir(tmp_path / task_dir.name, **kw)
+    steps = catalog.plan(combo["experiment"], combo["variables"], overlay=overlay)
+    assert [(s.name, s.template, s.is_c3) for s in steps] == \
+        [(s["name"], s["template"], s["is_c3"]) for s in combo["steps"]]
+    rendered = 0
+    for step, rec in zip(steps, combo["steps"]):
+        if not rec.get("rendered"):       # the raster upload's C4 (rendering it reads pixels)
+            continue
+        golden = (MATRIX / combo["combo"] / f"{step.name}.yaml").read_text()
+        assert render_text(step, ctx) == golden, step.name
+        assert gc.normalise_yaml(render_text(step, elsewhere), str(elsewhere.run_dir)) == \
+            gc.normalise_yaml(golden, str(task_dir)), step.name
+        rendered += 1
+    assert rendered == sum(1 for s in combo["steps"] if s.get("rendered"))
+
+
+# ---------------------------------------------------------------------------------------------
+# A2: the legacy-v1 cache
+# ---------------------------------------------------------------------------------------------
+
+@needs_matrix
+@pytest.mark.parametrize("combo", COMBOS, ids=[c["combo"] for c in COMBOS])
+def test_legacy_keys_match_the_render_matrix(combo):
+    overlay = _matrix_overlay(combo)
+    # render_matrix.py keyed every combination on the shared noise/input.parquet
+    ctx = RunContext(run_dir=Path(combo["task_dir"]), cohort_parquet=ROOT / "noise" / "input.parquet",
+                     data_dir="/project", buffer_m=combo["buffer_m"],
+                     raster_res_m=combo["raster_res_m"], overlay=overlay)
+    legacy = WeightCache(Path("/nonexistent-cache"), key_format="legacy-v1")
+    steps = catalog.plan(combo["experiment"], combo["variables"], overlay=overlay)
+    expected = [rec["cache_key"] for rec in combo["steps"] if "cache_key" in rec]
+    assert [legacy.key(s, ctx) for s, rec in zip(steps, combo["steps"]) if "cache_key" in rec] \
+        == expected
+
+
+def _cold_c3(name: str) -> list:
+    run, config = _run(name)
+    steps = catalog.plan(run["experiment"], run["variables"], overlay=_overlay(run, config))
+    written = {p.stem for p in (ROOT / name / "pipeline_configs").glob("*.yaml")}
+    return [s for s in steps if s.is_c3 and s.cache_tag and s.name in written]  # cold C3 only
+
+
+GOLDEN_KEYS = sorted((name, p.name[: -len(".meta.json")]) for name in RUNS
+                     for p in (ROOT / name / "c3_cache").glob("*.meta.json"))
+
+
+def test_there_are_fourteen_golden_cache_entries():
+    assert len(GOLDEN_KEYS) == 14
 
 
 @pytest.mark.parametrize("name", RUNS)
-def test_cold_c3_steps_name_their_cache_entries(name):
+def test_legacy_keys_name_the_runner_cache_entries(name, tmp_path):
     run, config = _run(name)
-    sha = hashlib.sha256((ROOT / name / "input.parquet").read_bytes()).hexdigest()
-    buffer_m, res = config["buffer"]["size"], config["buffer"].get("raster_res_m", 25)
-    steps = catalog.plan(run["experiment"], run["variables"], overlay=_overlay(run, config))
-    written = {p.stem for p in (ROOT / name / "pipeline_configs").glob("*.yaml")}
-    for step in steps:
-        if not (step.is_c3 and step.cache_tag) or step.name not in written:
-            continue                      # only a cold C3 step renders and writes the cache
-        key = recipes.legacy_cache_key(step, sha, buffer_m=buffer_m, raster_res_m=res)
-        meta = json.loads((ROOT / name / "c3_cache" / f"{key}.meta.json").read_text())
+    task = tmp_path / "tasks" / f"task-{name[-8:]:0>8}"
+    task.mkdir(parents=True)
+    shutil.copyfile(ROOT / name / "input.parquet", task / "input.parquet")
+    ctx = _ctx(run, config, task)
+    legacy = WeightCache(tmp_path / "c3_cache", key_format="legacy-v1")
+    assert sorted(legacy.key(step, ctx) for step in _cold_c3(name)) == \
+        sorted(k for n, k in GOLDEN_KEYS if n == name)
+    for step in _cold_c3(name):
+        meta = json.loads((ROOT / name / "c3_cache" / f"{legacy.key(step, ctx)}.meta.json")
+                          .read_text())
         assert meta["boundary"] == (step.meta_boundary or step.cache_tag)
         assert ("raster_res_m" in meta) == bool(step.meta_raster_res)
+
+
+@needs_outputs
+@pytest.mark.parametrize("name,key", GOLDEN_KEYS, ids=[k for _n, k in GOLDEN_KEYS])
+def test_legacy_store_writes_the_runner_entry_byte_for_byte(name, key, tmp_path, monkeypatch):
+    run, config = _run(name)
+    task = tmp_path / "tasks" / f"task-{name[-8:]:0>8}"
+    (task / "output").mkdir(parents=True)
+    shutil.copyfile(ROOT / name / "input.parquet", task / "input.parquet")
+    assert MANIFEST["runs"][name]["input_csv_is_cohort"]
+    shutil.copyfile(COHORT_CSV, task / "input.csv")      # input_row_count counts its lines
+    ctx = _ctx(run, config, task)
+    cache = WeightCache(tmp_path / "c3_cache", key_format="legacy-v1")
+    (step,) = [s for s in _cold_c3(name) if cache.key(s, ctx) == key]
+    src = ctx.output_path(step.name)
+    shutil.copyfile(ROOT / name / "output" / src.name, src)
+
+    golden_meta = ROOT / name / "c3_cache" / f"{key}.meta.json"
+    recorded = json.loads(golden_meta.read_text())
+    monkeypatch.setattr(orch_cache, "_utc_now_iso", lambda: recorded["created_at"])
+    assert cache.fetch(step, ctx, tmp_path / "miss.parquet") is None
+    assert cache.store(step, ctx, src, seconds=recorded["wall_clock_seconds"] + 0.6) == key
+    assert cache.meta_path(key).read_bytes() == golden_meta.read_bytes()
+    (entry,) = [e for e in MANIFEST["runs"][name]["c3_cache_entries"] if e["key"] == key]
+    assert hashlib.sha256(cache.path(key).read_bytes()).hexdigest() == entry["sha256"]
+
+    again = tmp_path / "again" / "output" / src.name
+    assert cache.fetch(step, ctx, again) == key
+    assert again.read_bytes() == src.read_bytes()
+
+
+# ---------------------------------------------------------------------------------------------
+# A1 cohort, A3 merge
+# ---------------------------------------------------------------------------------------------
+
 
 
 @pytest.mark.parametrize("variant", cohort.VARIANTS)

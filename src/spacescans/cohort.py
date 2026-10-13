@@ -40,6 +40,8 @@ from typing import Any, Literal, Union
 
 import pandas as pd
 
+from spacescans.catalog.recipes import COHORT_STR_COLUMNS as _COHORT_STR_COLUMNS
+
 _log = logging.getLogger(__name__)
 
 __all__ = [
@@ -83,12 +85,8 @@ ACCEPTED_DATE_EXAMPLES = "2017-08-19 (ISO, preferred) or 8/19/2017"
 # through untouched. They are read as text so leading zeros ("06" for CA)
 # survive. The web has two variants: bg_ndi_wi.py:81 (four columns) and
 # zcta5_cbp.py:90, which adds zcta5 and which every runner except bg_ndi_wi
-# uses.
-_FIPS_BG = ("state_fips", "county_fips", "tract_geoid", "bg_geoid")
-FIPS_STR_COLS: Mapping[str, tuple[str, ...]] = {
-    "bg_ndi_wi": _FIPS_BG,
-    "zcta5": _FIPS_BG + ("zcta5",),
-}
+# uses. The table is the catalog's (each recipe names its variant), kept once.
+FIPS_STR_COLS: Mapping[str, tuple[str, ...]] = _COHORT_STR_COLUMNS
 VARIANTS: tuple[str, ...] = tuple(FIPS_STR_COLS)
 Variant = Literal["bg_ndi_wi", "zcta5"]
 
