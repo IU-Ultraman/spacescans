@@ -74,9 +74,11 @@ STALE_TEMP_S = 3600.0
 _STEP_CODE_PACKAGES = ("cli", "engine", "geometry", "io", "linkage", "models", "pipeline",
                        "plugins", "tools", "transforms")
 _STEP_CODE_MODULES = ("__main__.py", "_extras.py", "config_resolution.py")
-# Rendered-config fields that differ between runs of the same computation.
+# Rendered-config fields that differ between runs of the same computation. The
+# tile-cache folder is a location, not an input: what is in it counts (source_fp).
 _RUN_FIELDS = (("name",), ("buffer", "patient_file"), ("output", "path"),
-               ("engine", "threads"), ("engine", "memory_limit"), ("engine", "temp_directory"))
+               ("engine", "threads"), ("engine", "memory_limit"), ("engine", "temp_directory"),
+               ("source", "road_cache_dir"))
 
 
 # ---------------------------------------------------------------------------
@@ -231,9 +233,11 @@ def native_versions() -> dict[str, str | None]:
 def normalised_config(cfg: Mapping[str, Any]) -> dict[str, Any]:
     """The rendered config without its run-specific fields.
 
-    Drops ``name`` (task suffix), ``buffer.patient_file``, ``output.path`` and
+    Drops ``name`` (task suffix), ``buffer.patient_file``, ``output.path``,
     the engine resource caps (``threads``, ``memory_limit``,
-    ``temp_directory``), which do not change what a step computes.
+    ``temp_directory``) and the tile-cache folder ``source.road_cache_dir``,
+    which do not change what a step computes (the tiles a data-root cache
+    holds are fingerprinted in :func:`source_fingerprint`).
     """
     out = json.loads(json.dumps(cfg))
     for path in _RUN_FIELDS:
@@ -246,11 +250,7 @@ def normalised_config(cfg: Mapping[str, Any]) -> dict[str, Any]:
 
 
 def _data_refs(cfg: Mapping[str, Any]) -> list[str]:
-    """The data files a C3 config reads: ``source.file`` and every ``source.*_file``.
-
-    ``*_cache_dir`` entries are cohort-independent caches the pipeline writes
-    itself; they are not inputs.
-    """
+    """The data files a C3 config reads: ``source.file`` and every ``source.*_file``."""
     source = cfg.get("source")
     refs: list[str] = []
     if isinstance(source, Mapping):
@@ -260,6 +260,43 @@ def _data_refs(cfg: Mapping[str, Any]) -> list[str]:
             values = value if isinstance(value, list) else [value]
             refs.extend(v for v in values if isinstance(v, str))
     return refs
+
+
+def _cache_dir_refs(cfg: Mapping[str, Any]) -> list[str]:
+    """Tile caches in the data root that a C3 config reads: relative ``source.*_cache_dir``.
+
+    The TIGER and NHD steps read their feature tiles from there when present
+    (a prebuilt cache from the data release, e.g. ``nhd_features_cache``), so
+    the tiles are inputs. An absolute folder is a private one ``link`` made in
+    the run directory: tiles derived from ``source.file``, which is
+    fingerprinted itself.
+    """
+    source = cfg.get("source")
+    refs: list[str] = []
+    if isinstance(source, Mapping):
+        for key, value in source.items():
+            if key.endswith("_cache_dir") and isinstance(value, str) and value \
+                    and not os.path.isabs(value):
+                refs.append(value)
+    return refs
+
+
+def _tree_entry(ref: str, data_dir: Path) -> list[Any]:
+    """``[ref, files, bytes, sha256]`` of a folder tree: its file count, total size and a
+    hash of every ``(relpath, size, mtime_ns)``; ``[ref, 0, 0, None]`` when absent."""
+    root = data_dir / ref
+    if not root.is_dir():
+        return [ref, 0, 0, None]
+    h = hashlib.sha256()
+    count = total = 0
+    for p in sorted(root.rglob("*")):
+        if not p.is_file():
+            continue
+        st = p.stat()
+        count += 1
+        total += st.st_size
+        h.update(f"{p.relative_to(root).as_posix()}\0{st.st_size}\0{st.st_mtime_ns}\n".encode())
+    return [ref, count, total, h.hexdigest()]
 
 
 def _static_prefix(pattern: str) -> str:
@@ -341,18 +378,28 @@ def source_fingerprint(cfg: Mapping[str, Any], data_dir: str | os.PathLike) -> d
     receipt covers a referenced file. ``files``: ``[path, size, mtime_ns]``
     for referenced files no receipt covers (paths relative to ``data_dir``
     unless the config gave an absolute one; size and mtime are None for a
-    missing file).
+    missing file). ``trees`` (only when there are any): ``[folder, files,
+    bytes, sha256]`` of each tile cache in the data root
+    (:func:`_cache_dir_refs`) that no receipt covers.
     """
     data_dir = Path(data_dir)
-    receipts, rest = _receipt_entries(_data_refs(cfg), data_dir)
+    cache_refs = _cache_dir_refs(cfg)
+    receipts, rest = _receipt_entries(_data_refs(cfg) + cache_refs, data_dir)
     files: list[list[Any]] = []
+    trees: list[list[Any]] = []
     seen: set[str] = set()
     for ref in rest:
+        if ref in cache_refs:
+            trees.append(_tree_entry(ref, data_dir))
+            continue
         for entry in _stat_entries(ref, data_dir):
             if entry[0] not in seen:
                 seen.add(entry[0])
                 files.append(entry)
-    return {"receipts": receipts, "files": sorted(files, key=lambda e: e[0])}
+    out: dict[str, Any] = {"receipts": receipts, "files": sorted(files, key=lambda e: e[0])}
+    if trees:
+        out["trees"] = sorted(trees, key=lambda e: e[0])
+    return out
 
 
 # ---------------------------------------------------------------------------

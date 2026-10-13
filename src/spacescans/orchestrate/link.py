@@ -55,6 +55,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
 
+from spacescans.orchestrate.context import RunContext
 from spacescans.orchestrate.events import LOG_MERGE_FAILED, Event
 from spacescans.orchestrate.run import (
     RenderError,
@@ -133,6 +134,19 @@ class LinkResult:
     def ok(self) -> bool:
         """Every requested source completed."""
         return not self.failed and not self.skipped
+
+
+@dataclass(frozen=True)
+class _LinkContext(RunContext):
+    """The contract's :class:`RunContext` plus ``feature_caches`` (link only).
+
+    ``feature_caches`` maps a template's ``source.road_cache_dir`` to the
+    folder this run uses instead (see :func:`_feature_caches`);
+    :func:`~spacescans.orchestrate.render.render_template` applies it. The
+    web never sets it, so its YAML is unchanged.
+    """
+
+    feature_caches: Mapping[str, str] | None = None
 
 
 def web_name_suffix(run_dir: str | os.PathLike) -> str:
@@ -307,6 +321,49 @@ def _weight_cache(cache: Any) -> WeightCache | None:
         return WeightCache(cache, key_format="v2")
     raise LinkConfigError("cache must be None, a WeightCache or a cache directory",
                           details={"cache": type(cache).__name__})
+
+
+def _feature_caches(planned: Mapping[str, Sequence[Any]], data_summary: Mapping[str, Any],
+                    run_dir: Path) -> dict[str, str]:
+    """Private tile-cache folders for the C3 steps that would write into the data root.
+
+    The TIGER and NHD C3 steps read feature tiles from ``source.road_cache_dir``
+    (a folder in the data root) and write every tile they derive from raw data
+    there, named after the counties or grid tiles around the cohort's points.
+    When ``data.status`` chose the prebuilt tile cache (``tiger_roads_cache``,
+    ``nhd_features_cache``) the folder stays (the tiles are only read);
+    otherwise it moves to ``run_dir/feature_cache/<step>``, which goes with the
+    run directory and never touches a read-only or shared data root.
+    """
+    from spacescans import catalog
+    from spacescans.data import load_manifest
+
+    manifest = load_manifest()
+    chosen = {d for v in (data_summary.get("variables") or {}).values()
+              for d in (v.get("datasets") or [])}
+
+    def prebuilt(rel: str) -> bool:
+        rel = rel.rstrip("/")
+        for key in chosen:
+            ds = manifest.datasets.get(key)
+            for rule in (ds.layout if ds is not None else ()):
+                folder = rule.get("dir") or rule.get("path")
+                if isinstance(folder, str):
+                    folder = folder.split("{", 1)[0].rstrip("/")
+                    if folder and (folder == rel or folder.startswith(rel + "/")):
+                        return True
+        return False
+
+    out: dict[str, str] = {}
+    for steps in planned.values():
+        for step in steps:
+            if not step.is_c3:
+                continue
+            rel = (catalog.template(step.template).get("source") or {}).get("road_cache_dir")
+            if isinstance(rel, str) and rel and not os.path.isabs(rel) and rel not in out \
+                    and not prebuilt(rel):
+                out[rel] = str(run_dir / "feature_cache" / step.name)
+    return out
 
 
 def _executor_name(executor: Any) -> str:
@@ -489,7 +546,6 @@ def link(cohort: pd.DataFrame | str | os.PathLike, variables: Sequence[str], *,
     from spacescans import cohort as _cohort
     from spacescans import data as _data
     from spacescans.orchestrate import provenance as _provenance
-    from spacescans.orchestrate.context import RunContext
     from spacescans.orchestrate.execute import make_executor
 
     started = datetime.now(timezone.utc)
@@ -533,11 +589,12 @@ def link(cohort: pd.DataFrame | str | os.PathLike, variables: Sequence[str], *,
 
     engine = {k: v for k, v in (("threads", threads), ("memory_limit", memory_limit))
               if v is not None} or None
-    ctx = RunContext(run_dir=rdir, cohort_parquet=rdir / COHORT_FILE, data_dir=root,
-                     buffer_m=buffer_m, raster_res_m=raster_res_m,
-                     name_suffix=web_name_suffix(rdir), overlay=overlay or None, engine=engine)
-
     planned = {exp: catalog.plan(exp, ks, overlay=overlay or None) for exp, ks in groups.items()}
+    ctx = _LinkContext(run_dir=rdir, cohort_parquet=rdir / COHORT_FILE, data_dir=root,
+                       buffer_m=buffer_m, raster_res_m=raster_res_m,
+                       name_suffix=web_name_suffix(rdir), overlay=overlay or None, engine=engine,
+                       feature_caches=_feature_caches(planned, data_summary, rdir) or None)
+
     distinct = {(s.name, s.cache_tag) if s.is_c3 else (s.name, exp)
                 for exp, steps in planned.items() for s in steps}
     emit(Event("plan", "link", total=len(distinct),

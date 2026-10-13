@@ -36,12 +36,18 @@ def render_template(step: Step, template: Mapping[str, Any], ctx: Any) -> dict[s
 
     ``ctx`` is a :class:`~spacescans.orchestrate.context.RunContext` or any
     object with ``run_dir``, ``cohort_parquet``, ``buffer_m``,
-    ``raster_res_m`` and ``name_suffix`` (``engine`` is optional).
+    ``raster_res_m`` and ``name_suffix`` (``engine`` and ``feature_caches``
+    are optional; without them the result is the web's config).
     """
-    return _recipes.render_config(
+    cfg = _recipes.render_config(
         step, template, run_dir=Path(ctx.run_dir), cohort_parquet=ctx.cohort_parquet,
         buffer_m=ctx.buffer_m, raster_res_m=ctx.raster_res_m, name_suffix=ctx.name_suffix,
         engine=getattr(ctx, "engine", None))
+    caches = getattr(ctx, "feature_caches", None)
+    source = cfg.get("source")
+    if caches and isinstance(source, dict) and source.get("road_cache_dir") in caches:
+        source["road_cache_dir"] = str(caches[source["road_cache_dir"]])
+    return cfg
 
 
 def render(step: Step, ctx: RunContext) -> dict[str, Any]:

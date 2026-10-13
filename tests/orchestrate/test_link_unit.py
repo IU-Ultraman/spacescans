@@ -537,3 +537,30 @@ def test_a_timed_out_step_is_not_reported_as_out_of_memory():
     oom = StepFailed("c3_noise", -9, ["x"])
     assert oom.oom and "memory" in str(oom) and "memory" in oom.hint
     assert classify(oom).details["oom"] is True
+
+
+@pytest.mark.parametrize("variable,step,folder,prebuilt", [
+    ("tiger_proximity", "c3_tiger_roads", "cache/C3/tiger_roads_filtered", "tiger_roads_cache"),
+    ("nhd_bluespace", "c3_nhd_bluespace", "cache/C3/nhd_features", "nhd_features_cache")])
+def test_tile_caches_stay_out_of_the_data_root_unless_prebuilt(tmp_path, monkeypatch, no_data_check,
+                                                               variable, step, folder, prebuilt):
+    """Review P1: TIGER/NHD C3 steps wrote tiles named by the cohort's counties into data_dir."""
+    from spacescans.orchestrate.render import render
+
+    res = _link(tmp_path / "raw", [variable])           # status not known: private folder
+    cfg = yaml.safe_load((res.run_dir / "pipeline_configs" / f"{step}.yaml").read_text())
+    assert cfg["source"]["road_cache_dir"] == str(res.run_dir / "feature_cache" / step)
+    assert catalog.template(catalog.plan(variable, [variable])[0].template)["source"][
+        "road_cache_dir"] == folder
+
+    # data.status chose the prebuilt tile cache: the data root's folder is read in place
+    monkeypatch.setattr(link_fn, "_check_data", lambda groups, overlay, data_dir: (
+        {"data_dir": str(data_dir), "data_release": "test", "datasets": {},
+         "variables": {variable: {"status": "ready", "datasets": [prebuilt]}}}, []))
+    res2 = _link(tmp_path / "prebuilt", [variable])
+    cfg2 = yaml.safe_load((res2.run_dir / "pipeline_configs" / f"{step}.yaml").read_text())
+    assert cfg2["source"]["road_cache_dir"] == folder
+
+    # the web's render (a plain RunContext) is unchanged
+    ctx = _ctx(tmp_path / "web")
+    assert render(catalog.plan(variable, [variable])[0], ctx)["source"]["road_cache_dir"] == folder

@@ -494,6 +494,30 @@ def test_source_fingerprint_covers_shapefile_parts_and_missing_files(run):
     assert zcta == [["ZCTA5/C3/tl_2010_us_zcta510/tl_2010_us_zcta510.shp", None, None]]
 
 
+def test_v2_key_follows_the_tile_cache_a_c3_step_reads(run):
+    """Review F2: replacing an NHD feature tile left the v2 key unchanged."""
+    step = catalog.plan("nhd_bluespace", ["nhd_bluespace"])[0]
+    tile = run.data / "cache" / "C3" / "nhd_features" / "tile_gx0_gy0_flow.parquet"
+    tile.parent.mkdir(parents=True)
+    tile.write_bytes(b"v1" * 100)
+    v2 = WeightCache(run.tmp / "cache", key_format="v2")
+    comps = v2.components(step, run.ctx)
+    assert "road_cache_dir" not in comps["config"]["source"]       # a location, not an input
+    [tree] = comps["source_fp"]["trees"]
+    assert tree[:3] == ["cache/C3/nhd_features", 1, 200]
+    k1 = v2.key(step, run.ctx)
+    tile.write_bytes(b"version two" * 50)
+    k2 = v2.key(step, run.ctx)
+    assert k1 != k2
+    # a private tile folder (link's run_dir/feature_cache) is neither fingerprinted nor keyed
+    cfg = render(step, run.ctx)
+    cfg["source"]["road_cache_dir"] = str(run.tmp / "private" / "c3_nhd_bluespace")
+    assert "trees" not in orch_cache.source_fingerprint(cfg, run.data)
+    assert orch_cache.normalised_config(cfg) == comps["config"]
+    # steps without a tile cache keep their source_fp shape
+    assert "trees" not in orch_cache.source_fingerprint(render(NOISE_C3, run.ctx), run.data)
+
+
 def test_unknown_key_format_is_refused(tmp_path):
     with pytest.raises(ValueError, match="key_format"):
         WeightCache(tmp_path, key_format="v3")
