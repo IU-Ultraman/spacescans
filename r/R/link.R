@@ -198,23 +198,32 @@ ss_link <- function(cohort, variables, data_dir = ss_data_dir(), buffer_m = 270L
             details = list(variables = names_bad, datasets = datasets, status = st))
 }
 
-# Variables whose catalog entry names a Python extra that is not installed.
+# Variables that need a Python extra this install lacks. The bridge's catalog
+# rows carry `missing_extras` (the extras a variable's patterns and readers
+# need that this Python install cannot load); a catalog that lists the extras
+# each variable needs (`extras`) is checked against hello's extras instead.
 .ss_check_extras <- function(variables) {
   if (!"catalog" %in% unlist(.ss_hello()$commands)) return(invisible())
   cat <- tryCatch(.ss_catalog_value(), error = function(e) NULL)
   if (is.null(cat)) return(invisible())
   rows <- .ss_catalog_rows(cat)
-  if (is.null(rows$extras)) return(invisible())
-  caps <- .ss_hello()
-  need <- unique(unlist(lapply(rows$extras[rows$variable %in% variables], function(e) {
+  split <- function(e) {
     e <- trimws(strsplit(as.character(e %||% ""), ",", fixed = TRUE)[[1]])
     e[nzchar(e) & !is.na(e)]
-  })))
-  have <- names(Filter(function(e) isTRUE(e$available), caps$extras %||% list()))
-  missing <- setdiff(need, have)
+  }
+  if (!is.null(rows$missing_extras)) {
+    lacking <- lapply(rows$missing_extras, split)
+  } else if (!is.null(rows$extras)) {
+    caps <- .ss_hello()
+    have <- names(Filter(function(e) isTRUE(e$available), caps$extras %||% list()))
+    lacking <- lapply(rows$extras, function(e) setdiff(split(e), have))
+  } else {
+    return(invisible())
+  }
+  selected <- rows$variable %in% variables
+  missing <- unique(unlist(lacking[selected]))
   if (length(missing)) {
-    who <- rows$variable[rows$variable %in% variables &
-                           vapply(rows$extras, function(e) any(missing %in% trimws(strsplit(as.character(e %||% ""), ",")[[1]])), logical(1))]
+    who <- rows$variable[selected & lengths(lacking) > 0L]
     .ss_abort("missing_extra", sprintf("%s need(s) the Python extra(s) %s, which are not installed.",
                                        paste(who, collapse = ", "), paste(missing, collapse = ", ")),
               hint = .ss_r_hint("missing_extra", list(extra = missing), NULL),

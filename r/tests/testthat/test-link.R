@@ -108,6 +108,27 @@ test_that("a missing Python extra stops before the link starts, naming the ss_in
   expect_length(fake_requests(dir, "link"), 0L)
 })
 
+test_that("the missing-extra preflight reads the bridge catalog's missing_extras", {
+  # The Python bridge's catalog rows name the extras this install lacks
+  # (`missing_extras`), not every extra a variable needs (`extras`).
+  row <- function(key, experiment, missing) {
+    list(key = key, label = key, experiment = experiment, value_cols = list(key),
+         datasets = list(), missing_extras = missing, runnable_here = !length(missing))
+  }
+  cat <- list(variables = list(row("ndi", "bg_ndi_wi", list()), row("walkability", "bg_ndi_wi", list()),
+                               row("temis", "temis", list("hdf4"))),
+              features = list(), data_release = "2026.07", catalog_hash = "x")
+  dir <- local_fake_bridge(list(catalog = list(value = cat)))
+  e <- tryCatch(link(variables = c("ndi", "temis")), error = identity)
+  expect_s3_class(e, "spacescans_error_missing_extra")
+  expect_match(conditionMessage(e), "temis need(s) the Python extra(s) hdf4", fixed = TRUE)
+  expect_match(e$hint, 'ss_install(extras = "hdf4")', fixed = TRUE)
+  expect_length(fake_requests(dir, "link"), 0L)
+  dir <- local_fake_bridge(list(catalog = list(value = cat)))
+  res <- link(variables = c("ndi", "walkability"))
+  expect_length(fake_requests(dir, "link"), 1L)
+})
+
 test_that("a failed step is a spacescans_error_step with the log tail and an OOM hint", {
   dir <- local_fake_bridge(list(link = list(error = list(
     kind = "step_failed", message = "step c3_bg failed",
