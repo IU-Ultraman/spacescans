@@ -384,7 +384,7 @@ def test_data_missing_is_raised_before_any_step(tmp_path):
 
 def test_bad_arguments_are_config_errors(tmp_path, no_data_check):
     for kw in ({"buffer_m": 270.5}, {"raster_res_m": 0}, {"on_error": "ignore"},
-               {"buffer_m": True}):
+               {"buffer_m": True}, {"threads": 0}, {"memory_limit": 8}):
         with pytest.raises(LinkConfigError):
             _link(tmp_path, ["noise"], **kw)
     with pytest.raises(LinkConfigError):

@@ -151,10 +151,10 @@ def _variables(variables: Sequence[str]) -> list[str]:
     return keys
 
 
-def _positive_int(name: str, value: Any) -> int:
+def _positive_int(name: str, value: Any, *, unit: str = "") -> int:
     if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
-        raise LinkConfigError(f"{name} must be a positive whole number of metres, "
-                              f"got {value!r}", details={name: repr(value)})
+        raise LinkConfigError(f"{name} must be a positive whole number{unit}, got {value!r}",
+                              details={name: repr(value)})
     return value
 
 
@@ -432,12 +432,15 @@ def link(cohort: pd.DataFrame | str | os.PathLike, variables: Sequence[str], *,
     emit = on_event if on_event is not None else (lambda _ev: None)
 
     keys = _variables(variables)
-    buffer_m = _positive_int("buffer_m", buffer_m)
-    raster_res_m = _positive_int("raster_res_m", raster_res_m)
+    buffer_m = _positive_int("buffer_m", buffer_m, unit=" of metres")
+    raster_res_m = _positive_int("raster_res_m", raster_res_m, unit=" of metres")
     if on_error not in ("stop", "continue"):
         raise LinkConfigError(f"on_error must be 'stop' or 'continue', got {on_error!r}")
     if threads is not None:
         _positive_int("threads", threads)
+    if memory_limit is not None and (not isinstance(memory_limit, str) or not memory_limit.strip()):
+        raise LinkConfigError(f"memory_limit must be a DuckDB size such as '8GB', "
+                              f"got {memory_limit!r}")
     if isinstance(reserved_names, (str, bytes)):
         raise LinkConfigError("reserved_names must be a list of column names")
     cohort_in = cohort if isinstance(cohort, pd.DataFrame) else Path(os.fspath(cohort))
