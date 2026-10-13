@@ -58,7 +58,11 @@ class Response:
     def headers(self) -> http.client.HTTPMessage:
         return self._resp.headers
 
-    def read(self, n: int = -1) -> bytes:
+    def read(self, n: int | None = -1) -> bytes:
+        # Before Python 3.12, http.client's read(-1) ignores Content-Length and waits
+        # for EOF, which never comes on a keep-alive connection; read() does not.
+        if n is None or n < 0:
+            return self._resp.read()
         return self._resp.read(n)
 
     def close(self) -> None:
