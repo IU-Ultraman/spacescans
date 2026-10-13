@@ -54,7 +54,7 @@ COHORT = pd.DataFrame({
 
 def _value_cols_for(step_name: str) -> list[str]:
     """The pre-rename value columns the C4 output of ``step_name`` carries."""
-    for exp, rec in catalog.all_recipes().items():
+    for rec in catalog.all_recipes().values():
         if rec.dynamic:
             continue
         inverse = {v: k for k, v in rec.renames.items()}
@@ -174,12 +174,12 @@ def test_run_source_logs_the_web_lines(tmp_path):
         catalog.plan("noise", ["noise"])[0], ctx)
     cfg = ctx.run_dir / "pipeline_configs"
     assert msgs == [
-        ("info", "runner", f"spawning c3_noise: fake-spacescans run --data-dir {ctx.data_dir} "
-                           f"{cfg / 'c3_noise.yaml'}"),
+        ("info", "runner", (f"spawning c3_noise: fake-spacescans run --data-dir {ctx.data_dir} "
+                            f"{cfg / 'c3_noise.yaml'}")),
         ("info", "runner", "step c3_noise exit code 0"),
         ("info", "c3_noise", f"cache write: {key}.parquet"),
-        ("info", "runner", f"spawning c4_noise: fake-spacescans run --data-dir {ctx.data_dir} "
-                           f"{cfg / 'c4_noise.yaml'}"),
+        ("info", "runner", (f"spawning c4_noise: fake-spacescans run --data-dir {ctx.data_dir} "
+                            f"{cfg / 'c4_noise.yaml'}")),
         ("info", "runner", "step c4_noise exit code 0"),
     ]
 
@@ -391,6 +391,9 @@ def test_bad_arguments_are_config_errors(tmp_path, no_data_check):
         _link(tmp_path, "noise")
     with pytest.raises(LinkConfigError, match="no catalog knows"):
         _link(tmp_path, ["noise", "custom_deadbeef"])
+    with pytest.raises(LinkConfigError, match="cohort file not found"):
+        link(tmp_path / "nope.csv", ["noise"], data_dir=tmp_path / "data",
+             run_dir=tmp_path / "run3", executor=FakeExecutor())
     assert LinkConfigError("x").to_dict()["kind"] == "config"
 
 

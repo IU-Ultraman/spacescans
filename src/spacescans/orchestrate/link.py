@@ -280,6 +280,9 @@ def _cohort_columns(cohort_in: Any) -> list[str]:
     if isinstance(cohort_in, pd.DataFrame):
         cols = [str(c) for c in cohort_in.columns]
     else:
+        if not Path(cohort_in).is_file():
+            raise LinkConfigError(f"cohort file not found: {cohort_in}",
+                                  details={"cohort": str(cohort_in)})
         cols = [str(c) for c in pd.read_csv(cohort_in, nrows=0).columns]
     if "pid" not in cols:
         alias = find_id_alias(cols)
@@ -437,6 +440,8 @@ def link(cohort: pd.DataFrame | str | os.PathLike, variables: Sequence[str], *,
         _positive_int("threads", threads)
     if isinstance(reserved_names, (str, bytes)):
         raise LinkConfigError("reserved_names must be a list of column names")
+    cohort_in = cohort if isinstance(cohort, pd.DataFrame) else Path(os.fspath(cohort))
+    taken = list(_cohort_columns(cohort_in)) + [str(c) for c in reserved_names]
     overlay, warnings = _custom_overlay(custom, keys)
     groups = _groups(keys, overlay)
     root = _data.resolve_data_dir(data_dir)
@@ -446,8 +451,6 @@ def link(cohort: pd.DataFrame | str | os.PathLike, variables: Sequence[str], *,
     weight_cache = _weight_cache(cache)
 
     rdir = _run_dir(run_dir)
-    cohort_in = cohort if isinstance(cohort, pd.DataFrame) else Path(os.fspath(cohort))
-    taken = list(_cohort_columns(cohort_in)) + [str(c) for c in reserved_names]
     info = _cohort.to_pipeline_parquet(cohort_in, rdir / COHORT_FILE, variant="zcta5",
                                        pid_as_str=True, columns="required")
     if info.episode_id_overwritten:

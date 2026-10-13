@@ -283,7 +283,7 @@ def run_source(experiment: str, keys: Sequence[str], ctx: RunContext, *,
                                data={"level": level, "source": record.get("source", step.name)},
                                **common))
                 config = write_config(step, ctx)
-            except Exception as exc:  # noqa: BLE001 - the web logs every render failure the same way
+            except Exception as exc:     # the web logs every render failure the same way
                 emit(Event("warning", experiment,
                            text=LOG_RENDER_FAILED.format(step=step.name, exc=exc),
                            data={"level": "error", "source": "runner", "code": "render_failed"},
