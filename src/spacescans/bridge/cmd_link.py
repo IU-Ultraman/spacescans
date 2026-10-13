@@ -22,13 +22,13 @@ stops the step's process group), waits ``cancel_grace_s`` (default 7 s),
 kills any child process still alive and exits 130/143 with kind
 ``interrupted``. C3 steps already finished stay in the cache.
 
-``WeightCache`` (orch-core) and ``orchestrate.link`` (orch-link) are imported
-lazily, so this module imports on builds that do not have them yet.
+``orchestrate.link``, ``orchestrate.cache.WeightCache`` and the orchestrate
+``LogWriter`` are imported inside the functions that use them, because importing
+``spacescans.orchestrate`` loads pandas and the other bridge commands should not
+pay for it.
 """
 from __future__ import annotations
 
-import datetime as _dt
-import json
 import os
 import sys
 import tempfile
@@ -68,96 +68,57 @@ LOG_FILE = "logs.jsonl"
 DIR_MODE = 0o700
 
 
-# --- orchestrate parts that live on other phase-B branches -------------------
+# --- the orchestrate parts the commands call -----------------------------------
 
 def link_function() -> Callable[..., Any]:
-    """``spacescans.orchestrate.link`` (the function, even if ``link`` is also a module)."""
-    try:
-        import spacescans.orchestrate as orch
-    except ImportError as e:  # pragma: no cover - orchestrate is part of the base install
-        raise BridgeError("internal", f"spacescans.orchestrate cannot be imported: {e}") from e
-    fn = getattr(orch, "link", None)
-    if fn is not None and not callable(fn):  # the submodule, not the function
-        fn = getattr(fn, "link", None)
-    if fn is None or not callable(fn):
-        raise BridgeError("internal", "this spacescans build has no orchestrate.link",
-                          hint="install a spacescans build that includes orchestrate.link (tier 2)",
-                          details={"missing": "spacescans.orchestrate.link"})
-    return fn
+    """``spacescans.orchestrate.link.link`` (contract 5.3).
+
+    Read from the submodule: the package attribute ``spacescans.orchestrate.link``
+    is the function, which hides the submodule of the same name.
+    """
+    from spacescans.orchestrate.link import link
+    return link
 
 
 def weight_cache(root: str | os.PathLike, key_format: str = "v2") -> Any:
-    """``WeightCache(root, key_format=...)`` from ``spacescans.orchestrate.cache``."""
-    cls = None
-    try:
-        from spacescans.orchestrate.cache import WeightCache as cls  # type: ignore[no-redef]
-    except ImportError:
-        try:
-            from spacescans.orchestrate import WeightCache as cls  # type: ignore[no-redef]
-        except ImportError:
-            cls = None
-    if cls is None:
-        raise BridgeError("internal", "this spacescans build has no orchestrate.WeightCache",
-                          hint="install a spacescans build that includes the C3 weight cache (tier 2)",
-                          details={"missing": "spacescans.orchestrate.cache.WeightCache"})
-    return cls(Path(root), key_format=key_format)
+    """``spacescans.orchestrate.cache.WeightCache(root, key_format=...)``.
+
+    ``root`` is the cache root; v2 entries live under ``root/c3/v2``.
+    """
+    from spacescans.orchestrate.cache import WeightCache
+    return WeightCache(Path(root), key_format=key_format)
 
 
 # --- logs.jsonl ---------------------------------------------------------------
 
-class _FileLog:
-    """The web's logs.jsonl line: ``{"ts", "level", "source", "msg"}`` (json.dumps defaults)."""
-
-    def __init__(self, path: Path):
-        self._fh = open(path, "a", encoding="utf-8")
-        self._lock = threading.Lock()
-
-    def write(self, level: str, source: str, msg: str) -> None:
-        line = json.dumps({"ts": _dt.datetime.now(_dt.timezone.utc).isoformat(),
-                           "level": level, "source": source, "msg": msg})
-        with self._lock:
-            if self._fh is not None:
-                self._fh.write(line + "\n")
-                self._fh.flush()
-
-    def close(self) -> None:
-        with self._lock:
-            if self._fh is not None:
-                self._fh.close()
-                self._fh = None
-
-
 class RunLog:
-    """``run_dir/logs.jsonl`` through ``spacescans.orchestrate.events.LogWriter`` when the
-    build has it (``LogWriter(run_dir)`` with ``.write(level, source, msg)``), else an
-    equivalent writer of the web's format."""
+    """``run_dir/logs.jsonl`` through :class:`spacescans.orchestrate.events.LogWriter`.
+
+    ``write`` adds the bridge's own lines; ``event`` writes an orchestrator event
+    with the web runners' level and source for its kind (``LogWriter.event``), so
+    the file matches what the web writes for the same steps. Logging never
+    breaks a run.
+    """
 
     def __init__(self, run_dir: Path):
-        self.path = run_dir / LOG_FILE
-        self._writer: Any = None
-        try:
-            from spacescans.orchestrate.events import LogWriter
-            writer = LogWriter(run_dir)
-            if callable(getattr(writer, "write", None)):
-                self._writer = writer
-        except Exception:
-            self._writer = None
-        if self._writer is None:
-            self._writer = _FileLog(self.path)
+        from spacescans.orchestrate.events import LogWriter
+        self._writer = LogWriter.for_run_dir(run_dir)
+        self.path = self._writer.path
 
     def write(self, level: str, source: str, msg: str) -> None:
         try:
             self._writer.write(level, source, msg)
-        except Exception:  # logging must never break a run
+        except Exception:
+            pass
+
+    def event(self, ev: Any) -> None:
+        try:
+            self._writer.event(ev)
+        except Exception:
             pass
 
     def close(self) -> None:
-        close = getattr(self._writer, "close", None)
-        if callable(close):
-            try:
-                close()
-            except Exception:
-                pass
+        """Nothing to release: ``LogWriter`` opens the file for each record."""
 
 
 # --- event relay ----------------------------------------------------------------
@@ -363,8 +324,12 @@ def cmd_link(args: dict, ctx) -> Outcome:
     link = link_function()
     cache = weight_cache(cache_dir, "v2") if cache_dir is not None else None
 
+    from spacescans.orchestrate.events import tee
+
     log = RunLog(run_dir)
-    relay = LinkRelay(ctx.events, log, total_steps=planned_steps(variables, custom), verbose=ctx.verbose)
+    # logs.jsonl gets the events through LogWriter; the relay only streams them to the client
+    relay = LinkRelay(ctx.events, None, total_steps=planned_steps(variables, custom), verbose=ctx.verbose)
+    on_event = tee(log.event, relay)
     cancel = threading.Event()
     log.write("info", "runner", f"bridge link: {len(variables)} variable(s), {co.rows} episode(s), "
                                 f"{co.patients} patient(s); executor={executor}")
@@ -379,7 +344,7 @@ def cmd_link(args: dict, ctx) -> Outcome:
             lambda: link(co.table, variables, data_dir=data_dir, run_dir=run_dir, buffer_m=buffer_m,
                          raster_res_m=raster_res_m, custom=custom, cache=cache, executor=executor,
                          threads=threads, memory_limit=memory_limit, on_error=on_error,
-                         reserved_names=tuple(reserved), on_event=relay, cancel=cancel),
+                         reserved_names=tuple(reserved), on_event=on_event, cancel=cancel),
             on_line, cancel=cancel, grace_s=grace, log=ctx.log)
     except BaseException as e:
         log.write("error", "runner", f"bridge link stopped: {type(e).__name__}")

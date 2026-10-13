@@ -4,10 +4,11 @@ Every command runs as a client runs it (``python -I -u -X utf8 -m
 spacescans.bridge <cmd> --request ... --result ...``) and every stdout line is
 parsed as JSON, so each test also checks that the event stream is JSON Lines.
 
-``orchestrate.link`` and ``orchestrate.cache.WeightCache`` live on other
-phase-B branches: the link and cache tests inject fakes with the contract 5.1
-and 5.3 signatures through a runner script (the bridge runs with ``-I``, so
-nothing can be injected through the environment's PYTHONPATH).
+``link``, ``cache-info`` and ``cache-clear`` run the real ``orchestrate.link`` and
+``orchestrate.cache.WeightCache``. The link tests stand in only for the pipeline
+steps (and the data check) through a runner script, because the bridge runs with
+``-I`` and nothing can be injected through the environment's PYTHONPATH; a real
+link against a data root is the opt-in ``tests/test_bridge_real_link.py``.
 """
 from __future__ import annotations
 
@@ -66,164 +67,114 @@ def write_cohort(path: Path, n: int = 4) -> Path:
     return path
 
 
-# --- fakes for orchestrate.link / WeightCache -----------------------------------
+# --- the real orchestrate.link with a stand-in for the pipeline steps ------------
 
-FAKES = r'''
-import json, os, signal, subprocess, sys, threading, time
-from dataclasses import dataclass
+# The bridge runs the real ``orchestrate.link`` (and its real WeightCache, LogWriter,
+# events, merge and provenance). Only two things are replaced, through a runner
+# script because the bridge runs with ``-I``: the step executor (``make_executor``
+# returns an in-process stand-in for ``spacescans run`` that writes plausible
+# outputs) and, except in mode ``data_missing``, the data-readiness check (the
+# tests have no data root).
+STEP_FAKES = r'''
+import importlib, json, os, signal, subprocess, sys, time
 from pathlib import Path
 
 import pandas as pd
+import yaml
 
-import spacescans.orchestrate as _orch
+from spacescans import catalog
+from spacescans.orchestrate import execute as _execute
+from spacescans.orchestrate.execute import StepRun
 
+_link_mod = importlib.import_module("spacescans.orchestrate.link")
 MODE = os.environ.get("SS_FAKE_MODE", "ok")
 MARK = os.environ.get("SS_FAKE_MARK", "ss-fake")
+NOTES = os.environ.get("SS_FAKE_NOTES")
+PIDFILE = os.environ.get("SS_FAKE_PIDFILE")
 
 
-@dataclass
-class Event:
-    kind: str
-    experiment: str
-    step: str | None = None
-    index: int | None = None
-    total: int | None = None
-    frac: float | None = None
-    text: str | None = None
-    data: dict | None = None
-    t: float = 0.0
+def _note(**fields):
+    if NOTES:
+        with open(NOTES, "a", encoding="utf-8") as f:
+            f.write(json.dumps(fields) + "\n")
 
 
-@dataclass
-class StepRecord:
-    name: str
-    status: str
-    seconds: float
-    rc: int | None
-    maxrss_bytes: int | None
-    cache_key: str | None
-
-
-class StepFailed(Exception):
-    kind = "step_failed"
-
-    def __init__(self, step, rc, log_tail):
-        super().__init__(f"step {step} exit code {rc}")
-        self.step, self.rc, self.log_tail = step, rc, log_tail
-
-
-StepFailed.__module__ = "spacescans.orchestrate.run"
-
-
-def _spawn(run_dir):
-    child = subprocess.Popen([sys.executable, "-c", f"import time; time.sleep(120)  # {MARK}"],
-                             start_new_session=True)
-    (Path(run_dir) / "child.pid").write_text(str(child.pid))
-    return child
-
-
-def fake_link(cohort, variables, *, data_dir=None, run_dir=None, buffer_m=270, raster_res_m=25,
-              custom=None, cache=None, executor="subprocess", threads=None, memory_limit=None,
-              on_error="stop", reserved_names=(), on_event=None, cancel=None):
-    run_dir = Path(run_dir)
-    (run_dir / "fake_args.json").write_text(json.dumps({
-        "columns": list(cohort.columns), "rows": len(cohort), "pid_type": str(cohort["pid"].dtype),
-        "variables": list(variables), "data_dir": str(data_dir), "run_dir": str(run_dir),
-        "buffer_m": buffer_m, "raster_res_m": raster_res_m,
-        "custom": custom, "cache": None if cache is None else [type(cache).__name__, str(cache.root), cache.key_format],
-        "executor": executor, "threads": threads, "memory_limit": memory_limit, "on_error": on_error,
-        "reserved_names": list(reserved_names), "cancel_is_event": isinstance(cancel, threading.Event),
-        "env_data_dir": os.environ.get("SPACESCANS_DATA_DIR"), "cwd": os.getcwd(),
-    }))
-    emit = on_event or (lambda e: None)
-    if MODE == "hang":
-        child = _spawn(run_dir)
-        emit(Event("step_start", "bg_ndi_wi", "c3_bg", 0, 3))
-        while not cancel.wait(0.05):
-            pass
-        os.killpg(child.pid, signal.SIGTERM)      # what SubprocessExecutor does on cancel
-        child.wait(5)
-        raise RuntimeError("cancelled")
-    if MODE == "hang_ignore":
-        _spawn(run_dir)
-        while True:                                 # ignores cancel and leaves its child behind
-            time.sleep(0.05)
-    if MODE == "step_failed":
-        emit(Event("step_start", "bg_ndi_wi", "c3_bg", 0, 3))
-        raise StepFailed("c3_bg", -9, ["[overlap_fast] tile 1/2", "Killed"])
-    if MODE == "data_missing":
-        from spacescans.data import DataMissingError
-        raise DataMissingError("data for ndi is not in the data directory",
-                               hint="spacescans data fetch ndi", details={"variables": ["ndi"]})
-    if MODE == "internal":
-        raise ZeroDivisionError("division by zero")
-    steps = [("bg_ndi_wi", "c3_bg"), ("bg_ndi_wi", "c3_bg_2020"), ("bg_ndi_wi", "c4_ndi"), ("bg_ndi_wi", "c4_wi")]
-    emit(Event("plan", "bg_ndi_wi", data={"experiments": ["bg_ndi_wi"]}))
-    emit(Event("cohort", "bg_ndi_wi", data={"rows": len(cohort)}))
-    records = []
-    for i, (exp, step) in enumerate(steps):
-        emit(Event("step_start", exp, step, i, len(steps)))
-        if step == "c3_bg_2020":
-            emit(Event("cache_hit", exp, step, i, len(steps), text=f"cache hit: abc__BG2020__b{buffer_m}m — skipping pipeline run",
-                       data={"key": f"abc__BG2020__b{buffer_m}m"}))
-            records.append(StepRecord(step, "cache_hit", 0.01, None, None, "abc"))
+def _value_cols(step_name):
+    for rec in catalog.all_recipes().values():
+        if rec.dynamic:
             continue
-        emit(Event("spawn", exp, step, i, len(steps), text=f"spawning {step}: python -m spacescans run {step}.yaml"))
-        n = 400 if step == "c3_bg" else 3
-        t0 = time.monotonic()
+        inverse = {v: k for k, v in rec.renames.items()}
+        for key in rec.variables:
+            if rec.output_for(key) == f"{step_name}.parquet":
+                return [inverse.get(c, c) for c in catalog.variable(key).value_cols]
+    return ["intermediate"]
+
+
+class StepStandIn:
+    """What ``spacescans run <config>`` would do, in miniature."""
+
+    def command(self, config, data_dir):
+        return ["fake-spacescans", "run", Path(config).name]
+
+    def run(self, config, *, data_dir, cwd, on_line, cancel=None):
+        cfg = yaml.safe_load(Path(config).read_text())
+        name = Path(config).stem.split("_task_")[0]
+        cohort = pd.read_parquet(cfg["buffer"]["patient_file"])
+        _note(step=name, data_dir=os.fspath(data_dir), cwd=os.fspath(cwd),
+              columns=list(cohort.columns), rows=len(cohort),
+              env_data_dir=os.environ.get("SPACESCANS_DATA_DIR"))
+        if MODE == "internal":
+            raise ZeroDivisionError("division by zero")
+        if MODE in ("hang", "hang_ignore"):
+            child = subprocess.Popen([sys.executable, "-c", f"import time; time.sleep(120)  # {MARK}"],
+                                     start_new_session=True)
+            Path(PIDFILE).write_text(str(child.pid))
+            if MODE == "hang_ignore":            # ignores cancel and leaves its child behind
+                while True:
+                    time.sleep(0.05)
+            while not cancel.wait(0.05):
+                pass
+            os.killpg(child.pid, signal.SIGTERM)  # what SubprocessExecutor does on cancel
+            child.wait(5)
+            return StepRun(rc=-15, seconds=0.1, maxrss_bytes=None, tail=["stopped"], cancelled=True)
+        if MODE == "step_failed" and name.startswith("c3_"):
+            on_line("[overlap_fast] tile 1/2 ( 50.0%)")
+            return StepRun(rc=-9, seconds=0.1, maxrss_bytes=4096, tail=["[overlap_fast] tile 1/2", "Killed"])
+        print("a stray print from a step")
+        n = 400 if name == "c3_bg" else 3
         for k in range(1, n + 1):
-            line = f"[overlap_fast] tile {k}/{n} ({100 * k / n:5.1f}%)"
-            emit(Event("line", exp, step, i, len(steps), text=line))
-            emit(Event("progress", exp, step, i, len(steps), frac=k / n, text=line))
-            if step == "c3_bg":
+            on_line(f"[overlap_fast] tile {k}/{n} ({100 * k / n:5.1f}%)")
+            if n > 3:
                 time.sleep(0.003)
-        emit(Event("step_end", exp, step, i, len(steps), text=f"step {step} exit code 0",
-                   data={"rc": 0, "seconds": round(time.monotonic() - t0, 3), "maxrss_bytes": 123456,
-                         "step": "shadowed"}))
-        records.append(StepRecord(step, "ran", 0.5, 0, 123456, None))
-    emit(Event("merge", "bg_ndi_wi", text="ndi: 100.0% of episodes linked (4/4)"))
-    emit(Event("warning", "bg_ndi_wi", text="vnl matched 72.4% of episodes", data={"code": "low_match", "pct": 72.4}))
-    emit(Event("done", "bg_ndi_wi"))
-    print("a stray print from the orchestrator")
-    n = len(cohort)
-    exposures = pd.DataFrame({"episode_id": range(n), "ndi": [0.5] * n, "NatWalkInd": [10.0] * n})
-    from spacescans import catalog
-    features = pd.DataFrame(catalog.feature_rows(["ndi", "NatWalkInd"]))
-    coverage = pd.DataFrame([{"variable": "ndi", "episodes": n, "with_value": n, "pct": 100.0},
-                             {"variable": "walkability", "episodes": n, "with_value": n - 1, "pct": float("nan")}])
-    class Result:
-        pass
-    r = Result()
-    r.exposures, r.features, r.coverage = exposures, features, coverage
-    r.steps, r.failed, r.skipped = records, [], []
-    r.warnings = [{"code": "low_match", "experiment": "vnl", "pct": 72.4, "msg": "vnl matched 72.4% of episodes"}]
-    r.provenance = {"versions": {"spacescans": "0.2.7"}, "cache_keys": {"c3_bg": "abc"}}
-    r.run_dir = run_dir
-    return r
+        out = Path(cfg["output"]["path"])
+        out.parent.mkdir(parents=True, exist_ok=True)
+        if name.startswith("c3_"):
+            df = pd.DataFrame({"geoid": cohort["episode_id"], "grid_id": cohort["episode_id"] + 7,
+                               "weight": 1.0})
+        else:
+            df = pd.DataFrame({"PATID": cohort["pid"], "geoid": cohort["episode_id"]})
+            for j, col in enumerate(_value_cols(name)):
+                df[col] = cohort["episode_id"].astype(float) * 0.5 + j
+        df.to_parquet(out, index=False)
+        return StepRun(rc=0, seconds=0.05, maxrss_bytes=123456, tail=[])
 
 
-class FakeWeightCache:
-    def __init__(self, root, *, key_format):
-        self.root, self.key_format = Path(root), key_format
-
-    def info(self):
-        return {"entries": 2, "bytes": 2048, "oldest": 1.0, "newest": 2.0, "root": str(self.root)}
-
-    def clear(self, *, older_than_s=None):
-        return {"removed": 1 if older_than_s else 2, "bytes_freed": 1024}
+def _make_executor(executor="subprocess", *, threads=None, memory_limit=None):
+    _note(make_executor=executor if isinstance(executor, str) else type(executor).__name__,
+          threads=threads, memory_limit=memory_limit)
+    return StepStandIn()
 
 
-_orch.link = fake_link
-import types
-_cache_mod = types.ModuleType("spacescans.orchestrate.cache")
-_cache_mod.WeightCache = FakeWeightCache
-sys.modules["spacescans.orchestrate.cache"] = _cache_mod
+_execute.make_executor = _make_executor
+if MODE != "data_missing":
+    _link_mod._check_data = lambda groups, overlay, data_dir: (
+        {"data_dir": str(data_dir), "data_release": "test", "variables": {}, "datasets": {}}, [])
 '''
 
 
 def fake_prefix(tmp: Path) -> list[str]:
-    runner = tmp / "fake_bridge.py"
-    runner.write_text(FAKES + textwrap.dedent("""
+    runner = tmp / "fake_steps_bridge.py"
+    runner.write_text(STEP_FAKES + textwrap.dedent("""
         import runpy
         sys.argv = ["spacescans.bridge"] + sys.argv[1:]
         runpy.run_module("spacescans.bridge", run_name="__main__", alter_sys=True)
@@ -504,42 +455,53 @@ def test_custom_validate_raster(tmp_path):
     assert d["geometry"] == "raster" and d["value_cols"] == ["value"] and len(d["grid_hash"]) == 8
 
 
-# --- link (fake orchestrate.link) ------------------------------------------------------------------
+# --- link: the real orchestrate.link (pipeline steps stood in) ---------------------------------------
 
-def test_link_writes_results_and_streams_events(tmp_path, monkeypatch):
+def _notes(path: Path) -> list[dict]:
+    return [json.loads(x) for x in path.read_text().splitlines()] if path.exists() else []
+
+
+def test_link_runs_orchestrate_link_and_streams_events(tmp_path, monkeypatch):
     monkeypatch.setenv("SPACESCANS_DATA_DIR", str(tmp_path / "somewhere-else"))
     args = link_args(tmp_path)
+    notes = tmp_path / "steps.jsonl"
     rc, res, events, err = call(tmp_path, "link", args, prefix=fake_prefix(tmp_path),
-                                env=fake_env("ok"), verbose=False)
+                                env=fake_env("ok", SS_FAKE_NOTES=str(notes)), verbose=False)
     assert rc == 0, res["error"]
     v = res["value"]
     run = tmp_path / "run"
     assert v["exposures"] == str(run / "exposures.parquet") and v["run_dir"] == str(run)
     assert v["rows"] == v["episodes"] == 4 and v["patients"] == 2
     ex = pd.read_parquet(v["exposures"])
-    assert list(ex["episode_id"]) == [0, 1, 2, 3] and v["columns"] == ["episode_id", "ndi", "NatWalkInd"]
+    assert list(ex["episode_id"]) == [0, 1, 2, 3]
+    produced = [c for c in v["columns"] if c != "episode_id"]
+    assert v["columns"][0] == "episode_id" and len(produced) >= 2 and "pid" not in v["columns"]
     feats = pd.read_csv(v["features"])
     assert list(feats.columns) == ["feature_name", "short_description", "detailed_description"]
-    assert list(feats["feature_name"]) == ["ndi", "NatWalkInd"]
-    assert v["coverage"][1]["pct"] is None                     # NaN -> null
-    assert [s["status"] for s in v["steps"]] == ["ran", "cache_hit", "ran", "ran"]
+    assert list(feats["feature_name"]) == produced
+    assert {c["variable"] for c in v["coverage"]} == {"ndi", "walkability"}
+    assert all(c["episodes"] == 4 and c["with_value"] == 4 for c in v["coverage"])
+    assert [(s["name"], s["status"]) for s in v["steps"]] == [
+        ("c3_bg", "ran"), ("c3_bg_2020", "ran"), ("c4_ndi", "ran"), ("c4_wi", "ran")]
+    c3_keys = {s["name"]: s["cache_key"] for s in v["steps"] if s["name"].startswith("c3_")}
+    assert all(c3_keys.values())
     assert v["failed"] == [] and v["skipped"] == []
     prov = json.loads(Path(v["provenance"]).read_text())
-    assert prov["bridge"]["client"]["name"] == "pytest" and prov["cache_keys"] == {"c3_bg": "abc"}
-    # the arguments link received
-    got = json.loads((run / "fake_args.json").read_text())
-    assert got["columns"] == ["pid", "startDate", "endDate", "longitude", "latitude"]
-    assert got["variables"] == ["ndi", "walkability"] and got["reserved_names"] == ["age"]
-    assert got["cache"] == ["FakeWeightCache", str(tmp_path / "cache"), "v2"]
-    assert (got["executor"], got["threads"], got["memory_limit"], got["on_error"]) == ("subprocess", 2, "4GB", "stop")
-    assert got["cancel_is_event"] is True and got["buffer_m"] == 270
-    assert got["env_data_dir"] == got["data_dir"] == args["data_dir"]          # mismatch #11
-    # warnings: link's own (msg -> message) reach the client
-    assert any(w["code"] == "low_match" and w["message"] for w in res["warnings"])
+    assert prov["bridge"]["client"]["name"] == "pytest" and prov["bridge"]["executor"] == "subprocess"
+    # what link handed the executor and the steps
+    seen = _notes(notes)
+    assert [n for n in seen if "make_executor" in n] == [
+        {"make_executor": "subprocess", "threads": 2, "memory_limit": "4GB"}]
+    steps_seen = [n for n in seen if "step" in n]
+    assert [n["step"] for n in steps_seen] == ["c3_bg", "c3_bg_2020", "c4_ndi", "c4_wi"]
+    for n in steps_seen:
+        assert n["env_data_dir"] == n["data_dir"] == args["data_dir"]          # mismatch #11
+        assert n["rows"] == 4 and n["cwd"] == str(run)
+        assert {"pid", "episode_id", "longitude", "latitude"} <= set(n["columns"])
     # events
     kinds = [e["ev"] for e in events]
     assert kinds[0] == "start" and kinds[-1] == "done"
-    assert {"plan", "step_start", "cache_hit", "spawn", "progress", "step_end", "merge", "warning"} <= set(kinds)
+    assert {"plan", "step_start", "spawn", "progress", "step_end", "cache_write"} <= set(kinds)
     assert "line" not in kinds                                       # only with verbose
     prog = [e for e in events if e["ev"] == "progress" and e["step"] == "c3_bg"]
     span = prog[-1]["t"] - prog[0]["t"]
@@ -548,19 +510,44 @@ def test_link_writes_results_and_streams_events(tmp_path, monkeypatch):
     assert overall == sorted(overall) and 0 <= overall[0] and overall[-1] == 1.0
     end = next(e for e in events if e["ev"] == "step_end")
     assert end["rc"] == 0 and end["maxrss_bytes"] == 123456 and end["step"] == "c3_bg"
-    assert end["data_step"] == "shadowed"
-    # logs.jsonl in the web's format
+    # logs.jsonl: the web's format and sources, written by the orchestrate LogWriter
     lines = [json.loads(x) for x in (run / "logs.jsonl").read_text().splitlines()]
     assert all(set(x) == {"ts", "level", "source", "msg"} for x in lines)
     msgs = [(x["source"], x["msg"]) for x in lines]
-    assert ("runner", "spawning c3_bg: python -m spacescans run c3_bg.yaml") in msgs
+    assert ("runner", "spawning c3_bg: fake-spacescans run c3_bg.yaml") in msgs
     assert ("runner", "step c3_bg exit code 0") in msgs
     assert ("c3_bg", "[overlap_fast] tile 400/400 (100.0%)") in msgs
-    assert ("merge", "ndi: 100.0% of episodes linked (4/4)") in msgs
-    assert any(x["level"] == "warning" for x in lines)
-    assert "a stray print from the orchestrator" in err
+    assert ("c3_bg", f"cache write: {c3_keys['c3_bg']}.parquet") in msgs
+    assert "a stray print from a step" in err
     no_cohort_values(json.dumps(res), err, json.dumps(events), (run / "logs.jsonl").read_text(),
                      Path(v["provenance"]).read_text())
+
+    # a second link reuses both C3 steps from the real v2 cache and renders no YAML for them
+    rc, res2, events2, _ = call(tmp_path, "link", link_args(tmp_path, run_dir=str(tmp_path / "run2")),
+                                prefix=fake_prefix(tmp_path), env=fake_env("ok", SS_FAKE_NOTES=str(notes)))
+    assert rc == 0, res2["error"]
+    assert [(s["name"], s["status"]) for s in res2["value"]["steps"]] == [
+        ("c3_bg", "cache_hit"), ("c3_bg_2020", "cache_hit"), ("c4_ndi", "ran"), ("c4_wi", "ran")]
+    assert {e["key"] for e in events2 if e["ev"] == "cache_hit"} == set(c3_keys.values())
+    assert not list((tmp_path / "run2" / "pipeline_configs").glob("c3_*"))
+    assert pd.read_parquet(res2["value"]["exposures"]).equals(ex)
+    v2 = tmp_path / "cache" / "c3" / "v2"
+    assert sorted(p.name for p in v2.glob("*.parquet")) == sorted(f"{k}.parquet" for k in c3_keys.values())
+    assert (v2.stat().st_mode & 0o777) == 0o700
+
+    # cache-info and cache-clear on that cache: the real WeightCache
+    root = str(tmp_path / "cache")
+    rc, res, _, _ = call(tmp_path, "cache-info", {"cache_dir": root})
+    assert rc == 0, res
+    info = res["value"]
+    assert (info["cache_dir"], info["key_format"], info["entries"]) == (root, "v2", 2)
+    assert info["bytes"] > 0 and info["oldest"] and info["newest"] and info["directory"] == str(v2)
+    rc, res, _, _ = call(tmp_path, "cache-clear", {"cache_dir": root, "older_than_s": 86400})
+    assert rc == 0 and res["value"]["removed"] == 0 and res["value"]["older_than_s"] == 86400
+    rc, res, _, _ = call(tmp_path, "cache-clear", {"cache_dir": root})
+    assert rc == 0 and res["value"]["removed"] == 2 and res["value"]["bytes"] > 0
+    rc, res, _, _ = call(tmp_path, "cache-info", {"cache_dir": root})
+    assert rc == 0 and res["value"]["entries"] == 0
 
 
 def test_link_verbose_streams_lines(tmp_path):
@@ -570,22 +557,35 @@ def test_link_verbose_streams_lines(tmp_path):
     assert sum(e["ev"] == "line" for e in events) >= 400
 
 
-@pytest.mark.parametrize("mode,kind", [("step_failed", "step_failed"), ("data_missing", "data_missing"),
-                                       ("internal", "internal")])
+def test_link_lists_a_failed_source_with_its_step_and_hint(tmp_path):
+    """link does not raise for a failed step: the source is listed as failed (and the
+    rest skipped under on_error="stop"), with a value-free warning naming the step."""
+    rc, res, events, err = call(tmp_path, "link", link_args(tmp_path), prefix=fake_prefix(tmp_path),
+                                env=fake_env("step_failed"))
+    assert rc == 0, res["error"]
+    v = res["value"]
+    assert v["failed"] == ["bg_ndi_wi"] and v["skipped"] == []
+    assert list(pd.read_parquet(v["exposures"]).columns) == ["episode_id"]
+    assert [(s["name"], s["status"], s["rc"]) for s in v["steps"]] == [("c3_bg", "failed", -9)]
+    w = next(w for w in res["warnings"] if w["code"] == "step_failed")
+    assert w["experiment"] == "bg_ndi_wi" and "c3_bg" in w["message"] and "memory" in w["message"]
+    assert not list((tmp_path / "cache" / "c3" / "v2").glob("*.parquet"))   # nothing cached
+    no_cohort_values(json.dumps(res), err, json.dumps(events))
+
+
+@pytest.mark.parametrize("mode,kind", [("data_missing", "data_missing"), ("internal", "internal")])
 def test_link_error_kinds(tmp_path, mode, kind):
-    rc, res, _, _ = call(tmp_path, "link", link_args(tmp_path), prefix=fake_prefix(tmp_path),
-                         env=fake_env(mode))
+    rc, res, _, err = call(tmp_path, "link", link_args(tmp_path), prefix=fake_prefix(tmp_path),
+                           env=fake_env(mode))
     assert rc == 1
     e = res["error"]
     assert e["kind"] == kind, e
-    if kind == "step_failed":
-        assert e["details"]["step"] == "c3_bg" and e["details"]["rc"] == -9 and e["details"]["oom"] is True
-        assert e["details"]["log_tail"][-1] == "Killed" and "memory" in e["hint"]
-        assert e["type"] == "spacescans.orchestrate.run.StepFailed"
-    elif kind == "data_missing":
-        assert e["hint"] == "spacescans data fetch ndi" and e["details"] == {"variables": ["ndi"]}
+    if kind == "data_missing":              # the real data.status on an empty data directory
+        assert "data fetch ndi" in e["hint"] and e["type"].endswith("DataMissingError")
+        assert not (tmp_path / "run" / "pipeline_configs").exists()        # before any step
     else:
         assert "ZeroDivisionError" in e["message"] and "Traceback" in e["traceback"]
+    no_cohort_values(json.dumps(res), err)
 
 
 def test_link_argument_errors(tmp_path):
@@ -596,6 +596,9 @@ def test_link_argument_errors(tmp_path):
     assert rc == 1 and res["error"]["kind"] == "config" and "buffer_m" in res["error"]["message"]
     rc, res, _, _ = call(tmp_path, "link", link_args(tmp_path, executor="threads"), prefix=prefix, env=fake_env())
     assert rc == 1 and res["error"]["kind"] == "config"
+    rc, res, _, _ = call(tmp_path, "link", link_args(tmp_path, variables=["no_such_variable"]),
+                         prefix=prefix, env=fake_env())
+    assert rc == 1 and res["error"]["kind"] == "config"                 # from orchestrate.link
     env = fake_env()
     env.pop("SPACESCANS_DATA_DIR", None)
     rc, res, _, _ = call(tmp_path, "link", link_args(tmp_path, data_dir=None), prefix=prefix, env=env)
@@ -607,14 +610,6 @@ def test_link_argument_errors(tmp_path):
     assert rc == 1 and res["error"]["kind"] == "cohort"
     assert res["error"]["details"]["issues"][0]["code"] == "date_order"
     no_cohort_values(json.dumps(res), err)
-
-
-def test_link_without_orchestrate_link_is_internal(tmp_path):
-    import spacescans.orchestrate as orch
-    if callable(getattr(orch, "link", None)) or hasattr(getattr(orch, "link", None), "link"):
-        pytest.skip("this build has orchestrate.link")
-    rc, res, _, _ = call(tmp_path, "link", link_args(tmp_path, cache_dir=None))
-    assert rc == 1 and res["error"]["kind"] == "internal" and "orchestrate.link" in res["error"]["message"]
 
 
 # --- interrupts: exit 130/143, kind interrupted, no leftover processes ----------------------------
@@ -633,14 +628,14 @@ def _marked(mark: str) -> list[str]:
                                            ("hang_ignore", signal.SIGINT, 130)])
 def test_link_interrupt_kills_steps_and_leaves_no_process(tmp_path, mode, sig, code):
     mark = f"ss-fake-{uuid.uuid4().hex}"
+    pid_file = tmp_path / "child.pid"
     args = link_args(tmp_path, cancel_grace_s=1.0 if mode == "hang_ignore" else 7.0)
     req = tmp_path / "req.json"
     res = tmp_path / "res.json"
     req.write_text(json.dumps({"protocol": 1, "command": "link", "args": args}))
     p = subprocess.Popen(fake_prefix(tmp_path) + ["link", "--request", str(req), "--result", str(res)],
                          stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, cwd=str(tmp_path),
-                         env=fake_env(mode, SS_FAKE_MARK=mark))
-    pid_file = tmp_path / "run" / "child.pid"
+                         env=fake_env(mode, SS_FAKE_MARK=mark, SS_FAKE_PIDFILE=str(pid_file)))
     deadline = time.monotonic() + 60
     while not pid_file.exists() and time.monotonic() < deadline:
         time.sleep(0.05)
@@ -657,7 +652,7 @@ def test_link_interrupt_kills_steps_and_leaves_no_process(tmp_path, mode, sig, c
     assert result["ok"] is False and result["error"]["kind"] == "interrupted"
     if mode == "hang_ignore":     # the grace period is waited out, then the sweep kills the child
         assert elapsed >= 0.9 and "still running" in err and "killed 1 leftover" in err, err
-    else:                         # the orchestrator stopped its own step; nothing left to sweep
+    else:                         # link stopped its own step (RunCancelled); nothing left to sweep
         assert "worker stopped" in err and "killed 0 leftover" in err, err
     deadline = time.monotonic() + 3
     while (_alive(child) or _marked(mark)) and time.monotonic() < deadline:
@@ -665,24 +660,17 @@ def test_link_interrupt_kills_steps_and_leaves_no_process(tmp_path, mode, sig, c
     assert not _alive(child) and not _marked(mark), _marked(mark)
 
 
-# --- cache-info / cache-clear (fake WeightCache) -------------------------------------------------
+# --- cache-info / cache-clear argument checks (the real WeightCache: see the link test) ------------
 
-def test_cache_info_and_clear(tmp_path):
-    prefix = fake_prefix(tmp_path)
+def test_cache_commands_check_their_arguments(tmp_path):
     root = str(tmp_path / "cache")
-    rc, res, _, _ = call(tmp_path, "cache-info", {"cache_dir": root}, prefix=prefix, env=fake_env())
-    assert rc == 0, res
-    assert res["value"] == {"cache_dir": root, "key_format": "v2", "entries": 2, "bytes": 2048,
-                            "oldest": 1.0, "newest": 2.0, "root": root}
-    rc, res, _, _ = call(tmp_path, "cache-clear", {"cache_dir": root, "older_than_s": 86400},
-                         prefix=prefix, env=fake_env())
-    assert rc == 0 and res["value"]["removed"] == 1 and res["value"]["older_than_s"] == 86400
-    rc, res, _, _ = call(tmp_path, "cache-clear", {"cache_dir": root}, prefix=prefix, env=fake_env())
-    assert rc == 0 and res["value"]["removed"] == 2
-    rc, res, _, _ = call(tmp_path, "cache-info", {"cache_dir": "rel"}, prefix=prefix, env=fake_env())
+    rc, res, _, _ = call(tmp_path, "cache-info", {"cache_dir": root})
+    assert rc == 0 and res["value"]["entries"] == 0 and res["value"]["key_format"] == "v2"
+    rc, res, _, _ = call(tmp_path, "cache-info", {"cache_dir": "rel"})
     assert rc == 1 and res["error"]["kind"] == "config"
-    rc, res, _, _ = call(tmp_path, "cache-clear", {"cache_dir": root, "older_than_s": -1},
-                         prefix=prefix, env=fake_env())
+    rc, res, _, _ = call(tmp_path, "cache-clear", {"cache_dir": root, "older_than_s": -1})
+    assert rc == 1 and res["error"]["kind"] == "config"
+    rc, res, _, _ = call(tmp_path, "cache-info", {"cache_dir": root, "key_format": "v3"})
     assert rc == 1 and res["error"]["kind"] == "config"
 
 
