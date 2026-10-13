@@ -60,14 +60,20 @@ locked-down machines);
 \item install the dependencies from the bundled hash-pinned lock file when
 there is one for this platform (\verb{inst/python/locks/}), then the wheel
 with \code{--no-deps}; without a lock, install \code{wheel[extras]} and let uv
-resolve. Only binary wheels are accepted, so nothing is compiled;
+resolve. Only binary wheels are accepted for the dependencies, so
+nothing is compiled;
 \item run the bridge once and write \code{env.json} in the environment.
 }
 
 The wheel is looked for in this order: the \code{wheel} argument, the wheel in
 the package's \verb{python/} directory (checked against \code{pin.json}), the
 \code{wheelhouse} directory, and the URL recorded in \code{pin.json} (downloaded and
-checked against its SHA-256).
+checked against its SHA-256). When there is none, as in an R package
+installed from GitHub with \code{remotes::install_github()} or pak before a
+release, \code{spacescans-pipeline} is installed from the source archive of the
+same GitHub commit, which those tools record in the installed package's
+\code{RemoteSha} field. The pipeline is pure Python, so building it compiles
+nothing.
 }
 \examples{
 \dontrun{

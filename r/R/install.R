@@ -15,13 +15,19 @@
 #' 3. install the dependencies from the bundled hash-pinned lock file when
 #'    there is one for this platform (`inst/python/locks/`), then the wheel
 #'    with `--no-deps`; without a lock, install `wheel[extras]` and let uv
-#'    resolve. Only binary wheels are accepted, so nothing is compiled;
+#'    resolve. Only binary wheels are accepted for the dependencies, so
+#'    nothing is compiled;
 #' 4. run the bridge once and write `env.json` in the environment.
 #'
 #' The wheel is looked for in this order: the `wheel` argument, the wheel in
 #' the package's `python/` directory (checked against `pin.json`), the
 #' `wheelhouse` directory, and the URL recorded in `pin.json` (downloaded and
-#' checked against its SHA-256).
+#' checked against its SHA-256). When there is none, as in an R package
+#' installed from GitHub with `remotes::install_github()` or pak before a
+#' release, `spacescans-pipeline` is installed from the source archive of the
+#' same GitHub commit, which those tools record in the installed package's
+#' `RemoteSha` field. The pipeline is pure Python, so building it compiles
+#' nothing.
 #'
 #' @param extras Python extras to add: any of `"geo"`, `"rda"`, `"nc"`,
 #'   `"hdf4"` (TEMIS needs `"hdf4"`). Extras already installed stay installed.
@@ -56,7 +62,7 @@ ss_install <- function(extras = c("geo", "rda", "nc"), python = "3.12", envdir =
               hint = "Choose a local directory with ss_install(envdir = ...).")
   }
   uv <- .ss_find_uv(uv)
-  whl <- .ss_find_wheel(wheel, wheelhouse, offline)
+  src <- .ss_find_wheel(wheel, wheelhouse, offline)
   # Use the system certificate store, so TLS-inspecting institutional proxies work.
   uv_help <- tryCatch(processx::run(uv, "--help", error_on_status = FALSE)$stdout, error = function(e) "")
   tls <- if (grepl("system-certs", uv_help, fixed = TRUE)) c(UV_SYSTEM_CERTS = "1") else c(UV_NATIVE_TLS = "1")
@@ -82,16 +88,17 @@ ss_install <- function(extras = c("geo", "rda", "nc"), python = "3.12", envdir =
   }
   net <- c(if (isTRUE(offline)) c("--offline", "--no-index"),
            if (!is.null(wheelhouse)) c("--find-links", normalizePath(wheelhouse)))
-  common <- c("pip", "install", "--python", py, "--only-binary", ":all:", "--compile-bytecode", net)
+  # A GitHub source archive is the one distribution uv may build (pure Python).
+  common <- c("pip", "install", "--python", py, "--only-binary", ":all:", "--compile-bytecode", net,
+              if (identical(src$kind, "github")) c("--no-binary", "spacescans-pipeline"))
   lock <- .ss_lock_file()
   if (!is.null(lock)) {
     reqs <- .ss_lock_requirements(lock, extras, file.path(tempdir(), "spacescans-requirements.txt"))
     on.exit(unlink(reqs), add = TRUE)
     run_uv(c(common, "--require-hashes", "-r", reqs))
-    run_uv(c(common, "--no-deps", whl))
+    run_uv(c(common, "--no-deps", .ss_requirement(src)))
   } else {
-    spec <- if (length(extras)) sprintf("%s[%s]", whl, paste(extras, collapse = ",")) else whl
-    run_uv(c(common, spec))
+    run_uv(c(common, .ss_requirement(src, extras)))
   }
   .ss_state$hello <- NULL
   caps <- .ss_bridge("capabilities", python = py, check_version = FALSE)
@@ -99,15 +106,22 @@ ss_install <- function(extras = c("geo", "rda", "nc"), python = "3.12", envdir =
   info <- list(
     python = py, envdir = envdir, installed_at = format(Sys.time(), "%Y-%m-%dT%H:%M:%S%z"),
     spacescans = caps$spacescans$version, code_fp = caps$spacescans$code_fp,
-    python_version = caps$python$version, wheel = basename(whl),
-    wheel_sha256 = .ss_sha256(whl), lock = if (!is.null(lock)) basename(lock),
+    python_version = caps$python$version,
+    wheel = if (identical(src$kind, "wheel")) basename(src$path),
+    wheel_sha256 = if (identical(src$kind, "wheel")) .ss_sha256(src$path),
+    source = if (identical(src$kind, "github")) src$url,
+    source_commit = if (identical(src$kind, "github")) src$commit,
+    lock = if (!is.null(lock)) basename(lock),
     lock_sha256 = if (!is.null(lock)) .ss_sha256(lock),
     extras = names(Filter(function(e) isTRUE(e$available), caps$extras)),
     uv = uv, uv_version = uv_version, r_package = .ss_pkg_version()
   )
   writeLines(jsonlite::toJSON(info, auto_unbox = TRUE, pretty = TRUE, null = "null"),
              file.path(envdir, "env.json"))
-  if (!quiet) message(sprintf("spacescans %s is ready in %s", caps$spacescans$version, envdir))
+  if (!quiet) {
+    from <- if (identical(src$kind, "github")) sprintf(" (from GitHub %s@%s)", src$repo, substr(src$commit, 1, 12)) else ""
+    message(sprintf("spacescans %s is ready in %s%s", caps$spacescans$version, envdir, from))
+  }
   invisible(caps)
 }
 
@@ -161,11 +175,15 @@ ss_install <- function(extras = c("geo", "rda", "nc"), python = "3.12", envdir =
   dest
 }
 
-.ss_find_wheel <- function(wheel = NULL, wheelhouse = NULL, offline = FALSE) {
+# Where ss_install() gets spacescans-pipeline: a wheel (`kind = "wheel"`,
+# `path`) or, failing that, the GitHub source archive of the commit this R
+# package was installed from (`kind = "github"`, see .ss_github_source()).
+.ss_find_wheel <- function(wheel = NULL, wheelhouse = NULL, offline = FALSE,
+                           github = .ss_github_source()) {
   want <- .ss_expected()$version
   if (!is.null(wheel)) {
     if (!file.exists(wheel)) .ss_abort("install", sprintf("Wheel not found: %s", wheel))
-    return(normalizePath(wheel))
+    return(.ss_wheel_source(normalizePath(wheel)))
   }
   pin <- .ss_pin()
   bundled_dir <- system.file("python", package = "spacescans")
@@ -175,13 +193,13 @@ ss_install <- function(extras = c("geo", "rda", "nc"), python = "3.12", envdir =
       if (!identical(.ss_sha256(path), pin$sha256)) {
         .ss_abort("install", sprintf("The bundled wheel %s does not match the SHA-256 in pin.json.", path))
       }
-      return(normalizePath(path))
+      return(.ss_wheel_source(normalizePath(path)))
     }
   }
   if (!is.null(wheelhouse)) {
     found <- list.files(wheelhouse, pattern = sprintf("^spacescans_pipeline-%s-.*\\.whl$", gsub(".", "\\.", want, fixed = TRUE)),
                         full.names = TRUE)
-    if (length(found)) return(normalizePath(found[1]))
+    if (length(found)) return(.ss_wheel_source(normalizePath(found[1])))
   }
   if (!is.null(pin$url) && !isTRUE(offline)) {
     dest <- file.path(tempdir(), pin$wheel %||% basename(pin$url))
@@ -190,10 +208,41 @@ ss_install <- function(extras = c("geo", "rda", "nc"), python = "3.12", envdir =
       unlink(dest)
       .ss_abort("install", sprintf("The wheel downloaded from %s does not match the SHA-256 in pin.json.", pin$url))
     }
-    return(dest)
+    return(.ss_wheel_source(dest))
   }
+  if (!isTRUE(offline) && !is.null(github)) return(github)
   .ss_abort("install",
     sprintf("No spacescans %s wheel is bundled with this R package.", want),
-    hint = paste0("Build it from the repository with r/tools/build-wheel.sh, or pass ",
-                  "ss_install(wheel = \"spacescans_pipeline-", want, "-py3-none-any.whl\")."))
+    hint = paste0("Install the R package with remotes::install_github(\"IU-Ultraman/spacescans\", ",
+                  "subdir = \"r\") so ss_install() can fetch the matching Python package, or pass ",
+                  "ss_install(wheel = \"spacescans_pipeline-", want, "-py3-none-any.whl\") ",
+                  "built with r/tools/build-wheel.sh."))
+}
+
+.ss_wheel_source <- function(path) list(kind = "wheel", path = path)
+
+# The GitHub commit this R package was installed from, as remotes and pak
+# record it in the installed DESCRIPTION (RemoteSha and friends; older
+# remotes wrote GithubSHA1), or NULL for any other kind of install.
+.ss_github_source <- function(desc = suppressWarnings(utils::packageDescription("spacescans"))) {
+  if (!is.list(desc)) return(NULL)
+  pick <- function(...) {
+    for (k in c(...)) if (!is.null(desc[[k]]) && !is.na(desc[[k]]) && nzchar(desc[[k]])) return(desc[[k]])
+    NULL
+  }
+  type <- pick("RemoteType") %||% (if (!is.null(pick("GithubSHA1"))) "github")
+  sha <- pick("RemoteSha", "GithubSHA1")
+  user <- pick("RemoteUsername", "GithubUsername")
+  repo <- pick("RemoteRepo", "GithubRepo")
+  host <- pick("RemoteHost") %||% "api.github.com"
+  if (!identical(type, "github") || is.null(sha) || is.null(user) || is.null(repo)) return(NULL)
+  if (!grepl("^[0-9a-f]{40}$", sha) || !host %in% c("api.github.com", "github.com")) return(NULL)
+  url <- sprintf("https://github.com/%s/%s/archive/%s.tar.gz", user, repo, sha)
+  list(kind = "github", url = url, commit = sha, repo = paste(user, repo, sep = "/"))
+}
+
+# What uv installs for a source, with the requested extras.
+.ss_requirement <- function(src, extras = character()) {
+  ext <- if (length(extras)) sprintf("[%s]", paste(extras, collapse = ",")) else ""
+  if (identical(src$kind, "github")) sprintf("spacescans-pipeline%s @ %s", ext, src$url) else paste0(src$path, ext)
 }

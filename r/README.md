@@ -12,17 +12,9 @@ package, which the R package runs in a separate process.
 remotes::install_github("IU-Ultraman/spacescans", subdir = "r")
 ```
 
-The R package needs the spacescans Python package. Create its environment once with
-[uv](https://docs.astral.sh/uv/):
-
-```sh
-uv venv ~/.spacescans-py --python 3.12
-uv pip install --python ~/.spacescans-py/bin/python "spacescans-pipeline[geo,rda,nc] @ git+https://github.com/IU-Ultraman/spacescans"
-```
-
 ```r
 library(spacescans)
-ss_use_python("~/.spacescans-py")
+ss_install()                                   # once: the matching Python environment
 ss_data_dir("~/ss-data")
 ss_data_status(c("ndi", "walkability"))        # what is missing, and the next call
 ss_fetch(c("ndi", "walkability"))              # resumable downloads
@@ -30,8 +22,10 @@ res <- ss_link(cohort, c("ndi", "walkability"))
 attr(res, "coverage"); attr(res, "features"); attr(res, "provenance")
 ```
 
-`ss_catalog()` lists every exposure variable. For the TEMIS ultraviolet source, install the
-Python package with the `hdf4` extra as well (`[geo,rda,nc,hdf4]`).
+`ss_install()` needs [uv](https://docs.astral.sh/uv/) (for example `brew install uv`). It builds a
+private Python environment and installs the spacescans Python package from the same GitHub commit
+as the R package. `ss_catalog()` lists every exposure variable; the TEMIS ultraviolet source also
+needs `ss_install(extras = "hdf4")`.
 
 ## Your cohort
 
@@ -116,8 +110,8 @@ sha256, code fingerprint, commit). It refuses a dirty tree and mismatched
 versions. The wheel and pin.json are not committed; the release job runs the
 script at the release commit (with `--url` of the wheel attached to the
 GitHub release) before `R CMD build r`. Until a release bundles it,
-`ss_install()` has no wheel to install, which is why the quick start above
-builds the Python environment with uv.
+`ss_install()` installs `spacescans-pipeline` from the source archive of the
+GitHub commit that `remotes::install_github()` recorded (`RemoteSha`).
 
 ## The dependency lock
 
@@ -146,8 +140,9 @@ otherwise they skip. `tests/testthat/test-live.R` also needs
 `SPACESCANS_LIVE=1`; each of its tests skips while the installed bridge does
 not list the command it uses. `SPACESCANS_LIVE_DATA_DIR` (read only, checked
 unchanged afterwards) and `SPACESCANS_LIVE_LINK=1` enable the data-status and
-real-link tests. The `ss_install()` test also needs
-`SPACESCANS_TEST_INSTALL=true` and `SPACESCANS_TEST_WHEEL=<wheel>`.
+real-link tests. The `ss_install()` tests also need
+`SPACESCANS_TEST_INSTALL=true` plus `SPACESCANS_TEST_WHEEL=<wheel>` (install from
+a wheel) or `SPACESCANS_TEST_GITHUB_SHA=<pushed commit>` (install from GitHub).
 
 `R CMD check` reports one WARNING, "Non-standard license specification",
 until a licence is chosen.
