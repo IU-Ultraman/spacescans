@@ -91,10 +91,18 @@ def test_provider_licence_notes():
         if ds.acquire != "mirror":
             assert ds.instructions, ds.key
             assert ds.layout, ds.key
-    # Provider data are never mirrored or fetched automatically.
+    # Provider data are never mirrored. FAQSD, TEMIS and ACAG have scripted
+    # downloads, which run only with their terms accepted in the call; VNL
+    # needs an EOG login, so it stays manual.
     for key in ("vnl", "acag", "faqsd", "temis_uv_raw"):
-        assert m.datasets[key].acquire == "provider-manual"
         assert not m.datasets[key].artifacts
+        assert m.datasets[key].terms is not None
+    assert m.datasets["vnl"].acquire == "provider-manual" and not m.datasets["vnl"].scripted
+    for key, method in (("acag", "box"), ("faqsd", "files"), ("temis_uv_raw", "daily")):
+        assert m.datasets[key].acquire == "provider-scripted" and m.datasets[key].scripted
+        assert m.datasets[key].download.method == method
+    assert m.datasets["faqsd"].download.range is False and m.datasets["faqsd"].download.gunzip
+    assert m.datasets["temis_uv_raw"].download.url.startswith("https://d1qb6yzwaaq4he.cloudfront.net/")
 
 
 def test_no_data_files_ship_in_the_package():

@@ -16,7 +16,9 @@ status                      usable   meaning
 ``missing``                 no       nothing present; ``spacescans data fetch`` gets it
 ``action_required``         no       nothing present and no automatic download: a
                                      provider download, terms, or a file not yet on the
-                                     mirror; ``instructions`` say what to do
+                                     mirror; ``instructions`` say what to do. A
+                                     ``scripted`` provider dataset is fetched once its
+                                     terms are accepted (``next`` names the command)
 ==========================  =======  ==================================================
 
 A variable takes the worst status of its requirements; a requirement with
@@ -121,6 +123,8 @@ class DatasetStatus:
     needed_artifacts: list[str]  # mirror artifacts a fetch would (re)place
     instructions: list[str]
     next: str
+    scripted: bool = False       # fetch downloads it from the provider once its terms are accepted
+    generate: list[str] = field(default_factory=list)  # needed artifacts ``prepare`` can regenerate
 
     @property
     def usable(self) -> bool:
@@ -140,6 +144,7 @@ class DatasetStatus:
             "fetchable": self.fetchable, "fetch_helps": self.fetch_helps,
             "needed_artifacts": self.needed_artifacts,
             "instructions": self.instructions, "next": self.next,
+            "scripted": self.scripted, "generate": self.generate,
         }
 
 
@@ -329,6 +334,8 @@ def dataset_status(manifest: Manifest, key: str, root: Path, *, deep: bool = Fal
             art = manifest.artifacts[a.name]
             if not art.available and art.interim:
                 instructions.append(f"{art.name}: {art.interim}")
+    generate = [a.name for a in needed if ds.acquire == "mirror"
+                and not manifest.artifacts[a.name].available and manifest.artifacts[a.name].generate]
     next_step = _dataset_next(ds, status, fetchable, fetch_helps, needed, manifest)
 
     return DatasetStatus(
@@ -340,7 +347,7 @@ def dataset_status(manifest: Manifest, key: str, root: Path, *, deep: bool = Fal
         missing_count=layout.missing_count, problems=problems, warnings=warnings,
         download_bytes=download, disk_bytes=disk, fetchable=fetchable, fetch_helps=fetch_helps,
         needed_artifacts=[a.name for a in needed] if ds.acquire == "mirror" else [],
-        instructions=instructions, next=next_step,
+        instructions=instructions, next=next_step, scripted=ds.scripted, generate=generate,
     )
 
 
@@ -355,10 +362,16 @@ def _dataset_next(ds: Dataset, status: str, fetchable: bool, fetch_helps: bool,
     if ds.acquire == "mirror":
         pending = [a.name for a in needed if not manifest.artifacts[a.name].available]
         head = f"spacescans data fetch --dataset {ds.key}; then " if fetch_helps else ""
+        gens = sorted({manifest.artifacts[a].generate for a in pending if manifest.artifacts[a].generate})
+        if gens and len(gens) == 1 and all(manifest.artifacts[a].generate for a in pending):
+            return (head + f"spacescans data prepare {gens[0]} (not yet on the mirror: "
+                    + ", ".join(pending) + ")")
         return (head + "not yet on the mirror: " + ", ".join(pending) +
                 "; see instructions (or fetch with --mirror DIR)")
     if ds.acquire == "generated":
         return "produced on first use; see instructions"
+    if ds.scripted:
+        return f"spacescans data fetch --dataset {ds.key} --accept-terms {ds.terms.id}"
     return "manual download from the provider; see instructions"
 
 
@@ -448,6 +461,9 @@ def _variable_next(v: str, not_usable: Sequence[DatasetStatus]) -> str:
         return ""
     if all(d.fetchable for d in not_usable):
         return f"spacescans data fetch {v}"
+    if all(d.fetchable or d.scripted for d in not_usable):
+        ids = list(dict.fromkeys(d.terms["id"] for d in not_usable if d.scripted and d.terms))
+        return f"spacescans data fetch {v}" + "".join(f" --accept-terms {i}" for i in ids)
     manual = [d.dataset for d in not_usable if not d.fetchable]
     head = "spacescans data fetch " + v + "; then " if any(d.fetch_helps for d in not_usable) else ""
     return head + "manual step for dataset " + ", ".join(manual) + " (see its instructions)"
@@ -469,8 +485,15 @@ def _next_steps(var_status: Sequence[VariableStatus], ds_keys: Sequence[str],
         d = ds_status[k]
         if d.usable or d.fetchable:
             continue
-        steps.append({"action": "manual", "dataset": k, "status": d.status,
-                      "terms": d.terms, "instructions": d.instructions})
+        step = {"action": "manual", "dataset": k, "status": d.status,
+                "terms": d.terms, "instructions": d.instructions}
+        if d.scripted and d.terms:
+            # Additive keys: spacescans can download it once the terms are accepted.
+            step.update(scripted=True, accept_terms=[d.terms["id"]],
+                        command=f"spacescans data fetch --dataset {k} --accept-terms {d.terms['id']}")
+        elif d.generate:
+            step.update(generate=list(d.generate), command="spacescans data prepare templates")
+        steps.append(step)
     return steps
 
 

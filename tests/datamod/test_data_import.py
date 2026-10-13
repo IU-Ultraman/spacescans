@@ -54,7 +54,7 @@ def test_refusals(tmp_path, data_dir):
     with pytest.raises(UsageError, match="project mirror"):
         import_files("noise_rasters", [tmp_path / "x.tif"], data_dir=data_dir)
     with pytest.raises(UsageError, match="place them by hand"):
-        import_files("acag", [tmp_path / "x.nc"], data_dir=data_dir)
+        import_files("nhd_gdb_raw", [tmp_path / "x.gdbtable"], data_dir=data_dir)
     bad = tmp_path / (VNL13 + ".gz")
     bad.write_bytes(b"not gzip")
     from spacescans.data import DataCorruptError
@@ -69,3 +69,49 @@ def test_cli_import(tmp_path, data_dir, capsys):
     rc = main(["data", "import", "vnl", str(f), "--data-dir", str(data_dir)])
     out = capsys.readouterr().out
     assert rc == 0 and f"-> VNL/C3/{VNL14}: placed" in out and "vnl: incomplete" in out
+
+
+HDF5 = bytes.fromhex("894844460d0a1a0a")
+
+
+def test_acag_files_and_folders_are_sorted_into_species_folders(tmp_path, data_dir):
+    """ACAG's per-species folders come from the file names (plain vs FromBiomass)."""
+    dl = tmp_path / "box-download"
+    (dl / "GWRPM25/xNorthAmerica/BiWeekly").mkdir(parents=True)
+    (dl / "NetCDF/BC/xNorthAmerica/BiWeekly").mkdir(parents=True)
+    names = {
+        "GWRPM25/xNorthAmerica/BiWeekly/V5NA05.HybridPM25.xNorthAmerica.2013001-2013014.nc":
+            "ACAG/C4/xNorthAmerica/PM25/BiWeekly/V5NA05.HybridPM25.xNorthAmerica.2013001-2013014.nc",
+        "NetCDF/BC/xNorthAmerica/BiWeekly/V5NA05.02.HybridBC-BC.FromBiomass.xNorthAmerica.2019351-2019364.nc":
+            "ACAG/C4/xNorthAmerica/BC_bm/BiWeekly/V5NA05.02.HybridBC-BC.FromBiomass.xNorthAmerica.2019351-2019364.nc",
+        "V5NA05.HybridPM25.FromBiomass.xNorthAmerica.2016015-2016028.nc":
+            "ACAG/C4/xNorthAmerica/PM25_bm/BiWeekly/V5NA05.HybridPM25.FromBiomass.xNorthAmerica.2016015-2016028.nc",
+    }
+    for rel in names:
+        (dl / rel).write_bytes(HDF5 + b"netcdf4")
+    (dl / "GWRPM25/xNorthAmerica/BiWeekly/._V5NA05.HybridPM25.xNorthAmerica.2013001-2013014.nc").write_bytes(b"x")
+    (dl / "GWRPM25/xNorthAmerica/BiWeekly/.DS_Store").write_bytes(b"x")
+    old_year = dl / "GWRPM25/xNorthAmerica/BiWeekly/V5NA05.HybridPM25.xNorthAmerica.2012001-2012014.nc"
+    old_year.write_bytes(HDF5)
+    html = dl / "V5NA05.02.HybridSO4-SO4.xNorthAmerica.2014001-2014014.nc"
+    html.write_bytes(b"<!DOCTYPE html><html>Box sign-in</html>")
+    loose = dl / "V5NA05.HybridPM25.FromBiomass.xNorthAmerica.2016015-2016028.nc"
+    rep = import_files("acag", [dl / "GWRPM25", dl / "NetCDF", loose, html], data_dir=data_dir)
+    got = {i.source.rsplit("/", 1)[-1]: (i.result, i.target, i.detail) for i in rep.items}
+    for rel, target in names.items():
+        name = rel.rsplit("/", 1)[-1]
+        assert got[name][:2] == ("placed", target), got[name]
+        assert (data_dir / target).read_bytes() == HDF5 + b"netcdf4"
+    assert got[old_year.name][0] == "rejected" and "outside 2013-2019" in got[old_year.name][2]
+    assert got[html.name][0] == "rejected" and "signature" in got[html.name][2]
+    assert len(rep.items) == 5 and not rep.ok           # no AppleDouble or .DS_Store items
+    d = rep.status.dataset("acag")
+    assert d.status == "incomplete" and d.present == 3
+    assert not list(data_dir.rglob("*.part"))
+
+
+def test_temis_import_checks_the_hdf4_signature(tmp_path, data_dir):
+    bad = tmp_path / "uvief20160102.hdf"
+    bad.write_bytes(b"<html>error</html>")
+    rep = import_files("temis_uv_raw", [bad], data_dir=data_dir)
+    assert rep.items[0].result == "rejected" and "signature 0e031301" in rep.items[0].detail
