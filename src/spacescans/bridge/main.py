@@ -109,13 +109,36 @@ def _read_request(path: str | None, command: str) -> dict[str, Any]:
     return req
 
 
+DATA_DIR_ENV = "SPACESCANS_DATA_DIR"
+
+
+def apply_data_dir(args: dict) -> str | None:
+    """Make ``$SPACESCANS_DATA_DIR`` agree with the request's ``data_dir`` (mismatch #11).
+
+    The pipeline expands ``${SPACESCANS_DATA_DIR}`` from the environment but
+    resolves relative paths against ``data_dir``; clients pass their whole
+    environment through, so the two could name different directories. With a
+    ``data_dir`` in the request the bridge sets the variable to it for this
+    process and every step subprocess; without one the environment's value
+    (if any) is the data root for both.
+    """
+    value = args.get("data_dir") if isinstance(args, dict) else None
+    if isinstance(value, str) and value and os.path.isabs(value):
+        os.environ[DATA_DIR_ENV] = value
+        return value
+    return None
+
+
 def main(argv: list[str] | None = None) -> int:
     t0 = time.perf_counter()
     parser = argparse.ArgumentParser(
         prog="python -m spacescans.bridge",
         description=f"spacescans bridge, protocol {PROTOCOL}: run one command from a JSON request.")
-    parser.add_argument("command", help="capabilities | schema | resolve | run | quickstart | "
-                                        "templates | yaml-load | yaml-dump | ping")
+    parser.add_argument("command", help="hello | catalog | coverage | data-status | data-plan | "
+                                        "data-verify | data-fetch | data-import | data-terms | "
+                                        "custom-validate | link | cache-info | cache-clear | run | "
+                                        "resolve | schema | templates | quickstart | yaml-load | "
+                                        "yaml-dump | capabilities | ping")
     parser.add_argument("--request", help="request JSON file (optional for commands without args)")
     parser.add_argument("--result", help="where to write the result JSON (default: a final 'result' event)")
     parser.add_argument("--verbose", action="store_true", help="also emit raw pipeline lines as events")
@@ -140,7 +163,9 @@ def main(argv: list[str] | None = None) -> int:
                                   details={"commands": sorted(COMMANDS)}, exit_code=EXIT_USAGE)
             events.verbose = bool(ns.verbose or request.get("verbose"))
             events.emit("start", command=command, pid=os.getpid(), protocol=PROTOCOL)
-            ctx = Context(events=events, verbose=events.verbose)
+            apply_data_dir(request["args"])
+            client = request.get("client") if isinstance(request.get("client"), dict) else {}
+            ctx = Context(events=events, verbose=events.verbose, client=client)
             value, warns = COMMANDS[command](request["args"], ctx)
         except (KeyboardInterrupt, _Terminated) as e:
             # Ignore further signals while we write the result.

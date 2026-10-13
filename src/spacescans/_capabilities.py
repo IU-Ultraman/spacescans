@@ -150,11 +150,67 @@ def python_info() -> dict[str, Any]:
     }
 
 
+def catalog_fingerprint(hashes: dict[str, str] | None = None) -> str:
+    """``"sha256:<hex>"`` over the packaged catalog templates.
+
+    Built from ``catalog.template_hashes()`` ({relpath: sha256 hex}) the same
+    way as :func:`fingerprint_entries` builds the code fingerprint, so it
+    equals ``fingerprint_entries((rel, template_bytes(rel)) ...)``. Two
+    installs with the same value render the same pipeline YAMLs.
+    """
+    if hashes is None:
+        from spacescans import catalog
+        hashes = catalog.template_hashes()
+    h = hashlib.sha256()
+    for rel in sorted(hashes):
+        h.update(rel.encode("utf-8"))
+        h.update(b"\0")
+        h.update(bytes.fromhex(hashes[rel]))
+        h.update(b"\n")
+    return "sha256:" + h.hexdigest()
+
+
+def catalog_info() -> dict[str, Any]:
+    """The catalog this install ships: template fingerprint and counts, file hashes."""
+    from importlib import resources
+
+    from spacescans import catalog
+
+    def file_sha(name: str) -> str:
+        return hashlib.sha256(resources.files("spacescans.catalog").joinpath(name).read_bytes()).hexdigest()
+
+    hashes = catalog.template_hashes()
+    return {
+        "hash": catalog_fingerprint(hashes),
+        "templates": len(hashes),
+        "variables": len(catalog.variables()),
+        "experiments": catalog.experiments(),
+        "variables_sha256": file_sha("variables.json"),
+        "features_sha256": file_sha("features.json"),
+    }
+
+
+def data_release() -> str | None:
+    """The data release the packaged data manifest describes (``manifest.json``)."""
+    from spacescans.data.manifest import load_manifest
+
+    return load_manifest().data_release
+
+
+def _guarded(fn) -> Any:
+    try:
+        return fn()
+    except Exception as e:  # a broken catalog or manifest must not break capabilities()
+        return {"error": f"{type(e).__name__}: {e}"}
+
+
 def capabilities() -> dict[str, Any]:
-    """Version, code fingerprint, extras, registered patterns and native libraries."""
+    """Version, code fingerprint, extras, registered patterns, native libraries,
+    the catalog fingerprint and the data release."""
     import spacescans
     from spacescans.pipeline import registry
 
+    release = _guarded(data_release)
     return {
         "spacescans": {
             "version": spacescans.__version__,
@@ -168,4 +224,6 @@ def capabilities() -> dict[str, Any]:
         "flags": dict(FLAGS),
         "versions": package_versions(),
         "native": native_versions(),
+        "catalog": _guarded(catalog_info),
+        "data_release": release if isinstance(release, str) else None,
     }

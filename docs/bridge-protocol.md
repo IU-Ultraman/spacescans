@@ -64,12 +64,31 @@ does not know; pydantic would drop it silently) and `python_warning`
 
 ## Error kinds
 
-`protocol`, `config` (bad arguments or pipeline config, including pydantic
-validation errors with `details.errors[].loc`), `data` (an input file is
-missing or unreadable; `details.path`), `missing_extra` (`details.extra`,
-`details.missing`), `runtime` (the pipeline raised), `interrupted`,
-`internal`. Later phases add kinds (`data_missing`, `step_failed`, ...);
-clients must accept unknown kinds.
+Design section 3.5 (`spacescans.bridge.protocol.ERROR_KINDS`):
+
+| kind | when | details |
+|---|---|---|
+| `protocol` | bad request, protocol out of range, unknown command (exit 2) | |
+| `config` | bad arguments, unknown variable, invalid pipeline config, rejected custom definition | pydantic: `errors[].loc` |
+| `cohort` | missing columns, unparseable dates, missing or out-of-range coordinates, end before start | `code`, `issues[]` with 1-based `rows` and `count`; never values |
+| `data_missing` | data not in the data directory (`data.status`), or a file that is not there or not readable | `path` or the data module's details |
+| `data_corrupt` | checksum or size mismatch | |
+| `terms_required` | a provider download needs explicit terms | |
+| `missing_extra` | a pattern or reader needs an extra that is not installed | `extra`, `missing` |
+| `network` / `disk_space` / `locked` | download failed after retries / not enough space / another fetch holds the lock | `report` (what was done) |
+| `step_failed` | a pipeline step exited with rc != 0 | `step`, `rc`, `log_tail` (last 40 lines), `oom` (rc -9 or 137) |
+| `interrupted` | SIGINT / SIGTERM (exit 130 / 143) | `signal` |
+| `internal` | anything else: a bug; `traceback` shows where | |
+
+An exception that declares its own `kind` (and usually `to_dict()`) keeps
+it: the `spacescans.data` errors, `cohort.CohortError`,
+`custom.CustomExposomeError`, the orchestrator's `StepFailed` and
+`RenderError`. Phase A's `data` is now `data_missing` and `runtime` is
+`internal`. Clients must accept kinds they do not know.
+
+Cohort values (ids, dates, coordinates) never appear in messages, details,
+tracebacks, events, logs or provenance: cohort problems are reported by row
+number.
 
 ## Events (stdout, one JSON object per line)
 
@@ -86,22 +105,67 @@ start-up the bridge duplicates fd 1 for itself and points fd 1 at stderr, so
 {"ev":"done","ok":true,"exit":0}
 ```
 
-Progress events are limited to 4 per second per step. `maxrss_bytes` is the
-bridge process's peak RSS, normalised to bytes (macOS reports bytes, Linux KiB).
+Progress events are limited to 4 per second per step and carry `overall`,
+the fraction of the whole command (for one-step commands it equals `frac`).
+`maxrss_bytes` is the bridge process's peak RSS for `run`, the step's for
+`link`, normalised to bytes (macOS reports bytes, Linux KiB).
+
+`link` relays the orchestrator's events, each with `exp` (experiment):
+`plan`, `cohort` (counts only), `step_start` (`i`, `n`, `overall`),
+`cache_hit` (`key`), `spawn` (`text`, the command line), `progress`,
+`step_end` (`rc`, `seconds`, `maxrss_bytes`, `overall`), `cache_write`,
+`cache_warning`, `merge`, `warning` (`code`, ...), `experiment_done`; `line`
+only with verbose. A data field that clashes with one of these names gets a
+`data_` prefix. `data-fetch` and `data-verify` relay the data module's events
+(`artifact_start`, `download` with `bytes`/`total`/`rate`, `verify`,
+`extract_progress`, `artifact_end`, `retry`, ...).
+
+`run_dir/logs.jsonl` (`link`) holds the web's log lines,
+`{"ts", "level", "source", "msg"}`, so the paper's stage-timing tools parse
+R runs too.
 
 ## Commands
 
+List arguments also accept a single value (R writes a length-1 vector as a
+scalar). Paths must be absolute.
+
 | command | args | value |
 |---|---|---|
-| `capabilities` (alias `hello`) | — | `spacescans.capabilities()` plus `protocol`, `protocol_range`, `commands` |
+| `hello` (alias `capabilities`) | — | `spacescans.capabilities()` (version, code_fp, extras, registry, native libraries, `catalog` {`hash`, `templates`, `variables`, `experiments`, `variables_sha256`, `features_sha256`}, `data_release`) plus `protocol`, `protocol_range`, `commands` |
+| `catalog` | `variables`, `custom`, `data_dir` (all optional) | `{"variables": [{key, label, ..., value_cols, columns, requires, datasets, steps, templates, patterns, plugins, missing_extras, runnable_here, custom}], "experiments", "features", "catalog", "data_release"}`; with `data_dir` each row gains `status`, `usable`, `next` and the value gains `status` (`data.status`) |
+| `coverage` | `cohort` (.parquet or .csv), `variables`, `custom` | `{"episodes", "patients", "variables": [{variable, coverage_years, episodes, episodes_in_time_window, episodes_in_region, episodes_covered, pct, warnings, boundary, display_unit, temporal}]}`; counts are episodes (rows) |
+| `data-status` | `variables`, `datasets`, `data_dir`, `deep`, `manifest` | `data.status(...).to_dict()` |
+| `data-plan` | as `data-status` plus `accept_terms`, `keep_archives`, `force`, `mirror` | `data.plan(...).to_dict()` (no network) |
+| `data-verify` | as `data-status` (`deep` default true) plus `archives` | `data.verify(...).to_dict()` |
+| `data-fetch` | as `data-plan` plus `dry_run` | `data.fetch(...).to_dict()`; interrupting keeps `.part` files |
+| `data-import` | `dataset`, `paths`, `data_dir`, `move`, `manifest` | `data.import_files(...).to_dict()` |
+| `data-terms` | `dataset`, `manifest` | `data.terms(dataset)` |
+| `custom-validate` | `kind` (`polygon`, `raster`, `check`), `files`, `options` {`boundary`, `key_col`, `value_cols`, `year_col`, `name`, `description`, `labels`, `units`; raster: `years`, `bands`}; `check`: `definition`, `key`, `deep` | `{"kind", "definition", "key"}`; the definition goes back unchanged into `link`'s `custom` |
+| `link` | `cohort`, `variables`, `custom`, `data_dir`, `run_dir`, `buffer_m` (270), `raster_res_m` (25), `cache_dir` (WeightCache root, v2 keys; none = no cache), `executor` (`subprocess`/`inprocess`), `threads`, `memory_limit`, `on_error` (`stop`/`continue`), `reserved_names`, `cancel_grace_s` (7) | `{"exposures": <run_dir/exposures.parquet>, "rows", "episodes", "patients", "columns", "features": <run_dir/feature_dictionary.csv>, "coverage", "steps", "failed", "skipped", "warnings", "provenance": <run_dir/provenance.json>, "run_dir", "seconds"}` |
+| `cache-info` | `cache_dir`, `key_format` (`v2`) | `{"cache_dir", "key_format", "entries", "bytes", "oldest", "newest"}` |
+| `cache-clear` | `cache_dir`, `key_format`, `older_than_s` | `{"cache_dir", "key_format", "older_than_s", ...}` (`WeightCache.clear`) |
 | `schema` | — | `{"model": "DatasetConfig", "schema": <JSON schema>}` |
 | `resolve` | `config` (mapping or absolute YAML path), `data_dir`, `output_dir`, `strict` | `{"config": <validated, paths resolved>, "unknown_keys", "config_source"}` |
 | `run` | as `resolve`, plus `threads`, `memory_limit`, `temp_directory` | `{"output", "format", "rows", "columns", "name", "linkage_pattern", "output_grouping", "seconds", "maxrss_bytes", "engine", "config", "config_source", "unknown_keys"}` |
 | `quickstart` | `output_dir`, `threads`, `memory_limit` | as `run`, plus `"demo": true` |
-| `templates` | `name` (optional) | list: `{"templates": [{"name", "kind", "file", "config_name", "linkage_pattern"}]}`; one: `{"name", "kind", "text", "config"}` |
+| `templates` | `kind` (`catalog`, default, or `init`), `name` (optional) | list: `{"set", "hash" (catalog), "templates": [{"name", "kind", "set", "file", "sha256", "config_name", "linkage_pattern"}]}`; one: `{"name", "kind", "set", "file", "sha256", "text", "config"}`. `catalog` is the 25 templates the recipes render; `init` the 5 init-config starter templates |
 | `yaml-load` | `path` or `text` | `{"config", "path"}` |
 | `yaml-dump` | `config`, `path` (optional), `as_config` (default true) | `{"text", "path"}`; written with `yaml.safe_dump(sort_keys=False)` |
 | `ping` | `echo`, `sleep_s`, `fail_kind`, `exit_code`, `signal` | `{"pong", "echo", "slept_s"}`; diagnostics for client tests |
+
+`link` reads the cohort, checks it with `cohort.validate` (errors are
+`cohort` errors with row numbers) and passes only the five required columns
+to `orchestrate.link`. Custom definitions are repaired and checked with
+`custom.check_definition` first. With a `data_dir` in the request the bridge
+sets `SPACESCANS_DATA_DIR` to it for itself and every step subprocess, so
+`${SPACESCANS_DATA_DIR}` in a config and relative paths name the same
+directory; without one the environment's value is the data root for both.
+
+On SIGINT/SIGTERM during `link` the bridge sets the orchestrator's `cancel`
+event (the executor stops the step's process group: SIGTERM, SIGKILL after
+5 s), waits up to `cancel_grace_s`, kills any child process still alive,
+writes the result (kind `interrupted`) and exits 130/143. Clients should
+allow 10 s before killing the bridge.
 
 `run` executes in-process (`Pipeline.from_dict`) on a worker thread; the main
 thread only waits, so SIGINT/SIGTERM are honoured within about 0.1 s even

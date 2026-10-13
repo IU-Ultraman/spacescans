@@ -1,18 +1,19 @@
 """Bridge commands. Each takes (args, ctx) and returns (value, warnings)."""
 from __future__ import annotations
 
-import contextlib
 import os
 import sys
 import tempfile
-import threading
 import time
-import warnings as _warnings
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from spacescans.bridge.args import bool_arg as _bool_arg
+from spacescans.bridge.args import choice_arg
+from spacescans.bridge.args import int_arg as _int_arg
+from spacescans.bridge.args import str_arg as _str_arg
 from spacescans.bridge.configs import (
     absolute_path_arg,
     coerce_scalars,
@@ -20,10 +21,13 @@ from spacescans.bridge.configs import (
     unknown_keys,
 )
 from spacescans.bridge.errors import BridgeError
-from spacescans.bridge.events import EventStream, LineSink, pipeline_line_handler
+from spacescans.bridge.events import EventStream, pipeline_line_handler
 from spacescans.bridge.protocol import PROTOCOL, PROTOCOL_RANGE
+from spacescans.bridge.worker import run_captured, warning_records
 
 Outcome = tuple[Any, list]
+
+__all__ = ["COMMANDS", "Context", "run_captured"]
 
 
 @dataclass
@@ -31,39 +35,18 @@ class Context:
     events: EventStream
     verbose: bool = False
     warnings: list = field(default_factory=list)
+    client: dict = field(default_factory=dict)
+
+    def log(self, msg: str) -> None:
+        """A line for the human log (stderr)."""
+        try:
+            sys.__stderr__.write(msg.rstrip("\n") + "\n")
+            sys.__stderr__.flush()
+        except (OSError, ValueError, AttributeError):
+            pass
 
 
 # --- helpers -----------------------------------------------------------------
-
-def _bool_arg(args: dict, name: str, default: bool = False) -> bool:
-    value = args.get(name, default)
-    if value is None:
-        return default
-    if not isinstance(value, bool):
-        raise BridgeError("config", f"argument '{name}' must be true or false")
-    return value
-
-
-def _int_arg(args: dict, name: str, *, minimum: int | None = None) -> int | None:
-    value = args.get(name)
-    if value is None:
-        return None
-    if isinstance(value, float) and value.is_integer():
-        value = int(value)
-    if isinstance(value, bool) or not isinstance(value, int):
-        raise BridgeError("config", f"argument '{name}' must be a whole number, got {value!r}")
-    if minimum is not None and value < minimum:
-        raise BridgeError("config", f"argument '{name}' must be at least {minimum}, got {value}")
-    return value
-
-
-def _str_arg(args: dict, name: str) -> str | None:
-    value = args.get(name)
-    if value is None:
-        return None
-    if not isinstance(value, str) or not value:
-        raise BridgeError("config", f"argument '{name}' must be a non-empty string")
-    return value
 
 
 def _maxrss_bytes() -> int | None:
@@ -74,62 +57,6 @@ def _maxrss_bytes() -> int | None:
         return None
     rss = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
     return int(rss) if sys.platform == "darwin" else int(rss) * 1024
-
-
-_QUIET_WARNINGS = (DeprecationWarning, PendingDeprecationWarning, FutureWarning)
-
-
-def _warning_records(caught: list) -> list[dict]:
-    out, seen = [], set()
-    for w in caught:
-        if issubclass(w.category, _QUIET_WARNINGS):
-            continue
-        key = (w.category.__name__, str(w.message))
-        if key in seen:
-            continue
-        seen.add(key)
-        out.append({"code": "python_warning", "category": w.category.__name__,
-                    "message": str(w.message), "source": f"{w.filename}:{w.lineno}"})
-        if len(out) >= 50:
-            break
-    return out
-
-
-def run_captured(fn: Callable[[], Any], on_line: Callable[[str], None]) -> tuple[Any, list]:
-    """Run ``fn`` in a worker thread with stdout captured line by line.
-
-    The main thread only waits, in short joins, so SIGINT/SIGTERM are handled
-    within ~0.1 s even while the worker sits in a long C call (GDAL,
-    exactextract, DuckDB). Returns (value, recorded warnings); re-raises the
-    worker's exception.
-    """
-    sink = LineSink(on_line)
-    box: dict[str, Any] = {"warnings": []}
-
-    def target() -> None:
-        with _warnings.catch_warnings(record=True) as caught:
-            _warnings.simplefilter("default")
-            try:
-                with contextlib.redirect_stdout(sink):
-                    box["value"] = fn()
-            except BaseException as e:
-                box["error"] = e
-            finally:
-                box["warnings"] = list(caught)
-
-    worker = threading.Thread(target=target, name="spacescans-bridge-worker", daemon=True)
-    worker.start()
-    while worker.is_alive():
-        worker.join(0.1)
-    sink.close()
-    for w in box["warnings"]:  # keep them in the human log too
-        try:
-            sys.__stderr__.write(_warnings.formatwarning(w.message, w.category, w.filename, w.lineno))
-        except (OSError, ValueError, AttributeError):
-            pass
-    if "error" in box:
-        raise box["error"]
-    return box.get("value"), box["warnings"]
 
 
 def _output_summary(out: Path) -> dict[str, Any]:
@@ -181,7 +108,7 @@ def _execute(raw: dict, args: dict, ctx: Context, source: dict) -> Outcome:
     maxrss = _maxrss_bytes()
     ctx.events.progress(1.0, step=step, force=True)
     ctx.events.emit("step_end", step=step, ok=True, rc=0, seconds=seconds, maxrss_bytes=maxrss)
-    warns += _warning_records(caught)
+    warns += warning_records(caught)
     value = {
         **_output_summary(Path(out)),
         "name": cfg.name,
@@ -200,6 +127,8 @@ def _execute(raw: dict, args: dict, ctx: Context, source: dict) -> Outcome:
 # --- commands ----------------------------------------------------------------
 
 def cmd_capabilities(args: dict, ctx: Context) -> Outcome:
+    """``spacescans.capabilities()`` (version, code_fp, extras, registry, native
+    libraries, ``catalog`` {hash, templates, ...}, ``data_release``) plus the protocol."""
     from spacescans._capabilities import capabilities
     caps = capabilities()
     caps["protocol"] = PROTOCOL
@@ -280,7 +209,8 @@ def cmd_quickstart(args: dict, ctx: Context) -> Outcome:
 _TEMPLATE_DIRS = (("c3", "templates/c3"), ("c4", "templates/c4"), ("quickstart", "quickstart"))
 
 
-def _template_entries() -> list[tuple[str, str, Any]]:
+def _init_template_entries() -> list[tuple[str, str, Any]]:
+    """The ``init-config`` starter templates (spacescans/resources/configs)."""
     from importlib import resources
     root = resources.files("spacescans.resources.configs")
     out = []
@@ -294,23 +224,62 @@ def _template_entries() -> list[tuple[str, str, Any]]:
     return out
 
 
-def cmd_templates(args: dict, ctx: Context) -> Outcome:
+def _templates_init(name: str | None) -> Outcome:
     import yaml
-    name = _str_arg(args, "name")
-    entries = _template_entries()
+    entries = _init_template_entries()
     if name is None:
         rows = []
         for tname, kind, entry in entries:
-            cfg = yaml.safe_load(entry.read_text(encoding="utf-8")) or {}
-            rows.append({"name": tname, "kind": kind, "file": f"{tname}.yaml",
-                         "config_name": cfg.get("name"), "linkage_pattern": cfg.get("linkage_pattern")})
-        return {"templates": rows}, []
-    for tname, kind, entry in entries:
-        if tname == name:
             text = entry.read_text(encoding="utf-8")
-            return {"name": tname, "kind": kind, "text": text, "config": yaml.safe_load(text)}, []
-    raise BridgeError("config", f"unknown template {name!r}",
-                      details={"available": [e[0] for e in entries]})
+            cfg = yaml.safe_load(text) or {}
+            rows.append({"name": tname, "kind": kind, "set": "init", "file": f"{tname}.yaml",
+                         "sha256": _sha256_text(text),
+                         "config_name": cfg.get("name"), "linkage_pattern": cfg.get("linkage_pattern")})
+        return {"set": "init", "templates": rows}, []
+    for tname, kind, entry in entries:
+        if tname == name or f"{tname}.yaml" == name:
+            text = entry.read_text(encoding="utf-8")
+            return {"name": tname, "kind": kind, "set": "init", "file": f"{tname}.yaml",
+                    "sha256": _sha256_text(text), "text": text, "config": yaml.safe_load(text)}, []
+    raise BridgeError("config", f"unknown init template {name!r}",
+                      details={"available": [e[0] for e in entries], "set": "init"})
+
+
+def _sha256_text(text: str) -> str:
+    import hashlib
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+def _templates_catalog(name: str | None) -> Outcome:
+    import yaml
+
+    from spacescans import catalog
+    from spacescans._capabilities import catalog_fingerprint
+    hashes = catalog.template_hashes()
+    if name is None:
+        rows = []
+        for rel in catalog.templates():
+            cfg = catalog.template(rel) or {}
+            rows.append({"name": rel[:-5], "kind": rel.split("/", 1)[0], "set": "catalog", "file": rel,
+                         "sha256": hashes[rel], "config_name": cfg.get("name"),
+                         "linkage_pattern": cfg.get("linkage_pattern")})
+        return {"set": "catalog", "hash": catalog_fingerprint(hashes), "templates": rows}, []
+    rel = name if name.endswith(".yaml") else f"{name}.yaml"
+    if rel not in hashes:
+        raise BridgeError("config", f"unknown catalog template {name!r}",
+                          hint="templates with kind 'init' lists the init-config starter templates",
+                          details={"available": [r[:-5] for r in catalog.templates()], "set": "catalog"})
+    text = catalog.template_text(rel)
+    return {"name": rel[:-5], "kind": rel.split("/", 1)[0], "set": "catalog", "file": rel,
+            "sha256": hashes[rel], "text": text, "config": yaml.safe_load(text)}, []
+
+
+def cmd_templates(args: dict, ctx: Context) -> Outcome:
+    """The 25 catalog templates (default, with sha256 and the catalog hash) or,
+    with ``kind: "init"``, the 5 init-config starter templates; ``name`` gets one."""
+    which = choice_arg(args, "kind", ("catalog", "init"), default="catalog")
+    name = _str_arg(args, "name")
+    return _templates_catalog(name) if which == "catalog" else _templates_init(name)
 
 
 def cmd_yaml_load(args: dict, ctx: Context) -> Outcome:
@@ -394,3 +363,12 @@ COMMANDS: dict[str, Callable[[dict, Context], Outcome]] = {
     "yaml-dump": cmd_yaml_dump,
     "ping": cmd_ping,
 }
+
+
+def _register() -> None:
+    from spacescans.bridge import cmd_catalog, cmd_data, cmd_link
+    for table in (cmd_catalog.COMMANDS, cmd_data.COMMANDS, cmd_link.COMMANDS):
+        COMMANDS.update(table)
+
+
+_register()

@@ -270,7 +270,8 @@ def test_run_missing_input_is_data_error(tmp_path):
     rc, res, events, _ = call(tmp_path, "run", {"config": cfg, "data_dir": str(tmp_path)})
     assert rc == 1
     err = res["error"]
-    assert err["kind"] == "data" and err["type"] == "FileNotFoundError"
+    # phase B: design 3.5's data_missing (R still gets spacescans_error_data for data_* kinds)
+    assert err["kind"] == "data_missing" and err["type"] == "FileNotFoundError"
     assert err["details"]["path"].endswith("patients.parquet")
     assert any(e["ev"] == "step_end" and e["ok"] is False for e in events)
 
@@ -318,13 +319,14 @@ def test_quickstart(tmp_path):
 # --- templates / yaml --------------------------------------------------------
 
 def test_templates_list_and_get(tmp_path):
-    rc, res, _, _ = call(tmp_path, "templates")
+    # phase B (#10): the init-config starter templates moved under kind "init"
+    rc, res, _, _ = call(tmp_path, "templates", {"kind": "init"})
     names = [t["name"] for t in res["value"]["templates"]]
     assert rc == 0 and {"c3/county", "c4/zbp", "quickstart/end_to_end"} <= set(names)
-    rc, res, _, _ = call(tmp_path, "templates", {"name": "c3/county"})
+    rc, res, _, _ = call(tmp_path, "templates", {"kind": "init", "name": "c3/county"})
     assert rc == 0 and res["value"]["config"]["linkage_pattern"] == "boundary_overlap_fast"
     assert res["value"]["text"].startswith("name: county_us")
-    rc, res, _, _ = call(tmp_path, "templates", {"name": "c3/nope"})
+    rc, res, _, _ = call(tmp_path, "templates", {"kind": "init", "name": "c3/nope"})
     assert rc == 1 and res["error"]["kind"] == "config" and "c3/county" in res["error"]["details"]["available"]
 
 
@@ -453,8 +455,8 @@ def test_classify_mapping():
     assert classify(MissingExtraError("m", extra="nc", missing=["xarray"])).details == {
         "extra": "nc", "missing": ["xarray"]}
     assert classify(KeyError("Unknown linkage pattern: zz. Registered: []")).kind == "config"
-    assert classify(FileNotFoundError(2, "No such file", "/x")).kind == "data"
-    assert classify(PermissionError(13, "denied", "/x")).kind == "data"
-    assert classify(ValueError("boom")).kind == "runtime"
-    assert classify(SystemExit(3)).kind == "runtime"
+    assert classify(FileNotFoundError(2, "No such file", "/x")).kind == "data_missing"
+    assert classify(PermissionError(13, "denied", "/x")).kind == "data_missing"
+    assert classify(ValueError("boom")).kind == "internal"          # phase B (#7): not "runtime"
+    assert classify(SystemExit(3)).kind == "internal"
     assert classify(ValueError("boom")).to_dict()["type"] == "ValueError"
