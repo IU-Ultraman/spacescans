@@ -27,14 +27,14 @@ jobs:
     env:
       NOT_CRAN: "true"   # testthat runs skip_on_cran() tests too
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Fail unless the runner is Apple silicon
         run: |
           sw_vers
           test "$(uname -m)" = arm64
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with: {python-version: "3.12"}
 
       - name: Install this commit's Python package for the bridge tests (geo extra, wheels only)
@@ -68,7 +68,7 @@ jobs:
         if: failure()
         run: cat spacescans.Rcheck/tests/testthat.Rout.fail spacescans.Rcheck/tests/testthat.Rout 2>/dev/null || true
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: r-cmd-check

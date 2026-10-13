@@ -10,7 +10,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-24.04, macos-latest]
         python: ["3.10", "3.11", "3.12", "3.13"]
     runs-on: ${{ matrix.os }}
     env:
@@ -18,14 +18,14 @@ jobs:
       # golden tests (their references are not in git; they skip without them anyway).
       BASE_MARKERS: not extras and not geo and not rda and not hdf4 and not nc and not slow and not golden
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with: {python-version: "${{ matrix.python }}"}
       - run: pip install -e .[dev]
       - run: pytest tests/ -v -m "$BASE_MARKERS" --tb=short
       - name: Tests ignore the caller's SPACESCANS_* variables
         # tests/conftest.py removes them for every test; this run proves it.
-        if: matrix.os == 'ubuntu-latest' && matrix.python == '3.12'
+        if: matrix.os == 'ubuntu-24.04' && matrix.python == '3.12'
         env:
           SPACESCANS_DATA_DIR: /nonexistent/spacescans-data
           SPACESCANS_OUTPUT_DIR: /nonexistent/spacescans-output

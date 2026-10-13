@@ -6,10 +6,10 @@ on:
 
 jobs:
   test-geo:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with: {python-version: "3.12"}
       - run: pip install -e .[geo,dev]
       - run: pytest tests/ -v -m "geo and not golden" --tb=short
@@ -21,8 +21,8 @@ jobs:
     # so macOS 14 gets the 1.5.1 wheel).
     runs-on: macos-14
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with: {python-version: "3.12"}
       - name: Install with the geo extra, wheels only
         run: |
@@ -36,39 +36,39 @@ jobs:
       - run: pytest tests/ -v -m "not rda and not hdf4 and not nc and not golden" --tb=short
 
   test-rda:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with: {python-version: "3.12"}
       - run: pip install -e .[rda,dev]
       - run: pytest tests/ -v -m "rda and not golden" --tb=short
 
   test-hdf4:
-    runs-on: ubuntu-latest  # macOS HDF4 too painful for CI; documented only.
+    runs-on: ubuntu-24.04  # macOS HDF4 too painful for CI; documented only.
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - run: sudo apt-get update && sudo apt-get install -y libhdf4-dev
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with: {python-version: "3.12"}
       - run: pip install -e .[hdf4,dev]
       - run: pytest tests/ -v -m "hdf4 and not golden" --tb=short
 
   test-nc:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with: {python-version: "3.12"}
       - run: pip install -e .[nc,geo,dev]
       - run: pytest tests/ -v -m "nc and not golden" --tb=short
 
   test-all:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - run: sudo apt-get update && sudo apt-get install -y libhdf4-dev
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with: {python-version: "3.12"}
       - run: pip install -e .[all,dev]
       # Golden tests need references kept out of git (tests/golden/README.md).
