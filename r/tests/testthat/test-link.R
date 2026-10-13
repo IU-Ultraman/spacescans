@@ -189,6 +189,7 @@ test_that("arguments are checked before Python starts", {
   local_clean_state()
   withr::local_envvar(SPACESCANS_PYTHON = "/nonexistent/python")
   expect_error(ss_link(fake_cohort(), "ndi", buffer_m = 270.5), class = "spacescans_error_config")
+  expect_error(ss_link(fake_cohort(), "ndi", buffer_m = 0), "`buffer_m` must be .* at least 1", class = "spacescans_error_config")
   expect_error(ss_link(fake_cohort(), character()), class = "spacescans_error_config")
   expect_error(ss_link(fake_cohort(), "ndi", threads = 0), class = "spacescans_error_config")
   bad <- fake_cohort()

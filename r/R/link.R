@@ -76,7 +76,7 @@ ss_link <- function(cohort, variables, data_dir = ss_data_dir(), buffer_m = 270L
                     threads = NULL, memory_limit = NULL, on_error = c("stop", "continue"),
                     progress = interactive(), keep = FALSE, run_dir = NULL, wait = TRUE) {
   on_error <- match.arg(on_error)
-  buffer_m <- .ss_whole(buffer_m, "buffer_m", min = 0)
+  buffer_m <- .ss_whole(buffer_m, "buffer_m", min = 1)   # the bridge and link need >= 1
   raster_res_m <- .ss_whole(raster_res_m, "raster_res_m", min = 1)
   threads <- .ss_threads_arg(threads)
   memory_limit <- .ss_memory_arg(memory_limit)
