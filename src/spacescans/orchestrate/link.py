@@ -25,6 +25,11 @@
    the upload path's linkage report first), then **fan in** onto the cohort's
    episodes: a column whose name is taken by the cohort, by
    ``reserved_names`` or by an earlier source gets ``_<experiment>_dup``.
+   Within one source a value column an earlier variable already produced
+   (two custom datasets that both call their column ``value``) gets
+   ``_<variable>_dup`` instead of being dropped as the web's merge drops it.
+   Every rename is reported as a ``renamed`` warning, and the feature
+   dictionary lists renamed columns under their new names.
 
 The run directory is laid out like a web task directory (``input.parquet``,
 ``pipeline_configs/<step>.yaml``, ``output/<step>.parquet``) and step configs
@@ -56,6 +61,7 @@ from spacescans.orchestrate.run import (
     RunCancelled,
     StepFailed,
     StepRecord,
+    clash_renames,
     partial,
     run_source,
 )
@@ -312,13 +318,16 @@ def _executor_name(executor: Any) -> str:
 # ---------------------------------------------------------------------------
 
 def coverage_table(partials: Mapping[str, pd.DataFrame], groups: Mapping[str, Sequence[str]],
-                   cohort_keys: pd.DataFrame, overlay: Mapping[str, dict] | None = None
+                   cohort_keys: pd.DataFrame, overlay: Mapping[str, dict] | None = None,
+                   col_renames: Mapping[str, Mapping[str, Mapping[str, str]]] | None = None
                    ) -> pd.DataFrame:
     """Per variable: episodes, episodes with any value, pct, and the same for patients.
 
     ``cohort_keys`` holds ``pid`` and ``episode_id`` for every input row;
     ``partials`` maps a completed source to its partial table. A variable's
-    columns are its catalog ``value_cols`` after the source's renames (FAQSD).
+    columns are its catalog ``value_cols`` after the source's renames (FAQSD)
+    and its own clash renames (``col_renames[experiment][variable]``, see
+    :func:`~spacescans.orchestrate.run.clash_renames`).
     """
     import pandas as pd
 
@@ -329,8 +338,10 @@ def coverage_table(partials: Mapping[str, pd.DataFrame], groups: Mapping[str, Se
     patients = int(cohort_keys["pid"].nunique())
     for exp, part in partials.items():
         renames = dict(catalog.recipe(exp).renames)
+        own = (col_renames or {}).get(exp, {})
         for key in groups[exp]:
             cols = [renames.get(c, c) for c in catalog.variable(key, overlay=overlay or None).value_cols]
+            cols = [dict(own.get(key, {})).get(c, c) for c in cols]
             cols = [c for c in cols if c in part.columns]
             if cols:
                 joined = cohort_keys.merge(part[["pid", "episode_id"] + cols],
@@ -348,9 +359,28 @@ def coverage_table(partials: Mapping[str, pd.DataFrame], groups: Mapping[str, Se
                                        "patients", "patients_with_value"])
 
 
+def _fan_in_names(partials: Mapping[str, pd.DataFrame], reserved: Sequence[str]
+                  ) -> list[tuple[str, str, str]]:
+    """``(experiment, partial column, result column)`` in fan-in order: ``merge.fan_in``'s
+    rule (a name taken by ``reserved`` or an earlier column gets ``_<experiment>_dup``)."""
+    from spacescans.orchestrate import merge
+
+    present = set(reserved) | set(merge.KEYS)
+    names = []
+    for exp, part in partials.items():
+        for col in part.columns:
+            if col in merge.KEYS:
+                continue
+            final = f"{col}_{exp}_dup" if col in present else str(col)
+            present.add(final)
+            names.append((exp, str(col), final))
+    return names
+
+
 def _fan_in(cohort_keys: pd.DataFrame, partials: Mapping[str, pd.DataFrame],
-            taken: Sequence[str]) -> pd.DataFrame:
-    """``episode_id`` plus every source's columns, one row per input row, input order."""
+            taken: Sequence[str]) -> tuple[pd.DataFrame, list[tuple[str, str, str]]]:
+    """``episode_id`` plus every source's columns, one row per input row, input order;
+    and :func:`_fan_in_names` of those columns."""
     from spacescans.orchestrate import merge
 
     reserved = sorted({c for c in taken if c not in merge.KEYS})
@@ -360,15 +390,50 @@ def _fan_in(cohort_keys: pd.DataFrame, partials: Mapping[str, pd.DataFrame],
         raise RuntimeError(f"fan-in produced {len(fanned)} rows for {len(cohort_keys)} episodes "
                            "(a source returned duplicate episode rows)")
     cols = [c for c in fanned.columns if c not in merge.KEYS]
-    return fanned[["episode_id"] + cols].reset_index(drop=True)
+    names = _fan_in_names(partials, reserved)
+    if [final for _, _, final in names] != cols:     # pragma: no cover - mirrors merge.fan_in
+        raise RuntimeError("fan-in column names do not follow the _<experiment>_dup rule")
+    return fanned[["episode_id"] + cols].reset_index(drop=True), names
 
 
-def _features(columns: Sequence[str]) -> pd.DataFrame:
+def _features(columns: Sequence[str], base: Mapping[str, str] | None = None) -> pd.DataFrame:
+    """Feature-dictionary rows of ``columns``; a renamed column is looked up by
+    ``base[column]`` (its catalog name) and listed under its new name."""
     import pandas as pd
 
     from spacescans import catalog
 
-    return pd.DataFrame(catalog.feature_rows(columns), columns=list(catalog.FEATURE_FIELDNAMES))
+    rows = []
+    for col in columns:
+        for row in catalog.feature_rows([(base or {}).get(col, col)]):
+            rows.append({**row, "feature_name": col})
+    return pd.DataFrame(rows, columns=list(catalog.FEATURE_FIELDNAMES))
+
+
+def _rename_warnings(names: Sequence[tuple[str, str, str]],
+                     within: Mapping[str, Mapping[str, Mapping[str, str]]]
+                     ) -> tuple[dict[str, str], list[dict]]:
+    """The catalog name of every result column, and a ``renamed`` warning per renamed one."""
+    origin: dict[tuple[str, str], tuple[str, str]] = {}   # (exp, partial col) -> (variable, base)
+    for exp, per_var in within.items():
+        for var, renames in per_var.items():
+            for col, new in renames.items():
+                origin[(exp, new)] = (var, col)
+    base: dict[str, str] = {}
+    warnings: list[dict] = []
+    for exp, col, final in names:
+        var, name = origin.get((exp, col), (None, col))
+        base[final] = name
+        if final == name:
+            continue
+        if var is not None and final == col:
+            why = f"another variable of the {exp} source already has a column {name}"
+        else:
+            why = "the name is already taken (a cohort column, reserved_names or an earlier source)"
+        warnings.append({"code": "renamed", "experiment": exp, "variable": var, "column": name,
+                         "renamed_to": final,
+                         "message": f"{var or exp}: column {name} renamed to {final}; {why}"})
+    return base, warnings
 
 
 def _error_entry(exc: BaseException, exp: str, keys: list[str]) -> dict[str, Any]:
@@ -445,6 +510,10 @@ def link(cohort: pd.DataFrame | str | os.PathLike, variables: Sequence[str], *,
         raise LinkConfigError("reserved_names must be a list of column names")
     cohort_in = cohort if isinstance(cohort, pd.DataFrame) else Path(os.fspath(cohort))
     taken = list(_cohort_columns(cohort_in)) + [str(c) for c in reserved_names]
+    if not isinstance(cohort_in, pd.DataFrame):     # read once, as to_pipeline_parquet would
+        cohort_in = _cohort.read_upload_csv(cohort_in, variant="zcta5", pid_as_str=True)
+    # The checks the bridge makes (row numbers, never values), before any file is written.
+    _cohort.validate(cohort_in).raise_for_errors()
     overlay, warnings = _custom_overlay(custom, keys)
     groups = _groups(keys, overlay)
     root = _data.resolve_data_dir(data_dir)
@@ -481,6 +550,7 @@ def link(cohort: pd.DataFrame | str | os.PathLike, variables: Sequence[str], *,
     skipped: list[str] = []
     errors: list[dict] = []
     reuse: dict[tuple, StepRecord] = {}
+    within: dict[str, dict[str, dict[str, str]]] = {}     # experiment -> clash renames
     stopped = False
     for exp, exp_keys in groups.items():
         if stopped:
@@ -512,7 +582,8 @@ def link(cohort: pd.DataFrame | str | os.PathLike, variables: Sequence[str], *,
                     if record["level"] != "info":
                         warnings.append({"code": "custom_linkage", "experiment": exp,
                                          "message": record["msg"]})
-            table, stats = partial(exp, exp_keys, ctx)
+            col_renames = clash_renames(exp, exp_keys, overlay or None)
+            table, stats = partial(exp, exp_keys, ctx, col_renames=col_renames)
         except Exception as exc:  # noqa: BLE001 - the web fails the source on a merge error
             emit(Event("warning", exp, text=LOG_MERGE_FAILED.format(exc=exc),
                        data={"level": "error", "source": "runner", "code": "merge_failed"}))
@@ -529,13 +600,17 @@ def link(cohort: pd.DataFrame | str | os.PathLike, variables: Sequence[str], *,
                              "message": f"{exp}: {stats.match_pct}% of episodes got a value "
                                         f"({stats.matched_n}/{stats.cohort_n})"})
         partials[exp] = table
+        if col_renames:
+            within[exp] = col_renames
         emit(Event("done", exp, data={"ok": True, "rows": len(table),
                                       "matched": stats.matched_n, "pct": stats.match_pct}))
 
     cohort_keys = pd.read_parquet(rdir / COHORT_FILE, columns=["pid", "episode_id"])
-    exposures = _fan_in(cohort_keys, partials, taken)
+    exposures, names = _fan_in(cohort_keys, partials, taken)
     columns = [c for c in exposures.columns if c != "episode_id"]
-    coverage = coverage_table(partials, groups, cohort_keys, overlay)
+    base_names, rename_warnings = _rename_warnings(names, within)
+    warnings.extend(rename_warnings)
+    coverage = coverage_table(partials, groups, cohort_keys, overlay, col_renames=within)
     ended = datetime.now(timezone.utc)
     prov = _provenance.build(
         ctx=ctx, groups=groups, overlay=overlay, steps=steps, cache=weight_cache,
@@ -543,6 +618,7 @@ def link(cohort: pd.DataFrame | str | os.PathLike, variables: Sequence[str], *,
         on_error=on_error, data_summary=data_summary, cohort_info=info,
         started=started, ended=ended, seconds=time.monotonic() - t0,
         failed=failed, skipped=skipped, columns=columns)
-    return LinkResult(exposures=exposures, features=_features(columns), coverage=coverage,
+    return LinkResult(exposures=exposures, features=_features(columns, base_names),
+                      coverage=coverage,
                       steps=steps, failed=failed, skipped=skipped, warnings=warnings,
                       provenance=prov, run_dir=rdir, partials=partials, errors=errors)

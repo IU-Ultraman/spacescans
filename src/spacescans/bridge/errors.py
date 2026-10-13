@@ -127,7 +127,9 @@ def _step_failed(exc: BaseException, message: str, hint: str | None,
         rc = details.get("rc")
     tail = _log_tail(getattr(exc, "log_tail", None) or details.get("log_tail"))
     experiment = getattr(exc, "experiment", None) or details.get("experiment")
-    oom = rc in OOM_EXIT_CODES
+    timed_out = bool(getattr(exc, "timed_out", False) or details.get("timed_out"))
+    # A step the executor killed itself after its timeout is not out of memory.
+    oom = rc in OOM_EXIT_CODES and not timed_out
     details = {**details, "step": step, "rc": rc, "log_tail": tail, "oom": oom}
     if experiment is not None:
         details["experiment"] = experiment

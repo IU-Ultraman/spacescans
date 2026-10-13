@@ -68,6 +68,7 @@ __all__ = [
     "SourceResult",
     "StepFailed",
     "StepRecord",
+    "clash_renames",
     "partial",
     "run_source",
 ]
@@ -107,13 +108,21 @@ class StepFailed(Exception):
         self.timed_out = timed_out
         self.reason = reason or ("timed out" if timed_out else f"exit code {rc}")
         msg = f"step {step} failed: {self.reason}"
-        if rc in (-9, 137):
+        if self.oom:
             msg += " (killed: often the machine ran out of memory)"
         super().__init__(msg)
 
     @property
+    def oom(self) -> bool:
+        """Killed (rc -9 or 137) by something other than the executor's own timeout."""
+        return self.rc in (-9, 137) and not self.timed_out
+
+    @property
     def hint(self) -> str:
-        if self.rc in (-9, 137):
+        if self.timed_out:
+            return (f"{self.step} ran longer than the executor's timeout and was stopped; "
+                    "raise the timeout or link a smaller cohort")
+        if self.oom:
             return ("the step was killed, most often by the out-of-memory killer; lower "
                     "threads or memory_limit, or use a machine with more memory")
         return f"see the log tail and {self.step}'s lines in logs.jsonl"
@@ -339,8 +348,37 @@ def _value_cols(keys: Sequence[str], overlay: Mapping[str, Any] | None) -> dict[
     return {k: list(catalog.variable(k, overlay=overlay).value_cols) for k in keys}
 
 
+def clash_renames(experiment: str, keys: Sequence[str],
+                  overlay: Mapping[str, Any] | None = None) -> dict[str, dict[str, str]]:
+    """Value columns a later variable of one source shares with an earlier one.
+
+    ``{variable: {column: f"{column}_{variable}_dup"}}`` for every variable
+    (after the first) whose value column, after the source's renames, an
+    earlier variable in ``keys`` already produces. Catalog sources never
+    share a column; two custom datasets can (two rasters both default to
+    ``value``). The web's ``write_partial`` keeps the first variable's column
+    and drops the later one; ``link`` renames the later one instead (pass the
+    result to :func:`partial`), so no dataset's values are lost.
+    """
+    from spacescans import catalog
+
+    src = dict(catalog.recipe(experiment).renames)
+    seen: set[str] = set()
+    out: dict[str, dict[str, str]] = {}
+    for key in keys:
+        cols = [src.get(c, c) for c in catalog.variable(key, overlay=overlay).value_cols]
+        clash = {c: f"{c}_{key}_dup" for c in cols if c in seen}
+        if clash:
+            out[key] = clash
+        seen.update(cols)
+        seen.update(clash.values())
+    return out
+
+
 def partial(experiment: str, keys: Sequence[str], ctx: RunContext, *,
-            rewrite_in_place: bool = False) -> tuple[pd.DataFrame, MatchStats]:
+            rewrite_in_place: bool = False,
+            col_renames: Mapping[str, Mapping[str, str]] | None = None
+            ) -> tuple[pd.DataFrame, MatchStats]:
     """One source's partial table and match statistics (``_merge.write_partial``).
 
     Reads each variable's C4 output from ``ctx.run_dir/output`` (in ``keys``
@@ -349,6 +387,11 @@ def partial(experiment: str, keys: Sequence[str], ctx: RunContext, *,
     ``rewrite_in_place`` also writes them back into the C4 parquet, as the
     web's runner does (``faqsd.py:213-216``). The table is what the web writes
     to ``result_<experiment>.csv`` (with ``to_csv(index=False)``).
+
+    ``col_renames`` (:func:`clash_renames`) renames a variable's value
+    columns after the source's renames, before the merge; without it a
+    column two variables share keeps the first variable's values, as in the
+    web.
     """
     import pandas as pd
 
@@ -369,5 +412,15 @@ def partial(experiment: str, keys: Sequence[str], ctx: RunContext, *,
     id_col = "pid" if "pid" in names else "PATID"    # a legacy web input.parquet may keep PATID
     cohort_keys = merge.episode_keys(pd.read_parquet(ctx.cohort_parquet, columns=[id_col]))
     outputs = [(k, pd.read_parquet(out_dir / rec.output_for(k))) for k in keys]
-    return merge.merge_partial(cohort_keys, outputs, _value_cols(keys, ctx.overlay),
-                               experiment=experiment, renames=dict(rec.renames) or None)
+    value_cols = _value_cols(keys, ctx.overlay)
+    renames = dict(rec.renames) or None
+    if col_renames:
+        src = renames or {}
+        outputs = [(k, df.rename(columns=src).rename(columns=dict(col_renames.get(k, {}))))
+                   for k, df in outputs]
+        value_cols = {k: [dict(col_renames.get(k, {})).get(src.get(c, c), src.get(c, c))
+                          for c in cols]
+                      for k, cols in value_cols.items()}
+        renames = None
+    return merge.merge_partial(cohort_keys, outputs, value_cols,
+                               experiment=experiment, renames=renames)

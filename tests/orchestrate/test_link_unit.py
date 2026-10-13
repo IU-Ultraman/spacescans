@@ -348,6 +348,17 @@ def test_name_clashes_get_the_web_dup_suffix(tmp_path, no_data_check):
     res2 = link(df, ["noise"], data_dir=tmp_path / "data", run_dir=tmp_path / "run2",
                 executor=FakeExecutor())
     assert "l50dba_exi_noise_dup" in res2.exposures.columns
+    # every rename is reported, and the renamed column keeps its dictionary row (review F6)
+    renamed = [w for w in res2.warnings if w["code"] == "renamed"]
+    assert [(w["column"], w["renamed_to"], w["experiment"]) for w in renamed] == [
+        ("l50dba_exi", "l50dba_exi_noise_dup", "noise")]
+    assert "l50dba_exi_noise_dup" in renamed[0]["message"]
+    feats = res2.features.set_index("feature_name")
+    assert list(feats.index) == ["l50dba_exi_noise_dup", "l50dba_imp", "l50dba_nat"]
+    want = catalog.feature_rows(["l50dba_exi"])[0]
+    assert feats.loc["l50dba_exi_noise_dup", "short_description"] == want["short_description"]
+    assert [w["renamed_to"] for w in res.warnings if w["code"] == "renamed"] == [
+        "NatWalkInd_bg_ndi_wi_dup"]
     # only the five cohort columns reach the disk
     assert list(pd.read_parquet(res2.run_dir / "input.parquet").columns) == [
         "pid", "startDate", "endDate", "longitude", "latitude", "episode_id"]
@@ -451,3 +462,78 @@ def test_catalog_coverage_delegates_to_compute_coverage():
 
 def test_step_statuses_are_documented():
     assert run_mod.STEP_STATUSES == ("ran", "cache_hit", "reused", "failed")
+
+
+def test_two_custom_datasets_with_one_column_name_keep_both(tmp_path, no_data_check):
+    """Review F1: the second dataset's column was dropped and its coverage taken from the first."""
+    from spacescans import custom
+
+    a = tmp_path / "a.csv"
+    a.write_text("GEOID10,pm25\n180973201001,1.5\n")
+    b = tmp_path / "b.csv"
+    b.write_text("GEOID10,pm25\n18097320100,99.0\n")
+    da = custom.define_polygon(a, boundary="BG", key_col="GEOID10", value_cols=["pm25"])
+    db = custom.define_polygon(b, boundary="Tract", key_col="GEOID10", value_cols=["pm25"])
+    ka, kb = da["variable_key"], db["variable_key"]
+
+    class Marked(FakeExecutor):            # dataset b: 1000 + ..., and no value in row 0
+        def run(self, config, **kw):
+            run = super().run(config, **kw)
+            if Path(config).stem == f"c4_{kb}":
+                out = Path(yaml.safe_load(Path(config).read_text())["output"]["path"])
+                df = pd.read_parquet(out)
+                df["pm25"] = [None] + list(df["pm25"][1:] + 1000)
+                df.to_parquet(out, index=False)
+            return run
+
+    res = _link(tmp_path, [ka, kb], custom={ka: da, kb: db}, executor=Marked())
+    dup = f"pm25_{kb}_dup"
+    assert list(res.exposures.columns) == ["episode_id", "pm25", dup]
+    assert list(res.exposures["pm25"]) == [0.0, 0.5, 1.0, 1.5]
+    assert res.exposures[dup].isna().tolist() == [True, False, False, False]
+    assert list(res.exposures[dup][1:]) == [1000.5, 1001.0, 1001.5]
+    cov = res.coverage.set_index("variable")
+    assert (cov.loc[ka, "with_value"], cov.loc[kb, "with_value"]) == (4, 3)
+    assert cov.loc[kb, "pct"] == 75.0
+    renamed = [w for w in res.warnings if w["code"] == "renamed"]
+    assert [(w["variable"], w["column"], w["renamed_to"]) for w in renamed] == [(kb, "pm25", dup)]
+    from spacescans.orchestrate.run import clash_renames
+    assert clash_renames("custom", [ka, kb], {ka: da, kb: db}) == {kb: {"pm25": dup}}
+    assert clash_renames("bg_ndi_wi", ["walkability", "ndi"]) == {}
+
+
+def test_link_refuses_a_cohort_that_validate_refuses(tmp_path, no_data_check):
+    """Review F4: link ran the steps on NaN / out-of-range coordinates and reversed dates."""
+    from spacescans.cohort import CohortError
+
+    bad = COHORT.copy()
+    bad.loc[1, "longitude"] = float("nan")
+    bad.loc[2, "latitude"] = 123.0
+    bad.loc[3, "endDate"] = "2010-01-01"
+    exe = FakeExecutor()
+    with pytest.raises(CohortError) as info:
+        link(bad, ["noise"], data_dir=tmp_path / "data", run_dir=tmp_path / "run", executor=exe)
+    assert info.value.kind == "cohort" and exe.calls == []
+    assert not (tmp_path / "run").exists()
+    codes = {i.code for i in info.value.issues}
+    assert {"coord_missing", "coord_range", "date_order"} <= codes
+    for v in ("123", "2010-01-01"):
+        assert v not in str(info.value)
+    csv = tmp_path / "bad.csv"
+    bad.to_csv(csv, index=False)
+    with pytest.raises(CohortError):
+        link(csv, ["noise"], data_dir=tmp_path / "data", run_dir=tmp_path / "run", executor=exe)
+    assert exe.calls == [] and not (tmp_path / "run").exists()
+
+
+def test_a_timed_out_step_is_not_reported_as_out_of_memory():
+    """Review F3: the executor's own SIGKILL after a timeout read as the OOM killer."""
+    from spacescans.bridge.errors import classify
+
+    timed = StepFailed("c3_noise", -9, ["x"], timed_out=True)
+    assert "memory" not in str(timed) and "timeout" in timed.hint and not timed.oom
+    b = classify(timed)
+    assert b.details["oom"] is False and "memory" not in b.hint
+    oom = StepFailed("c3_noise", -9, ["x"])
+    assert oom.oom and "memory" in str(oom) and "memory" in oom.hint
+    assert classify(oom).details["oom"] is True
