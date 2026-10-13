@@ -114,4 +114,7 @@ test_that("ss_install() builds a working environment from the GitHub source arch
   info <- jsonlite::read_json(file.path(envdir, "env.json"))
   expect_equal(info$source_commit, sha)
   expect_null(info$wheel)
+  # built outside the default location, so this session uses it directly
+  expect_equal(ss_python()$path, spacescans:::.ss_abs_path(file.path(envdir, "bin", "python")))
+  expect_equal(ss_version()$python_package, caps$spacescans$version)
 })

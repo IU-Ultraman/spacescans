@@ -122,6 +122,12 @@ ss_install <- function(extras = c("geo", "rda", "nc"), python = "3.12", envdir =
     from <- if (identical(src$kind, "github")) sprintf(" (from GitHub %s@%s)", src$repo, substr(src$commit, 1, 12)) else ""
     message(sprintf("spacescans %s is ready in %s%s", caps$spacescans$version, envdir, from))
   }
+  # Later calls look for the environment at .ss_envdir(); one built elsewhere
+  # is used for the rest of this session, and the message says how to keep it.
+  if (!identical(envdir, .ss_absolute(.ss_envdir()))) {
+    .ss_state$python <- list(path = py, source = "ss_install()")
+    if (!quiet) message(sprintf('Using it in this session. In new sessions, set options(spacescans.envdir = "%s").', envdir))
+  }
   invisible(caps)
 }
 
