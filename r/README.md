@@ -1,21 +1,87 @@
 # spacescans (R)
 
-R client for the spacescans Python pipeline. Every call runs
-`python -m spacescans.bridge` in a separate process and exchanges JSON request
-and result files (tables as Parquet); see `docs/bridge-protocol.md` in this
-repository. There is no reticulate dependency: a crash or Ctrl-C in Python
-never takes the R session down. Imports: processx, ps, jsonlite, nanoparquet.
+Link residential histories to the spatial and contextual exposome from R. `ss_link()` takes a
+cohort of residential episodes, links each one to the exposure sources you choose, and returns
+your data frame with one column per exposure variable. The work is done by the spacescans Python
+package, which the R package runs in a separate process.
+
+## Quick start
+
+```r
+# install.packages("remotes")
+remotes::install_github("IU-Ultraman/spacescans", subdir = "r")
+```
+
+The R package needs the spacescans Python package. Create its environment once with
+[uv](https://docs.astral.sh/uv/):
+
+```sh
+uv venv ~/.spacescans-py --python 3.12
+uv pip install --python ~/.spacescans-py/bin/python "spacescans-pipeline[geo,rda,nc] @ git+https://github.com/IU-Ultraman/spacescans"
+```
 
 ```r
 library(spacescans)
-ss_install()                                   # once: uv venv + the bundled wheel
-ss_doctor()
-ss_data_dir("~/ss-data")                       # or SPACESCANS_DATA_DIR
+ss_use_python("~/.spacescans-py")
+ss_data_dir("~/ss-data")
 ss_data_status(c("ndi", "walkability"))        # what is missing, and the next call
 ss_fetch(c("ndi", "walkability"))              # resumable downloads
 res <- ss_link(cohort, c("ndi", "walkability"))
 attr(res, "coverage"); attr(res, "features"); attr(res, "provenance")
 ```
+
+`ss_catalog()` lists every exposure variable. For the TEMIS ultraviolet source, install the
+Python package with the `hdf4` extra as well (`[geo,rda,nc,hdf4]`).
+
+## Your cohort
+
+`cohort` is your own data: one row per residential episode, with these five columns.
+
+| Column | Content |
+| --- | --- |
+| `pid` | Patient identifier |
+| `startDate`, `endDate` | First and last day at the address, as `2017-08-19` or `8/19/2017` |
+| `longitude`, `latitude` | The geocoded residence, in decimal degrees |
+
+```csv
+pid,startDate,endDate,longitude,latitude
+P001,2013-01-01,2015-06-30,-86.1581,39.7684
+P001,2015-07-01,2018-12-31,-86.2760,39.8010
+P002,2014-03-15,2019-12-31,-84.5120,39.1031
+```
+
+A patient who moved has one row per address. Keep the file anywhere on your computer, preferably
+in a local, access-controlled project folder rather than a cloud-synced one, and either read it
+into R yourself or give `ss_link()` its path:
+
+```r
+cohort <- read.csv("~/projects/my-study/cohort.csv")
+res <- ss_link(cohort, c("ndi", "walkability"))
+
+res <- ss_link("~/projects/my-study/cohort.csv", c("ndi", "walkability"))   # .csv or .parquet
+```
+
+If your columns have other names, map them with `cols`:
+
+```r
+res <- ss_link(cohort, "ndi", cols = c(pid = "patient_id", startDate = "start",
+                                      endDate = "end", longitude = "lon", latitude = "lat"))
+```
+
+Your other columns (age, diagnoses and so on) stay in R and come back unchanged in `res`, in your
+row order. During the run only the five columns above are written, to a private temporary folder
+that is deleted afterwards.
+
+## How it works
+
+Every call runs `python -m spacescans.bridge` in a separate process and exchanges JSON request
+and result files (tables as Parquet); see `docs/bridge-protocol.md` in this repository. There is
+no reticulate dependency: a crash or Ctrl-C in Python never takes the R session down. Imports:
+processx, ps, jsonlite, nanoparquet.
+
+`ss_link()` writes only `pid`, `startDate`, `endDate`, `longitude` and `latitude` to a private
+(0700) run directory under `tempdir()`, deleted after success unless `keep = TRUE`; cohort values
+never appear in messages, events or provenance.
 
 Functions: `ss_install()`, `ss_use_python()`, `ss_doctor()`, `ss_version()`;
 `ss_catalog()`, `ss_features()`; `ss_data_dir()`, `ss_data_status()`,
@@ -26,11 +92,6 @@ Functions: `ss_install()`, `ss_use_python()`, `ss_doctor()`, `ss_version()`;
 `ss_cache_clear()`; and the tier-1 interface `ss_run()`, `ss_quickstart()`,
 `ss_templates()`, `ss_config_schema()`, `ss_validate()`, `ss_read_config()`,
 `ss_write_config()`, `ss_read_result()`. See the "Getting started" vignette.
-
-`ss_link()` writes only `pid`, `startDate`, `endDate`, `longitude` and
-`latitude` to a private (0700) run directory under `tempdir()`, deleted after
-success unless `keep = TRUE`; cohort values never appear in messages, events
-or provenance.
 
 Supported platform: macOS 14 or later on Apple silicon, Python 3.12.
 
@@ -54,7 +115,9 @@ always gives the same bytes, and writes `inst/python/pin.json` (version,
 sha256, code fingerprint, commit). It refuses a dirty tree and mismatched
 versions. The wheel and pin.json are not committed; the release job runs the
 script at the release commit (with `--url` of the wheel attached to the
-GitHub release) before `R CMD build r`.
+GitHub release) before `R CMD build r`. Until a release bundles it,
+`ss_install()` has no wheel to install, which is why the quick start above
+builds the Python environment with uv.
 
 ## The dependency lock
 
