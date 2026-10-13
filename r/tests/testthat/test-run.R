@@ -97,3 +97,16 @@ test_that("ss_read_result() renames geoid in episode-level outputs and pins the 
   expect_equal(names(ss_read_result(path, episode = FALSE))[2], "geoid")
   expect_error(ss_read_result(file.path(d, "none.parquet")), class = "spacescans_error_data")
 })
+
+
+test_that("ss_read_result() keeps CSV PATIDs and geography geoids as text (review rux F9)", {
+  d <- withr::local_tempdir()
+  ep <- file.path(d, "c4.csv")
+  writeLines(c("PATID,geoid,v", "007,0,1.5", "7,1,2.5"), ep)
+  df <- ss_read_result(ep)
+  expect_equal(df$PATID, c("007", "7"))
+  expect_equal(df$episode_id, c(0L, 1L))
+  geo <- file.path(d, "c3.csv")
+  writeLines(c("geoid,value", "01001020100,3.5", "18097320100,4.5"), geo)
+  expect_equal(ss_read_result(geo)$geoid, c("01001020100", "18097320100"))
+})

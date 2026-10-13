@@ -122,3 +122,39 @@ test_that("buffer and resource arguments are checked in R", {
   expect_equal(spacescans:::.ss_memory_arg("8GB"), "8GB")
   expect_error(spacescans:::.ss_memory_arg("lots"), class = "spacescans_error_config")
 })
+
+
+test_that("Parquet INT64 ids above 2^53 are read exactly (review rux F1)", {
+  skip_if_not_installed("bit64")
+  d <- withr::local_tempdir()
+  big <- bit64::as.integer64("9007199254740993") + rep(0:19, each = 2) * 2L
+  df <- data.frame(pid = big, startDate = as.Date("2015-01-01") + 0:39,
+                   endDate = as.Date("2016-01-01") + 0:39, longitude = -86 - (1:40) / 100,
+                   latitude = 39 + (1:40) / 100)
+  df$income <- bit64::as.integer64("9007199254740995") + 0:39
+  path <- file.path(d, "big.parquet")
+  nanoparquet::write_parquet(df, path)
+  x <- spacescans:::.ss_cohort_input(path)
+  expect_s3_class(x$pid, "integer64")
+  expect_s3_class(x$income, "integer64")
+  out <- prep(x)
+  expect_equal(out$n_patients, 20L)
+  expect_equal(out$df$pid[1], "9007199254740993")
+  expect_equal(length(unique(out$df$pid)), 20L)
+})
+
+test_that("CSV columns of zero-padded codes keep their zeros; others are inferred (review rux F9)", {
+  d <- withr::local_tempdir()
+  path <- file.path(d, "lz.csv")
+  writeLines(c("pid,startDate,endDate,longitude,latitude,zip,age,score,flag",
+               "007,2015-01-01,2015-12-31,-86.1,39.7,02134,30,1.5,TRUE",
+               "7,2015-01-01,2015-12-31,-86.2,39.8,46202,41,,FALSE"), path)
+  x <- spacescans:::.ss_cohort_input(path)
+  expect_equal(x$pid, c("007", "7"))
+  expect_equal(x$zip, c("02134", "46202"))
+  expect_type(x$age, "integer")
+  expect_type(x$score, "double")
+  expect_true(is.na(x$score[2]))
+  expect_type(x$flag, "logical")
+  expect_equal(prep(x)$n_patients, 2L)
+})

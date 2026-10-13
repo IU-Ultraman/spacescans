@@ -12,8 +12,8 @@
 #' until the link has run. Pass it to `ss_link(custom = )`; its key
 #' (`custom_<id>`) is added to the variables automatically.
 #'
-#' @param values Path of a CSV file, or a data frame (written to a CSV under
-#'   [tempdir()] for this session).
+#' @param values Path of a CSV file, or a data frame (written to a CSV file
+#'   of its own under [tempdir()] for this session).
 #' @param boundary The geography the key column holds.
 #' @param key_col Column with the geography id (GEOID).
 #' @param value_cols Columns with the values to link.
@@ -35,7 +35,7 @@
 #' @export
 ss_custom_polygon <- function(values, boundary = c("Tract", "BG", "ZCTA5", "County"), key_col,
                               value_cols, year_col = NULL, name = NULL, labels = NULL, units = NULL) {
-  boundary <- match.arg(boundary)
+  boundary <- .ss_choice(boundary, c("Tract", "BG", "ZCTA5", "County"), "boundary")
   if (missing(key_col) || !is.character(key_col) || length(key_col) != 1L) {
     .ss_abort("config", "`key_col` must name the column with the geography id.")
   }
@@ -46,7 +46,10 @@ ss_custom_polygon <- function(values, boundary = c("Tract", "BG", "ZCTA5", "Coun
     label <- name %||% "values"
     dir <- file.path(tempdir(), "spacescans-custom")
     dir.create(dir, showWarnings = FALSE, recursive = TRUE, mode = "0700")
-    path <- file.path(dir, paste0(gsub("[^A-Za-z0-9_-]+", "_", label), ".csv"))
+    # A file per definition: a second data frame (or a name that differs only
+    # in punctuation) must never overwrite the file an earlier definition hashed.
+    path <- tempfile(pattern = paste0(gsub("[^A-Za-z0-9_-]+", "_", label), "-"), tmpdir = dir,
+                     fileext = ".csv")
     utils::write.csv(values, path, row.names = FALSE, na = "")
     values <- path
   }

@@ -75,7 +75,7 @@ ss_link <- function(cohort, variables, data_dir = ss_data_dir(), buffer_m = 270L
                     raster_res_m = 25L, custom = NULL, cols = NULL, cache = TRUE,
                     threads = NULL, memory_limit = NULL, on_error = c("stop", "continue"),
                     progress = interactive(), keep = FALSE, run_dir = NULL, wait = TRUE) {
-  on_error <- match.arg(on_error)
+  on_error <- .ss_choice(on_error, c("stop", "continue"), "on_error")
   buffer_m <- .ss_whole(buffer_m, "buffer_m", min = 1)   # the bridge and link need >= 1
   raster_res_m <- .ss_whole(raster_res_m, "raster_res_m", min = 1)
   threads <- .ss_threads_arg(threads)
@@ -187,15 +187,25 @@ ss_link <- function(cohort, variables, data_dir = ss_data_dir(), buffer_m = 270L
   datasets <- unique(unlist(lapply(vars, function(v) .ss_chr(v$not_usable))))
   corrupt <- vapply(vars, function(v) identical(v$status, "corrupt"), logical(1))
   kind <- if (all(corrupt)) "data_corrupt" else "data_missing"
-  manual <- Filter(function(d) identical(d$status, "action_required") && d$dataset %in% datasets,
-                   st$datasets %||% list())
+  needed <- Filter(function(d) d$dataset %in% datasets, st$datasets %||% list())
+  # A dataset spacescans downloads once its provider's terms are accepted is not a manual step.
+  terms_only <- Filter(function(d) isTRUE(d$scripted) && !is.null(d$terms$id), needed)
+  accept <- unique(.ss_chr(lapply(terms_only, function(d) d$terms$id)))
+  manual <- Filter(function(d) identical(d$status, "action_required") && !isTRUE(d$scripted), needed)
   msg <- sprintf("The data for %d of %d variable(s) is not ready in %s:\n%s",
                  length(vars), length(variables), data_dir, paste(lines, collapse = "\n"))
   if (length(manual)) {
     msg <- paste0(msg, "\nSome data must be downloaded by hand; ss_data_status() shows the instructions.")
   }
-  .ss_abort(kind, msg, hint = .ss_r_hint(kind, list(variables = names_bad, datasets = datasets), NULL),
-            details = list(variables = names_bad, datasets = datasets, status = st))
+  if (length(accept)) {
+    msg <- paste0(msg, sprintf(paste0(
+      "\nThe provider's terms must be accepted first (%s); ss_data_terms(%s) shows them."),
+      paste(accept, collapse = ", "), .ss_deparse_chr(terms_only[[1]]$dataset)))
+  }
+  .ss_abort(kind, msg, hint = .ss_r_hint(kind, list(variables = names_bad, datasets = datasets,
+                                                    accept_terms = accept), NULL),
+            details = list(variables = names_bad, datasets = datasets, accept_terms = accept,
+                           status = st))
 }
 
 # Variables that need a Python extra this install lacks. The bridge's catalog
@@ -253,6 +263,11 @@ ss_link <- function(cohort, variables, data_dir = ss_data_dir(), buffer_m = 270L
   if (is.null(out)) {
     out <- data.frame(episode_id = seq_len(n) - 1L)
   }
+  # A data.table comes back as a data.table that := can extend in place: a
+  # deep copy (the input is never modified), over-allocated, attributes set
+  # by reference.
+  dt <- inherits(out, "data.table") && isNamespaceLoaded("data.table")
+  if (dt) out <- .ss_dt("copy")(out)
   taken <- names(out)
   for (col in names(ex)) {
     name <- col
@@ -266,7 +281,7 @@ ss_link <- function(cohort, variables, data_dir = ss_data_dir(), buffer_m = 270L
       warning(sprintf("spacescans: exposure column %s renamed to %s (name already in the cohort).", col, name),
               call. = FALSE)
     }
-    out[[name]] <- ex[[col]]
+    if (dt) .ss_dt("set")(out, j = name, value = ex[[col]]) else out[[name]] <- ex[[col]]
     taken <- c(taken, name)
   }
   features <- if (is.character(value$features) && file.exists(value$features)) {
@@ -284,21 +299,30 @@ ss_link <- function(cohort, variables, data_dir = ss_data_dir(), buffer_m = 270L
   steps <- .ss_records_df(value$steps, first = c("name", "status", "seconds", "rc", "maxrss_bytes", "cache_key"))
   failed <- .ss_chr(value$failed)
   skipped <- .ss_chr(value$skipped)
-  attr(out, "features") <- features
-  attr(out, "coverage") <- coverage
-  attr(out, "provenance") <- provenance
-  attr(out, "spacescans") <- list(
+  info_attr <- list(
     rows = value$rows, episodes = value$episodes, patients = value$patients, steps = steps,
     failed = failed, skipped = skipped, warnings = value$warnings %||% list(), bridge = info,
     run_dir = if (isTRUE(job$remove_on_success)) NULL else job$run_dir
   )
-  .ss_link_warnings(coverage, value, failed, skipped)
+  attrs <- list(features = features, coverage = coverage, provenance = provenance, spacescans = info_attr)
+  for (nm in names(attrs)) {
+    if (dt) .ss_dt("setattr")(out, nm, attrs[[nm]]) else attr(out, nm) <- attrs[[nm]]
+  }
+  # R's cohort check already warned about blank dates when it had the cohort.
+  .ss_link_warnings(coverage, value, failed, skipped,
+                    skip = c("low_match", if (!is.null(job$cohort)) "cohort_date_missing"))
   out
 }
 
+# A data.table function, looked up only when a data.table was passed in (so
+# its namespace is loaded); spacescans does not depend on data.table.
+.ss_dt <- function(name) getExportedValue("data.table", name)
+
 .ss_low_match_pct <- 90
 
-.ss_link_warnings <- function(coverage, value, failed, skipped) {
+# The link's warnings, each once: R's own coverage warning stands in for the
+# bridge's low_match records; `skip` lists other codes R reported itself.
+.ss_link_warnings <- function(coverage, value, failed, skipped, skip = "low_match") {
   if (nrow(coverage) && all(c("variable", "pct") %in% names(coverage))) {
     low <- !is.na(coverage$pct) & coverage$pct < .ss_low_match_pct
     for (i in which(low)) {
@@ -306,10 +330,14 @@ ss_link <- function(cohort, variables, data_dir = ss_data_dir(), buffer_m = 270L
                       coverage$pct[i], coverage$variable[i], .ss_low_match_pct), call. = FALSE)
     }
   }
+  shown <- character()
   for (w in value$warnings %||% list()) {
-    if (identical(w$code, "low_match")) next
+    if (isTRUE(w$code %in% skip)) next
+    if (identical(w$code, "failed") && length(failed)) next   # summarised below
     msg <- w$message %||% w$text
-    if (!is.null(msg)) warning(paste0("spacescans: ", msg), call. = FALSE)
+    if (is.null(msg) || msg %in% shown) next
+    shown <- c(shown, msg)
+    warning(paste0("spacescans: ", msg), call. = FALSE)
   }
   if (length(failed)) {
     warning(sprintf("spacescans: these sources failed and have no columns: %s%s.",

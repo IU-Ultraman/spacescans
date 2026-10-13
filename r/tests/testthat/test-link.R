@@ -259,3 +259,93 @@ test_that("ss_coverage() sends only the five columns and returns one row per var
   seen <- attr(last_request(dir, "coverage"), "seen")
   expect_equal(seen$cohort_columns, c("pid", "startDate", "endDate", "longitude", "latitude"))
 })
+
+
+test_that("an unknown on_error is a spacescans_error_config (review F11)", {
+  dir <- local_fake_bridge()
+  e <- tryCatch(link(on_error = "ignore"), error = identity)
+  expect_s3_class(e, "spacescans_error_config")
+  expect_match(conditionMessage(e), '"stop", "continue"', fixed = TRUE)
+  expect_length(fake_requests(dir, "link"), 0L)
+})
+
+test_that("each link warning is shown once (review F4)", {
+  ws <- list(list(code = "cohort_date_missing", message = "Blank endDate in 2 rows (rows 3, 5)"),
+             list(code = "renamed", message = "noise: column x renamed to x_noise_dup"),
+             list(code = "low_match", message = "walkability: 50% of episodes got a value"))
+  dir <- local_fake_bridge(list(link = list(warnings = ws, result_warnings = ws,
+                                            na_frac = list(walkability = 0.5))))
+  co <- fake_cohort()
+  co$endDate[c(3, 5)] <- NA
+  got <- character()
+  res <- withCallingHandlers(link(co), warning = function(w) {
+    got <<- c(got, conditionMessage(w))
+    invokeRestart("muffleWarning")
+  })
+  expect_equal(sum(grepl("blank in rows 3, 5", got, ignore.case = TRUE)), 1L)  # R's own check
+  expect_equal(sum(grepl("Blank endDate", got)), 0L)
+  expect_equal(sum(grepl("x_noise_dup", got)), 1L)
+  expect_equal(sum(grepl("walkability", got)), 1L)                             # R's coverage warning
+  expect_match(got[grepl("blank", got)], "no exposure values (static or time-varying)", fixed = TRUE)
+})
+
+test_that("an error while joining keeps the run directory and says how to remove it (review P4)", {
+  dir <- local_fake_bridge(list(link = list(bad_ids = TRUE)))
+  e <- tryCatch(link(), error = identity)
+  expect_s3_class(e, "spacescans_error_internal")
+  expect_match(conditionMessage(e), paste0("Run directory kept at ", e$run_dir), fixed = TRUE)
+  expect_match(conditionMessage(e), "unlink(", fixed = TRUE)
+  expect_true(dir.exists(e$run_dir))
+  unlink(e$run_dir, recursive = TRUE)
+})
+
+test_that("terms-only data gets an ss_fetch(accept_terms = ) hint, not 'by hand' (review F3)", {
+  st <- list(data_dir = "/x", data_release = "2026.07", deep = FALSE, ready = FALSE,
+             variables = list(list(variable = "faqsd", status = "action_required", usable = FALSE,
+                                   datasets = list("faqsd"), chosen = list("faqsd"),
+                                   not_usable = list("faqsd"), download_bytes = 0, disk_bytes = 0,
+                                   `next` = "spacescans data fetch faqsd --accept-terms epa-faqsd")),
+             datasets = list(list(dataset = "faqsd", status = "action_required", usable = FALSE,
+                                  title = "EPA FAQSD", acquire = "provider", scripted = TRUE,
+                                  terms = list(id = "epa-faqsd", url = "https://www.epa.gov/"),
+                                  download_bytes = 0, disk_bytes = 0, present = 0L, expected = 7L,
+                                  `next` = "spacescans data fetch --dataset faqsd --accept-terms epa-faqsd")),
+             download_bytes = 0, disk_bytes = 0, free_bytes = 1e12, next_steps = list(),
+             warnings = list())
+  dir <- local_fake_bridge(list(`data-status` = list(value = st)))
+  e <- tryCatch(link(variables = "faqsd"), error = identity)
+  expect_s3_class(e, "spacescans_error_data_missing")
+  expect_equal(e$hint, 'Run ss_fetch("faqsd", accept_terms = "epa-faqsd") to download the missing data.')
+  expect_no_match(conditionMessage(e), "by hand")
+  expect_match(conditionMessage(e), 'ss_data_terms("faqsd")', fixed = TRUE)
+  stt <- ss_data_status("faqsd", data_dir = tempdir())
+  expect_equal(stt[["next"]], 'ss_fetch("faqsd", accept_terms = "epa-faqsd")')
+  expect_equal(attr(stt, "datasets")[["next"]], 'ss_fetch(datasets = "faqsd", accept_terms = "epa-faqsd")')
+})
+
+test_that("a data.table comes back extendable by reference, the input untouched (review F7)", {
+  pkg <- "data.table"                      # optional: spacescans does not depend on it
+  skip_if_not_installed(pkg)
+  dt_fun <- function(name) getExportedValue(pkg, name)
+  dir <- local_fake_bridge()
+  co <- dt_fun("as.data.table")(fake_cohort())
+  before <- names(co)
+  res <- link(co)
+  expect_s3_class(res, "data.table")
+  expect_equal(names(co), before)
+  expect_null(attr(co, "features"))
+  expect_equal(attr(res, "features")$feature_name, c("ndi", "NatWalkInd"))
+  expect_no_warning(dt_fun("set")(res, j = "flag", value = 1L))
+  expect_equal(res$flag, rep(1L, 6))
+})
+
+test_that("bridges that must not outlive R are told R's pid; a persistent job is not (review P2)", {
+  dir <- local_fake_bridge()
+  link()
+  expect_equal(attr(last_request(dir, "link"), "seen")$bridge_parent, as.character(Sys.getpid()))
+  expect_equal(attr(last_request(dir, "data-status"), "seen")$bridge_parent, as.character(Sys.getpid()))
+  rd <- file.path(withr::local_tempdir(), "persistent")
+  job <- link(run_dir = rd, wait = FALSE)
+  ss_job_wait(job, progress = FALSE)
+  expect_equal(attr(last_request(dir, "link"), "seen")$bridge_parent, "")
+})

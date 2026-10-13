@@ -18,7 +18,10 @@ or a \link{difftime}. \code{NULL} (default) removes every entry.}
 }
 \value{
 \code{ss_cache_info()}: a list with \code{cache_dir}, \code{entries}, \code{bytes},
-\code{oldest}, \code{newest}. \code{ss_cache_clear()}: invisibly, what was removed.
+\code{oldest}, \code{newest}, and \code{temp_files}/\code{temp_bytes} (copies left by
+writes that were interrupted; they hold weights too and
+\code{ss_cache_clear()} removes them). \code{ss_cache_clear()}: invisibly, what
+was removed.
 }
 \description{
 \code{\link[=ss_link]{ss_link()}} keeps the C3 weights it computes (which census units, grid

@@ -43,9 +43,12 @@ ss_data_dir <- function(path = NULL) {
 }
 
 # The bridge's "next" commands are written for the shell; show the R call.
+# `--accept-terms ID` becomes ss_fetch()'s accept_terms argument.
 .ss_r_command <- function(cmd) {
   if (is.null(cmd) || !length(cmd) || is.na(cmd) || !nzchar(cmd)) return("")
   out <- cmd
+  terms <- regmatches(out, gregexpr("--accept-terms [A-Za-z0-9_.-]+", out))[[1]]
+  out <- gsub(" *--accept-terms [A-Za-z0-9_.-]+", "", out)
   out <- gsub("spacescans data fetch --dataset ([A-Za-z0-9_]+)", 'ss_fetch(datasets = "\\1")', out)
   out <- gsub("spacescans data verify --dataset ([A-Za-z0-9_]+)", 'ss_data_verify(datasets = "\\1")', out)
   out <- gsub("spacescans data import --dataset ([A-Za-z0-9_]+)", 'ss_data_import("\\1", paths = ...)', out)
@@ -56,6 +59,14 @@ ss_data_dir <- function(path = NULL) {
     out <- sub(m, sprintf("ss_fetch(%s)", .ss_deparse_chr(vars)), out, fixed = TRUE)
   }
   out <- gsub("spacescans data fetch", "ss_fetch()", out, fixed = TRUE)
+  if (length(terms)) {
+    acc <- sprintf("accept_terms = %s", .ss_deparse_chr(sub("^--accept-terms ", "", terms)))
+    out <- if (grepl("ss_fetch()", out, fixed = TRUE)) {
+      sub("ss_fetch()", sprintf("ss_fetch(%s)", acc), out, fixed = TRUE)
+    } else {
+      sub("ss_fetch\\(((?:[^()]|\\([^()]*\\))*)\\)", sprintf("ss_fetch(\\1, %s)", acc), out, perl = TRUE)
+    }
+  }
   out
 }
 

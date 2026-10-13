@@ -139,17 +139,22 @@
 }
 
 # Start the bridge for `command` in `run_dir` (request already written).
-# stdout: "|" for a pipe, or a file path. cleanup: kill the process (tree)
-# when its handle is garbage collected or R exits.
+# stdout: "|" for a pipe, or a file path. cleanup: the process must not
+# outlive R. Its tree is killed when the handle is garbage collected or R
+# exits; processx's supervisor stops it when R itself is killed, and the
+# bridge stops its work when its parent process (this R) goes away
+# (SPACESCANS_BRIDGE_PARENT). A persistent job (cleanup = FALSE) keeps running.
 .ss_spawn <- function(py, command, run_dir, stdout = "|", cleanup = TRUE, env = NULL) {
   p <- .ss_paths(run_dir)
+  env <- env %||% .ss_child_env()
+  if (cleanup) env[["SPACESCANS_BRIDGE_PARENT"]] <- as.character(Sys.getpid())
   tryCatch(
     processx::process$new(
       py,
       c("-I", "-u", "-X", "utf8", "-m", "spacescans.bridge", command,
         "--request", p$request, "--result", p$result),
-      stdout = stdout, stderr = p$log, wd = run_dir, env = env %||% .ss_child_env(),
-      cleanup = cleanup, cleanup_tree = cleanup
+      stdout = stdout, stderr = p$log, wd = run_dir, env = env,
+      cleanup = cleanup, cleanup_tree = cleanup, supervise = cleanup
     ),
     error = function(e) {
       .ss_abort("python", sprintf("Cannot start Python (%s): %s", py, conditionMessage(e)))
@@ -204,6 +209,7 @@
       },
       cache_hit = ui$update(ev$step, 1, st$overall, "(cached)"),
       step_end = {
+        if (identical(num(ev$rc), 0) && !isTRUE(ev$cancelled) && !isTRUE(ev$timed_out)) st$frac <- 1
         if (!is.na(num(ev$overall))) st$overall <- num(ev$overall)
         if (isTRUE(verbose)) {
           ui$note(sprintf("step %s finished (%s s)", ev$step %||% "", format(ev$seconds %||% NA)))

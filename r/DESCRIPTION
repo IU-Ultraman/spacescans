@@ -26,6 +26,7 @@ Imports:
     utils
 Suggests:
     arrow,
+    bit64,
     knitr,
     markdown,
     testthat (>= 3.0.0),

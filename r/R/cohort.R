@@ -27,21 +27,54 @@
   if (is.character(cohort) && length(cohort) == 1L && !is.na(cohort)) {
     path <- path.expand(cohort)
     if (!file.exists(path)) .ss_abort("cohort", sprintf("Cohort file not found: %s", cohort))
-    if (grepl("\\.parquet$", path, ignore.case = TRUE)) {
-      return(as.data.frame(nanoparquet::read_parquet(path), stringsAsFactors = FALSE))
-    }
-    if (grepl("\\.(csv|txt)$", path, ignore.case = TRUE)) {
-      # Ids, dates and FIPS/GEOID codes stay text (leading zeros); the rest is inferred.
-      header <- names(utils::read.csv(path, nrows = 1L, check.names = FALSE))
-      text <- header[tolower(header) %in% tolower(c(.ss_cohort_cols[1:3], "patid", .ss_fips_cols)) |
-                       header %in% unname(cols)]
-      return(utils::read.csv(path, stringsAsFactors = FALSE, check.names = FALSE,
-                             colClasses = stats::setNames(rep("character", length(text)), text),
-                             na.strings = c("", "NA")))
-    }
+    if (grepl("\\.parquet$", path, ignore.case = TRUE)) return(.ss_read_cohort_parquet(path))
+    if (grepl("\\.(csv|txt)$", path, ignore.case = TRUE)) return(.ss_read_cohort_csv(path, cols))
     .ss_abort("cohort", sprintf("Unsupported cohort file: %s (expected .csv or .parquet).", cohort))
   }
   .ss_abort("cohort", "`cohort` must be a data frame or the path of a CSV or Parquet file.")
+}
+
+# INT64 columns (ids above 2^53 among them) are read as bit64::integer64, so
+# no id is rounded; without bit64 a file whose INT64 values a double cannot
+# hold exactly is refused.
+.ss_read_cohort_parquet <- function(path) {
+  if (requireNamespace("bit64", quietly = TRUE)) {
+    opts <- nanoparquet::parquet_options(read_int64_type = "integer64")
+    return(as.data.frame(nanoparquet::read_parquet(path, options = opts), stringsAsFactors = FALSE))
+  }
+  df <- as.data.frame(nanoparquet::read_parquet(path), stringsAsFactors = FALSE)
+  schema <- nanoparquet::read_parquet_schema(path)
+  int64 <- intersect(schema$name[schema$type %in% "INT64"], names(df))
+  big <- int64[vapply(int64, function(c) any(abs(df[[c]]) > 2^53, na.rm = TRUE), logical(1))]
+  if (length(big)) {
+    .ss_abort("cohort", sprintf(paste0(
+      "Column(s) %s of %s hold 64-bit integers too large to read exactly without the bit64 package."),
+      paste(big, collapse = ", "), basename(path)),
+      hint = 'install.packages("bit64"), or read the file yourself and pass a data frame.')
+  }
+  df
+}
+
+# Ids, dates and FIPS/GEOID codes stay text; every other column is inferred
+# as utils::read.csv() does, except that a column of zero-padded digit codes
+# ("02134") stays text so its leading zeros survive.
+.ss_read_cohort_csv <- function(path, cols = NULL) {
+  df <- utils::read.csv(path, stringsAsFactors = FALSE, check.names = FALSE,
+                        colClasses = "character", na.strings = character())
+  text <- tolower(names(df)) %in% tolower(c(.ss_cohort_cols[1:3], "patid", .ss_fips_cols)) |
+    names(df) %in% unname(cols)
+  for (i in which(!text)) {
+    x <- df[[i]]
+    x[x %in% c("", "NA")] <- NA_character_
+    padded <- any(grepl("^0[0-9]+$", trimws(x)), na.rm = TRUE)
+    df[[i]] <- if (padded) x else utils::type.convert(x, as.is = TRUE, na.strings = character())
+  }
+  for (i in which(text)) {
+    x <- df[[i]]
+    x[x %in% c("", "NA")] <- NA_character_
+    df[[i]] <- x
+  }
+  df
 }
 
 # Which user column provides each required column.
@@ -179,7 +212,7 @@
     for (dc in names(conv)) {
       blank <- is.na(conv[[dc]])
       if (any(blank)) {
-        warn <- c(warn, sprintf("%s is blank in %s; those episodes get no time-varying exposure.",
+        warn <- c(warn, sprintf("%s is blank in %s; those episodes get no exposure values (static or time-varying).",
                                 map[[dc]], .ss_rows_text(blank)))
       }
       out[[dc]] <- conv[[dc]]

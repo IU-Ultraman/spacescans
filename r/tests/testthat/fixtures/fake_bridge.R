@@ -66,7 +66,7 @@ sc <- scenario[[command]] %||% list()
 
 req <- if (!is.null(req_path)) read_json(req_path, simplifyVector = FALSE) else list(args = list())
 args <- req$args %||% list()
-seen <- list(cwd = getwd())
+seen <- list(cwd = getwd(), bridge_parent = Sys.getenv("SPACESCANS_BRIDGE_PARENT"))
 
 log_dir <- Sys.getenv("SS_FAKE_LOG", "")
 seq_id <- NA

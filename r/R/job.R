@@ -321,9 +321,18 @@ ss_job_result <- function(job, wait = TRUE, progress = interactive()) {
     interrupted <- TRUE
   }
   if (!is.list(result) && isTRUE(job$cancelled)) interrupted <- TRUE
-  value <- .ss_outcome(status, result, .ss_tail(p$log), kept = job$run_dir, interrupted = interrupted)
+  # ss_link()'s finisher reports the link's warnings itself, once.
+  value <- .ss_outcome(status, result, .ss_tail(p$log), kept = job$run_dir, interrupted = interrupted,
+                       emit_warnings = !identical(job$command, "link"))
   finish <- job$meta_finish %||% function(job, value) value
-  out <- finish(job, value)
+  out <- tryCatch(finish(job, value), error = function(e) {
+    # The run directory stays after an error: say where, and how to remove it.
+    if (dir.exists(job$run_dir) && !grepl("Run directory kept at", conditionMessage(e), fixed = TRUE)) {
+      e$message <- paste0(conditionMessage(e), .ss_kept_note(job$run_dir))
+      if (is.null(e$run_dir)) e$run_dir <- job$run_dir
+    }
+    stop(e)
+  })
   job$done <- TRUE
   job$value <- out
   job$final_state <- "succeeded"

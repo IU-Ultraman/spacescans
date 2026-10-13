@@ -63,6 +63,22 @@ NULL
   stop(.ss_condition(kind, message, hint = hint, ..., call = call))
 }
 
+# match.arg() for a single choice, raising spacescans_error_config.
+.ss_choice <- function(arg, choices, name) {
+  if (identical(arg, choices)) return(choices[1L])
+  if (!is.character(arg) || length(arg) != 1L || is.na(arg) || !arg %in% choices) {
+    .ss_abort("config", sprintf("`%s` must be one of %s.", name,
+                                paste0('"', choices, '"', collapse = ", ")))
+  }
+  arg
+}
+
+# The sentence every error appends when it keeps a run directory.
+.ss_kept_note <- function(run_dir) {
+  paste0("\nRun directory kept at ", run_dir, "; remove it with unlink(\"", run_dir,
+         "\", recursive = TRUE).")
+}
+
 # R code for a character vector: c("a", "b") or "a".
 .ss_deparse_chr <- function(x) {
   x <- unique(as.character(unlist(x)))
@@ -93,10 +109,12 @@ NULL
     data_missing = {
       vars <- .ss_chr(details$variables)
       ds <- .ss_chr(details$datasets %||% details$missing)
+      terms <- .ss_chr(details$accept_terms)
+      acc <- if (length(terms)) sprintf(", accept_terms = %s", .ss_deparse_chr(terms)) else ""
       if (length(vars)) {
-        sprintf("Run ss_fetch(%s) to download the missing data.", .ss_deparse_chr(vars))
+        sprintf("Run ss_fetch(%s%s) to download the missing data.", .ss_deparse_chr(vars), acc)
       } else if (length(ds)) {
-        sprintf("Run ss_fetch(datasets = %s) to download the missing data.", .ss_deparse_chr(ds))
+        sprintf("Run ss_fetch(datasets = %s%s) to download the missing data.", .ss_deparse_chr(ds), acc)
       } else {
         "ss_data_status() shows what is missing; ss_fetch() downloads it."
       }
@@ -144,10 +162,14 @@ NULL
     step_failed = {
       rc <- suppressWarnings(as.integer(details$rc))
       step <- details$step
-      oom <- length(rc) == 1L && !is.na(rc) && rc %in% c(-9L, 137L)
+      # The bridge says whether a kill was the OOM killer (a timeout kill is not).
+      oom <- if (!is.null(details$oom)) isTRUE(details$oom) else
+        length(rc) == 1L && !is.na(rc) && rc %in% c(-9L, 137L) && !isTRUE(details$timed_out)
       paste0(
         if (!is.null(step)) sprintf("Step %s exited with code %s. ", step, format(details$rc)) else "",
-        if (oom) {
+        if (isTRUE(details$timed_out)) {
+          "It ran longer than the time limit and was stopped."
+        } else if (oom) {
           "Code -9/137 usually means the system ran out of memory: try fewer threads, a memory_limit, or a smaller cohort."
         } else {
           "The run directory holds the step's config and log."

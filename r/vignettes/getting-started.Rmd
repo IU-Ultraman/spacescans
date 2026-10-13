@@ -113,13 +113,20 @@ job <- ss_link(cohort, c("ndi", "noise", "vnl"), cols = c(pid = "patient_id",
                startDate = "start", endDate = "end", longitude = "lon", latitude = "lat"),
                wait = FALSE, run_dir = "~/ss-runs/noise-vnl")
 ss_job_status(job)
-res <- ss_job_result(job)          # waits, then joins as above
+res <- ss_job_result(job)          # waits, joins as above, then removes the run directory
+```
 
-# After restarting R, the job can be found again from its run directory:
+`ss_job_result()` removes the run directory once it has the result (pass
+`keep = TRUE` to `ss_link()` to keep it). A job started with an explicit
+`run_dir` keeps running when R exits; in a new R session, instead of the
+`ss_job_result()` call above, find it again from its run directory:
+
+```{r}
 job <- ss_job_attach("~/ss-runs/noise-vnl", cohort = cohort,
                      cols = c(pid = "patient_id", startDate = "start", endDate = "end",
                               longitude = "lon", latitude = "lat"))
-ss_job_cancel(job)
+ss_job_status(job)
+res <- ss_job_result(job)          # or ss_job_cancel(job) to stop it
 ```
 
 ## 5. Your own exposure data

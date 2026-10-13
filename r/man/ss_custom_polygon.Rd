@@ -27,8 +27,8 @@ ss_custom_raster(
 )
 }
 \arguments{
-\item{values}{Path of a CSV file, or a data frame (written to a CSV under
-\code{\link[=tempdir]{tempdir()}} for this session).}
+\item{values}{Path of a CSV file, or a data frame (written to a CSV file
+of its own under \code{\link[=tempdir]{tempdir()}} for this session).}
 
 \item{boundary}{The geography the key column holds.}
 

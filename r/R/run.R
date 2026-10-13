@@ -125,7 +125,13 @@ ss_read_result <- function(path, episode = NULL) {
     .ss_abort("data", sprintf("Result file not found: %s", format(path)), details = list(path = path))
   }
   df <- if (grepl("\\.csv$", path, ignore.case = TRUE)) {
-    utils::read.csv(path, stringsAsFactors = FALSE, check.names = FALSE)
+    # PATID, and a geoid that is a geography code rather than an episode id,
+    # stay text: "007" and "7" are different patients, 01001 a FIPS code.
+    header <- names(utils::read.csv(path, nrows = 1L, check.names = FALSE))
+    episodes <- if (is.null(episode)) all(c("PATID", "geoid") %in% header) else isTRUE(episode)
+    text <- intersect(c("PATID", if (!episodes) "geoid"), header)
+    utils::read.csv(path, stringsAsFactors = FALSE, check.names = FALSE,
+                    colClasses = stats::setNames(rep("character", length(text)), text))
   } else if (grepl("\\.parquet$", path, ignore.case = TRUE)) {
     nanoparquet::read_parquet(path)
   } else {

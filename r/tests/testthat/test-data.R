@@ -77,4 +77,26 @@ test_that("bridge next commands are translated to R calls", {
   expect_equal(spacescans:::.ss_r_command("optional: spacescans data verify --dataset vnl"),
                'optional: ss_data_verify(datasets = "vnl")')
   expect_equal(spacescans:::.ss_r_command(""), "")
+  # --accept-terms becomes the accept_terms argument (review rux F3)
+  expect_equal(spacescans:::.ss_r_command("spacescans data fetch --dataset faqsd --accept-terms epa-faqsd"),
+               'ss_fetch(datasets = "faqsd", accept_terms = "epa-faqsd")')
+  expect_equal(spacescans:::.ss_r_command("spacescans data fetch faqsd temis --accept-terms a-1 --accept-terms b"),
+               'ss_fetch(c("faqsd", "temis"), accept_terms = c("a-1", "b"))')
+})
+
+test_that("ss_custom_polygon() gives every data frame a file of its own (review rux F2)", {
+  dir <- local_fake_bridge()
+  a <- data.frame(FIPS = c("18097320100", "18097320200"), greenness = c(0.2, 0.4))
+  b <- transform(a, greenness = 999)
+  da <- ss_custom_polygon(a, boundary = "Tract", key_col = "FIPS", value_cols = "greenness")
+  db <- ss_custom_polygon(b, boundary = "Tract", key_col = "FIPS", value_cols = "greenness")
+  expect_false(identical(da$values_path, db$values_path))
+  expect_equal(utils::read.csv(da$values_path)$greenness, c(0.2, 0.4))
+  expect_equal(utils::read.csv(db$values_path)$greenness, c(999, 999))
+  dn <- ss_custom_polygon(a, boundary = "Tract", key_col = "FIPS", value_cols = "greenness", name = "SVI 2018")
+  dm <- ss_custom_polygon(b, boundary = "Tract", key_col = "FIPS", value_cols = "greenness", name = "SVI/2018")
+  expect_false(identical(dn$values_path, dm$values_path))
+  e <- tryCatch(ss_custom_polygon(a, boundary = "Block", key_col = "FIPS", value_cols = "greenness"),
+                error = identity)
+  expect_s3_class(e, "spacescans_error_config")
 })

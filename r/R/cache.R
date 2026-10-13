@@ -39,7 +39,10 @@
 #' @param cache_dir The cache root (default: option `spacescans.cache_dir`,
 #'   then `tools::R_user_dir("spacescans", "cache")`).
 #' @return `ss_cache_info()`: a list with `cache_dir`, `entries`, `bytes`,
-#'   `oldest`, `newest`. `ss_cache_clear()`: invisibly, what was removed.
+#'   `oldest`, `newest`, and `temp_files`/`temp_bytes` (copies left by
+#'   writes that were interrupted; they hold weights too and
+#'   `ss_cache_clear()` removes them). `ss_cache_clear()`: invisibly, what
+#'   was removed.
 #' @examples
 #' \dontrun{
 #' ss_cache_info()
@@ -61,6 +64,10 @@ print.ss_cache_info <- function(x, ...) {
   cat("  size     ", .ss_format_bytes(x$bytes %||% 0), "\n", sep = "")
   if (!is.null(x$oldest)) cat("  oldest   ", format(x$oldest), "\n", sep = "")
   if (!is.null(x$newest)) cat("  newest   ", format(x$newest), "\n", sep = "")
+  if (isTRUE((x$temp_files %||% 0) > 0)) {
+    cat("  leftover ", format(x$temp_files), " temp file(s) of interrupted writes, ",
+        .ss_format_bytes(x$temp_bytes %||% 0), " (ss_cache_clear() removes them)\n", sep = "")
+  }
   invisible(x)
 }
 

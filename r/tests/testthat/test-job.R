@@ -70,3 +70,17 @@ test_that("an attached running job can be cancelled through its process tree mar
 test_that("non-jobs are refused", {
   expect_error(ss_job_status(list()), class = "spacescans_error_config")
 })
+
+
+test_that("a step counts as done only when it ends with rc 0 (review rux F8)", {
+  st <- spacescans:::.ss_event_state(spacescans:::.ss_progress_ui(FALSE))
+  st$handle(list(ev = "step_start", step = "c4_noise", overall = 0.5))
+  st$handle(list(ev = "progress", step = "c4_noise", frac = 0.4, overall = 0.7))
+  st$handle(list(ev = "step_end", step = "c4_noise", rc = 0L, overall = 1))
+  expect_equal(st$frac, 1)
+  st$handle(list(ev = "step_start", step = "c4_vnl", overall = 0.5))
+  st$handle(list(ev = "progress", step = "c4_vnl", frac = 0.3, overall = 0.65))
+  st$handle(list(ev = "step_end", step = "c4_vnl", rc = -15L, cancelled = TRUE, overall = 0.65))
+  expect_equal(st$frac, 0.3)
+  expect_equal(st$overall, 0.65)
+})
