@@ -64,8 +64,12 @@ PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest -q -p no:cacheprovider
 | `SPACESCANS_CUSTOM_EXAMPLES` | `custom_exposome_examples` | `tests/custom/test_custom_web_parity.py` |
 | `SPACESCANS_CUSTOM_R1` | the paper's R1 custom outputs | `tests/custom/test_custom_web_parity.py` |
 | `SPACESCANS_R1_DIR`, `SPACESCANS_R1_COHORT` | the paper's R1 pipeline outputs and `synth_1k.csv` | `tests/test_web_parity_r1.py` |
+| `SPACESCANS_REAL_DATA_DIR` (with `SPACESCANS_GOLDEN_DIR`) | a data root, only read (`spacescans-web/pipeline-data`) | real pipeline runs: `tests/orchestrate/test_exec_real_run.py` (one C3 step through `SubprocessExecutor`) and `tests/test_bridge_real_link.py` (a bridge `link` of noise on synth_1k, held to the golden at `CROSS_ENV`) |
+| `SPACESCANS_A4=1` (with the two above) | — | gate A4, `tests/orchestrate/test_link_a4.py`: every golden run through `orchestrate.link` (about 24 minutes). `SPACESCANS_A4_ONLY=noise,vnl` picks runs, `SPACESCANS_A4_OUT` keeps the run directories, `SPACESCANS_A4_TOL=same` and `SPACESCANS_A4_PREFIX` are for the frozen-image check |
 
-Every suite only reads these directories.
+Every suite only reads these directories. The real-run suites check afterwards that nothing
+in the data root is newer than a stamp taken first. Run them one at a time: they are real
+pipeline jobs.
 
 To run everything on this Mac:
 
@@ -111,6 +115,10 @@ bash ../.github/scripts/r-check-status.sh spacescans.Rcheck/00check.log
 ```
 
 - **Without `SPACESCANS_PYTHON`** every test that needs Python skips.
+- **The live tests** (`tests/testthat/test-live.R`) run against the real bridge with
+  `SPACESCANS_LIVE=1`; `SPACESCANS_LIVE_DATA_DIR=<data root>` adds the status checks on a real
+  data root (read only, checked with a stamp) and `SPACESCANS_LIVE_LINK=1` one small real
+  `ss_link()`.
 - **The `ss_install()` test** also needs `SPACESCANS_TEST_INSTALL=true` and
   `SPACESCANS_TEST_WHEEL=<wheel>`.
 - **The pass rule** is the one `.github/scripts/r-check-status.sh` applies: no ERROR, and
