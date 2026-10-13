@@ -608,6 +608,14 @@ class WeightCache:
             return []
         return sorted(p for p in d.glob("*.parquet") if p.is_file() and not p.name.startswith("."))
 
+    def _temp_files(self) -> list[Path]:
+        """Temp files of v2 stores (``.<key>.<random>.parquet.tmp`` / ``.meta.json.tmp``):
+        a store in progress, or one that was killed before it could clean up."""
+        d = self.directory
+        if self.key_format != V2 or not d.is_dir():
+            return []
+        return sorted(p for p in d.glob(".*.tmp") if p.is_file())
+
     def info(self) -> dict[str, Any]:
         """``entries``, ``bytes`` (parquet plus meta), ``oldest`` and ``newest`` (ISO 8601 UTC)."""
         entries = self._entries()
@@ -623,6 +631,11 @@ class WeightCache:
             meta = p.with_name(p.name[: -len(".parquet")] + ".meta.json")
             with contextlib.suppress(FileNotFoundError):
                 total += meta.stat().st_size
+        temp_files = temp_bytes = 0
+        for t in self._temp_files():     # they hold C3 weights too: never hide them
+            with contextlib.suppress(FileNotFoundError):
+                temp_bytes += t.stat().st_size
+                temp_files += 1
         return {
             "key_format": self.key_format,
             "root": str(self.root),
@@ -631,15 +644,18 @@ class WeightCache:
             "bytes": total,
             "oldest": _iso(min(mtimes)) if mtimes else None,
             "newest": _iso(max(mtimes)) if mtimes else None,
+            "temp_files": temp_files,
+            "temp_bytes": temp_bytes,
         }
 
     def clear(self, *, older_than_s: float | None = None) -> dict[str, Any]:
         """Remove entries (all, or those last written more than ``older_than_s`` ago).
 
         A v2 entry that another process is writing is left alone. Temp files
-        of interrupted v2 stores older than an hour, and meta files without
-        their parquet, are removed too. Returns ``removed``, ``kept`` and
-        ``bytes`` (freed).
+        of interrupted v2 stores (their key's lock is free) are removed too:
+        all of them without ``older_than_s``, otherwise those older than
+        ``older_than_s`` or an hour; so are meta files without their parquet.
+        Returns ``removed``, ``kept`` and ``bytes`` (freed).
         """
         now = time.time()
         removed = kept = freed = 0
@@ -674,11 +690,22 @@ class WeightCache:
                         if older_than_s is None or now - meta.stat().st_mtime >= older_than_s:
                             meta.unlink()
                             freed += size
-            if self.key_format == V2:
-                for tmp in d.glob(".*.tmp"):
+            for tmp in self._temp_files():
+                key = tmp.name[1:].split(".", 1)[0]
+                try:
+                    st = tmp.stat()
+                except FileNotFoundError:
+                    continue
+                age = now - st.st_mtime
+                if older_than_s is not None and age < min(older_than_s, STALE_TEMP_S):
+                    continue
+                with self._lock(key, blocking=False) as got:
+                    if not got:                  # a store is writing it right now
+                        continue
                     with contextlib.suppress(FileNotFoundError):
-                        if now - tmp.stat().st_mtime >= STALE_TEMP_S:
-                            size = tmp.stat().st_size
-                            tmp.unlink()
-                            freed += size
+                        tmp.unlink()
+                        freed += st.st_size
+                    if not self.path(key).exists():
+                        with contextlib.suppress(FileNotFoundError):
+                            (d / ".locks" / f"{key}.lock").unlink()
         return {"removed": removed, "kept": kept, "bytes": freed}

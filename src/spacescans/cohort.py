@@ -430,8 +430,9 @@ def validate(df: pd.DataFrame) -> CohortReport:
     endDate before its startDate.
 
     Warnings: a blank startDate or endDate (the web accepts these; such an
-    episode gets no time-varying exposure); a user ``episode_id`` column,
-    which is replaced by the row number.
+    episode gets no exposure values, static or time-varying, because the
+    pipeline cannot build its period); a user ``episode_id`` column, which
+    is replaced by the row number.
 
     Points outside the contiguous US are not errors here; coverage reports
     them per variable.

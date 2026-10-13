@@ -660,6 +660,55 @@ def test_link_interrupt_kills_steps_and_leaves_no_process(tmp_path, mode, sig, c
     assert not _alive(child) and not _marked(mark), _marked(mark)
 
 
+def test_link_stops_when_its_client_dies(tmp_path):
+    """Review P2: a killed R session left the bridge and its steps running as orphans."""
+    mark = f"ss-fake-{uuid.uuid4().hex}"
+    pid_file = tmp_path / "child.pid"
+    bridge_pid = tmp_path / "bridge.pid"
+    req = tmp_path / "req.json"
+    res = tmp_path / "res.json"
+    req.write_text(json.dumps({"protocol": 1, "command": "link", "args": link_args(tmp_path)}))
+    cmd = fake_prefix(tmp_path) + ["link", "--request", str(req), "--result", str(res)]
+    client = textwrap.dedent(f"""
+        import os, subprocess, sys, time
+        env = dict(os.environ, SPACESCANS_BRIDGE_PARENT=str(os.getpid()))
+        log = open({str(tmp_path / "bridge.log")!r}, "w")
+        p = subprocess.Popen({cmd!r}, env=env, stdout=subprocess.DEVNULL, stderr=log,
+                             cwd={str(tmp_path)!r})
+        open({str(bridge_pid)!r}, "w").write(str(p.pid))
+        time.sleep(600)
+    """)
+    parent = subprocess.Popen([sys.executable, "-c", client],
+                              env=fake_env("hang", SS_FAKE_MARK=mark, SS_FAKE_PIDFILE=str(pid_file)))
+    try:
+        deadline = time.monotonic() + 60
+        while not pid_file.exists() and time.monotonic() < deadline:
+            time.sleep(0.05)
+        child, bridge = int(pid_file.read_text()), int(bridge_pid.read_text())
+        assert _alive(child) and _alive(bridge)
+        parent.kill()                                   # the client dies without cleaning up
+        parent.wait(5)
+        deadline = time.monotonic() + 15
+        while (_alive(bridge) or _alive(child) or _marked(mark)) and time.monotonic() < deadline:
+            time.sleep(0.1)
+        assert not _alive(bridge) and not _alive(child) and not _marked(mark)
+        result = json.loads(res.read_text())
+        assert result["ok"] is False and result["error"]["kind"] == "interrupted"
+        assert "is gone; stopping" in (tmp_path / "bridge.log").read_text()
+    finally:
+        parent.kill()
+
+
+def test_watch_parent_needs_the_variable_to_name_the_parent(monkeypatch):
+    from spacescans.bridge.main import PARENT_ENV, watch_parent
+    monkeypatch.delenv(PARENT_ENV, raising=False)
+    assert watch_parent() is None
+    monkeypatch.setenv(PARENT_ENV, str(os.getppid() + 100000))   # not our parent: no watch
+    assert watch_parent() is None and PARENT_ENV not in os.environ
+    monkeypatch.setenv(PARENT_ENV, "junk")
+    assert watch_parent() is None
+
+
 # --- cache-info / cache-clear argument checks (the real WeightCache: see the link test) ------------
 
 def test_cache_commands_check_their_arguments(tmp_path):
@@ -762,6 +811,20 @@ def test_relay_overall_fraction_is_monotonic():
     evs = [json.loads(x) for x in sink.lines]
     assert [e.get("overall") for e in evs if e["ev"] != "orchestrate_start"] == [0.0, 0.25, 0.25, 0.5, 1.0]
     assert evs[-1]["ev"] == "orchestrate_start"
+
+    # Review F8: a cancelled, failed or timed-out step is not finished; overall stays put.
+    for end in ({"rc": -15, "cancelled": True}, {"rc": 3}, {"rc": -9, "timed_out": True}):
+        sink.lines.clear()
+        relay = LinkRelay(EventStream(sink, progress_interval_s=0), None, total_steps=2,
+                          verbose=False)
+        relay(E(kind="step_start", step="a"))
+        relay(E(kind="step_end", step="a", data={"rc": 0}))
+        relay(E(kind="step_start", step="b"))
+        relay(E(kind="progress", step="b", frac=0.4))
+        relay(E(kind="step_end", step="b", data=end))
+        evs = [json.loads(x) for x in sink.lines]
+        assert [e["overall"] for e in evs] == [0.0, 0.5, 0.5, 0.7, 0.7], end
+        assert "b" not in relay.finished
 
 
 def test_planned_steps_counts_shared_steps_once():

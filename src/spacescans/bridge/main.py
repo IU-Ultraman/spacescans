@@ -7,6 +7,7 @@ import json
 import os
 import signal
 import sys
+import threading
 import time
 from pathlib import Path
 from typing import Any
@@ -110,6 +111,40 @@ def _read_request(path: str | None, command: str) -> dict[str, Any]:
 
 
 DATA_DIR_ENV = "SPACESCANS_DATA_DIR"
+#: Set by a client whose bridge must not outlive it (R, except for a job meant
+#: to survive the session): the client's pid.
+PARENT_ENV = "SPACESCANS_BRIDGE_PARENT"
+
+
+def watch_parent(interval_s: float = 1.0) -> threading.Thread | None:
+    """Stop the bridge, as on SIGTERM, once the client that started it is gone.
+
+    Only with ``$SPACESCANS_BRIDGE_PARENT`` naming this process's parent at
+    start-up: when the parent dies (the bridge is re-parented), the bridge
+    sends itself SIGTERM, so the running command is cancelled, its step
+    processes are stopped and the result says ``interrupted``. Without this
+    a killed R session would leave the bridge and its pipeline steps running.
+    The variable is removed so step subprocesses never see it.
+    """
+    raw = os.environ.pop(PARENT_ENV, "")
+    try:
+        expected = int(raw)
+    except ValueError:
+        return None
+    if expected <= 1 or os.getppid() != expected:
+        return None
+
+    def loop() -> None:
+        while True:
+            time.sleep(interval_s)
+            if os.getppid() != expected:
+                _log(f"the client process {expected} is gone; stopping")
+                os.kill(os.getpid(), signal.SIGTERM)
+                return
+
+    thread = threading.Thread(target=loop, name="spacescans-bridge-parent-watch", daemon=True)
+    thread.start()
+    return thread
 
 
 def apply_data_dir(args: dict) -> str | None:
@@ -149,6 +184,7 @@ def main(argv: list[str] | None = None) -> int:
     stream = _split_stdout()
     events = EventStream(stream)
     previous_term = signal.signal(signal.SIGTERM, _on_sigterm)
+    watch_parent()
     command = ns.command
     value: Any = None
     warns: list = []

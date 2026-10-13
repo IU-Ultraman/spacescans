@@ -447,6 +447,30 @@ def test_v2_clear_leaves_an_entry_being_written(run):
     assert v2.clear()["removed"] == 1
 
 
+def test_v2_clear_removes_the_temp_copy_of_an_interrupted_store(run):
+    """Review P3: a fresh temp copy (C3 weights) survived clear() and info() never counted it."""
+    v2 = WeightCache(run.tmp / "cache", key_format="v2")
+    key = v2.store(NOISE_C3, run.ctx, run.out, seconds=1.0)
+    leftover = v2.directory / f".{key}.ab12cd34.parquet.tmp"      # named as store names it
+    leftover.write_bytes(v2.path(key).read_bytes())
+    leftover_bytes = leftover.stat().st_size
+    busy = v2.directory / f".{v2.key(BG_C3, run.ctx)}.ef56ab78.parquet.tmp"
+    busy.write_bytes(b"x" * 64)
+    info = v2.info()
+    assert (info["entries"], info["temp_files"]) == (1, 2)
+    assert info["temp_bytes"] == leftover_bytes + 64
+    # with an age limit, a temp file younger than both the limit and an hour stays
+    assert v2.clear(older_than_s=7 * 86400)["removed"] == 0 and leftover.exists()
+    entry_bytes = v2.path(key).stat().st_size + v2.meta_path(key).stat().st_size
+    with v2._lock(v2.key(BG_C3, run.ctx)):              # a store is writing this one
+        res = v2.clear()
+    assert res["removed"] == 1 and res["bytes"] == entry_bytes + leftover_bytes
+    assert not leftover.exists() and busy.exists()
+    assert v2.info()["temp_files"] == 1
+    assert v2.clear()["bytes"] == 64 and not busy.exists()
+    assert v2.info()["temp_files"] == 0 and not any(v2.directory.glob(".*.tmp"))
+
+
 def test_source_fingerprint_prefers_receipts(run):
     cfg = render(NOISE_C3, run.ctx)
     by_stat = orch_cache.source_fingerprint(cfg, run.data)

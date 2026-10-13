@@ -133,9 +133,11 @@ class LinkRelay:
     """orchestrate ``Event`` -> bridge event (and a logs.jsonl line).
 
     ``overall`` is (finished steps + the current step's fraction) / planned
-    steps, never decreasing. A step counts as finished at ``step_end``,
-    ``cache_hit`` or a ``reused`` status. Any relay error is swallowed: the
-    run matters more than its progress display.
+    steps, never decreasing. A step counts as finished at a successful
+    ``step_end`` (rc 0, not cancelled or timed out), ``cache_hit`` or a
+    ``reused`` status; a failed or cancelled step leaves ``overall`` where it
+    was. Any relay error is swallowed: the run matters more than its
+    progress display.
     """
 
     _PASS = ("cache_write", "cache_warning", "merge", "warning", "cohort")
@@ -226,7 +228,11 @@ class LinkRelay:
                 self.current[step] = max(self.current.get(step, 0.0), frac)
             self.events.progress(frac, step=step, text=text, overall=self.overall(), exp=exp)
         elif kind == "step_end":
-            self._finish(step)
+            ok = data.get("rc") == 0 and not data.get("cancelled") and not data.get("timed_out")
+            if ok:
+                self._finish(step)
+            elif step:
+                self.current.pop(step, None)     # not finished: overall stays where it was
             emit("step_end", exp=exp, step=step, overall=self.overall(), text=text, **data)
         elif kind in self._PASS:
             if data.get("status") == "reused":
