@@ -15,10 +15,11 @@
     "backend/app/data/variable_metadata.schema.json": "77b63ae2749138f868c5d0d94e3e2ae5e8503de058902dec8a3ef53792bca132"
   },
   "python": "3.12.13",
+  "platform": "darwin-arm64",
   "pandas": "3.0.6",
   "pyarrow": "26.0.0",
   "numpy": "2.5.4",
   "seed": 20261012,
   "generated_at": "2026-10-12T16:49:44-04:00",
-  "note": "All values are synthetic. Parquet bytes are comparable only with the same pandas and pyarrow versions."
+  "note": "All values are synthetic. Parquet bytes are comparable only with the same pandas and pyarrow versions on the same platform."
 }

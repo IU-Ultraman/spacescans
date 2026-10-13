@@ -620,7 +620,8 @@ def _alive(pid: int) -> bool:
 
 
 def _marked(mark: str) -> list[str]:
-    out = subprocess.run(["ps", "-A", "-o", "pid=,command="], capture_output=True, text=True).stdout
+    # -ww: whole command lines; without a terminal procps cuts them at 80 columns
+    out = subprocess.run(["ps", "-A", "-ww", "-o", "pid=,command="], capture_output=True, text=True).stdout
     return [line for line in out.splitlines() if mark in line and "ps -A" not in line]
 
 

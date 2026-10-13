@@ -12,8 +12,8 @@ Run it with an interpreter that has the web backend's dependencies
 (pandas, pyarrow, numpy, pydantic-settings, jsonschema, pyyaml) and NOT
 spacescans: the fixtures must come from the web's code alone. Use the same
 pandas/pyarrow/numpy versions as the test environment if parquet bytes are
-to be compared; the versions used are recorded in manifest.json and the
-tests compare decoded tables instead when they differ.
+to be compared; the versions and platform used are recorded in manifest.json
+and the tests compare decoded tables instead when they differ.
 
 Every value here is synthetic: random coordinates, dates and exposure
 values with the real column names and dtypes of the web's C4 outputs. No
@@ -44,6 +44,7 @@ import importlib
 import io
 import json
 import os
+import platform
 import random
 import shutil
 import sys
@@ -596,6 +597,7 @@ def main(argv=None):
         "web_commit": args.web_commit,
         "web_files_sha256": {f"backend/app/{u}": _sha256_file(web_app / u) for u in used},
         "python": sys.version.split()[0],
+        "platform": f"{sys.platform}-{platform.machine()}",
         "pandas": pd.__version__,
         "pyarrow": pyarrow.__version__,
         "numpy": np.__version__,
@@ -603,7 +605,7 @@ def main(argv=None):
         "generated_at": datetime.now(ZoneInfo("America/New_York")).isoformat(
             timespec="seconds"),
         "note": "All values are synthetic. Parquet bytes are comparable only "
-                "with the same pandas and pyarrow versions.",
+                "with the same pandas and pyarrow versions on the same platform.",
     }
     (out / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
     shutil.rmtree(work, ignore_errors=True)

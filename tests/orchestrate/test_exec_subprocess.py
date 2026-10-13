@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import os
+import resource
 import signal
 import sys
 import threading
@@ -25,6 +26,7 @@ from spacescans.orchestrate.execute import (
     TAIL_LINES,
     Executor,
     SubprocessExecutor,
+    _maxrss_to_bytes,
     command_line,
     default_prefix,
     execute_step,
@@ -251,14 +253,19 @@ def test_a_step_that_cannot_start_is_rc_127_or_126_not_an_exception(dirs, tmp_pa
 
 def test_maxrss_comes_from_wait4_for_the_step_alone(dirs):
     run_dir, data_dir = dirs
+    # Linux also counts in a child's peak what it shared with this process before exec, so
+    # the big step allocates more than this process holds. It runs first: the small step
+    # must then report its own peak, not the largest one so far.
+    alloc_mb = _maxrss_to_bytes(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss) // 2**20 + 256
+    big = fake().run(spec_file(run_dir, alloc_mb=alloc_mb), data_dir=data_dir, cwd=run_dir,
+                     on_line=lambda _l: None, cancel=None)
     small = fake().run(spec_file(run_dir, lines=["x"]), data_dir=data_dir, cwd=run_dir,
                        on_line=lambda _l: None, cancel=None)
-    big = fake().run(spec_file(run_dir, alloc_mb=256), data_dir=data_dir, cwd=run_dir,
-                     on_line=lambda _l: None, cancel=None)
     assert small.rc == big.rc == 0
-    assert 1_000_000 < small.maxrss_bytes < 200 * 2**20
-    assert big.maxrss_bytes >= 256 * 2**20
-    assert big.maxrss_bytes - small.maxrss_bytes >= 200 * 2**20
+    assert big.maxrss_bytes >= alloc_mb * 2**20
+    assert 1_000_000 < small.maxrss_bytes <= big.maxrss_bytes - 200 * 2**20
+    if sys.platform == "darwin":  # nothing shared: just the interpreter
+        assert small.maxrss_bytes < 200 * 2**20
 
 
 # ---------------------------------------------------------------------------

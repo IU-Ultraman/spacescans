@@ -83,7 +83,9 @@ class StepRun:
     ``rc`` is the exit code, negative for a signal (-15 SIGTERM, -9 SIGKILL) as in
     ``subprocess``. ``seconds`` is wall time. ``maxrss_bytes`` is the step's peak
     resident set size (the subprocess's, from ``wait4``; in-process, this process's
-    peak so far), None where unknown. ``tail`` holds the last output lines (raw
+    peak so far), None where unknown. On Linux the subprocess's figure also counts what
+    it shared with this process before exec, so it is at least this process's resident
+    size when the step started. ``tail`` holds the last output lines (raw
     pipeline output: hand it on as a log tail, not as a user message). ``cancelled``
     and ``timed_out`` say the executor stopped the step.
     """

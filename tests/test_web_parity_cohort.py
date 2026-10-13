@@ -9,16 +9,23 @@ check depends on how close this one is to the generator's:
 
 * always: column names, row count, arrow type family and every value;
 * same pandas major version: the exact arrow schema and pandas metadata
-  (pandas 3 stores text as large_string, pandas 2 as string);
-* same pandas and pyarrow versions: the sha256 of the file bytes, which the
-  legacy C3 cache key is built from.
+  (pandas 3 stores text as large_string, pandas 2 as string), and every
+  value exactly except floats, which may be one unit in the last place
+  apart (pandas parses some decimals differently on Linux x86_64 and macOS
+  arm64);
+* same pandas and pyarrow versions on the generator's platform: every float
+  bit for bit and the sha256 of the file bytes, which the legacy C3 cache
+  key is built from.
 """
 from __future__ import annotations
 
 import hashlib
 import json
+import platform
+import sys
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 import pyarrow
 import pyarrow.parquet as pq
@@ -28,8 +35,10 @@ from spacescans import cohort
 
 FIX = Path(__file__).parent / "fixtures" / "web_parity"
 MANIFEST = json.loads((FIX / "manifest.json").read_text())
-SAME_ENV = (pd.__version__, pyarrow.__version__) == (MANIFEST["pandas"],
-                                                     MANIFEST["pyarrow"])
+PLATFORM = f"{sys.platform}-{platform.machine()}"
+SAME_ENV = (pd.__version__, pyarrow.__version__, PLATFORM) == (MANIFEST["pandas"],
+                                                               MANIFEST["pyarrow"],
+                                                               MANIFEST["platform"])
 SAME_PANDAS_MAJOR = pd.__version__.split(".")[0] == MANIFEST["pandas"].split(".")[0]
 
 PARQUET_CASES = sorted((FIX / "expected" / "parquet").glob("*.json"))
@@ -58,6 +67,17 @@ def _values(t: pyarrow.Table) -> pd.DataFrame:
     return df
 
 
+def _assert_equal_floats_to_one_ulp(got: pyarrow.Table, want: pyarrow.Table) -> None:
+    assert got.schema.equals(want.schema)
+    for name in want.column_names:
+        g, w = got.column(name), want.column(name)
+        if pyarrow.types.is_floating(w.type):
+            assert g.is_null().equals(w.is_null()), name
+            np.testing.assert_array_max_ulp(g.to_numpy(), w.to_numpy(), maxulp=1)
+        else:
+            assert g.equals(w), name
+
+
 def assert_parquet_like_web(actual: Path, rec: dict) -> None:
     expected = FIX / "expected" / "parquet" / rec["blob"]
     got_t, want_t = pq.read_table(actual), pq.read_table(expected)
@@ -67,7 +87,10 @@ def assert_parquet_like_web(actual: Path, rec: dict) -> None:
     pd.testing.assert_frame_equal(_values(got_t), _values(want_t), check_dtype=False)
     if SAME_PANDAS_MAJOR:
         assert [[f.name, str(f.type)] for f in got_t.schema] == rec["schema"]
-        assert got_t.equals(want_t)
+        if SAME_ENV:
+            assert got_t.equals(want_t)
+        else:
+            _assert_equal_floats_to_one_ulp(got_t, want_t)
         # pandas' own metadata (dtypes, index) must match too, version aside.
         got_md = json.loads(got_t.schema.metadata[b"pandas"])
         want_md = json.loads(want_t.schema.metadata[b"pandas"])
