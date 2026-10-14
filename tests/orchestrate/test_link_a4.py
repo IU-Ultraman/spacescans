@@ -493,7 +493,7 @@ def test_fan_in_of_every_run_matches_fanin_all(a4: A4) -> None:
     link_mod = importlib.import_module("spacescans.orchestrate.link")
     cohort_text = pd.read_csv(a4.cohort_csv, dtype=str, keep_default_na=False)
     keys = pd.DataFrame({"pid": cohort_text["pid"], "episode_id": range(len(cohort_text))})
-    exposures = link_mod._fan_in(keys, partials, list(cohort_text.columns))
+    exposures, _names = link_mod._fan_in(keys, partials, list(cohort_text.columns))
     full = pd.concat([cohort_text, exposures.drop(columns=["episode_id"])], axis=1)
     out = a4.out / "fanin_all"
     out.mkdir(parents=True, exist_ok=True)
