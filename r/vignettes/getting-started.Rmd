@@ -92,14 +92,17 @@ What `ss_link()` does, in order:
 1. checks the cohort in R and reports problems by row number, never by
    value;
 2. writes only the five required columns to a private run directory (mode
-   0700); `age` and any other column never leave R;
+   0700, under `tools::R_user_dir("spacescans", "cache")/runs`); `age` and
+   any other column never leave R;
 3. checks that the data and the Python extras are in place, and otherwise
    tells you the exact `ss_fetch()` or `ss_install()` call to run;
 4. runs the pipeline, showing progress; Ctrl-C stops it cleanly;
 5. joins the exposures back onto your data frame by row, keeping its types
    and attributes, and warns when a variable matched fewer than 90% of the
    episodes;
-6. deletes the run directory (unless `keep = TRUE`).
+6. deletes the run directory (unless `keep = TRUE`). Should R be killed
+   before it can, the next session's package load (or `ss_doctor()`,
+   `ss_cache_clear()`) deletes it, since it holds the five cohort columns.
 
 The C3 weights (which units each residential buffer overlaps) are cached
 under `tools::R_user_dir("spacescans", "cache")`, so linking the same cohort

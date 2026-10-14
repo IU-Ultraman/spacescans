@@ -558,8 +558,11 @@ def link(cohort: pd.DataFrame | str | os.PathLike, variables: Sequence[str], *,
     ``cohort``: a table or a CSV path with ``pid`` (or a PATID alias),
     ``startDate``, ``endDate``, ``longitude``, ``latitude``; only these five
     columns are written to disk. ``data_dir``: the data root (default
-    ``$SPACESCANS_DATA_DIR``). ``run_dir``: where the run writes (default: a
-    new private temp dir; created 0700 when missing). ``custom``: definitions
+    ``$SPACESCANS_DATA_DIR``). ``run_dir``: where the run writes (created
+    0700 when missing; default: a new private directory under the per-user
+    root ``tools::R_user_dir("spacescans", "cache")/runs`` with an owner
+    record for this process, removed by a later sweep once the process is
+    gone, see :mod:`~spacescans.orchestrate.runs`). ``custom``: definitions
     of the selected custom variables, keyed by variable key. ``cache``: None
     (no cross-run cache), a :class:`~spacescans.orchestrate.cache.WeightCache`
     (either key format), or a directory (a ``v2`` cache). ``threads`` and
