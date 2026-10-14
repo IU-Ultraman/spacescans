@@ -52,6 +52,26 @@ test_that("the run root is R_user_dir('spacescans', 'cache')/runs and a new run 
   expect_false(file.exists(file.path(o, "owner.json")))
 })
 
+test_that("without a usable run root the session falls back to tempdir() with one warning", {
+  base <- withr::local_tempdir()
+  blocker <- file.path(base, "not-a-dir")
+  writeLines("x", blocker)
+  withr::local_envvar(R_USER_CACHE_DIR = blocker)     # the root cannot be created under a file
+  st <- spacescans:::.ss_state
+  old <- st$runs_root_warned
+  st$runs_root_warned <- NULL
+  withr::defer(st$runs_root_warned <- old)
+  d <- NULL
+  expect_warning(d <- spacescans:::.ss_new_run_dir(), "cannot create the run directory root")
+  on.exit(unlink(d, recursive = TRUE), add = TRUE)
+  expect_equal(dirname(d), normalizePath(tempdir()))
+  expect_equal(as.character(file.info(d)$mode), "700")
+  expect_false(file.exists(file.path(d, "owner.json")))
+  d2 <- NULL
+  expect_no_warning(d2 <- spacescans:::.ss_new_run_dir())    # warned once per session
+  on.exit(unlink(d2, recursive = TRUE), add = TRUE)
+})
+
 test_that("owner liveness: dead pid, reused pid, live pid, other host", {
   alive <- spacescans:::.ss_owner_alive
   expect_true(alive(own_owner()))
