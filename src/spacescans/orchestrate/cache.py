@@ -9,9 +9,13 @@ one run's C3 table can serve another. C4 is never cached.
     what the 0.2.7 runners write. The key is
     ``f"{sha256(input.parquet)[:8]}__{TAG}__b{buffer_m}m"`` plus
     ``f"__r{raster_res_m}m"`` for areal tags (:func:`legacy_key`). A hit needs
-    only a readable parquet of at least 100 bytes; nothing else is checked,
-    as in the web, and a lookup error other than a missing file is raised as
-    the web's was. Entries are copied plainly, as the web does.
+    a readable parquet of at least 100 bytes, as in the web, and a lookup
+    error other than a missing file is raised as the web's was. The key holds
+    only 8 hex digits of the input's hash, so two cohorts can share it: an
+    entry whose ``.meta.json`` records another full hash (``sha_full``) is a
+    miss, which the fresh run then overwrites; an entry without a readable
+    meta is served as the web serves it. Entries are copied plainly, as the
+    web does.
 
 ``v2`` (R and new callers; never shares a directory with the web)
     ``<root>/c3/v2/<cohort8>__<TAG>__b<buffer>m[__r<res>m]__<sha12>.parquet``
@@ -182,6 +186,24 @@ def _legacy_valid_parquet(path: Path) -> bool:
         return True
     except Exception:  # noqa: BLE001 - an unreadable file is a miss, as in the web
         return False
+
+def _legacy_meta_refuses(meta_path: Path, sha_full: str) -> bool:
+    """Whether the entry's ``.meta.json`` records another input than ``sha_full``.
+
+    The legacy key holds only 8 hex digits of the input's sha256, so two
+    cohorts can share a key; every meta the web or this module writes records
+    the full hash (``sha_full``), and an entry whose meta names a different
+    one belongs to another cohort. A meta that is missing, unreadable or
+    without ``sha_full`` proves nothing, and the entry is served as 0.2.7
+    serves it.
+    """
+    try:
+        meta = json.loads(meta_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return False
+    recorded = meta.get("sha_full") if isinstance(meta, dict) else None
+    return isinstance(recorded, str) and recorded != sha_full
+
 
 
 def _parquet_rows(path: Path) -> int:
@@ -547,13 +569,19 @@ class WeightCache:
             key += f"__r{ctx.raster_res_m}m"
         return f"{key}__{digest[:12]}", comps
 
+    def _legacy_key(self, step: Step, ctx: Any) -> tuple[str, str]:
+        """The legacy key of ``step`` in ``ctx`` and the input's full sha256."""
+        _require_c3(step)
+        sha = sha256_file(ctx.cohort_parquet)
+        return legacy_key(step.cache_tag, sha, buffer_m=ctx.buffer_m,
+                          raster_res_m=ctx.raster_res_m,
+                          uses_raster_res=step.uses_raster_res), sha
+
     def key(self, step: Step, ctx: Any) -> str:
         """The entry name of the C3 ``step`` in the run ``ctx``."""
         _require_c3(step)
         if self.key_format == LEGACY:
-            return legacy_key(step.cache_tag, sha256_file(ctx.cohort_parquet),
-                              buffer_m=ctx.buffer_m, raster_res_m=ctx.raster_res_m,
-                              uses_raster_res=step.uses_raster_res)
+            return self._legacy_key(step, ctx)[0]
         return self._v2_key(step, ctx)[0]
 
     # -- locks --------------------------------------------------------------
@@ -590,13 +618,15 @@ class WeightCache:
 
         A legacy lookup raises what the web's lookup raised (a cache directory
         that cannot be searched gives PermissionError), so the caller logs the
-        web's warning and runs fresh without a write-back.
+        web's warning and runs fresh without a write-back. A legacy entry whose
+        meta records another input's full hash is a miss (another cohort with
+        the same 8-digit key prefix).
         """
         dst = Path(dst)
         if self.key_format == LEGACY:
-            key = self.key(step, ctx)
+            key, sha = self._legacy_key(step, ctx)
             path = self.path(key)
-            if not _legacy_valid_parquet(path):
+            if not _legacy_valid_parquet(path) or _legacy_meta_refuses(self.meta_path(key), sha):
                 return None
             dst.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy(path, dst)

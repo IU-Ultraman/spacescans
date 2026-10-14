@@ -250,6 +250,35 @@ def test_legacy_lookup_raises_what_the_webs_lookup_raised(run):
     assert not dst.exists()
 
 
+def _same_prefix_other_hash(sha: str) -> str:
+    """Another full sha256 with the same 8-digit prefix (what two colliding cohorts give)."""
+    return sha[:8] + ("1" if sha[8] == "0" else "0") + sha[9:]
+
+
+def test_legacy_hit_is_refused_when_its_meta_records_another_input(run):
+    """Phase-C review PRIV-1: the key holds 8 hex digits of the input's sha256, so another
+    cohort can share it. An entry whose meta records a different sha_full is that cohort's
+    and is a miss; an entry whose meta proves nothing is served as 0.2.7 serves it."""
+    legacy = WeightCache(run.tmp / "c3_cache", key_format="legacy-v1")
+    key = legacy.store(NOISE_C3, run.ctx, run.out, seconds=1.0)
+    meta_path = legacy.meta_path(key)
+    meta = json.loads(meta_path.read_text())
+    dst = run.tmp / "dst.parquet"
+    assert legacy.fetch(NOISE_C3, run.ctx, dst) == key          # its own input: a hit
+    dst.unlink()
+    meta_path.write_text(json.dumps({**meta, "sha_full": _same_prefix_other_hash(meta["sha_full"])},
+                                    indent=2))
+    assert legacy.fetch(NOISE_C3, run.ctx, dst) is None and not dst.exists()
+    no_sha = json.dumps({k: v for k, v in meta.items() if k != "sha_full"}, indent=2)
+    for text in (None, "{not json", no_sha, "[]", json.dumps({**meta, "sha_full": None})):
+        if text is None:
+            meta_path.unlink()
+        else:
+            meta_path.write_text(text)
+        assert legacy.fetch(NOISE_C3, run.ctx, dst) == key      # nothing to compare: as 0.2.7
+        dst.unlink()
+
+
 # ---------------------------------------------------------------------------------------------
 # v2
 # ---------------------------------------------------------------------------------------------

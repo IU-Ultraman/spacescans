@@ -237,6 +237,29 @@ def test_an_unsearchable_legacy_cache_gives_the_webs_lookup_warning(tmp_path):
     assert [s.cache_key for s in res.steps] == [None, None] and not any(cache.root.iterdir())
 
 
+def test_a_legacy_entry_of_another_input_is_run_fresh_and_replaced(tmp_path):
+    """Phase-C review PRIV-1: B's lookup finds an entry under its key whose meta records
+    another cohort's full hash (the same 8-digit prefix). B's C3 runs instead of copying
+    that cohort's weights, and the entry becomes B's."""
+    ctx = _ctx(tmp_path)
+    cache = WeightCache(tmp_path / "cache", key_format="legacy-v1")
+    step = next(s for s in catalog.plan("noise", ["noise"]) if s.is_c3)
+    key = cache.key(step, ctx)
+    sha_b = hashlib.sha256(ctx.cohort_parquet.read_bytes()).hexdigest()
+    sha_a = sha_b[:8] + ("1" if sha_b[8] == "0" else "0") + sha_b[9:]
+    cache.root.mkdir()
+    pd.DataFrame({"geoid": [0], "grid_id": [424242], "weight": [1.0]}) \
+        .to_parquet(cache.path(key), index=False)
+    cache.meta_path(key).write_text(json.dumps({"sha_full": sha_a, "boundary": "BG_NOISE"}))
+    seen, emit = _events()
+    res = run_source("noise", ["noise"], ctx, cache=cache, executor=FakeExecutor(), on_event=emit)
+    assert [(s.name, s.status) for s in res.steps] == [("c3_noise", "ran"), ("c4_noise", "ran")]
+    assert not any(e.kind == "cache_hit" for e in seen)
+    assert 424242 not in pd.read_parquet(ctx.output_path("c3_noise"))["grid_id"].tolist()
+    assert json.loads(cache.meta_path(key).read_text())["sha_full"] == sha_b
+    assert cache.path(key).read_bytes() == ctx.output_path("c3_noise").read_bytes()
+
+
 def test_a_render_failure_is_a_render_error_with_the_web_line(tmp_path, monkeypatch):
     ctx = _ctx(tmp_path)
 
