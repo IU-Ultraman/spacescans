@@ -202,11 +202,11 @@ def test_c3_noise_weights_have_the_golden_keys(real_run):
     assert sums.max() <= 1e-12
 
 
-@pytest.mark.xfail(strict=False, reason=(
-    "host macOS (GDAL 3.12.2, rasterio 1.5.2) vs the frozen Linux image (GDAL 3.12.3, rasterio "
-    "1.5.0): measured 2026-10-12, 43 of 8,098 weights differ and 3 exceed CROSS_ENV, at most "
-    "8.6e-9 abs; keys and per-episode sums agree. Reported to orch-link for A4."))
 def test_c3_noise_weights_within_cross_env(real_run):
+    """Host macOS (GDAL 3.12.2, rasterio 1.5.2) against the frozen Linux image (GDAL 3.12.3,
+    rasterio 1.5.0): 43 of 8,098 weights differ, at most 8.6e-9 absolute (measured 2026-10-12);
+    keys and per-episode sums agree. Phase-C decision 1 accepts weight differences up to 1e-8
+    absolute across environments (``CROSS_ENV.weight_atol``), so this holds strictly."""
     r, gc = real_run, real_run["gc"]
     assert r["c3"] is not None
-    assert gc.compare_tables(r["golden_c3"], r["c3"], tol=gc.CROSS_ENV) == []
+    assert gc.compare_tables(r["golden_c3"], r["c3"], tol=gc.CROSS_ENV, c3=True) == []

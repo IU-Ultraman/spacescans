@@ -177,6 +177,53 @@ test_that("live: ss_cache_info() and ss_cache_clear() work on an empty cache", {
   ss_cache_clear(cache_dir = root)
 })
 
+test_that("live: R and the bridge keep run directories under one root and sweep each other's", {
+  skip_if_not_live()
+  skip_if_no_command("runs-sweep")
+  local_clean_state()
+  root <- withr::local_tempdir()
+  withr::local_envvar(R_USER_CACHE_DIR = root)
+  runs <- spacescans:::.ss_runs_root()
+  expect_equal(runs, file.path(tools::R_user_dir("spacescans", "cache"), "runs"))
+  # Python computes the same root as tools::R_user_dir() (no cache_root sent)
+  v <- spacescans:::.ss_bridge("runs-sweep", list(dry_run = TRUE))
+  expect_equal(normalizePath(v$root), normalizePath(runs))
+  # a directory R made for a session that is gone: the bridge's sweep removes it
+  p <- processx::process$new("/bin/sh", c("-c", "sleep 0.3"))
+  pid <- p$get_pid()
+  p$wait(10000)
+  stale <- file.path(runs, "ss-gone")
+  dir.create(stale, recursive = TRUE)
+  writeLines("cohort", file.path(stale, "cohort.parquet"))
+  spacescans:::.ss_write_owner(stale, pid = pid)
+  mine <- spacescans:::.ss_new_run_dir()
+  v <- spacescans:::.ss_bridge("runs-sweep", list())
+  expect_equal(unlist(v$removed), "ss-gone")
+  expect_false(dir.exists(stale))
+  expect_true(dir.exists(mine))            # owned by this live session
+  # ss_cache_info() counts a directory in use once, though R and the bridge both sweep
+  info <- ss_cache_info(cache_dir = withr::local_tempdir())
+  expect_equal(info$runs$kept, 1L)
+  expect_equal(info$runs$removed, character())
+  unlink(mine, recursive = TRUE)
+})
+
+test_that("live: a custom definition carries the label, units and description R gave", {
+  skip_if_not_live()
+  skip_if_no_command("custom-validate")
+  local_clean_state()
+  d <- withr::local_tempdir()
+  csv <- file.path(d, "tract_values.csv")
+  writeLines(c("GEOID,score,heat", "18097310100,0.25,1.5", "18097310200,0.75,2.5"), csv)
+  def <- ss_custom_polygon(csv, boundary = "Tract", key_col = "GEOID", value_cols = c("score", "heat"),
+                           name = "Live survey", description = "Scores from a live test.",
+                           labels = c(score = "Survey score"), units = c(heat = "degC"))
+  expect_equal(def$label, "Live survey")
+  expect_equal(def$description, "Scores from a live test.")
+  expect_equal(def$value_labels$score, "Survey score")
+  expect_equal(def$value_units$heat, "degC")
+})
+
 test_that("live: ss_link() links a small cohort and leaves the data directory untouched", {
   skip_if_not_live()
   if (!identical(Sys.getenv("SPACESCANS_LIVE_LINK"), "1")) skip("set SPACESCANS_LIVE_LINK=1 to run a real link")
@@ -193,4 +240,40 @@ test_that("live: ss_link() links a small cohort and leaves the data directory un
   expect_s3_class(attr(res, "coverage"), "data.frame")
   prov <- attr(res, "provenance")
   expect_false(any(grepl("L001", unlist(prov), fixed = TRUE)))
+  # decision 2: the run directory was under the per-user root and is gone after success
+  runs <- spacescans:::.ss_runs_root()
+  expect_equal(list.files(runs, all.files = TRUE, no.. = TRUE), character())
+  # kept on request: there, private, owned by this session; the C3 step is a cache hit
+  res2 <- ss_link(co, "walkability", data_dir = d, progress = FALSE, threads = 2, keep = TRUE)
+  rd <- attr(res2, "spacescans")$run_dir
+  on.exit(unlink(rd, recursive = TRUE), add = TRUE)
+  expect_equal(dirname(rd), normalizePath(runs))
+  expect_equal(as.character(file.info(rd)$mode), "700")
+  owner <- jsonlite::read_json(file.path(rd, "owner.json"))
+  expect_equal(owner$pid, Sys.getpid())
+  expect_false(any(grepl("L001|-86\\.1|2016-", readLines(file.path(rd, "owner.json")))))
+  expect_equal(res2$NatWalkInd, res$NatWalkInd)
+  expect_true("cache_hit" %in% attr(res2, "spacescans")$steps$status)
+})
+
+test_that("live: a real link describes a custom dataset's column by its definition (decision 3)", {
+  skip_if_not_live()
+  if (!identical(Sys.getenv("SPACESCANS_LIVE_LINK"), "1")) skip("set SPACESCANS_LIVE_LINK=1 to run a real link")
+  skip_if_no_command("link")
+  local_clean_state()
+  d <- live_data_dir()
+  local_untouched(d)
+  withr::local_envvar(R_USER_CACHE_DIR = withr::local_tempdir())
+  vals <- file.path(withr::local_tempdir(), "tract_scores.csv")
+  writeLines(c("GEOID,score", "18097310100,0.25", "18097310200,0.75"), vals)
+  def <- ss_custom_polygon(vals, boundary = "Tract", key_col = "GEOID", value_cols = "score",
+                           name = "Live survey", description = "Scores from a live test.",
+                           units = c(score = "points"))
+  res <- suppressWarnings(ss_link(live_cohort(), character(), custom = def, data_dir = d,
+                                  progress = FALSE, threads = 2))
+  f <- attr(res, "features")
+  expect_equal(f$feature_name, "score")
+  expect_equal(f$short_description, "Live survey")
+  expect_equal(f$detailed_description, "Scores from a live test. Unit: points.")
+  expect_equal(list.files(spacescans:::.ss_runs_root(), all.files = TRUE, no.. = TRUE), character())
 })

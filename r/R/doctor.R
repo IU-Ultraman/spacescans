@@ -5,9 +5,11 @@
 #' Python extras, GDAL/GEOS/PROJ, macOS version and architecture, memory,
 #' machine-wide `PROJ_*`/`GDAL_DATA` variables (they are not passed to
 #' Python), whether the data, cache, environment or temporary directories sit
-#' in a cloud-synced folder, free disk space, and (when a data directory is
-#' known) how many catalog variables have their data in place
-#' ([ss_data_status()]).
+#' in a cloud-synced folder, free disk space, the run directories under
+#' `tools::R_user_dir("spacescans", "cache")/runs` (those whose owner process
+#' no longer exists are removed, since they hold cohort data), and (when a
+#' data directory is known) how many catalog variables have their data in
+#' place ([ss_data_status()]).
 #'
 #' @param data_dir Data directory to check. Default: [ss_data_dir()] when
 #'   it is set.
@@ -93,6 +95,13 @@ ss_doctor <- function(data_dir = NULL) {
           sprintf("%s%s", d, if (dir.exists(d)) "" else if (optional) " (created on first use)" else " (does not exist)"))
     }
   }
+  sw <- tryCatch(.ss_sweep_runs(), error = function(e) list(removed = character(), kept = character(),
+                                                               unknown = character(), errors = conditionMessage(e)))
+  add("run directories", if (length(sw$errors)) "warn" else "ok",
+      sprintf("%s: %d in use, %d removed (owner process gone)%s%s", .ss_runs_root(), length(sw$kept),
+              length(sw$removed),
+              if (length(sw$unknown)) sprintf(", %d left alone (owner unknown)", length(sw$unknown)) else "",
+              if (length(sw$errors)) sprintf("; could not remove %s", paste(sw$errors, collapse = ", ")) else ""))
   if (!is.null(data_dir) && dir.exists(data_dir)) {
     free <- .ss_free_bytes(data_dir)
     if (!is.na(free)) add("disk space", if (free >= 50e9) "ok" else "warn",

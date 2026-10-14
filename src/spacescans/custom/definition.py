@@ -69,6 +69,49 @@ def is_raster(definition: Mapping[str, Any]) -> bool:
     return definition.get("geometry") == "raster"
 
 
+def feature_rows(definition: Mapping[str, Any], columns: Sequence[str] | None = None, *,
+                 names: Mapping[str, str] | None = None) -> list[dict[str, str]]:
+    """Feature-dictionary rows of a custom dataset's value columns, from the user's definition.
+
+    The catalog's dictionary (``catalog.feature_rows``) describes the shipped
+    columns by name; a custom column must not borrow those descriptions (a
+    raster whose column is called ``value`` is not VIIRS radiance). So each
+    row comes from the definition (phase-C decision 3): ``short_description``
+    is the column's label in ``value_labels``, else the dataset label (with the
+    column name added when the dataset has several columns);
+    ``detailed_description`` is the dataset description followed by the
+    column's unit, when one was given, as ``Unit: <unit>.``.
+
+    ``columns`` restricts the rows to those value columns (default: all, in the
+    definition's order); ``names`` maps a column to the result column it
+    appears under (a renamed clash), which becomes the row's ``feature_name``.
+    The rows use the dictionary's field names (``feature_name``,
+    ``short_description``, ``detailed_description``).
+    """
+    value_cols = [str(c) for c in (definition.get("value_cols") or [])]
+    wanted = value_cols if columns is None else [str(c) for c in columns]
+    labels = definition.get("value_labels") or {}
+    units = definition.get("value_units") or {}
+    label = str(definition.get("label") or "").strip()
+    description = str(definition.get("description") or "").strip()
+    rows = []
+    for col in wanted:
+        own = str(labels.get(col) or "").strip() if isinstance(labels, Mapping) else ""
+        if own:
+            short = own
+        elif label and len(value_cols) > 1:
+            short = f"{label} ({col})"
+        else:
+            short = label or col
+        unit = str(units.get(col) or "").strip() if isinstance(units, Mapping) else ""
+        detail = description
+        if unit:
+            detail = f"{detail} Unit: {unit}." if detail else f"Unit: {unit}."
+        rows.append({"feature_name": (names or {}).get(col, col), "short_description": short,
+                     "detailed_description": detail})
+    return rows
+
+
 def check_label(name: str | None) -> str:
     """A dataset name, trimmed: non-empty and at most 80 characters (any script)."""
     name = (name or "").strip()

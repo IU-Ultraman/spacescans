@@ -18,10 +18,10 @@ or a \link{difftime}. \code{NULL} (default) removes every entry.}
 }
 \value{
 \code{ss_cache_info()}: a list with \code{cache_dir}, \code{entries}, \code{bytes},
-\code{oldest}, \code{newest}, and \code{temp_files}/\code{temp_bytes} (copies left by
-writes that were interrupted; they hold weights too and
-\code{ss_cache_clear()} removes them). \code{ss_cache_clear()}: invisibly, what
-was removed.
+\code{oldest}, \code{newest}, \code{temp_files}/\code{temp_bytes} (copies left by writes
+that were interrupted; they hold weights too and \code{ss_cache_clear()}
+removes them) and \code{runs} (the run-directory sweep: \code{removed}, \code{kept},
+\code{unknown}, \code{bytes}). \code{ss_cache_clear()}: invisibly, what was removed.
 }
 \description{
 \code{\link[=ss_link]{ss_link()}} keeps the C3 weights it computes (which census units, grid
@@ -32,6 +32,14 @@ buffer and raster settings, the code and data fingerprints and the
 native library versions; a change in any of them is a miss. The entries
 can reveal where cohort members lived, so the directory is private
 (0700) and you may want to clear it when a project ends.
+}
+\details{
+Both functions also sweep the run directories under
+\code{tools::R_user_dir("spacescans", "cache")/runs}: a directory whose owner
+process no longer exists (an R session that was killed) still holds that
+run's cohort file and outputs, so it is deleted, never archived, and a
+message says how many went. The same sweep runs when the package loads and
+in \code{\link[=ss_doctor]{ss_doctor()}}.
 }
 \examples{
 \dontrun{

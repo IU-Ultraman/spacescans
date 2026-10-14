@@ -232,14 +232,16 @@ None.
    | Where the new code ran | Constant | rtol | atol | Basis |
    |---|---|---|---|---|
    | The frozen image, same data root | `SAME_ENV` | 1e-12 | 1e-12 | Two cold passes of this image differ by at most 1.4e-14 absolute (2.5e-14 relative). The absolute term alone is 70 times that, and all 71 compared files pass (see "Run-to-run variation"). |
-   | Another environment (e.g. the macOS uv env of the R package) | `CROSS_ENV` | 1e-9 | 1e-9 | Design gate B: weights abs 1e-9, continuous values rel 1e-9. For distances in metres this is about 1e-6 m. Anything larger is investigated as an environment difference. |
+   | Another environment (e.g. the macOS uv env of the R package) | `CROSS_ENV` | 1e-9 | 1e-9 | Design gate B for continuous values (rel 1e-9). Per column kind (`Tolerance.for_column`, phase-C decision 1 of 2026-10-13): the weights of a C3 table abs 1e-8 (`weight_atol`; the host's GDAL/rasterio build moves 3 of 8,098 noise grid weights by up to 8.6e-9 while every per-episode sum agrees to 1e-16), distances in metres (`dist_*` columns) abs 1e-6 m (`distance_atol_m`). Keys and missing-value masks stay exact. Anything larger is investigated as an environment difference. |
 
    On synth_1k, FARA's `LILATracts_1And10`, `LATracts1` and `HUNVFlag` take only the values
    0 and 1, so in practice they are compared exactly. `LowIncomeTracts` and CBP's `r_*`
    columns are continuous.
 4. **C3/C4 parquet.** Compare with `compare_tables()`: canonical row order, then the same
-   per-column rules. Byte equality is not expected: between two cold passes of the same
-   image, the C4 tables of several runs differed in row order or in the last bits.
+   per-column rules; pass `c3=True` for a `c3_*.parquet` table, so that at `CROSS_ENV` its
+   weights get the 1e-8 absolute bound. Byte equality is not expected: between two cold
+   passes of the same image, the C4 tables of several runs differed in row order or in the
+   last bits.
 5. **Rendered YAML (A0).** Before comparing, replace the task-dir prefix
    `/app/data/tasks/tier2-golden-<run>` and the name suffix `_task_<last 8 chars of the task
    dir name>`; the text must then be byte-identical. A step served from the cache renders no

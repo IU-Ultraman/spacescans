@@ -34,15 +34,22 @@
 #' can reveal where cohort members lived, so the directory is private
 #' (0700) and you may want to clear it when a project ends.
 #'
+#' Both functions also sweep the run directories under
+#' `tools::R_user_dir("spacescans", "cache")/runs`: a directory whose owner
+#' process no longer exists (an R session that was killed) still holds that
+#' run's cohort file and outputs, so it is deleted, never archived, and a
+#' message says how many went. The same sweep runs when the package loads and
+#' in [ss_doctor()].
+#'
 #' @param older_than Remove only entries older than this: a number of days
 #'   or a [difftime]. `NULL` (default) removes every entry.
 #' @param cache_dir The cache root (default: option `spacescans.cache_dir`,
 #'   then `tools::R_user_dir("spacescans", "cache")`).
 #' @return `ss_cache_info()`: a list with `cache_dir`, `entries`, `bytes`,
-#'   `oldest`, `newest`, and `temp_files`/`temp_bytes` (copies left by
-#'   writes that were interrupted; they hold weights too and
-#'   `ss_cache_clear()` removes them). `ss_cache_clear()`: invisibly, what
-#'   was removed.
+#'   `oldest`, `newest`, `temp_files`/`temp_bytes` (copies left by writes
+#'   that were interrupted; they hold weights too and `ss_cache_clear()`
+#'   removes them) and `runs` (the run-directory sweep: `removed`, `kept`,
+#'   `unknown`, `bytes`). `ss_cache_clear()`: invisibly, what was removed.
 #' @examples
 #' \dontrun{
 #' ss_cache_info()
@@ -51,10 +58,25 @@
 #' @export
 ss_cache_info <- function(cache_dir = NULL) {
   root <- .ss_absolute(cache_dir %||% .ss_cache_root())
-  value <- .ss_bridge("cache-info", list(cache_dir = root))
+  sw <- .ss_sweep_and_tell()
+  value <- .ss_bridge("cache-info", list(cache_dir = root,
+                                         cache_root = tools::R_user_dir("spacescans", "cache")))
   attr(value, "spacescans") <- NULL
   value$cache_dir <- value$cache_dir %||% root
+  value$runs <- .ss_merge_sweeps(sw, value$runs)
   structure(value, class = c("ss_cache_info", "list"))
+}
+
+# R's own sweep plus what the bridge's sweep of the same root found afterwards.
+# Both read the same root, the bridge's after R's, so a directory still in use
+# is counted once, from R's sweep (the bridge also sees the request directory
+# of this very call); a removal by either sweep is reported.
+.ss_merge_sweeps <- function(r, py) {
+  py <- py %||% list()
+  kept <- if (length(r$errors) && !length(r$kept)) as.integer(py$kept %||% 0L) else length(r$kept)
+  list(root = r$root %||% py$root, removed = unique(c(r$removed, .ss_chr(py$removed))),
+       kept = kept, unknown = unique(c(r$unknown, .ss_chr(py$unknown))),
+       bytes = (r$bytes %||% 0) + as.numeric(py$bytes %||% 0))
 }
 
 #' @export
@@ -67,6 +89,12 @@ print.ss_cache_info <- function(x, ...) {
   if (isTRUE((x$temp_files %||% 0) > 0)) {
     cat("  leftover ", format(x$temp_files), " temp file(s) of interrupted writes, ",
         .ss_format_bytes(x$temp_bytes %||% 0), " (ss_cache_clear() removes them)\n", sep = "")
+  }
+  if (is.list(x$runs)) {
+    cat("  run dirs ", format(x$runs$kept %||% 0L), " in use, ", length(x$runs$removed),
+        " removed (owner process gone)",
+        if (length(x$runs$unknown)) sprintf(", %d left alone (owner unknown)", length(x$runs$unknown)) else "",
+        "\n", sep = "")
   }
   invisible(x)
 }
@@ -85,7 +113,10 @@ ss_cache_clear <- function(older_than = NULL, cache_dir = NULL) {
     }
   }
   root <- .ss_absolute(cache_dir %||% .ss_cache_root())
-  value <- .ss_bridge("cache-clear", list(cache_dir = root, older_than_s = secs))
+  sw <- .ss_sweep_and_tell()
+  value <- .ss_bridge("cache-clear", list(cache_dir = root, older_than_s = secs,
+                                          cache_root = tools::R_user_dir("spacescans", "cache")))
   attr(value, "spacescans") <- NULL
+  value$runs <- .ss_merge_sweeps(sw, value$runs)
   invisible(value)
 }

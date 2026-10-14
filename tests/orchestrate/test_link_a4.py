@@ -321,7 +321,7 @@ def _compare_run(name: str, rec: dict, a4: A4) -> tuple[list[str], dict]:
         g, n = pd.read_parquet(gpath), pd.read_parquet(npath)
         if rec_of.rename_in_place and rec_of.renames and gpath.name.startswith("c4_"):
             n = n.rename(columns=dict(rec_of.renames))
-        diffs = gc.compare_tables(g, n, tol=tol)
+        diffs = gc.compare_tables(g, n, tol=tol, c3=gpath.name.startswith("c3_"))
         if diffs:
             problems.append(f"output/{gpath.name}: " + "; ".join(diffs))
         floats = [c for c in g.columns if pd.api.types.is_float_dtype(g[c])]
@@ -369,14 +369,34 @@ def _compare_run(name: str, rec: dict, a4: A4) -> tuple[list[str], dict]:
         except ValueError:      # a non-numeric exposure column: compared as text above
             pass
 
-    # feature dictionary, byte for byte
+    # feature dictionary, byte for byte: the web's lookup by column name, which the web keeps
+    # until the cutover (phase-C decision 3)
     feat_path = run_dir / "output" / "feature_dictionary.csv"
     catalog.write_feature_csv(list(full.columns), feat_path)
     if feat_path.read_bytes() != (gdir / "output" / "feature_dictionary.csv").read_bytes():
         problems.append("feature_dictionary.csv differs")
-    if list(result.features["feature_name"]) != [
-            r["feature_name"] for r in catalog.feature_rows(list(full.columns))]:
-        problems.append("LinkResult.features rows differ from the result's dictionary")
+    # LinkResult.features (phase-C decision 3): a catalog column carries the web's row for its
+    # name (the golden dictionary); a custom column carries the row made from the user's
+    # definition (label, units, description), not the catalog row of a column so named
+    from spacescans import custom as _custom
+
+    gold_rows = {r["feature_name"]: r for r in pd.read_csv(
+        gdir / "output" / "feature_dictionary.csv", dtype=str,
+        keep_default_na=False).to_dict(orient="records")}
+    definitions, _subs = a4.custom_for(name)
+    custom_cols = {c: d for d in (definitions or {}).values() for c in d.get("value_cols") or []}
+    want_rows = []
+    for col in [c for c in exposures.columns if c != "episode_id"]:
+        if col in custom_cols:
+            want_rows.extend(_custom.feature_rows(custom_cols[col], [col]))
+        elif col in gold_rows:
+            want_rows.append(gold_rows[col])
+    got_rows = result.features.to_dict(orient="records")
+    if got_rows != want_rows:
+        problems.append(f"LinkResult.features rows {got_rows} != expected {want_rows}")
+    evidence["feature_rows"] = {"catalog": sum(c not in custom_cols for c in exposures.columns
+                                               if c != "episode_id"),
+                                "custom": len(custom_cols)}
 
     # legacy cache keys and meta (A2 fields)
     cache_dir = rec["cache_dir"]
@@ -473,7 +493,7 @@ def test_fan_in_of_every_run_matches_fanin_all(a4: A4) -> None:
     link_mod = importlib.import_module("spacescans.orchestrate.link")
     cohort_text = pd.read_csv(a4.cohort_csv, dtype=str, keep_default_na=False)
     keys = pd.DataFrame({"pid": cohort_text["pid"], "episode_id": range(len(cohort_text))})
-    exposures = link_mod._fan_in(keys, partials, list(cohort_text.columns))
+    exposures, _names = link_mod._fan_in(keys, partials, list(cohort_text.columns))
     full = pd.concat([cohort_text, exposures.drop(columns=["episode_id"])], axis=1)
     out = a4.out / "fanin_all"
     out.mkdir(parents=True, exist_ok=True)

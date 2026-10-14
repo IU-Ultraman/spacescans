@@ -1,4 +1,4 @@
-"""``link``, ``cache-info`` and ``cache-clear``.
+"""``link``, ``cache-info``, ``cache-clear`` and ``runs-sweep``.
 
 ``link`` runs :func:`spacescans.orchestrate.link` (contract 5.3) on a worker
 thread and writes three files into ``run_dir``:
@@ -22,6 +22,15 @@ stops the step's process group), waits ``cancel_grace_s`` (default 7 s),
 kills any child process still alive and exits 130/143 with kind
 ``interrupted``. C3 steps already finished stay in the cache.
 
+Without a ``run_dir`` in the request, ``link`` creates one under the per-user
+root of :mod:`spacescans.orchestrate.runs` (R's
+``tools::R_user_dir("spacescans", "cache")/runs``), owned by the client
+process (the one ``$SPACESCANS_BRIDGE_PARENT`` names, else the bridge's
+parent), which reads the outputs after the bridge has exited.
+``cache-info``, ``cache-clear`` and ``runs-sweep`` sweep that root of run
+directories whose owner process is gone (phase-C decision 2) and report the
+count under ``runs``.
+
 ``orchestrate.link``, ``orchestrate.cache.WeightCache`` and the orchestrate
 ``LogWriter`` are imported inside the functions that use them, because importing
 ``spacescans.orchestrate`` loads pandas and the other bridge commands should not
@@ -31,7 +40,6 @@ from __future__ import annotations
 
 import os
 import sys
-import tempfile
 import threading
 import time
 from collections.abc import Callable, Mapping
@@ -259,9 +267,37 @@ def planned_steps(variables: list[str], overlay: Mapping[str, Any] | None) -> in
 
 # --- helpers ----------------------------------------------------------------------
 
-def _make_run_dir(path: str | None) -> Path:
+def _run_dir_owner() -> int:
+    """The process a run directory the bridge creates belongs to: the client.
+
+    The client reads ``exposures.parquet`` and the other outputs after the
+    bridge has exited, so the bridge itself must not be the owner (the next
+    sweep would delete the results). The client is the pid named by
+    ``$SPACESCANS_BRIDGE_PARENT``, else this process's parent; only an
+    orphaned bridge (parent pid 1) records itself.
+    """
+    from spacescans.bridge import main as _main
+
+    if _main.client_pid:
+        return _main.client_pid
+    parent = os.getppid()
+    return parent if parent > 1 else os.getpid()
+
+
+def _make_run_dir(path: str | None, ctx: Any = None) -> Path:
+    """The request's ``run_dir`` (created 0700 when missing), or a new directory under the
+    per-user run root, owned by the client that started this bridge (:func:`_run_dir_owner`)."""
     if path is None:
-        return Path(tempfile.mkdtemp(prefix="spacescans-link-"))  # mkdtemp: mode 0700
+        from spacescans import __version__
+        from spacescans.orchestrate import runs
+
+        client = dict(getattr(ctx, "client", None) or {})
+        who = " ".join(str(client[k]) for k in ("name", "version") if client.get(k))
+        label = f"spacescans.bridge {__version__}" + (f" for {who}" if who else "")
+        path, warning = runs.run_dir_or_temp(prefix="link-", pid=_run_dir_owner(), client=label)
+        if warning and ctx is not None:
+            ctx.log(f"[spacescans.bridge] {warning}")
+        return path
     p = Path(path)
     if not p.exists():
         p.mkdir(parents=True, mode=DIR_MODE)
@@ -311,7 +347,7 @@ def cmd_link(args: dict, ctx) -> Outcome:
     if data_dir is None:
         raise BridgeError("config", "no data directory: pass data_dir or set SPACESCANS_DATA_DIR",
                           hint="the data directory is where `data-fetch` put the exposure data")
-    run_dir = _make_run_dir(path_arg(args, "run_dir"))
+    run_dir = _make_run_dir(path_arg(args, "run_dir"), ctx)
     cache_dir = path_arg(args, "cache_dir")
     buffer_m = int_arg(args, "buffer_m", minimum=1, default=270)
     raster_res_m = int_arg(args, "raster_res_m", minimum=1, default=25)
@@ -395,26 +431,62 @@ def cmd_link(args: dict, ctx) -> Outcome:
     return value, warnings
 
 
+def _sweep_runs(args: dict, ctx, *, dry_run: bool = False) -> dict:
+    """Sweep ``<cache_root>/runs`` (default: the per-user cache root) of run directories
+    whose owner process is gone; log the count and return the report (decision 2). Never
+    fails the command it runs in."""
+    from spacescans.orchestrate import runs
+
+    root = path_arg(args, "cache_root")
+    try:
+        report = runs.sweep(root, dry_run=dry_run)
+    except Exception as e:  # noqa: BLE001 - housekeeping must not break the command
+        return {"root": root, "dry_run": dry_run, "removed": [], "kept": 0, "unknown": [],
+                "bytes": 0, "errors": [f"{type(e).__name__}: {e}"]}
+    msg = report.message()
+    if msg:
+        ctx.log(f"[spacescans.bridge] {msg}")
+    return report.to_dict()
+
+
 def cmd_cache_info(args: dict, ctx) -> Outcome:
-    """``WeightCache.info()``: entries, bytes, oldest, newest."""
+    """``WeightCache.info()``: entries, bytes, oldest, newest; plus the run-directory sweep."""
     root = path_arg(args, "cache_dir", required=True)
     key_format = choice_arg(args, "key_format", ("v2", "legacy-v1"), default="v2")
     info = weight_cache(root, key_format).info()
-    return {"cache_dir": root, "key_format": key_format, **to_jsonable(dict(info))}, []
+    return {"cache_dir": root, "key_format": key_format, **to_jsonable(dict(info)),
+            "runs": _sweep_runs(args, ctx)}, []
 
 
 def cmd_cache_clear(args: dict, ctx) -> Outcome:
-    """``WeightCache.clear(older_than_s=...)``; without ``older_than_s`` everything goes."""
+    """``WeightCache.clear(older_than_s=...)``; without ``older_than_s`` everything goes.
+    Also sweeps the run directories of dead owners."""
     root = path_arg(args, "cache_dir", required=True)
     key_format = choice_arg(args, "key_format", ("v2", "legacy-v1"), default="v2")
     older = number_arg(args, "older_than_s", minimum=0)
     res = weight_cache(root, key_format).clear(older_than_s=older)
     return {"cache_dir": root, "key_format": key_format, "older_than_s": older,
-            **to_jsonable(dict(res))}, []
+            **to_jsonable(dict(res)), "runs": _sweep_runs(args, ctx)}, []
+
+
+def cmd_runs_sweep(args: dict, ctx) -> Outcome:
+    """Remove the run directories under the per-user root whose owner process is gone.
+
+    args: ``cache_root`` (optional: the per-user cache root whose ``runs``
+    folder is swept; default R's ``tools::R_user_dir("spacescans", "cache")``
+    as :func:`spacescans.orchestrate.runs.user_cache_root` computes it) and
+    ``dry_run`` (list, do not delete). The value is the sweep report: ``root``
+    (the ``runs`` folder), ``removed`` (directory names), ``kept``,
+    ``unknown``, ``bytes``, ``errors``.
+    """
+    from spacescans.bridge.args import bool_arg
+
+    return _sweep_runs(args, ctx, dry_run=bool_arg(args, "dry_run", False)), []
 
 
 COMMANDS = {
     "link": cmd_link,
     "cache-info": cmd_cache_info,
     "cache-clear": cmd_cache_clear,
+    "runs-sweep": cmd_runs_sweep,
 }

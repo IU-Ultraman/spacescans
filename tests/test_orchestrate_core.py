@@ -521,3 +521,166 @@ def test_v2_key_follows_the_tile_cache_a_c3_step_reads(run):
 def test_unknown_key_format_is_refused(tmp_path):
     with pytest.raises(ValueError, match="key_format"):
         WeightCache(tmp_path, key_format="v3")
+
+
+# ---------------------------------------------------------------------------------------------
+# phase C: one v2 entry for the custom and the catalog c3_bg; receipts for the tile caches
+# ---------------------------------------------------------------------------------------------
+
+def test_custom_and_catalog_c3_bg_share_one_v2_key(run, tmp_path):
+    """orch-core open issue 2: the custom path's c3_bg renders ``time: {output_grouping:
+    episode}`` (a C4 setting no C3 pattern reads), bg_ndi_wi's does not; both must share one
+    v2 entry as they share the legacy one. Legacy keys are unchanged (gate A2)."""
+    csv = tmp_path / "vals.csv"
+    csv.write_text("GEOID10,myval\n180973201001,1.5\n")
+    d = custom.define_polygon(csv, boundary="BG", key_col="GEOID10", value_cols=["myval"])
+    key = d["variable_key"]
+    ctx = dataclasses.replace(run.ctx, overlay={key: d})
+    catalog_step = catalog.plan("bg_ndi_wi", ["ndi"])[0]
+    custom_step = next(s for s in catalog.plan("custom", [key], overlay={key: d}) if s.name == "c3_bg")
+    assert catalog_step.name == custom_step.name == "c3_bg"
+    cfg_catalog, cfg_custom = render(catalog_step, ctx), render(custom_step, ctx)
+    assert "time" not in cfg_catalog and cfg_custom["time"] == {"output_grouping": "episode"}
+    assert orch_cache.normalised_config(cfg_catalog) == orch_cache.normalised_config(cfg_custom)
+    assert "time" not in orch_cache.normalised_config(cfg_custom)
+    v2 = WeightCache(run.tmp / "cache", key_format="v2")
+    assert v2.key(catalog_step, ctx) == v2.key(custom_step, ctx)
+    assert v2.components(catalog_step, ctx) == v2.components(custom_step, ctx)
+    legacy = WeightCache(run.tmp / "legacy", key_format="legacy-v1")
+    assert legacy.key(catalog_step, ctx) == legacy.key(custom_step, ctx)
+    assert legacy.key(catalog_step, ctx).endswith("__BG__b270m__r25m")
+    # a stored custom entry is a hit for the catalog step
+    out = run.ctx.run_dir / "output" / "c3_bg.parquet"
+    pd.DataFrame({"geoid": [0, 1], "GEOID10": ["180973201001", "180973201001"],
+                  "value": [1.0, 1.0]}).to_parquet(out, index=False)
+    stored = v2.store(custom_step, ctx, out, seconds=1.0)
+    assert v2.fetch(catalog_step, ctx, run.tmp / "hit.parquet") == stored
+    # a C4 setting that is kept in a time block still counts
+    cfg_years = json.loads(json.dumps(cfg_custom))
+    cfg_years["time"]["years"] = [2015]
+    assert orch_cache.normalised_config(cfg_years) == {**orch_cache.normalised_config(cfg_catalog),
+                                                       "time": {"years": [2015]}}
+
+
+def test_an_empty_time_block_is_kept_for_patterns_that_read_it(run):
+    """tiger_proximity and proximity read ``config.time`` (years, temporal_mode): an empty
+    block (``time: {}``, years None) and no block (years 2013-2019) compute different things,
+    so only ``output_grouping`` goes from their key, never the block."""
+    step = catalog.plan("tiger_proximity", ["tiger_proximity"])[0]
+    cfg = render(step, run.ctx)
+    assert cfg["linkage_pattern"] == "tiger_proximity" and cfg["time"]["output_grouping"] == "episode"
+    norm = orch_cache.normalised_config(cfg)
+    assert "output_grouping" not in norm["time"] and norm["time"]["years"] == list(range(2013, 2020))
+    for pattern in ("tiger_proximity", "proximity"):
+        bare = {"linkage_pattern": pattern, "source": {"file": "x.shp"}}
+        only_grouping = {**bare, "time": {"output_grouping": "episode"}}
+        assert orch_cache.normalised_config(only_grouping) == {**bare, "time": {}}
+        assert orch_cache.normalised_config(only_grouping) != orch_cache.normalised_config(bare)
+    for pattern in sorted(orch_cache._TIMELESS_C3_PATTERNS):
+        bare = {"linkage_pattern": pattern, "source": {"file": "x.shp"}}
+        assert orch_cache.normalised_config({**bare, "time": {"output_grouping": "episode"}}) == bare
+
+
+def test_timeless_c3_patterns_never_read_the_time_block():
+    """The guard behind ``_TIMELESS_C3_PATTERNS``: neither those pattern modules nor what they
+    call (geometry, io, ``linkage.helpers.load_patients``) read ``config.time``. A computation
+    change that starts reading it must take the pattern out of the set."""
+    import inspect
+    import re
+    from importlib import import_module
+
+    reads_time = re.compile(r"\b(?:config|cfg|self\.config)\.time\b|getattr\([^)]*['\"]time['\"]")
+    modules = {"boundary_overlap": "boundary_overlap_linkage",
+               "boundary_overlap_fast": "boundary_overlap_fast_linkage",
+               "grid_weights": "grid_weights_linkage", "nhd_proximity": "nhd_proximity_linkage"}
+    assert set(modules) == orch_cache._TIMELESS_C3_PATTERNS
+    base = Path(spacescans.__file__).resolve().parent
+    sources = {f"linkage/{m}.py": (base / "linkage" / f"{m}.py").read_text() for m in modules.values()}
+    for package in ("geometry", "io"):
+        for path in sorted((base / package).rglob("*.py")):
+            sources[path.relative_to(base).as_posix()] = path.read_text()
+    helpers = import_module("spacescans.linkage.helpers")
+    sources["linkage/helpers.py:load_patients"] = inspect.getsource(helpers.load_patients)
+    readers = {name: m.group(0) for name, text in sources.items() if (m := reads_time.search(text))}
+    assert readers == {}
+    # and the regex does find the reads it is meant to find
+    assert reads_time.search((base / "linkage" / "tiger_proximity_linkage.py").read_text())
+
+
+def _tile_cache_root(run, folder: str, n: int = 3) -> list[Path]:
+    tiles = []
+    for i in range(n):
+        tile = run.data / folder / (f"2013/tl_2013_{i:05d}_roads.parquet" if "tiger" in folder
+                                    else f"tile_gx{i}_gy0_flow.parquet")
+        tile.parent.mkdir(parents=True, exist_ok=True)
+        tile.write_bytes(b"tile" * (10 + i))
+        tiles.append(tile)
+    return tiles
+
+
+@pytest.mark.parametrize("variable,step,folder,artifact", [
+    ("tiger_proximity", "c3_tiger_roads", "cache/C3/tiger_roads_filtered",
+     "tiger_roads_filtered_cache_v1.tar.gz"),
+    ("nhd_bluespace", "c3_nhd_bluespace", "cache/C3/nhd_features", "nhd_features_cache_v1.tar.gz")])
+def test_tile_cache_receipts_make_the_v2_fingerprint_instant(run, monkeypatch, variable, step,
+                                                             folder, artifact):
+    """Phase-B leftover (fix #5): without a receipt the tile cache a TIGER/NHD C3 step reads is
+    fingerprinted by walking its tree (about 0.4-0.6 s on the real root, twice per step); the
+    receipt ``data.fetch``/``adopt`` write for the cache's artifact replaces the walk by the
+    artifact's sha256."""
+    from spacescans.data import load_manifest
+    from spacescans.data.receipts import read_receipt, write_receipt
+
+    man = load_manifest()
+    art = man.artifacts[artifact]
+    assert folder in art.roots or any(r.rstrip("/") == folder for r in art.roots)
+    tiles = _tile_cache_root(run, folder)
+    planned = next(s for s in catalog.plan(variable, [variable]) if s.name == step)
+    cfg = render(planned, run.ctx)
+    assert cfg["source"]["road_cache_dir"] == folder          # the data root's prebuilt cache
+    v2 = WeightCache(run.tmp / "cache", key_format="v2")
+
+    without = orch_cache.source_fingerprint(cfg, run.data)
+    [tree] = without["trees"]
+    assert tree[:3] == [folder, 3, sum(t.stat().st_size for t in tiles)]
+    assert not any(name == artifact for name, _sha in without["receipts"])
+    key_without = v2.key(planned, run.ctx)
+
+    files = [(t.relative_to(run.data).as_posix(), t.stat().st_size, orch_cache.sha256_file(t))
+             for t in tiles]
+    write_receipt(run.data, art, files=files, source="test", origin="adopt",
+                  data_release=man.data_release)
+    assert read_receipt(run.data, artifact)["sha256"] == art.sha256
+
+    def never(ref, data_dir):
+        raise AssertionError(f"the tree {ref} was walked although its receipt covers it")
+
+    monkeypatch.setattr(orch_cache, "_tree_entry", never)
+    with_receipt = orch_cache.source_fingerprint(cfg, run.data)
+    assert "trees" not in with_receipt
+    assert [artifact, art.sha256] in with_receipt["receipts"]
+    key_with = v2.key(planned, run.ctx)
+    assert key_with != key_without
+    # the receipt identifies the data: touching a tile no longer changes the key, deleting
+    # the receipt brings the walk (and the old key) back
+    tiles[0].write_bytes(b"changed" * 20)
+    assert v2.key(planned, run.ctx) == key_with
+    monkeypatch.undo()
+    (run.data / ".spacescans" / "receipts" / f"{artifact}.json").unlink()
+    assert "trees" in orch_cache.source_fingerprint(cfg, run.data)
+
+
+def test_tile_tree_fingerprint_ignores_macos_metadata(run):
+    """Finder's .DS_Store and AppleDouble files are rewritten behind the pipeline's back and no
+    step reads them: they must not move a v2 key (the real TIGER cache carries a .DS_Store)."""
+    folder = "cache/C3/nhd_features"
+    _tile_cache_root(run, folder)
+    before = orch_cache._tree_entry(folder, run.data)
+    (run.data / folder / ".DS_Store").write_bytes(b"\x00\x00\x00\x01Bud1")
+    (run.data / folder / "._tile_gx0_gy0_flow.parquet").write_bytes(b"\x00\x05\x16\x07")
+    (run.data / folder / "__MACOSX").mkdir()
+    (run.data / folder / "__MACOSX" / "._x").write_bytes(b"junk")
+    assert orch_cache._tree_entry(folder, run.data) == before
+    (run.data / folder / "tile_gx9_gy9_flow.parquet").write_bytes(b"real")
+    after = orch_cache._tree_entry(folder, run.data)
+    assert after[1] == before[1] + 1 and after[3] != before[3]

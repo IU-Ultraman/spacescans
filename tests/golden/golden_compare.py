@@ -19,7 +19,10 @@ Rules
   ``SAME_ENV`` (the frozen image spacescans-web-backend:frozen-2026-10-12) or ``CROSS_ENV``
   (another environment, for example the macOS uv environment the R package installs).
   A value passes when ``abs(a - b) <= atol + rtol * abs(b)`` (numpy.isclose), b being the
-  golden value.
+  golden value. ``CROSS_ENV`` tells three kinds of column apart (phase-C decision 1,
+  2026-10-13): the weights of a C3 table (area fractions and grid weights, abs <= 1e-8),
+  distances in metres (``dist_*`` columns, abs <= 1e-6 m) and continuous values (rel <= 1e-9);
+  keys and missing-value masks stay exact. ``Tolerance.for_column`` applies the rule.
 * ``result.csv`` and ``feature_dictionary.csv`` follow the input row order (left join on the
   cohort), so they are compared as written, with the same per-cell rules.
 
@@ -43,12 +46,39 @@ SORT_RULE = ("rows sorted by int(episode_id), ties broken by the remaining colum
 
 KEY_COLUMNS = ("pid", "PATID", "episode_id", "geoid", "grid_id", "GEOID10", "GEOID", "year")
 
+#: Distance columns (metres): the NHD and TIGER proximity outputs (``dist_blue_m``, ``dist_pri``, ...).
+DISTANCE_PREFIX = "dist_"
+
+
+def is_distance_column(col: str) -> bool:
+    """A distance in metres: the proximity sources name every such column ``dist_*``."""
+    return str(col).startswith(DISTANCE_PREFIX)
+
 
 @dataclass(frozen=True)
 class Tolerance:
+    """How close a new value must be to the golden one: ``abs(a - b) <= atol + rtol * abs(b)``.
+
+    ``rtol``/``atol`` hold for continuous values (C4 outputs, result CSVs). Two kinds of
+    column may get an absolute bound of their own: ``weight_atol`` for the weights of a C3
+    table (area fractions and grid weights lie in [0, 1], so an absolute bound is the
+    natural one) and ``distance_atol_m`` for distances in metres (``dist_*`` columns, in C3
+    and C4 tables and result CSVs alike). ``None`` keeps ``rtol``/``atol`` for that kind.
+    """
+
     rtol: float
     atol: float
     why: str
+    weight_atol: float | None = None
+    distance_atol_m: float | None = None
+
+    def for_column(self, col: str, *, c3: bool = False) -> tuple[float, float]:
+        """``(rtol, atol)`` for one float column; ``c3`` says the table is a C3 output."""
+        if self.distance_atol_m is not None and is_distance_column(col):
+            return 0.0, self.distance_atol_m
+        if c3 and self.weight_atol is not None:
+            return 0.0, self.weight_atol
+        return self.rtol, self.atol
 
 
 # Same image, same data root. Two cold passes of the 0.2.7 runners themselves differ by up to
@@ -58,9 +88,15 @@ class Tolerance:
 # and the absolute term alone is 70 times the largest difference (design section 6, A4).
 SAME_ENV = Tolerance(rtol=1e-12, atol=1e-12,
                      why="same frozen image and data: exact expected; slack covers summation order")
-# Another environment (different GDAL/GEOS/PROJ, pandas, DuckDB builds): design section 6, gate B.
-CROSS_ENV = Tolerance(rtol=1e-9, atol=1e-9,
-                      why="different native libraries: design gate B (weights abs 1e-9, values rel 1e-9)")
+# Another environment (different GDAL/GEOS/PROJ, pandas, DuckDB builds): design section 6, gate B,
+# with the phase-C decision of 2026-10-13 for C3 weights. Measured on the host (macOS, GDAL
+# 3.12.2, rasterio 1.5.2) against the frozen image (GDAL 3.12.3, rasterio 1.5.0): 3 of 8,098
+# noise grid weights differ by up to 8.6e-9 absolute (one episode); every per-episode sum agrees
+# to 1.1e-16 and the C4 values stay within 1e-9 relative. Such a difference is accepted as an
+# environment difference up to 1e-8 absolute per weight.
+CROSS_ENV = Tolerance(rtol=1e-9, atol=1e-9, weight_atol=1e-8, distance_atol_m=1e-6,
+                      why="different native libraries: design gate B with phase-C decision 1 "
+                          "(C3 weights abs 1e-8, distances abs 1e-6 m, continuous values rel 1e-9)")
 
 
 # ---------------------------------------------------------------------------
@@ -231,12 +267,13 @@ def compare_text_frames(expected, actual, *, tol: Tolerance = SAME_ENV,
             problems.append(f"{col}: missing-value mask differs ({int((en != an).sum())} cell(s)), "
                             f"first at row {i}: {e.iloc[i]!r} vs {a.iloc[i]!r}")
             continue
-        ok = np.isclose(af, ef, rtol=tol.rtol, atol=tol.atol, equal_nan=True)
+        rtol, atol = tol.for_column(col)
+        ok = np.isclose(af, ef, rtol=rtol, atol=atol, equal_nan=True)
         if not ok.all():
             d = np.abs(af - ef)
             i = int(np.nanargmax(np.where(ok, -np.inf, d)))
-            problems.append(f"{col}: {int((~ok).sum())} value(s) outside rtol={tol.rtol} "
-                            f"atol={tol.atol}; worst row {i}: {ef[i]!r} vs {af[i]!r}")
+            problems.append(f"{col}: {int((~ok).sum())} value(s) outside rtol={rtol} "
+                            f"atol={atol}; worst row {i}: {ef[i]!r} vs {af[i]!r}")
     return problems
 
 
@@ -266,8 +303,12 @@ def canonical_table(df):
                           ignore_index=True)
 
 
-def compare_tables(expected, actual, *, tol: Tolerance = SAME_ENV) -> list[str]:
-    """Compare two C3/C4 parquet tables (as DataFrames) after ``canonical_table``."""
+def compare_tables(expected, actual, *, tol: Tolerance = SAME_ENV, c3: bool = False) -> list[str]:
+    """Compare two C3/C4 parquet tables (as DataFrames) after ``canonical_table``.
+
+    ``c3`` marks a C3 output (``c3_*.parquet``): its float columns are weights, held to
+    ``tol.weight_atol`` when the tolerance has one (distance columns keep their own bound).
+    """
     import numpy as np
     import pandas as pd
     if list(expected.columns) != list(actual.columns):
@@ -282,10 +323,11 @@ def compare_tables(expected, actual, *, tol: Tolerance = SAME_ENV) -> list[str]:
             if (np.isnan(ef) != np.isnan(af)).any():
                 problems.append(f"{col}: missing-value mask differs")
                 continue
-            ok = np.isclose(af, ef, rtol=tol.rtol, atol=tol.atol, equal_nan=True)
+            rtol, atol = tol.for_column(col, c3=c3)
+            ok = np.isclose(af, ef, rtol=rtol, atol=atol, equal_nan=True)
             if not ok.all():
-                problems.append(f"{col}: {int((~ok).sum())} value(s) outside tolerance; "
-                                f"max abs diff {float(np.nanmax(np.abs(af - ef))):.3e}")
+                problems.append(f"{col}: {int((~ok).sum())} value(s) outside rtol={rtol} "
+                                f"atol={atol}; max abs diff {float(np.nanmax(np.abs(af - ef))):.3e}")
         else:
             es = e[col].astype(str).to_numpy()
             as_ = a[col].astype(str).to_numpy()

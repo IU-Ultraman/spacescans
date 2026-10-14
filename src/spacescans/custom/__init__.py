@@ -45,6 +45,7 @@ from spacescans.custom.definition import (
     default_band_columns,
     define_polygon,
     define_raster,
+    feature_rows,
     is_raster,
     preview_raster,
     raster_bands,
@@ -123,7 +124,7 @@ __all__ = [
     "CATALOG_FIELDS", "MAX_LABEL", "MAX_DESCRIPTION", "MAX_RASTER_YEARS",
     "RESERVED_RASTER_COLS", "STATIC_COVERAGE_YEARS", "catalog_entry", "check_label",
     "check_band_columns", "check_definition", "default_band_columns", "define_polygon", "define_raster",
-    "preview_raster", "is_raster", "raster_bands",
+    "feature_rows", "preview_raster", "is_raster", "raster_bands",
     # raster
     "CONUS_BBOX", "MAX_BANDS_LISTED", "FULL_READ_MAX_CELLS", "inspect_raster",
     "grid_hash", "same_grid", "extract_values", "extract_bands",

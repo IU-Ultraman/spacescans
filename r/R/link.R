@@ -12,7 +12,8 @@
 #'    in range. Problems are reported with row numbers, never values.
 #' 3. Only the five columns `pid`, `startDate`, `endDate`, `longitude` and
 #'    `latitude` are written, to `cohort.parquet` in a private run directory
-#'    (mode 0700). Your other columns never leave R.
+#'    (mode 0700, under `tools::R_user_dir("spacescans", "cache")/runs` unless
+#'    you give `run_dir`). Your other columns never leave R.
 #' 4. The data directory is checked ([ss_data_status()]): when data is
 #'    missing the error says which [ss_fetch()] call to run, and when a
 #'    Python extra is missing, which [ss_install()] call. `ss_link()` never
@@ -26,7 +27,10 @@
 #'    attributes are kept. An exposure column whose name is already taken
 #'    gets the suffix `_<experiment>_dup`, as in the web app.
 #' 7. With `keep = FALSE` the run directory is deleted after success; cache
-#'    entries stay. After an error it is kept and its path printed.
+#'    entries stay. After an error it is kept and its path printed. A run
+#'    directory the package chose itself is recorded as owned by this R
+#'    session; should the session die, the next package load, [ss_doctor()]
+#'    or [ss_cache_clear()] (in any session of yours) deletes it.
 #'
 #' @param cohort A data frame with one row per residential episode, or the
 #'   path of a CSV or Parquet file.
@@ -53,7 +57,8 @@
 #' @param progress Show progress (default: in interactive sessions).
 #' @param keep Keep the run directory after success.
 #' @param run_dir Run directory to use (created with mode 0700; must be
-#'   empty). Default: a fresh directory under [tempdir()].
+#'   empty). Default: a fresh directory under
+#'   `tools::R_user_dir("spacescans", "cache")/runs`, owned by this session.
 #' @param wait `TRUE` (default) waits for the result; `FALSE` returns a job
 #'   at once (see [ss_job_status()]). Only a job with an explicit `run_dir`
 #'   survives the R session.

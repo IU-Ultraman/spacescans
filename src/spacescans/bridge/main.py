@@ -114,6 +114,10 @@ DATA_DIR_ENV = "SPACESCANS_DATA_DIR"
 #: Set by a client whose bridge must not outlive it (R, except for a job meant
 #: to survive the session): the client's pid.
 PARENT_ENV = "SPACESCANS_BRIDGE_PARENT"
+#: The client's pid when ``$SPACESCANS_BRIDGE_PARENT`` named this process's parent
+#: (set by :func:`watch_parent`); a run directory the bridge creates for ``link`` is
+#: owned by it, since the client reads the results after the bridge has exited.
+client_pid: int | None = None
 
 
 def watch_parent(interval_s: float = 1.0) -> threading.Thread | None:
@@ -126,6 +130,7 @@ def watch_parent(interval_s: float = 1.0) -> threading.Thread | None:
     a killed R session would leave the bridge and its pipeline steps running.
     The variable is removed so step subprocesses never see it.
     """
+    global client_pid
     raw = os.environ.pop(PARENT_ENV, "")
     try:
         expected = int(raw)
@@ -133,6 +138,7 @@ def watch_parent(interval_s: float = 1.0) -> threading.Thread | None:
         return None
     if expected <= 1 or os.getppid() != expected:
         return None
+    client_pid = expected
 
     def loop() -> None:
         while True:
@@ -171,7 +177,7 @@ def main(argv: list[str] | None = None) -> int:
         description=f"spacescans bridge, protocol {PROTOCOL}: run one command from a JSON request.")
     parser.add_argument("command", help="hello | catalog | coverage | data-status | data-plan | "
                                         "data-verify | data-fetch | data-import | data-terms | "
-                                        "custom-validate | link | cache-info | cache-clear | run | "
+                                        "custom-validate | link | cache-info | cache-clear | runs-sweep | run | "
                                         "resolve | schema | templates | quickstart | yaml-load | "
                                         "yaml-dump | capabilities | ping")
     parser.add_argument("--request", help="request JSON file (optional for commands without args)")

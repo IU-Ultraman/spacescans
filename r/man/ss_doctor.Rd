@@ -20,9 +20,11 @@ Runs local checks and one bridge handshake, and reports each as \code{ok},
 Python extras, GDAL/GEOS/PROJ, macOS version and architecture, memory,
 machine-wide \verb{PROJ_*}/\code{GDAL_DATA} variables (they are not passed to
 Python), whether the data, cache, environment or temporary directories sit
-in a cloud-synced folder, free disk space, and (when a data directory is
-known) how many catalog variables have their data in place
-(\code{\link[=ss_data_status]{ss_data_status()}}).
+in a cloud-synced folder, free disk space, the run directories under
+\code{tools::R_user_dir("spacescans", "cache")/runs} (those whose owner process
+no longer exists are removed, since they hold cohort data), and (when a
+data directory is known) how many catalog variables have their data in
+place (\code{\link[=ss_data_status]{ss_data_status()}}).
 }
 \examples{
 \dontrun{

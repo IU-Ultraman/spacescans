@@ -59,7 +59,8 @@ warning naming the failures).}
 \item{keep}{Keep the run directory after success.}
 
 \item{run_dir}{Run directory to use (created with mode 0700; must be
-empty). Default: a fresh directory under \code{\link[=tempdir]{tempdir()}}.}
+empty). Default: a fresh directory under
+\code{tools::R_user_dir("spacescans", "cache")/runs}, owned by this session.}
 
 \item{wait}{\code{TRUE} (default) waits for the result; \code{FALSE} returns a job
 at once (see \code{\link[=ss_job_status]{ss_job_status()}}). Only a job with an explicit \code{run_dir}
@@ -88,7 +89,8 @@ format, \code{2017-08-19} or \code{8/19/2017}); coordinates must be present and
 in range. Problems are reported with row numbers, never values.
 \item Only the five columns \code{pid}, \code{startDate}, \code{endDate}, \code{longitude} and
 \code{latitude} are written, to \code{cohort.parquet} in a private run directory
-(mode 0700). Your other columns never leave R.
+(mode 0700, under \code{tools::R_user_dir("spacescans", "cache")/runs} unless
+you give \code{run_dir}). Your other columns never leave R.
 \item The data directory is checked (\code{\link[=ss_data_status]{ss_data_status()}}): when data is
 missing the error says which \code{\link[=ss_fetch]{ss_fetch()}} call to run, and when a
 Python extra is missing, which \code{\link[=ss_install]{ss_install()}} call. \code{ss_link()} never
@@ -102,7 +104,10 @@ Completed C3 steps stay in the cache.
 attributes are kept. An exposure column whose name is already taken
 gets the suffix \verb{_<experiment>_dup}, as in the web app.
 \item With \code{keep = FALSE} the run directory is deleted after success; cache
-entries stay. After an error it is kept and its path printed.
+entries stay. After an error it is kept and its path printed. A run
+directory the package chose itself is recorded as owned by this R
+session; should the session die, the next package load, \code{\link[=ss_doctor]{ss_doctor()}}
+or \code{\link[=ss_cache_clear]{ss_cache_clear()}} (in any session of yours) deletes it.
 }
 }
 \examples{

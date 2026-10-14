@@ -13,7 +13,8 @@ ss_custom_polygon(
   year_col = NULL,
   name = NULL,
   labels = NULL,
-  units = NULL
+  units = NULL,
+  description = NULL
 )
 
 ss_custom_raster(
@@ -23,7 +24,8 @@ ss_custom_raster(
   value_cols = NULL,
   name = NULL,
   labels = NULL,
-  units = NULL
+  units = NULL,
+  description = NULL
 )
 }
 \arguments{
@@ -43,6 +45,9 @@ of its own under \code{\link[=tempdir]{tempdir()}} for this session).}
 \item{labels, units}{Named character vectors of labels and units, keyed by
 value column.}
 
+\item{description}{A sentence describing the dataset (default: one made
+from the boundary or the raster).}
+
 \item{paths}{GeoTIFF paths.}
 
 \item{years}{The year of each raster, or \code{NULL} for one static raster.}
@@ -51,7 +56,10 @@ value column.}
 }
 \value{
 A definition: a list of class \code{ss_custom} (\code{variable_key},
-\code{label}, \code{boundary}, \code{value_cols}, ...).
+\code{label}, \code{boundary}, \code{value_cols}, ...). The \code{features} attribute of
+the \code{\link[=ss_link]{ss_link()}} result describes each of its columns from this
+definition: the column's label (else the dataset's \code{name}), and the
+\code{description} followed by the column's unit.
 }
 \description{
 Validates your own values so \code{\link[=ss_link]{ss_link()}} can link them like a catalog

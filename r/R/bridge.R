@@ -35,11 +35,51 @@
                    POSIXt = "ISO8601", Date = "ISO8601", force = TRUE)
 }
 
-.ss_new_run_dir <- function(parent = tempdir()) {
+# A fresh private (0700) directory. Without `parent` it goes under the per-user
+# run root (tools::R_user_dir("spacescans", "cache")/runs, see runs.R) and gets
+# an owner.json naming this R session, so a later sweep removes it should this
+# session die before it can (phase-C decision 2). With `parent` (output
+# directories under tempdir()) it is an ordinary temp directory.
+.ss_new_run_dir <- function(parent = NULL) {
+  if (is.null(parent)) {
+    dir <- tryCatch(.ss_owned_run_dir(), error = function(e) NULL)
+    if (!is.null(dir)) return(dir)
+    if (!isTRUE(.ss_state$runs_root_warned)) {
+      .ss_state$runs_root_warned <- TRUE
+      warning(sprintf(paste0("spacescans: cannot create the run directory root %s; using tempdir() ",
+                             "for this session (set R_USER_CACHE_DIR to a writable location)."),
+                      .ss_runs_root()), call. = FALSE)
+    }
+    parent <- tempdir()
+  }
   dir <- tempfile("ss-", tmpdir = parent)
   dir.create(dir, recursive = TRUE, mode = "0700")
   Sys.chmod(dir, "0700", use_umask = FALSE)
   normalizePath(dir)
+}
+
+# A new directory under the per-user run root with this session's owner record,
+# or an error when the root, the directory or the record cannot be made (where
+# dir.create() and file.rename() only warn), so the caller can fall back.
+.ss_owned_run_dir <- function() {
+  root <- .ss_runs_root()
+  if (!dir.exists(root) && !suppressWarnings(dir.create(root, recursive = TRUE, mode = "0700"))) {
+    stop("cannot create ", root)
+  }
+  root <- .ss_ensure_private_dir(root)
+  dir <- tempfile("ss-", tmpdir = root)
+  if (!suppressWarnings(dir.create(dir, mode = "0700")) || !dir.exists(dir)) stop("cannot create ", dir)
+  Sys.chmod(dir, "0700", use_umask = FALSE)
+  dir <- normalizePath(dir, mustWork = TRUE)
+  ok <- tryCatch({
+    suppressWarnings(.ss_write_owner(dir))
+    file.exists(file.path(dir, "owner.json"))
+  }, error = function(e) FALSE)
+  if (!ok) {
+    unlink(dir, recursive = TRUE)
+    stop("cannot write the owner record in ", dir)
+  }
+  dir
 }
 
 .ss_tail <- function(path, n = 20L) {

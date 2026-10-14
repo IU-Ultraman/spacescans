@@ -74,8 +74,11 @@ no reticulate dependency: a crash or Ctrl-C in Python never takes the R session 
 processx, ps, jsonlite, nanoparquet.
 
 `ss_link()` writes only `pid`, `startDate`, `endDate`, `longitude` and `latitude` to a private
-(0700) run directory under `tempdir()`, deleted after success unless `keep = TRUE`; cohort values
-never appear in messages, events or provenance.
+(0700) run directory under `tools::R_user_dir("spacescans", "cache")/runs`, deleted after success
+unless `keep = TRUE`; cohort values never appear in messages, events or provenance. Each run
+directory records the R session that owns it; one left behind by a session that was killed is
+deleted (never archived) the next time the package loads, or by `ss_doctor()` or
+`ss_cache_clear()`.
 
 Functions: `ss_install()`, `ss_use_python()`, `ss_doctor()`, `ss_version()`;
 `ss_catalog()`, `ss_features()`; `ss_data_dir()`, `ss_data_status()`,

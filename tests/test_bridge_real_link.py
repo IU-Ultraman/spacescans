@@ -77,7 +77,8 @@ def test_bridge_link_on_real_data_matches_the_golden_noise_run(tmp_path, golden_
     for col in values:
         e, a = gold[col].to_numpy(float), ours[col].to_numpy(float)
         assert (np.isnan(e) == np.isnan(a)).all(), f"{col}: missing-value mask differs"
-        ok = np.isclose(a, e, rtol=gc.CROSS_ENV.rtol, atol=gc.CROSS_ENV.atol, equal_nan=True)
+        rtol, atol = gc.CROSS_ENV.for_column(col)
+        ok = np.isclose(a, e, rtol=rtol, atol=atol, equal_nan=True)
         assert ok.all(), f"{col}: {int((~ok).sum())} value(s) outside CROSS_ENV"
 
     run1 = Path(v["run_dir"])

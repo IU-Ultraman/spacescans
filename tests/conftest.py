@@ -52,6 +52,19 @@ def golden_dir() -> Path:
     return root
 
 
+@pytest.fixture(scope="session")
+def _test_user_cache(tmp_path_factory) -> Path:
+    return tmp_path_factory.mktemp("user-cache")
+
+
+@pytest.fixture(autouse=True)
+def _isolate_user_cache(monkeypatch, _test_user_cache):
+    """Point the per-user root (R's ``tools::R_user_dir("spacescans", "cache")``, read by
+    ``orchestrate.runs`` through ``R_USER_CACHE_DIR``) at a temp dir for every test, so a
+    ``link`` without ``run_dir`` or a sweep never touches the developer's real user cache."""
+    monkeypatch.setenv("R_USER_CACHE_DIR", str(_test_user_cache))
+
+
 @pytest.fixture(autouse=True)
 def _isolate_spacescans_env(monkeypatch):
     """Run every test without the caller's SPACESCANS_* environment variables.

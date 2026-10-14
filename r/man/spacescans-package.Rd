@@ -48,6 +48,13 @@ after Ctrl-C before its process tree is killed (default 10).
 \code{tools::R_user_dir("spacescans", "cache")}).
 \item \code{spacescans.envdir}: where \code{\link[=ss_install]{ss_install()}} puts the Python environment.
 }
+
+Run directories: a call that is given no \code{run_dir} works in a private
+(0700) directory under \code{tools::R_user_dir("spacescans", "cache")/runs},
+recorded as owned by this R session (\code{owner.json}: pid, start time, host;
+no cohort values). Directories whose owner no longer exists are deleted,
+never archived, when the package loads, in \code{\link[=ss_doctor]{ss_doctor()}} and in
+\code{\link[=ss_cache_clear]{ss_cache_clear()}} (the Python side sweeps too); a message says how many.
 }
 \seealso{
 Useful links:

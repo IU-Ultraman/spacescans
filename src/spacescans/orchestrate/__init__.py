@@ -12,6 +12,9 @@
   :class:`RunLock` (``.events``, ``.execute``, ``.locks``).
 * :func:`fan_in`, :func:`merge_partial` and friends (``.merge``) and the
   pre-run coverage estimate :func:`compute_coverage` (``.coverage``).
+* :func:`create_run_dir` and :func:`sweep_run_dirs` (``.runs``): run
+  directories under the per-user root R shares, each with an owner record,
+  and the sweep that removes the ones whose owner process is gone.
 
 Two names here are also submodule names: the function :func:`link` hides the
 ``link`` module as an attribute of this package, so import from submodules
@@ -83,6 +86,13 @@ from spacescans.orchestrate.run import (
     partial,
     run_source,
 )
+from spacescans.orchestrate.runs import (
+    SweepReport,
+    create_run_dir,
+    runs_root,
+    user_cache_root,
+)
+from spacescans.orchestrate.runs import sweep as sweep_run_dirs
 
 __all__ = [
     "CONUS_BBOX",
@@ -121,8 +131,10 @@ __all__ = [
     "StepRecord",
     "StepRun",
     "SubprocessExecutor",
+    "SweepReport",
     "WeightCache",
     "compute_coverage",
+    "create_run_dir",
     "episode_keys",
     "execute_step",
     "fan_in",
@@ -137,7 +149,10 @@ __all__ = [
     "partial_from_dir",
     "read_coverage_csv",
     "run_source",
+    "runs_root",
     "select_output",
+    "sweep_run_dirs",
     "tee",
+    "user_cache_root",
     "write_config",
 ]

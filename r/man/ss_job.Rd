@@ -68,7 +68,9 @@ finished command returns (for \code{ss_link()}, the linked data frame), or
 raises its error.
 \item \code{ss_job_attach()} finds a job again from its run directory, for example
 after R restarted. Only jobs started with an explicit \code{run_dir} survive
-the R session: a run directory under \code{\link[=tempdir]{tempdir()}} is removed when R exits.
+the R session: a run directory the package chose itself is tied to the
+session that started the job (the bridge stops with it, and the directory
+is removed by the next sweep once that session is gone).
 }
 }
 \examples{

@@ -45,7 +45,6 @@ exit codes, timings and fingerprints.
 from __future__ import annotations
 
 import os
-import tempfile
 import threading
 import time
 from collections import OrderedDict
@@ -276,19 +275,30 @@ def _check_data(groups: Mapping[str, list[str]], overlay: Mapping[str, dict],
 # run directory, cohort, cache, executor
 # ---------------------------------------------------------------------------
 
-def _run_dir(run_dir: str | os.PathLike | None) -> Path:
+def _run_dir(run_dir: str | os.PathLike | None) -> tuple[Path, str | None]:
+    """The run directory and, rarely, a warning about it.
+
+    The caller's (created 0700 when missing), or a new one of
+    :mod:`~spacescans.orchestrate.runs` under the per-user root, owned by this
+    process and swept with the other dead ones later (decision 2); when that
+    root cannot be created, a private temp directory and a warning that no
+    sweep removes it.
+    """
     if run_dir is None:
-        return Path(tempfile.mkdtemp(prefix="spacescans-link-"))   # mode 0700
+        from spacescans import __version__
+        from spacescans.orchestrate import runs
+
+        return runs.run_dir_or_temp(prefix="link-", client=f"spacescans {__version__} link")
     path = Path(os.fspath(run_dir)).expanduser().absolute()
     if path.exists():
         if not path.is_dir():
             raise LinkConfigError(f"run_dir {path} is not a directory",
                                   details={"run_dir": str(path)})
-        return path
+        return path, None
     path.parent.mkdir(parents=True, exist_ok=True)
     path.mkdir(mode=_RUN_DIR_MODE)
     os.chmod(path, _RUN_DIR_MODE)
-    return path
+    return path, None
 
 
 def _cohort_columns(cohort_in: Any) -> list[str]:
@@ -454,21 +464,30 @@ def _fan_in(cohort_keys: pd.DataFrame, partials: Mapping[str, pd.DataFrame],
 
 
 def _features(columns: Sequence[str],
-              origins: Mapping[str, tuple[str, str | None, str]] | None = None) -> pd.DataFrame:
+              origins: Mapping[str, tuple[str, str | None, str]] | None = None,
+              overlay: Mapping[str, dict] | None = None) -> pd.DataFrame:
     """Feature-dictionary rows of ``columns``.
 
-    A column is looked up by its name before any rename (``origins[column]``
-    is ``(experiment, variable, that name)``), as the web looks up a result
-    column (gate A4 holds the rows to the web's), so a renamed column keeps
-    its row under its new name.
+    A catalog column is looked up by its name before any rename
+    (``origins[column]`` is ``(experiment, variable, that name)``), as the web
+    looks up a result column (gate A4 holds the rows to the web's), so a
+    renamed column keeps its row under its new name. A custom column's row
+    comes from the user's definition in ``overlay`` (label, units, description;
+    ``custom.feature_rows``), not from the catalog's lookup by name, which
+    would hand a raster column called ``value`` the VIIRS description
+    (phase-C decision 3).
     """
     import pandas as pd
 
-    from spacescans import catalog
+    from spacescans import catalog, custom
 
     rows = []
     for col in columns:
-        _exp, _var, name = (origins or {}).get(col, (None, None, col))
+        exp, var, name = (origins or {}).get(col, (None, None, col))
+        definition = (overlay or {}).get(var) if exp == custom.EXPERIMENT_KEY else None
+        if definition is not None:
+            rows.extend(custom.feature_rows(definition, [name], names={name: col}))
+            continue
         for row in catalog.feature_rows([name]):
             rows.append({**row, "feature_name": col})
     return pd.DataFrame(rows, columns=list(catalog.FEATURE_FIELDNAMES))
@@ -544,8 +563,11 @@ def link(cohort: pd.DataFrame | str | os.PathLike, variables: Sequence[str], *,
     ``cohort``: a table or a CSV path with ``pid`` (or a PATID alias),
     ``startDate``, ``endDate``, ``longitude``, ``latitude``; only these five
     columns are written to disk. ``data_dir``: the data root (default
-    ``$SPACESCANS_DATA_DIR``). ``run_dir``: where the run writes (default: a
-    new private temp dir; created 0700 when missing). ``custom``: definitions
+    ``$SPACESCANS_DATA_DIR``). ``run_dir``: where the run writes (created
+    0700 when missing; default: a new private directory under the per-user
+    root ``tools::R_user_dir("spacescans", "cache")/runs`` with an owner
+    record for this process, removed by a later sweep once the process is
+    gone, see :mod:`~spacescans.orchestrate.runs`). ``custom``: definitions
     of the selected custom variables, keyed by variable key. ``cache``: None
     (no cross-run cache), a :class:`~spacescans.orchestrate.cache.WeightCache`
     (either key format), or a directory (a ``v2`` cache). ``threads`` and
@@ -597,7 +619,9 @@ def link(cohort: pd.DataFrame | str | os.PathLike, variables: Sequence[str], *,
     exe = make_executor(executor, threads=threads, memory_limit=memory_limit)
     weight_cache = _weight_cache(cache)
 
-    rdir = _run_dir(run_dir)
+    rdir, rdir_warning = _run_dir(run_dir)
+    if rdir_warning:
+        warnings.append({"code": "run_dir", "message": rdir_warning})
     info = _cohort.to_pipeline_parquet(cohort_in, rdir / COHORT_FILE, variant="zcta5",
                                        pid_as_str=True, columns="required")
     if info.episode_id_overwritten:
@@ -694,7 +718,7 @@ def link(cohort: pd.DataFrame | str | os.PathLike, variables: Sequence[str], *,
         on_error=on_error, data_summary=data_summary, cohort_info=info,
         started=started, ended=ended, seconds=time.monotonic() - t0,
         failed=failed, skipped=skipped, columns=columns)
-    return LinkResult(exposures=exposures, features=_features(columns, origins),
+    return LinkResult(exposures=exposures, features=_features(columns, origins, overlay),
                       coverage=coverage,
                       steps=steps, failed=failed, skipped=skipped, warnings=warnings,
                       provenance=prov, run_dir=rdir, partials=partials, errors=errors)
