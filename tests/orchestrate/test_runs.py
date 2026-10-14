@@ -131,6 +131,16 @@ def test_an_existing_root_is_made_private(tmp_path):
     assert stat.S_IMODE(base.stat().st_mode) == 0o700 and stat.S_IMODE(d.stat().st_mode) == 0o700
 
 
+def test_a_directory_whose_record_cannot_be_written_is_not_left_behind(tmp_path, monkeypatch):
+    def fail(*_a, **_k):
+        raise OSError("disk full")
+
+    monkeypatch.setattr(runs, "write_owner", fail)
+    with pytest.raises(OSError, match="disk full"):
+        runs.create_run_dir(tmp_path / "root", sweep_first=False)
+    assert list(runs.runs_root(tmp_path / "root").iterdir()) == []
+
+
 def test_create_run_dir_can_name_another_owner(tmp_path):
     """The bridge records its client: the client reads the results after the bridge exits."""
     dead, _start = _dead_process()

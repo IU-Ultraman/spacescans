@@ -283,8 +283,12 @@ def create_run_dir(root: str | os.PathLike | None = None, *, prefix: str = "link
         with contextlib.suppress(Exception):
             sweep(root)
     path = Path(tempfile.mkdtemp(prefix=prefix, dir=base))
-    os.chmod(path, _DIR_MODE)
-    write_owner(path, pid=pid, client=client)
+    try:
+        os.chmod(path, _DIR_MODE)
+        write_owner(path, pid=pid, client=client)
+    except BaseException:
+        shutil.rmtree(path, ignore_errors=True)   # a directory without a record is never swept
+        raise
     return path
 
 
