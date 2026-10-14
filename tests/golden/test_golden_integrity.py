@@ -156,6 +156,41 @@ def test_compare_accepts_within_and_rejects_beyond_tolerance(tmp_path):
     assert gc.compare_result_csv(exp, cols)[0].startswith("columns differ")
 
 
+def test_cross_env_holds_each_column_kind_to_its_phase_c_bound():
+    """Phase-C decision 1 (2026-10-13): across environments a C3 weight may differ by 1e-8
+    absolute (the host moves 3 noise grid weights by up to 8.6e-9), a distance by 1e-6 m,
+    a continuous value by 1e-9 relative; keys and missing-value masks stay exact. SAME_ENV is
+    unchanged."""
+    import pandas as pd
+
+    assert (gc.CROSS_ENV.rtol, gc.CROSS_ENV.atol) == (1e-9, 1e-9)
+    assert (gc.CROSS_ENV.weight_atol, gc.CROSS_ENV.distance_atol_m) == (1e-8, 1e-6)
+    assert gc.CROSS_ENV.for_column("weight", c3=True) == (0.0, 1e-8)
+    assert gc.CROSS_ENV.for_column("value", c3=True) == (0.0, 1e-8)        # areal weights
+    assert gc.CROSS_ENV.for_column("dist_blue_m", c3=True) == (0.0, 1e-6)
+    assert gc.CROSS_ENV.for_column("dist_pri") == (0.0, 1e-6)
+    assert gc.CROSS_ENV.for_column("l50dba_exi") == (1e-9, 1e-9)
+    assert gc.SAME_ENV.for_column("weight", c3=True) == gc.SAME_ENV.for_column("dist_pri") \
+        == (1e-12, 1e-12)
+
+    g = pd.DataFrame({"geoid": [0, 0, 1], "grid_id": [5, 6, 7], "weight": [0.31, 0.69, 1.0]})
+    near = g.assign(weight=[0.31 + 8.6e-9, 0.69 - 8.6e-9, 1.0])     # the host's worst weight
+    assert gc.compare_tables(g, near, tol=gc.CROSS_ENV, c3=True) == []
+    assert gc.compare_tables(g, near, tol=gc.CROSS_ENV) != []          # not a C3 table: rel 1e-9
+    assert gc.compare_tables(g, near, tol=gc.SAME_ENV, c3=True) != []
+    far = g.assign(weight=[0.31 + 2e-8, 0.69 - 2e-8, 1.0])
+    assert "outside rtol=0.0 atol=1e-08" in gc.compare_tables(g, far, tol=gc.CROSS_ENV, c3=True)[0]
+    masked = g.assign(weight=[0.31, float("nan"), 1.0])
+    assert "missing-value mask" in gc.compare_tables(g, masked, tol=gc.CROSS_ENV, c3=True)[0]
+    rekeyed = g.assign(grid_id=[5, 6, 8])
+    assert gc.compare_tables(g, rekeyed, tol=gc.CROSS_ENV, c3=True) != []
+    d = pd.DataFrame({"geoid": [0, 1], "dist_pri": [123456.789, 5.0]})
+    assert gc.compare_tables(d, d.assign(dist_pri=[123456.789 + 9e-7, 5.0 - 9e-7]),
+                             tol=gc.CROSS_ENV, c3=True) == []
+    assert gc.compare_tables(d, d.assign(dist_pri=[123456.789 + 2e-6, 5.0]),
+                             tol=gc.CROSS_ENV, c3=True) != []
+
+
 # ---------------------------------------------------------------------------
 # the render-only matrix (A0/A2) agrees with what the runs rendered
 # ---------------------------------------------------------------------------

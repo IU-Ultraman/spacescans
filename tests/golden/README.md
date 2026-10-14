@@ -232,7 +232,7 @@ None.
    | Where the new code ran | Constant | rtol | atol | Basis |
    |---|---|---|---|---|
    | The frozen image, same data root | `SAME_ENV` | 1e-12 | 1e-12 | Two cold passes of this image differ by at most 1.4e-14 absolute (2.5e-14 relative). The absolute term alone is 70 times that, and all 71 compared files pass (see "Run-to-run variation"). |
-   | Another environment (e.g. the macOS uv env of the R package) | `CROSS_ENV` | 1e-9 | 1e-9 | Design gate B: weights abs 1e-9, continuous values rel 1e-9. For distances in metres this is about 1e-6 m. Anything larger is investigated as an environment difference. |
+   | Another environment (e.g. the macOS uv env of the R package) | `CROSS_ENV` | 1e-9 | 1e-9 | Design gate B for continuous values (rel 1e-9). Per column kind (`Tolerance.for_column`, phase-C decision 1 of 2026-10-13): the weights of a C3 table abs 1e-8 (`weight_atol`; the host's GDAL/rasterio build moves 3 of 8,098 noise grid weights by up to 8.6e-9 while every per-episode sum agrees to 1e-16), distances in metres (`dist_*` columns) abs 1e-6 m (`distance_atol_m`). Keys and missing-value masks stay exact. Anything larger is investigated as an environment difference. |
 
    On synth_1k, FARA's `LILATracts_1And10`, `LATracts1` and `HUNVFlag` take only the values
    0 and 1, so in practice they are compared exactly. `LowIncomeTracts` and CBP's `r_*`

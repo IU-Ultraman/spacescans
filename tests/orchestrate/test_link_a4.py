@@ -321,7 +321,7 @@ def _compare_run(name: str, rec: dict, a4: A4) -> tuple[list[str], dict]:
         g, n = pd.read_parquet(gpath), pd.read_parquet(npath)
         if rec_of.rename_in_place and rec_of.renames and gpath.name.startswith("c4_"):
             n = n.rename(columns=dict(rec_of.renames))
-        diffs = gc.compare_tables(g, n, tol=tol)
+        diffs = gc.compare_tables(g, n, tol=tol, c3=gpath.name.startswith("c3_"))
         if diffs:
             problems.append(f"output/{gpath.name}: " + "; ".join(diffs))
         floats = [c for c in g.columns if pd.api.types.is_float_dtype(g[c])]
