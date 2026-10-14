@@ -237,10 +237,12 @@ def test_an_unsearchable_legacy_cache_gives_the_webs_lookup_warning(tmp_path):
     assert [s.cache_key for s in res.steps] == [None, None] and not any(cache.root.iterdir())
 
 
-def test_a_legacy_entry_of_another_input_is_run_fresh_and_replaced(tmp_path):
+@pytest.mark.parametrize("meta", ["another-input", "missing", "unreadable", "no-sha_full"])
+def test_a_legacy_entry_of_another_input_is_run_fresh_and_replaced(tmp_path, meta):
     """Phase-C review PRIV-1: B's lookup finds an entry under its key whose meta records
-    another cohort's full hash (the same 8-digit prefix). B's C3 runs instead of copying
-    that cohort's weights, and the entry becomes B's."""
+    another cohort's full hash (the same 8-digit prefix), or (project-lead decision) whose
+    meta is missing, unreadable or has no sha_full and so cannot show whose weights it
+    holds. B's C3 runs instead of copying them, and the entry becomes B's."""
     ctx = _ctx(tmp_path)
     cache = WeightCache(tmp_path / "cache", key_format="legacy-v1")
     step = next(s for s in catalog.plan("noise", ["noise"]) if s.is_c3)
@@ -250,7 +252,11 @@ def test_a_legacy_entry_of_another_input_is_run_fresh_and_replaced(tmp_path):
     cache.root.mkdir()
     pd.DataFrame({"geoid": [0], "grid_id": [424242], "weight": [1.0]}) \
         .to_parquet(cache.path(key), index=False)
-    cache.meta_path(key).write_text(json.dumps({"sha_full": sha_a, "boundary": "BG_NOISE"}))
+    text = {"another-input": json.dumps({"sha_full": sha_a, "boundary": "BG_NOISE"}),
+            "unreadable": '{"sha_full": "' + sha_a[:20],
+            "no-sha_full": json.dumps({"boundary": "BG_NOISE", "buffer_m": 270})}.get(meta)
+    if text is not None:
+        cache.meta_path(key).write_text(text)
     seen, emit = _events()
     res = run_source("noise", ["noise"], ctx, cache=cache, executor=FakeExecutor(), on_event=emit)
     assert [(s.name, s.status) for s in res.steps] == [("c3_noise", "ran"), ("c4_noise", "ran")]

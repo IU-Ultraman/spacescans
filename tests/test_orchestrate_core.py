@@ -223,7 +223,7 @@ def test_legacy_hit_needs_a_readable_parquet_of_100_bytes(run):
     assert legacy.fetch(NOISE_C3, run.ctx, dst) is None
     legacy.path(key).write_bytes(b"not a parquet file" * 20)
     assert legacy.fetch(NOISE_C3, run.ctx, dst) is None
-    legacy.path(key).write_bytes(run.out.read_bytes())    # no meta needed, as in the web
+    assert legacy.store(NOISE_C3, run.ctx, run.out, seconds=1.0) == key   # parquet + the web's meta
     assert legacy.fetch(NOISE_C3, run.ctx, dst) == key
     assert dst.read_bytes() == run.out.read_bytes()
 
@@ -258,7 +258,7 @@ def _same_prefix_other_hash(sha: str) -> str:
 def test_legacy_hit_is_refused_when_its_meta_records_another_input(run):
     """Phase-C review PRIV-1: the key holds 8 hex digits of the input's sha256, so another
     cohort can share it. An entry whose meta records a different sha_full is that cohort's
-    and is a miss; an entry whose meta proves nothing is served as 0.2.7 serves it."""
+    and is a miss; one whose meta records this input's hash is a hit."""
     legacy = WeightCache(run.tmp / "c3_cache", key_format="legacy-v1")
     key = legacy.store(NOISE_C3, run.ctx, run.out, seconds=1.0)
     meta_path = legacy.meta_path(key)
@@ -269,14 +269,72 @@ def test_legacy_hit_is_refused_when_its_meta_records_another_input(run):
     meta_path.write_text(json.dumps({**meta, "sha_full": _same_prefix_other_hash(meta["sha_full"])},
                                     indent=2))
     assert legacy.fetch(NOISE_C3, run.ctx, dst) is None and not dst.exists()
-    no_sha = json.dumps({k: v for k, v in meta.items() if k != "sha_full"}, indent=2)
-    for text in (None, "{not json", no_sha, "[]", json.dumps({**meta, "sha_full": None})):
-        if text is None:
-            meta_path.unlink()
-        else:
-            meta_path.write_text(text)
-        assert legacy.fetch(NOISE_C3, run.ctx, dst) == key      # nothing to compare: as 0.2.7
-        dst.unlink()
+
+
+def _legacy_entry_with_meta(run, case: str):
+    """A stored legacy entry for ``run``'s input whose meta is then made ``case``."""
+    legacy = WeightCache(run.tmp / "c3_cache", key_format="legacy-v1")
+    key = legacy.store(NOISE_C3, run.ctx, run.out, seconds=1.0)
+    meta_path = legacy.meta_path(key)
+    meta = json.loads(meta_path.read_text())
+    assert meta["sha_full"] == orch_cache.sha256_file(run.ctx.cohort_parquet)
+    if case == "missing":
+        meta_path.unlink()
+    elif case == "unreadable":
+        meta_path.write_text('{"sha_full": "' + meta["sha_full"])   # cut short: not JSON
+    elif case == "unreadable-mode-000":
+        os.chmod(meta_path, 0)
+    elif case == "no-sha_full":
+        meta_path.write_text(json.dumps({k: v for k, v in meta.items() if k != "sha_full"},
+                                        indent=2))
+    elif case == "sha_full-null":
+        meta_path.write_text(json.dumps({**meta, "sha_full": None}, indent=2))
+    elif case == "not-a-mapping":
+        meta_path.write_text(json.dumps([meta["sha_full"]]))
+    else:
+        raise AssertionError(case)
+    return legacy, key
+
+
+@pytest.mark.parametrize("case", [
+    "missing",
+    "unreadable", pytest.param("unreadable-mode-000", marks=pytest.mark.skipif(
+        hasattr(os, "geteuid") and os.geteuid() == 0, reason="root reads a mode-000 file")),
+    "no-sha_full", "sha_full-null", "not-a-mapping",
+])
+def test_legacy_entry_without_its_inputs_hash_in_the_meta_is_a_miss(run, case):
+    """Project-lead decision on PRIV-1: an entry whose meta is missing, unreadable or has no
+    sha_full cannot show whose weights it holds, so it is a miss (recomputed), never a hit.
+    The parquet is the right one here: only the meta decides."""
+    legacy, key = _legacy_entry_with_meta(run, case)
+    dst = run.tmp / "dst.parquet"
+    try:
+        assert legacy.fetch(NOISE_C3, run.ctx, dst) is None and not dst.exists()
+    finally:
+        if legacy.meta_path(key).exists():
+            os.chmod(legacy.meta_path(key), 0o600)
+    assert legacy.store(NOISE_C3, run.ctx, run.out, seconds=1.0) == key   # the fresh run's store
+    assert legacy.fetch(NOISE_C3, run.ctx, dst) == key                  # ... repairs the entry
+
+
+def test_a_failed_legacy_store_leaves_no_meta_of_another_input(run, monkeypatch):
+    """The parquet and its meta are two writes. A store that fails between them (or is
+    killed) must not leave the new parquet beside the old meta: under a shared key that
+    meta can name another cohort, which would then be served these weights."""
+    legacy = WeightCache(run.tmp / "c3_cache", key_format="legacy-v1")
+    key = legacy.store(NOISE_C3, run.ctx, run.out, seconds=1.0)
+    meta = json.loads(legacy.meta_path(key).read_text())
+    other = _same_prefix_other_hash(meta["sha_full"])
+    legacy.meta_path(key).write_text(json.dumps({**meta, "sha_full": other}, indent=2))
+
+    def no_meta(*a, **k):
+        raise OSError(28, "No space left on device")
+    monkeypatch.setattr(legacy, "legacy_meta", no_meta)
+    with pytest.raises(OSError):
+        legacy.store(NOISE_C3, run.ctx, run.out, seconds=1.0)
+    assert legacy.path(key).read_bytes() == run.out.read_bytes()
+    assert not legacy.meta_path(key).exists()          # not the other input's meta
+    assert legacy.fetch(NOISE_C3, run.ctx, run.tmp / "dst.parquet") is None
 
 
 # ---------------------------------------------------------------------------------------------

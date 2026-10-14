@@ -11,11 +11,12 @@ one run's C3 table can serve another. C4 is never cached.
     ``f"__r{raster_res_m}m"`` for areal tags (:func:`legacy_key`). A hit needs
     a readable parquet of at least 100 bytes, as in the web, and a lookup
     error other than a missing file is raised as the web's was. The key holds
-    only 8 hex digits of the input's hash, so two cohorts can share it: an
-    entry whose ``.meta.json`` records another full hash (``sha_full``) is a
-    miss, which the fresh run then overwrites; an entry without a readable
-    meta is served as the web serves it. Entries are copied plainly, as the
-    web does.
+    only 8 hex digits of the input's hash, so two cohorts can share it: a hit
+    also needs a ``.meta.json`` whose ``sha_full`` is the input's full sha256
+    (every 0.2.7 runner writes it). An entry whose meta is missing, unreadable,
+    without ``sha_full`` or records another input is a miss, which the fresh
+    run then overwrites; a store removes the old meta before it replaces the
+    parquet. Entries are copied plainly, as the web does.
 
 ``v2`` (R and new callers; never shares a directory with the web)
     ``<root>/c3/v2/<cohort8>__<TAG>__b<buffer>m[__r<res>m]__<sha12>.parquet``
@@ -187,23 +188,22 @@ def _legacy_valid_parquet(path: Path) -> bool:
     except Exception:  # noqa: BLE001 - an unreadable file is a miss, as in the web
         return False
 
-def _legacy_meta_refuses(meta_path: Path, sha_full: str) -> bool:
-    """Whether the entry's ``.meta.json`` records another input than ``sha_full``.
+
+def _legacy_meta_matches(meta_path: Path, sha_full: str) -> bool:
+    """Whether the entry's ``.meta.json`` records ``sha_full`` as its input.
 
     The legacy key holds only 8 hex digits of the input's sha256, so two
-    cohorts can share a key; every meta the web or this module writes records
-    the full hash (``sha_full``), and an entry whose meta names a different
-    one belongs to another cohort. A meta that is missing, unreadable or
-    without ``sha_full`` proves nothing, and the entry is served as 0.2.7
-    serves it.
+    cohorts can share a key. Every meta the web or this module writes records
+    the full hash (``sha_full``); only an entry whose meta records this
+    input's hash is served. A meta that is missing, unreadable, without
+    ``sha_full`` or names another input does not show whose weights the
+    parquet holds, so the entry is a miss.
     """
     try:
         meta = json.loads(meta_path.read_text(encoding="utf-8"))
     except (OSError, ValueError):
         return False
-    recorded = meta.get("sha_full") if isinstance(meta, dict) else None
-    return isinstance(recorded, str) and recorded != sha_full
-
+    return isinstance(meta, dict) and meta.get("sha_full") == sha_full
 
 
 def _parquet_rows(path: Path) -> int:
@@ -618,15 +618,15 @@ class WeightCache:
 
         A legacy lookup raises what the web's lookup raised (a cache directory
         that cannot be searched gives PermissionError), so the caller logs the
-        web's warning and runs fresh without a write-back. A legacy entry whose
-        meta records another input's full hash is a miss (another cohort with
-        the same 8-digit key prefix).
+        web's warning and runs fresh without a write-back. A legacy hit also
+        needs a meta that records this input's full hash: another cohort can
+        have the same 8-digit key prefix.
         """
         dst = Path(dst)
         if self.key_format == LEGACY:
             key, sha = self._legacy_key(step, ctx)
             path = self.path(key)
-            if not _legacy_valid_parquet(path) or _legacy_meta_refuses(self.meta_path(key), sha):
+            if not _legacy_valid_parquet(path) or not _legacy_meta_matches(self.meta_path(key), sha):
                 return None
             dst.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy(path, dst)
@@ -742,6 +742,10 @@ class WeightCache:
         key = self.key(step, ctx)
         path = self.path(key)
         path.parent.mkdir(parents=True, exist_ok=True)
+        # The old meta goes first: a store that fails or is killed before its own meta is
+        # written leaves an entry without one (a miss), never this parquet with the meta of
+        # another input that has the same key.
+        self.meta_path(key).unlink(missing_ok=True)
         shutil.copy(src, path)
         fields = self.legacy_meta(step, ctx, src, seconds=seconds)
         self.meta_path(key).write_text(json.dumps(fields, indent=2), encoding="utf-8")
