@@ -92,20 +92,24 @@ class StepFailed(Exception):
 
     ``step``, ``rc`` and ``log_tail`` (the step's last output lines, raw:
     show them as a log tail, never inside a user message) as in contract 5.3;
-    ``experiment``, ``timed_out`` and ``reason`` add context. ``kind`` is the
-    bridge error class. The message holds the step and exit code only.
+    ``experiment``, ``timed_out`` and ``reason`` add context, and ``episodes``
+    (the cohort's row count, a size, not a value) lets the out-of-memory hint
+    quote the measured memory need of the source at the nearest measured
+    cohort size (:mod:`spacescans.orchestrate.memory`). ``kind`` is the bridge
+    error class. The message holds the step and exit code only.
     """
 
     kind = "step_failed"
 
     def __init__(self, step: str, rc: int | None, log_tail: Sequence[str] = (), *,
                  experiment: str | None = None, timed_out: bool = False,
-                 reason: str | None = None) -> None:
+                 reason: str | None = None, episodes: int | None = None) -> None:
         self.step = step
         self.rc = rc
         self.log_tail = list(log_tail)
         self.experiment = experiment
         self.timed_out = timed_out
+        self.episodes = episodes
         self.reason = reason or ("timed out" if timed_out else f"exit code {rc}")
         msg = f"step {step} failed: {self.reason}"
         if self.oom:
@@ -123,14 +127,34 @@ class StepFailed(Exception):
             return (f"{self.step} ran longer than the executor's timeout and was stopped; "
                     "raise the timeout or link a smaller cohort")
         if self.oom:
-            return ("the step was killed, most often by the out-of-memory killer; lower "
+            hint = ("the step was killed, most often by the out-of-memory killer; lower "
                     "threads or memory_limit, or use a machine with more memory")
+            note = self.memory_note
+            return f"{hint}; {note}" if note else hint
         return f"see the log tail and {self.step}'s lines in logs.jsonl"
+
+    @property
+    def memory_note(self) -> str | None:
+        """For an out-of-memory kill, the measured need of the source (gate M), else None.
+
+        Quoted from :mod:`spacescans.orchestrate.memory` at the measured cohort size
+        nearest to ``episodes``; never raises (a hint must not break the error path).
+        """
+        if not self.oom:
+            return None
+        try:
+            from spacescans.orchestrate.memory import oom_note
+
+            return oom_note(self.experiment, self.episodes, step=self.step)
+        except Exception:  # noqa: BLE001 - the note only sharpens a hint
+            return None
 
     def to_dict(self) -> dict[str, Any]:
         return {"kind": self.kind, "message": str(self), "hint": self.hint,
                 "details": {"step": self.step, "rc": self.rc, "experiment": self.experiment,
-                            "timed_out": self.timed_out, "log_tail": list(self.log_tail)},
+                            "timed_out": self.timed_out, "oom": self.oom,
+                            "episodes": self.episodes, "memory_note": self.memory_note,
+                            "log_tail": list(self.log_tail)},
                 "type": type(self).__name__}
 
 
@@ -210,6 +234,16 @@ def _identity(step: Step, ctx: Any) -> tuple:
     """What makes two C3 steps the same computation within one link (the legacy key's parts)."""
     return (step.name, step.cache_tag, str(ctx.buffer_m),
             str(ctx.raster_res_m) if step.uses_raster_res else None)
+
+
+def _episode_count(cohort_parquet: Path) -> int | None:
+    """The cohort's row count from the parquet footer (a size for the memory hint), or None."""
+    try:
+        import pyarrow.parquet as pq
+
+        return int(pq.read_metadata(cohort_parquet).num_rows)
+    except Exception:  # noqa: BLE001 - the count only sharpens a hint
+        return None
 
 
 # ---------------------------------------------------------------------------
@@ -309,7 +343,8 @@ def run_source(experiment: str, keys: Sequence[str], ctx: RunContext, *,
                                           run.maxrss_bytes, None, experiment, step.kind))
                 raise StepFailed(step.name, run.rc, run.tail, experiment=experiment,
                                  timed_out=run.timed_out,
-                                 reason=None if not run.ok else "it produced no output parquet")
+                                 reason=None if not run.ok else "it produced no output parquet",
+                                 episodes=_episode_count(ctx.cohort_parquet))
 
             rec = StepRecord(step.name, "ran", round(run.seconds, 3), run.rc, run.maxrss_bytes,
                              None, experiment, step.kind)

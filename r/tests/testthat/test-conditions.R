@@ -43,6 +43,12 @@ test_that("R hints name the R call that fixes the problem", {
                'ss_fetch(datasets = "faqsd", accept_terms = "epa-faqsd")', fixed = TRUE)
   expect_match(h("step_failed", list(step = "c3_bg", rc = 137L), NULL), "ran out of memory")
   expect_false(grepl("memory", h("step_failed", list(step = "c3_bg", rc = 1L), NULL)))
+  # the bridge's measured memory need (gate M) is quoted after R's own advice
+  oom <- h("step_failed", list(step = "c4_temis", rc = -9L, oom = TRUE,
+                               memory_note = "measured: temis needed more than a 24 GiB container on 100,000 episodes"), NULL)
+  expect_match(oom, "smaller cohort. Measured: temis needed more than a 24 GiB container on 100,000 episodes.", fixed = TRUE)
+  expect_false(grepl("Measured", h("step_failed", list(step = "c4_temis", rc = -9L, oom = TRUE, memory_note = NULL), NULL)))
+  expect_false(grepl("Measured", h("step_failed", list(step = "c4_temis", rc = 2L, memory_note = "measured: x"), NULL)))
   expect_match(h("disk_space", list(required_bytes = 2e9, free_bytes = 1e9), NULL), "2.0 GB, 1.0 GB free")
   expect_match(h("network", list(), NULL), "resume")
   expect_equal(h("missing_extra", list(extra = c("geo", "hdf4")), NULL),

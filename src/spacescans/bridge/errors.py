@@ -119,6 +119,16 @@ def _log_tail(value: Any) -> list[str]:
     return lines[-LOG_TAIL_LINES:]
 
 
+def _memory_note(experiment: Any, episodes: int | None, step: Any) -> str | None:
+    """The measured memory need of the source (gate M table), or None; never raises."""
+    try:
+        from spacescans.orchestrate.memory import oom_note
+
+        return oom_note(experiment, episodes, step=step)
+    except Exception:  # noqa: BLE001 - the note only sharpens a hint on the error path
+        return None
+
+
 def _step_failed(exc: BaseException, message: str, hint: str | None,
                  details: dict[str, Any]) -> tuple[str, str | None, dict[str, Any]]:
     step = getattr(exc, "step", None) or details.get("step")
@@ -138,6 +148,12 @@ def _step_failed(exc: BaseException, message: str, hint: str | None,
     if oom:
         hint = (f"step {step} was killed (exit code {rc}), which usually means the machine ran out "
                 "of memory: use fewer threads or a lower memory_limit, or a smaller cohort")
+        episodes = getattr(exc, "episodes", None) or details.get("episodes")
+        details["episodes"] = episodes
+        note = _memory_note(experiment, episodes if isinstance(episodes, int) else None, step)
+        details["memory_note"] = note           # R's own hint quotes it (conditions.R)
+        if note:
+            hint = f"{hint}; {note}"
     elif hint is None:
         hint = "details.log_tail has the end of the step's output; logs.jsonl in the run directory has all of it"
     return message, hint, details

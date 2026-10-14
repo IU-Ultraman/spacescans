@@ -93,6 +93,12 @@ NULL
 
 # R-side advice for an error reported by the bridge. The bridge's own hint is
 # written for the command line; here it becomes the R call to make.
+# The bridge's measured memory need of the source (Python's gate-M table) as a sentence, or "".
+.ss_memory_note <- function(note) {
+  if (!is.character(note) || length(note) != 1L || is.na(note) || !nzchar(note)) return("")
+  paste0(" ", toupper(substr(note, 1L, 1L)), substr(note, 2L, nchar(note)), ".")
+}
+
 .ss_r_hint <- function(kind, details, py_hint) {
   details <- details %||% list()
   switch(kind,
@@ -170,7 +176,8 @@ NULL
         if (isTRUE(details$timed_out)) {
           "It ran longer than the time limit and was stopped."
         } else if (oom) {
-          "Code -9/137 usually means the system ran out of memory: try fewer threads, a memory_limit, or a smaller cohort."
+          paste0("Code -9/137 usually means the system ran out of memory: try fewer threads, a memory_limit, or a smaller cohort.",
+                 .ss_memory_note(details$memory_note))
         } else {
           "The run directory holds the step's config and log."
         })
