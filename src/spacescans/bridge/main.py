@@ -177,7 +177,7 @@ def main(argv: list[str] | None = None) -> int:
         description=f"spacescans bridge, protocol {PROTOCOL}: run one command from a JSON request.")
     parser.add_argument("command", help="hello | catalog | coverage | data-status | data-plan | "
                                         "data-verify | data-fetch | data-import | data-terms | "
-                                        "custom-validate | link | cache-info | cache-clear | run | "
+                                        "custom-validate | link | cache-info | cache-clear | runs-sweep | run | "
                                         "resolve | schema | templates | quickstart | yaml-load | "
                                         "yaml-dump | capabilities | ping")
     parser.add_argument("--request", help="request JSON file (optional for commands without args)")
