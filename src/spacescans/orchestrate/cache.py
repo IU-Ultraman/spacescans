@@ -306,9 +306,9 @@ def _tree_entry(ref: str, data_dir: Path) -> list[Any]:
     """``[ref, files, bytes, sha256]`` of a folder tree: its file count, total size and a
     hash of every ``(relpath, size, mtime_ns)``; ``[ref, 0, 0, None]`` when absent.
 
-    This is the fallback for a tile cache without a receipt (about 0.4-0.6 s on the
-    full NHD or TIGER tree); a receipt for the cache's artifact makes the fingerprint
-    the receipt's sha256 instead. macOS metadata (``.DS_Store``, AppleDouble ``._x``
+    This is the fallback for a tile cache without a receipt (measured on the real
+    trees: 0.6 s for NHD's 14,857 files, 1.0 s for TIGER's 22,619); a receipt for the
+    cache's artifact makes the fingerprint the receipt's sha256 instead (a few ms). macOS metadata (``.DS_Store``, AppleDouble ``._x``
     files, ``__MACOSX``), which Finder rewrites and no step reads, is left out so it
     cannot change the key.
     """
