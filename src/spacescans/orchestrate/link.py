@@ -454,21 +454,30 @@ def _fan_in(cohort_keys: pd.DataFrame, partials: Mapping[str, pd.DataFrame],
 
 
 def _features(columns: Sequence[str],
-              origins: Mapping[str, tuple[str, str | None, str]] | None = None) -> pd.DataFrame:
+              origins: Mapping[str, tuple[str, str | None, str]] | None = None,
+              overlay: Mapping[str, dict] | None = None) -> pd.DataFrame:
     """Feature-dictionary rows of ``columns``.
 
-    A column is looked up by its name before any rename (``origins[column]``
-    is ``(experiment, variable, that name)``), as the web looks up a result
-    column (gate A4 holds the rows to the web's), so a renamed column keeps
-    its row under its new name.
+    A catalog column is looked up by its name before any rename
+    (``origins[column]`` is ``(experiment, variable, that name)``), as the web
+    looks up a result column (gate A4 holds the rows to the web's), so a
+    renamed column keeps its row under its new name. A custom column's row
+    comes from the user's definition in ``overlay`` (label, units, description;
+    ``custom.feature_rows``), not from the catalog's lookup by name, which
+    would hand a raster column called ``value`` the VIIRS description
+    (phase-C decision 3).
     """
     import pandas as pd
 
-    from spacescans import catalog
+    from spacescans import catalog, custom
 
     rows = []
     for col in columns:
-        _exp, _var, name = (origins or {}).get(col, (None, None, col))
+        exp, var, name = (origins or {}).get(col, (None, None, col))
+        definition = (overlay or {}).get(var) if exp == custom.EXPERIMENT_KEY else None
+        if definition is not None:
+            rows.extend(custom.feature_rows(definition, [name], names={name: col}))
+            continue
         for row in catalog.feature_rows([name]):
             rows.append({**row, "feature_name": col})
     return pd.DataFrame(rows, columns=list(catalog.FEATURE_FIELDNAMES))
@@ -694,7 +703,7 @@ def link(cohort: pd.DataFrame | str | os.PathLike, variables: Sequence[str], *,
         on_error=on_error, data_summary=data_summary, cohort_info=info,
         started=started, ended=ended, seconds=time.monotonic() - t0,
         failed=failed, skipped=skipped, columns=columns)
-    return LinkResult(exposures=exposures, features=_features(columns, origins),
+    return LinkResult(exposures=exposures, features=_features(columns, origins, overlay),
                       coverage=coverage,
                       steps=steps, failed=failed, skipped=skipped, warnings=warnings,
                       provenance=prov, run_dir=rdir, partials=partials, errors=errors)

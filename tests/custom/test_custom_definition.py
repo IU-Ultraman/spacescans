@@ -497,6 +497,37 @@ def test_a_raster_definition_survives_a_json_round_trip_through_r(tif):
     assert custom.check_definition(_unboxed(yearly), deep=True) == yearly
 
 
+def test_feature_rows_come_from_the_definition():
+    """Phase-C decision 3: a custom column's dictionary row is the user's label, unit and
+    description, never the catalog's row for a shipped column of the same name."""
+    d = _define(label="My greenness", description="NDVI and heat from our own survey.",
+                labels={"greenness": "Greenness (NDVI)", "heat": ""},
+                units={"greenness": "index", "heat": "°C"})
+    rows = custom.feature_rows(d)
+    assert rows == [
+        {"feature_name": "greenness", "short_description": "Greenness (NDVI)",
+         "detailed_description": "NDVI and heat from our own survey. Unit: index."},
+        {"feature_name": "heat", "short_description": "My greenness (heat)",
+         "detailed_description": "NDVI and heat from our own survey. Unit: °C."},
+    ]
+    assert list(rows[0]) == ["feature_name", "short_description", "detailed_description"]
+    # one column: the dataset label alone; no unit, no description: nothing invented
+    one = _define(value_cols=["heat"], label="Heat", description="")
+    assert custom.feature_rows(one) == [{"feature_name": "heat", "short_description": "Heat",
+                                         "detailed_description": one["description"]}]
+    assert one["description"] == "User-uploaded Tract values."
+    # a subset of columns, under the result's (renamed) column name
+    assert custom.feature_rows(d, ["heat"], names={"heat": "heat_custom_dup"}) == [
+        {"feature_name": "heat_custom_dup", "short_description": "My greenness (heat)",
+         "detailed_description": "NDVI and heat from our own survey. Unit: °C."}]
+    # a column called like a shipped one does not borrow its description
+    v = _define(value_cols=["greenness"], label="value", description="")
+    assert custom.feature_rows({**v, "value_cols": ["value"]})[0]["short_description"] == "value"
+    # survives the JSON round trip through R (maps unboxed to [] / {})
+    assert custom.feature_rows({**one, "value_labels": [], "value_units": None}) == \
+        custom.feature_rows(one)
+
+
 @pytest.mark.geo
 def test_check_definition_rejects_a_broken_raster(tif):
     d = custom.define_raster([(tif("p.tif", _stack()), None)], label="x", bands=[1, 2],

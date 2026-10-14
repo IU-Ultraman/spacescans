@@ -153,7 +153,9 @@ class StepStandIn:
                                "weight": 1.0})
         else:
             df = pd.DataFrame({"PATID": cohort["pid"], "geoid": cohort["episode_id"]})
-            for j, col in enumerate(_value_cols(name)):
+            # an upload's C4 names its value columns in the config, a catalog C4 in the catalog
+            own = (cfg.get("exposure") or {}).get("value_cols") if name.startswith("c4_custom_") else None
+            for j, col in enumerate(own or _value_cols(name)):
                 df[col] = cohort["episode_id"].astype(float) * 0.5 + j
         df.to_parquet(out, index=False)
         return StepRun(rc=0, seconds=0.05, maxrss_bytes=123456, tail=[])
@@ -923,3 +925,32 @@ def test_catalog_and_hello_on_a_base_install(tmp_path):
     assert rows["ndi"]["missing_extras"] == ["geo"] and rows["ndi"]["runnable_here"] is False
     rc, res, _, _ = call(tmp_path, "hello", prefix=prefix)
     assert rc == 0 and res["value"]["catalog"]["templates"] == 25 and res["value"]["data_release"]
+
+
+def test_link_writes_custom_columns_dictionary_rows_from_the_definition(tmp_path):
+    """Phase-C decision 3 through the bridge: a custom column's row in feature_dictionary.csv
+    (what R reads into its ``features`` attribute) is the user's label, unit and description;
+    a catalog column keeps the catalog's row."""
+    from spacescans import catalog, custom
+
+    csv = tmp_path / "tract_values.csv"
+    csv.write_text("GEOID,score,heat\n18097310100,0.25,1.5\n18097310200,0.75,2.5\n")
+    d = custom.define_polygon(csv, boundary="Tract", key_col="GEOID", value_cols=["score", "heat"],
+                              label="Our survey", description="Scores from our own survey.",
+                              labels={"score": "Survey score"}, units={"heat": "degC"})
+    key = d["variable_key"]
+    args = link_args(tmp_path, variables=["ndi", key], custom={key: d})
+    rc, res, _events, err = call(tmp_path, "link", args, prefix=fake_prefix(tmp_path), env=fake_env("ok"))
+    assert rc == 0, res["error"] if res else err
+    rows = pd.read_csv(res["value"]["features"], dtype=str, keep_default_na=False).to_dict("records")
+    assert rows == [
+        {"feature_name": "ndi", **{k: v for k, v in catalog.feature_rows(["ndi"])[0].items()
+                                   if k != "feature_name"}},
+        {"feature_name": "score", "short_description": "Survey score",
+         "detailed_description": "Scores from our own survey."},
+        {"feature_name": "heat", "short_description": "Our survey (heat)",
+         "detailed_description": "Scores from our own survey. Unit: degC."},
+    ]
+    assert rows[1:] == custom.feature_rows(d)
+    # the catalog's lookup by name would have given these columns no row (or a shipped one)
+    assert catalog.feature_rows(["score", "heat"]) == []
