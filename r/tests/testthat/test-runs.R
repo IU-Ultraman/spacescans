@@ -45,7 +45,9 @@ test_that("the run root is R_user_dir('spacescans', 'cache')/runs and a new run 
   expect_match(owner$client, "^spacescans-r ")
   expect_lt(abs(owner$start_time - spacescans:::.ss_process_start()), 1e-3)
   expect_equal(as.character(file.info(file.path(d, "owner.json"))$mode), "600")
-  expect_setequal(names(owner), c("schema", "pid", "start_time", "host", "client", "created_at"))
+  fields <- c("schema", "pid", "start_time", "host", "client", "created_at")
+  if (!is.null(spacescans:::.ss_linux_boot())) fields <- c(fields, "boot_id", "boot_time")
+  expect_setequal(names(owner), fields)
   # with a parent (output directories): an ordinary temp dir without a record
   o <- spacescans:::.ss_new_run_dir(file.path(tempdir(), "spacescans-output"))
   on.exit(unlink(o, recursive = TRUE), add = TRUE)
@@ -83,6 +85,51 @@ test_that("owner liveness: dead pid, reused pid, live pid, other host", {
   expect_true(alive(own_owner(host = "")))            # no host recorded: judged here, as Python does
   expect_true(is.na(alive(own_owner(pid = NULL))))
   expect_true(is.na(alive(list())))
+})
+
+test_that("a Linux record survives a clock step but not a reused pid or a reboot", {
+  # Phase-C review PRIV-3: a Linux start time is boot time + ticks, and the boot time moves
+  # with every step of the wall clock. R's records had no boot fields, so after a step of
+  # more than 2 s any sweep (R's or Python's) judged a live R run dead and deleted its run
+  # dir. As in Python's owner_alive, a record with boot_id and boot_time is compared by the
+  # time since boot.
+  same <- spacescans:::.ss_same_start
+  started <- 1e6 + 3600                                   # an hour after a boot at 1e6
+  rec <- list(pid = 4242L, start_time = started, boot_id = "boot-a", boot_time = 1e6)
+  stepped <- list(boot_id = "boot-a", boot_time = 1e6 + 30)   # the clock went 30 s forward
+  expect_true(same(rec, started, boot = stepped))         # no step: equal start times
+  expect_true(same(rec, started + 30, boot = stepped))
+  expect_true(same(rec, started - 30, boot = list(boot_id = "boot-a", boot_time = 1e6 - 30)))
+  # without boot fields (an older record) a step cannot be told from pid reuse
+  expect_false(same(rec[c("pid", "start_time")], started + 30, boot = stepped))
+  # the pid was reused in the same boot, 10 minutes later
+  expect_false(same(rec, started + 30 + 600, boot = stepped))
+  # another boot: the recorded process is gone whatever the pid now runs
+  expect_false(same(rec, started + 30, boot = list(boot_id = "boot-b", boot_time = 1e6 + 30)))
+  # not Linux (no boot read): only the start times count
+  expect_false(same(rec, started + 30, boot = NULL))
+  expect_true(same(rec, started + 1.5, boot = NULL))
+  expect_true(same(list(start_time = NULL), started, boot = NULL))
+  expect_true(same(rec, NA_real_, boot = NULL))
+})
+
+test_that("on Linux the owner record carries the boot and the liveness check uses it", {
+  # .ss_linux_boot() reads /proc and ps on Linux only; mocked here, so this runs on macOS too.
+  boot <- list(boot_id = "0f1e2d3c-boot", boot_time = 1.7e9)
+  local_mocked_bindings(.ss_linux_boot = function() boot)
+  d <- withr::local_tempdir()
+  rec <- spacescans:::.ss_write_owner(d)
+  owner <- jsonlite::read_json(file.path(d, "owner.json"), simplifyVector = TRUE)
+  expect_equal(names(owner), c("schema", "pid", "start_time", "host", "client", "created_at",
+                               "boot_id", "boot_time"))      # Python's order and names
+  expect_equal(owner[c("boot_id", "boot_time")], boot)
+  # this live process, after the wall clock was stepped 30 s forward: its start time and the
+  # boot time now read 30 s later than recorded
+  now <- spacescans:::.ss_process_start()
+  stepped <- utils::modifyList(owner, list(start_time = now - 30, boot_time = boot$boot_time - 30))
+  expect_true(spacescans:::.ss_owner_alive(stepped))
+  expect_false(spacescans:::.ss_owner_alive(stepped[setdiff(names(stepped), c("boot_id", "boot_time"))]))
+  expect_false(spacescans:::.ss_owner_alive(utils::modifyList(stepped, list(boot_id = "other-boot"))))
 })
 
 test_that("the sweep removes dead owners' run dirs, keeps live ones and counts", {

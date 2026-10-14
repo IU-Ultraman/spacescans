@@ -24,7 +24,44 @@
   }, error = function(e) NA_real_)
 }
 
+# Linux only: this boot's id and boot time (Unix seconds); NULL elsewhere or when
+# either cannot be read. A Linux start time is the boot time plus the ticks since
+# boot, and the boot time moves with every step of the wall clock, so a record that
+# carries both is compared by the time since boot (.ss_same_start), as Python's
+# spacescans.orchestrate.runs.owner_alive compares it. The boot time is the one ps
+# adds to the ticks, so start_time - boot_time is the time since boot.
+.ss_linux_boot <- function() {
+  if (!identical(tryCatch(Sys.info()[["sysname"]], error = function(e) ""), "Linux")) return(NULL)
+  tryCatch({
+    id <- trimws(readLines("/proc/sys/kernel/random/boot_id", n = 1L, warn = FALSE))
+    btime <- as.numeric(ps::ps_boot_time())
+    if (length(id) == 1L && nzchar(id) && length(btime) == 1L && is.finite(btime)) {
+      list(boot_id = id, boot_time = btime)
+    }
+  }, error = function(e) NULL, warning = function(w) NULL)
+}
+
+# Whether a process whose start time now reads `now` is the one `owner` records:
+# the start times agree within 2 s, or cannot both be read; or, on Linux, the
+# record's boot_id is this boot's (`boot`, from .ss_linux_boot()) and the times
+# since boot agree within 2 s (the wall clock was stepped). Otherwise the pid now
+# belongs to another process.
+.ss_same_start <- function(owner, now, boot = .ss_linux_boot()) {
+  recorded <- suppressWarnings(as.numeric(owner$start_time))
+  if (length(recorded) != 1L || is.na(recorded) || length(now) != 1L || is.na(now)) return(TRUE)
+  if (abs(now - recorded) <= 2) return(TRUE)
+  rec_id <- owner$boot_id
+  rec_btime <- suppressWarnings(as.numeric(owner$boot_time))
+  if (!is.null(boot) && is.character(rec_id) && length(rec_id) == 1L && length(rec_btime) == 1L &&
+      !is.na(rec_btime) && identical(rec_id, boot$boot_id)) {
+    return(abs((now - boot$boot_time) - (recorded - rec_btime)) <= 2)
+  }
+  FALSE
+}
+
 # The owner record of a run directory: this process (or `pid`), never a cohort value.
+# On Linux it also carries the boot id and boot time (see .ss_linux_boot), as
+# Python's records do.
 .ss_write_owner <- function(run_dir, pid = Sys.getpid(), client = NULL) {
   start <- .ss_process_start(pid)
   record <- list(
@@ -32,6 +69,8 @@
     host = .ss_hostname(), client = client %||% paste("spacescans-r", .ss_pkg_version()),
     created_at = format(Sys.time(), "%Y-%m-%dT%H:%M:%S%z")
   )
+  boot <- .ss_linux_boot()
+  if (!is.null(boot)) record <- c(record, boot)
   path <- file.path(run_dir, "owner.json")
   tmp <- tempfile(pattern = ".owner.json.", tmpdir = run_dir)
   writeLines(jsonlite::toJSON(record, auto_unbox = TRUE, null = "null", digits = NA, pretty = TRUE),
@@ -50,8 +89,9 @@
 }
 
 # TRUE: the owner process runs (same start time, within 2 s, when both sides
-# know it); FALSE: no such pid, or the pid now belongs to another process;
-# NA: the record is from another host or has no usable pid.
+# know it; on Linux the same time since boot, see .ss_same_start); FALSE: no such
+# pid, or the pid now belongs to another process; NA: the record is from another
+# host or has no usable pid.
 .ss_owner_alive <- function(owner, host = .ss_hostname()) {
   if (!is.list(owner)) return(NA)
   rec_host <- as.character(owner$host %||% "")
@@ -61,10 +101,8 @@
   h <- tryCatch(ps::ps_handle(pid), error = function(e) NULL)
   if (is.null(h)) return(FALSE)
   if (!isTRUE(tryCatch(ps::ps_is_running(h), error = function(e) FALSE))) return(FALSE)
-  recorded <- suppressWarnings(as.numeric(owner$start_time))
   now <- tryCatch(as.numeric(ps::ps_create_time(h)), error = function(e) NA_real_)
-  if (length(recorded) == 1L && !is.na(recorded) && !is.na(now) && abs(now - recorded) > 2) return(FALSE)
-  TRUE
+  .ss_same_start(owner, now)
 }
 
 .ss_dir_bytes <- function(path) {
