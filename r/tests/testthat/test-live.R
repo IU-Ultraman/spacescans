@@ -201,6 +201,10 @@ test_that("live: R and the bridge keep run directories under one root and sweep 
   expect_equal(unlist(v$removed), "ss-gone")
   expect_false(dir.exists(stale))
   expect_true(dir.exists(mine))            # owned by this live session
+  # ss_cache_info() counts a directory in use once, though R and the bridge both sweep
+  info <- ss_cache_info(cache_dir = withr::local_tempdir())
+  expect_equal(info$runs$kept, 1L)
+  expect_equal(info$runs$removed, character())
   unlink(mine, recursive = TRUE)
 })
 

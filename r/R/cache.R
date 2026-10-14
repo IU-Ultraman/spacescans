@@ -68,11 +68,14 @@ ss_cache_info <- function(cache_dir = NULL) {
 }
 
 # R's own sweep plus what the bridge's sweep of the same root found afterwards.
+# Both read the same root, the bridge's after R's, so a directory still in use
+# is counted once, from R's sweep (the bridge also sees the request directory
+# of this very call); a removal by either sweep is reported.
 .ss_merge_sweeps <- function(r, py) {
   py <- py %||% list()
-  list(root = r$root %||% py$root, removed = c(r$removed, .ss_chr(py$removed)),
-       kept = length(r$kept) + as.integer(py$kept %||% 0L),
-       unknown = unique(c(r$unknown, .ss_chr(py$unknown))),
+  kept <- if (length(r$errors) && !length(r$kept)) as.integer(py$kept %||% 0L) else length(r$kept)
+  list(root = r$root %||% py$root, removed = unique(c(r$removed, .ss_chr(py$removed))),
+       kept = kept, unknown = unique(c(r$unknown, .ss_chr(py$unknown))),
        bytes = (r$bytes %||% 0) + as.numeric(py$bytes %||% 0))
 }
 
