@@ -153,6 +153,32 @@ class HeavyLock:
             self._f = None
 
 
+class HeldByCaller:
+    """For a batch run under the contract's wrapper: the caller already holds the heavy lock.
+
+    Taking it again from this process would deadlock (flock locks belong to the open file),
+    so this only checks that someone holds it: a lock this process can take is not held.
+    """
+
+    waited_s = 0.0
+
+    def __init__(self, path: Path = HEAVY_LOCK) -> None:
+        self.path = path
+
+    def __enter__(self) -> HeldByCaller:  # noqa: PYI034 - a plain context manager
+        with open(self.path, "w") as f:
+            try:
+                fcntl.flock(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except BlockingIOError:
+                return self                     # held, as the caller said
+            fcntl.flock(f, fcntl.LOCK_UN)
+        raise SystemExit(f"--lock-held, but nobody holds {self.path}: run the batch under the "
+                         "heavy-lock wrapper or drop --lock-held")
+
+    def __exit__(self, *exc) -> None:
+        return None
+
+
 # ---------------------------------------------------------------------------
 # staging
 # ---------------------------------------------------------------------------
@@ -250,7 +276,7 @@ def next_container_name(stage: Path) -> str:
 
 
 def run_one(stage: Path, size: str, case: Case, mode: str, *, src: Path, keep: bool,
-            redo: bool, dry_run: bool, image: str) -> dict | None:
+            redo: bool, dry_run: bool, image: str, lock_held: bool = False) -> dict | None:
     rdir = stage / size / case.name / mode
     record_path = rdir / "record.json"
     if record_path.exists() and not redo:
@@ -306,8 +332,9 @@ def run_one(stage: Path, size: str, case: Case, mode: str, *, src: Path, keep: b
     stamp = rdir / "data.stamp"
     stamp.touch()
     time.sleep(0.02)
-    say(f"{size} {case.name} {mode}: waiting for the heavy lock")
-    with HeavyLock() as lock:
+    say(f"{size} {case.name} {mode}: " + ("the caller holds the heavy lock" if lock_held
+                                           else "waiting for the heavy lock"))
+    with (HeldByCaller() if lock_held else HeavyLock()) as lock:
         say(f"{size} {case.name} {mode}: lock held (waited {lock.waited_s}s); container {name}")
         _CURRENT["container"] = name
         started = utc_now()
@@ -329,6 +356,7 @@ def run_one(stage: Path, size: str, case: Case, mode: str, *, src: Path, keep: b
         "package_src": str(src) if mode == "new" else None,
         "package_rev": src_rev.read_text().strip() if (mode == "new" and src_rev.exists()) else None,
         "docker_rc": proc.returncode, "docker_wall_s": docker_wall, "lock_wait_s": lock.waited_s,
+        "lock_held_by_caller": lock_held,
         "started_utc": started, "ended_utc": ended,
         "started_eastern": eastern(started), "ended_eastern": eastern(ended),
         "data_dir": str(DATA_DIR),
@@ -384,7 +412,8 @@ def cmd_run(args: argparse.Namespace) -> int:
             for mode in modes:
                 try:
                     run_one(stage, size, CASE_BY_NAME[n], mode, src=src, keep=args.keep,
-                            redo=args.redo, dry_run=args.dry_run, image=args.image)
+                            redo=args.redo, dry_run=args.dry_run, image=args.image,
+                            lock_held=args.lock_held)
                 except Exception as exc:  # noqa: BLE001 - record and go on with the next run
                     say(f"{size} {n} {mode}: DRIVER ERROR {exc!r}")
                     rdir = stage / size / n / mode
@@ -843,6 +872,9 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--keep", action="store_true", help="keep the scratch mount (cohort data) after a run")
     p.add_argument("--redo", action="store_true", help="re-run cases that already have a record")
     p.add_argument("--dry-run", action="store_true", help="print the docker command and stop")
+    p.add_argument("--lock-held", action="store_true",
+                   help="the caller holds the heavy lock for the whole batch (the contract's wrapper "
+                        "around this command); checked, never taken again")
     p.set_defaults(func=cmd_run)
     r = sub.add_parser("report", help="write docs/memory.md, docs/memory-<date>.csv and the hint table")
     r.add_argument("--stage", required=True)
