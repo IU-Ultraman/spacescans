@@ -54,7 +54,8 @@
 # NA: the record is from another host or has no usable pid.
 .ss_owner_alive <- function(owner, host = .ss_hostname()) {
   if (!is.list(owner)) return(NA)
-  if (!is.null(owner$host) && nzchar(host) && !identical(as.character(owner$host), host)) return(NA)
+  rec_host <- as.character(owner$host %||% "")
+  if (length(rec_host) == 1L && nzchar(rec_host) && nzchar(host) && !identical(rec_host, host)) return(NA)
   pid <- suppressWarnings(as.integer(owner$pid))
   if (length(pid) != 1L || is.na(pid) || pid <= 0L) return(NA)
   h <- tryCatch(ps::ps_handle(pid), error = function(e) NULL)

@@ -60,6 +60,7 @@ test_that("owner liveness: dead pid, reused pid, live pid, other host", {
   dead <- dead_process()
   expect_false(alive(own_owner(pid = dead$pid, start_time = dead$start)))
   expect_true(is.na(alive(own_owner(host = "some-other-host.example"))))
+  expect_true(alive(own_owner(host = "")))            # no host recorded: judged here, as Python does
   expect_true(is.na(alive(own_owner(pid = NULL))))
   expect_true(is.na(alive(list())))
 })

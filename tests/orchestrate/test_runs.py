@@ -94,6 +94,7 @@ def test_owner_alive_rules():
     assert runs.owner_alive(_owner(pid=dead, start_time=start)) is False
     # another host, or no usable pid: nothing can be said
     assert runs.owner_alive(_owner(host="some-other-host.example")) is None
+    assert runs.owner_alive(_owner(host="")) is True          # no host recorded: judged here, as R does
     assert runs.owner_alive(_owner(pid=None)) is None
     assert runs.owner_alive(_owner(pid="12")) is None
     assert runs.owner_alive(_owner(pid=True)) is None
