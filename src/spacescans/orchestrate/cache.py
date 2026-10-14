@@ -79,6 +79,18 @@ _STEP_CODE_MODULES = ("__main__.py", "_extras.py", "config_resolution.py")
 _RUN_FIELDS = (("name",), ("buffer", "patient_file"), ("output", "path"),
                ("engine", "threads"), ("engine", "memory_limit"), ("engine", "temp_directory"),
                ("source", "road_cache_dir"))
+# ``time.output_grouping`` is a C4 setting (one row per patient or per episode): only the
+# C4 linkages and the FAQSD reader read it (``linkage.helpers.resolve_output_grouping``),
+# never a C3 pattern, so a C3 key leaves it out. These C3 patterns read nothing of the
+# ``time`` block at all (tiger_proximity and proximity read ``time.years`` and
+# ``temporal_mode``, and for them an empty block differs from none), so for them a block
+# left empty is dropped too. The custom path renders its C3 steps with ``time:
+# {output_grouping: episode}`` and the catalog without a time block: this is what lets a
+# custom BG upload and bg_ndi_wi share one ``c3_bg`` v2 entry, as they share the legacy
+# one. ``tests/test_orchestrate_core.py`` checks the source of these patterns for reads
+# of ``config.time``.
+_TIMELESS_C3_PATTERNS = frozenset({"boundary_overlap", "boundary_overlap_fast", "grid_weights",
+                                   "nhd_proximity"})
 
 
 # ---------------------------------------------------------------------------
@@ -231,13 +243,17 @@ def native_versions() -> dict[str, str | None]:
 
 
 def normalised_config(cfg: Mapping[str, Any]) -> dict[str, Any]:
-    """The rendered config without its run-specific fields.
+    """A rendered C3 config without the fields that do not change what the step computes.
 
     Drops ``name`` (task suffix), ``buffer.patient_file``, ``output.path``,
     the engine resource caps (``threads``, ``memory_limit``,
-    ``temp_directory``) and the tile-cache folder ``source.road_cache_dir``,
-    which do not change what a step computes (the tiles a data-root cache
-    holds are fingerprinted in :func:`source_fingerprint`).
+    ``temp_directory``), the tile-cache folder ``source.road_cache_dir``
+    (the tiles a data-root cache holds are fingerprinted in
+    :func:`source_fingerprint`) and the C4-only ``time.output_grouping``.
+    For a C3 pattern that reads nothing of the ``time`` block
+    (:data:`_TIMELESS_C3_PATTERNS`) a block left empty is dropped too, so the
+    custom path's C3 configs (``time: {output_grouping: episode}``)
+    normalise to the catalog's.
     """
     out = json.loads(json.dumps(cfg))
     for path in _RUN_FIELDS:
@@ -246,6 +262,11 @@ def normalised_config(cfg: Mapping[str, Any]) -> dict[str, Any]:
             node = node.get(part) if isinstance(node, dict) else None
         if isinstance(node, dict):
             node.pop(path[-1], None)
+    time_block = out.get("time")
+    if isinstance(time_block, dict):
+        time_block.pop("output_grouping", None)
+        if not time_block and out.get("linkage_pattern") in _TIMELESS_C3_PATTERNS:
+            del out["time"]
     return out
 
 
@@ -283,14 +304,23 @@ def _cache_dir_refs(cfg: Mapping[str, Any]) -> list[str]:
 
 def _tree_entry(ref: str, data_dir: Path) -> list[Any]:
     """``[ref, files, bytes, sha256]`` of a folder tree: its file count, total size and a
-    hash of every ``(relpath, size, mtime_ns)``; ``[ref, 0, 0, None]`` when absent."""
+    hash of every ``(relpath, size, mtime_ns)``; ``[ref, 0, 0, None]`` when absent.
+
+    This is the fallback for a tile cache without a receipt (about 0.4-0.6 s on the
+    full NHD or TIGER tree); a receipt for the cache's artifact makes the fingerprint
+    the receipt's sha256 instead. macOS metadata (``.DS_Store``, AppleDouble ``._x``
+    files, ``__MACOSX``), which Finder rewrites and no step reads, is left out so it
+    cannot change the key.
+    """
+    from spacescans.data.extract import is_macos_metadata
+
     root = data_dir / ref
     if not root.is_dir():
         return [ref, 0, 0, None]
     h = hashlib.sha256()
     count = total = 0
     for p in sorted(root.rglob("*")):
-        if not p.is_file():
+        if not p.is_file() or is_macos_metadata(p.relative_to(root).as_posix()):
             continue
         st = p.stat()
         count += 1
