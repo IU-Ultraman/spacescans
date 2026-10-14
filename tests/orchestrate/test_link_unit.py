@@ -211,6 +211,32 @@ def test_a_cache_lookup_error_runs_fresh_and_skips_the_write_back(tmp_path, monk
     assert res.steps[0].status == "ran" and res.steps[0].cache_key is None
 
 
+@pytest.mark.skipif(hasattr(os, "geteuid") and os.geteuid() == 0,
+                    reason="root may search a mode-000 directory")
+def test_an_unsearchable_legacy_cache_gives_the_webs_lookup_warning(tmp_path):
+    """Phase-C review F1: with C3_CACHE_DIR at mode 000 the 0.2.7 runners logged
+    "cache check failed ... running fresh" before the spawn and wrote nothing back
+    (no "cache write failed" after the step)."""
+    ctx = _ctx(tmp_path)
+    cache = WeightCache(tmp_path / "cache", key_format="legacy-v1")
+    cache.root.mkdir()
+    os.chmod(cache.root, 0)
+    seen, emit = _events()
+    try:
+        res = run_source("noise", ["noise"], ctx, cache=cache, executor=FakeExecutor(),
+                         on_event=emit)
+    finally:
+        os.chmod(cache.root, 0o700)
+    texts = [e.text for e in seen if e.text]
+    warning = ("cache check failed for c3_noise: PermissionError(13, 'Permission denied') "
+               "— running fresh")
+    assert [e.text for e in seen if e.kind == "cache_warning"] == [warning]
+    spawn = next(i for i, t in enumerate(texts) if t.startswith("spawning c3_noise"))
+    assert texts.index(warning) < spawn
+    assert not any(e.kind == "cache_write" for e in seen)
+    assert [s.cache_key for s in res.steps] == [None, None] and not any(cache.root.iterdir())
+
+
 def test_a_render_failure_is_a_render_error_with_the_web_line(tmp_path, monkeypatch):
     ctx = _ctx(tmp_path)
 

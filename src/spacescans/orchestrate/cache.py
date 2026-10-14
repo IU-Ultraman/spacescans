@@ -10,7 +10,8 @@ one run's C3 table can serve another. C4 is never cached.
     ``f"{sha256(input.parquet)[:8]}__{TAG}__b{buffer_m}m"`` plus
     ``f"__r{raster_res_m}m"`` for areal tags (:func:`legacy_key`). A hit needs
     only a readable parquet of at least 100 bytes; nothing else is checked,
-    as in the web. Entries are copied plainly, as the web does.
+    as in the web, and a lookup error other than a missing file is raised as
+    the web's was. Entries are copied plainly, as the web does.
 
 ``v2`` (R and new callers; never shares a directory with the web)
     ``<root>/c3/v2/<cohort8>__<TAG>__b<buffer>m[__r<res>m]__<sha12>.parquet``
@@ -32,6 +33,7 @@ an error message or a log.
 from __future__ import annotations
 
 import contextlib
+import errno
 import functools
 import glob
 import hashlib
@@ -137,7 +139,7 @@ def _require_c3(step: Step) -> None:
 
 
 def _readable_parquet(path: Path) -> bool:
-    """The web's check: present, at least 100 bytes, and a readable parquet footer."""
+    """Present, at least 100 bytes, and a readable parquet footer; any error is a miss."""
     try:
         if path.stat().st_size < MIN_PARQUET_BYTES:
             return False
@@ -146,6 +148,39 @@ def _readable_parquet(path: Path) -> bool:
         pq.read_metadata(path)
         return True
     except Exception:  # noqa: BLE001 - any unreadable file is a miss
+        return False
+
+
+# What pathlib's Path.exists() treats as "absent" on the web's Python (3.12): any other
+# stat error propagates (bg_ndi_wi._is_valid_cached_parquet calls exists() outside its try).
+_ABSENT_ERRNOS = frozenset({errno.ENOENT, errno.ENOTDIR, errno.EBADF, errno.ELOOP})
+
+
+def _legacy_valid_parquet(path: Path) -> bool:
+    """The web's ``_is_valid_cached_parquet``, error for error.
+
+    A missing file (or a missing or non-directory parent) is a miss, and so is
+    a file under 100 bytes or one whose parquet footer cannot be read. Any
+    other error of the stat (a cache directory the process may not search, an
+    I/O error) propagates, so ``run_source`` logs the web's ``cache check
+    failed ... running fresh`` and skips the write-back, as the runners did.
+    """
+    try:
+        size = path.stat().st_size
+    except OSError as exc:
+        if exc.errno in _ABSENT_ERRNOS:
+            return False
+        raise
+    except ValueError:  # a path the OS cannot take, which Path.exists() calls absent
+        return False
+    if size < MIN_PARQUET_BYTES:
+        return False
+    try:
+        import pyarrow.parquet as pq
+
+        pq.read_metadata(path)
+        return True
+    except Exception:  # noqa: BLE001 - an unreadable file is a miss, as in the web
         return False
 
 
@@ -551,12 +586,17 @@ class WeightCache:
     # -- fetch / store --------------------------------------------------------
 
     def fetch(self, step: Step, ctx: Any, dst: str | os.PathLike) -> str | None:
-        """Copy the cached C3 output of ``step`` to ``dst``; its key on a hit, None on a miss."""
+        """Copy the cached C3 output of ``step`` to ``dst``; its key on a hit, None on a miss.
+
+        A legacy lookup raises what the web's lookup raised (a cache directory
+        that cannot be searched gives PermissionError), so the caller logs the
+        web's warning and runs fresh without a write-back.
+        """
         dst = Path(dst)
         if self.key_format == LEGACY:
             key = self.key(step, ctx)
             path = self.path(key)
-            if not _readable_parquet(path):
+            if not _legacy_valid_parquet(path):
                 return None
             dst.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy(path, dst)

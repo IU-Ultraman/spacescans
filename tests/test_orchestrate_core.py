@@ -228,6 +228,28 @@ def test_legacy_hit_needs_a_readable_parquet_of_100_bytes(run):
     assert dst.read_bytes() == run.out.read_bytes()
 
 
+@pytest.mark.skipif(hasattr(os, "geteuid") and os.geteuid() == 0,
+                    reason="root may search a mode-000 directory")
+def test_legacy_lookup_raises_what_the_webs_lookup_raised(run):
+    """Phase-C review F1: only a missing entry is a miss. The web's check called
+    Path.exists() outside its try, so a cache directory the process may not search
+    raised PermissionError, and the runner logged "cache check failed" instead."""
+    dst = run.tmp / "dst.parquet"
+    (run.tmp / "c3_file").write_text("not a directory\n")      # ENOTDIR: absent, a miss
+    assert WeightCache(run.tmp / "c3_file", key_format="legacy-v1") \
+        .fetch(NOISE_C3, run.ctx, dst) is None
+    legacy = WeightCache(run.tmp / "c3_cache", key_format="legacy-v1")
+    legacy.root.mkdir()
+    legacy.path(legacy.key(NOISE_C3, run.ctx)).write_bytes(run.out.read_bytes())
+    os.chmod(legacy.root, 0)
+    try:
+        with pytest.raises(PermissionError):
+            legacy.fetch(NOISE_C3, run.ctx, dst)
+    finally:
+        os.chmod(legacy.root, 0o700)
+    assert not dst.exists()
+
+
 # ---------------------------------------------------------------------------------------------
 # v2
 # ---------------------------------------------------------------------------------------------
