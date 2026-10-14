@@ -99,10 +99,11 @@ def oom_note(experiment: str | None, episodes: int | None = None, *,
              step: str | None = None) -> str | None:
     """One sentence on the measured memory need of ``experiment`` near ``episodes``.
 
-    ``None`` when nothing was measured for the source. ``step`` (the step that was
-    killed) picks, among several measured cases of one source (the two upload cases of
-    ``custom``), the one whose peak was in a step of the same kind (``c3_customgrid_*``,
-    ``c3_bg``); it also sharpens the wording when it is not the step that peaked there.
+    The need is the peak resident set of the largest process of the measured run (the
+    orchestrator's own, about 0.2-0.4 GiB, comes on top). ``None`` when nothing was
+    measured for the source. ``step`` (the step that was killed) picks, among several
+    measured cases of one source (the two upload cases of ``custom``), the one whose peak
+    was in a step of the same kind (``c3_customgrid_*``, ``c3_bg``).
     """
     if not experiment:
         return None
@@ -113,15 +114,13 @@ def oom_note(experiment: str | None, episodes: int | None = None, *,
         rows = tuple(r for r in rows if r.peak_step and _family(r.peak_step) == _family(step)) or rows
     worst = max(rows, key=lambda r: r.peak_gib)
     n = f"{worst.episodes:,}"
-    where = f" in step {worst.peak_step}" if worst.peak_step else ""
     if worst.outcome == "oom":
-        note = (f"measured: {experiment} exceeded a {worst.container_gib:.0f} GiB container on "
-                f"{n} episodes (killed{where} at about {worst.peak_gib:.1f} GiB)")
+        killed = f"step {worst.peak_step} was killed" if worst.peak_step else "killed"
+        note = (f"measured: {experiment} needed more than a {worst.container_gib:.0f} GiB "
+                f"container on {n} episodes ({killed} at about {worst.peak_gib:.1f} GiB)")
     else:
-        note = (f"measured: {experiment} peaked at about {worst.peak_gib:.1f} GiB on {n} episodes"
-                f"{where}")
+        where = f" (peak in step {worst.peak_step})" if worst.peak_step else ""
+        note = f"measured: {experiment} needed about {worst.peak_gib:.1f} GiB on {n} episodes{where}"
     if episodes and episodes != worst.episodes:
         note += f"; this cohort has {episodes:,} episodes"
-    if step and worst.peak_step and _family(step) != _family(worst.peak_step):
-        note += f" (the step that failed here, {step}, is not the one that peaked there)"
     return note

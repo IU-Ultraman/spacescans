@@ -75,7 +75,7 @@ def test_oom_note_names_the_container_when_the_measured_run_was_killed():
     assert killed, "the table records the 100k FAQSD/TEMIS kills"
     r = killed[0]
     note = mem.oom_note(r.experiment, r.episodes)
-    assert "exceeded" in note and f"{r.container_gib:.0f} GiB container" in note
+    assert "needed more than" in note and f"{r.container_gib:.0f} GiB container" in note
 
 
 def test_step_failed_hint_carries_the_note_only_when_out_of_memory():
@@ -124,10 +124,9 @@ def test_an_upload_quotes_the_measured_case_of_the_same_kind():
     assert {"custom_raster", "custom_bg_csv"} <= set(rows)
     grid, bg = rows["custom_raster"], rows["custom_bg_csv"]
     note = mem.oom_note("custom", 10002, step="c3_customgrid_0badf00d")
-    assert f"{grid.peak_gib:.1f} GiB" in note and grid.peak_step in note
-    assert "is not the one that peaked" not in note            # same kind of step, other upload
+    assert f"about {grid.peak_gib:.1f} GiB" in note and f"(peak in step {grid.peak_step})" in note
     note = mem.oom_note("custom", 10002, step="c3_bg")
-    assert f"{bg.peak_gib:.1f} GiB" in note and "in step c3_bg" in note
+    assert f"about {bg.peak_gib:.1f} GiB" in note and "(peak in step c3_bg)" in note
 
 
 def test_the_note_never_breaks_the_error_path(monkeypatch):
