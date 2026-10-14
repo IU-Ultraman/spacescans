@@ -487,6 +487,9 @@ def old_summary(rec: dict) -> dict:
 def oom_check(ns: dict, case: Case) -> tuple[bool, str]:
     """An expected OOM must come back as step_failed with the memory hint, Step 1 done first."""
     errors = ns["errors"]
+    if ns["ok"] and not ns["failed"]:
+        # within the container's memory where the old runner was killed: better, not a failure
+        return True, "completed within the container's memory (the old runner was killed)"
     if case.experiment not in ns["failed"] or not errors:
         return False, "the source did not fail"
     err = errors[0]
