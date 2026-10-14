@@ -46,7 +46,7 @@ from typing import Any
 __all__ = [
     "OWNER_FILE", "OWNER_SCHEMA", "RUNS_DIRNAME", "START_TIME_TOLERANCE_S", "SweepReport",
     "create_run_dir", "host_name", "owner_alive", "pid_exists", "process_start_time",
-    "read_owner", "runs_root", "sweep", "user_cache_root", "write_owner",
+    "read_owner", "run_dir_or_temp", "runs_root", "sweep", "user_cache_root", "write_owner",
 ]
 
 OWNER_FILE = "owner.json"
@@ -286,6 +286,24 @@ def create_run_dir(root: str | os.PathLike | None = None, *, prefix: str = "link
     os.chmod(path, _DIR_MODE)
     write_owner(path, pid=pid, client=client)
     return path
+
+
+def run_dir_or_temp(*, prefix: str = "link-", pid: int | None = None,
+                    client: str | None = None) -> tuple[Path, str | None]:
+    """:func:`create_run_dir` under the per-user root, or a private temp directory.
+
+    When the per-user root cannot be created (a read-only or missing home
+    directory) the run still goes ahead, as R's ``ss_link()`` does, in a
+    ``mkdtemp`` directory (0700) of the system temp dir, and the second value
+    says so: no sweep will remove that directory. It is None otherwise.
+    """
+    try:
+        return create_run_dir(prefix=prefix, pid=pid, client=client), None
+    except (OSError, RuntimeError) as exc:
+        path = Path(tempfile.mkdtemp(prefix=f"spacescans-{prefix}"))
+        return path, (f"could not create the per-user run directory root "
+                      f"({type(exc).__name__}); the run uses {path}, which no sweep removes: "
+                      f"delete it when you no longer need it")
 
 
 # ---------------------------------------------------------------------------

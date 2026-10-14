@@ -294,7 +294,10 @@ def _make_run_dir(path: str | None, ctx: Any = None) -> Path:
         client = dict(getattr(ctx, "client", None) or {})
         who = " ".join(str(client[k]) for k in ("name", "version") if client.get(k))
         label = f"spacescans.bridge {__version__}" + (f" for {who}" if who else "")
-        return runs.create_run_dir(prefix="link-", pid=_run_dir_owner(), client=label)
+        path, warning = runs.run_dir_or_temp(prefix="link-", pid=_run_dir_owner(), client=label)
+        if warning and ctx is not None:
+            ctx.log(f"[spacescans.bridge] {warning}")
+        return path
     p = Path(path)
     if not p.exists():
         p.mkdir(parents=True, mode=DIR_MODE)

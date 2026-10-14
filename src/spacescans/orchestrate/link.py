@@ -275,25 +275,30 @@ def _check_data(groups: Mapping[str, list[str]], overlay: Mapping[str, dict],
 # run directory, cohort, cache, executor
 # ---------------------------------------------------------------------------
 
-def _run_dir(run_dir: str | os.PathLike | None) -> Path:
-    """The run directory: the caller's (created 0700 when missing), or a new one of
-    :mod:`~spacescans.orchestrate.runs` under the per-user root, owned by this process
-    and swept with the other dead ones later (decision 2)."""
+def _run_dir(run_dir: str | os.PathLike | None) -> tuple[Path, str | None]:
+    """The run directory and, rarely, a warning about it.
+
+    The caller's (created 0700 when missing), or a new one of
+    :mod:`~spacescans.orchestrate.runs` under the per-user root, owned by this
+    process and swept with the other dead ones later (decision 2); when that
+    root cannot be created, a private temp directory and a warning that no
+    sweep removes it.
+    """
     if run_dir is None:
         from spacescans import __version__
         from spacescans.orchestrate import runs
 
-        return runs.create_run_dir(prefix="link-", client=f"spacescans {__version__} link")
+        return runs.run_dir_or_temp(prefix="link-", client=f"spacescans {__version__} link")
     path = Path(os.fspath(run_dir)).expanduser().absolute()
     if path.exists():
         if not path.is_dir():
             raise LinkConfigError(f"run_dir {path} is not a directory",
                                   details={"run_dir": str(path)})
-        return path
+        return path, None
     path.parent.mkdir(parents=True, exist_ok=True)
     path.mkdir(mode=_RUN_DIR_MODE)
     os.chmod(path, _RUN_DIR_MODE)
-    return path
+    return path, None
 
 
 def _cohort_columns(cohort_in: Any) -> list[str]:
@@ -614,7 +619,9 @@ def link(cohort: pd.DataFrame | str | os.PathLike, variables: Sequence[str], *,
     exe = make_executor(executor, threads=threads, memory_limit=memory_limit)
     weight_cache = _weight_cache(cache)
 
-    rdir = _run_dir(run_dir)
+    rdir, rdir_warning = _run_dir(run_dir)
+    if rdir_warning:
+        warnings.append({"code": "run_dir", "message": rdir_warning})
     info = _cohort.to_pipeline_parquet(cohort_in, rdir / COHORT_FILE, variant="zcta5",
                                        pid_as_str=True, columns="required")
     if info.episode_id_overwritten:

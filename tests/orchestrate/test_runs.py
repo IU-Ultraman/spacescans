@@ -231,6 +231,44 @@ def test_link_without_run_dir_uses_the_per_user_root_and_sweeps_first(tmp_path, 
     assert res2.run_dir == given and runs.read_owner(given) is None
 
 
+def test_without_a_usable_root_the_run_goes_to_a_temp_dir_with_a_warning(tmp_path, monkeypatch):
+    """As R's ss_link() does: a read-only or missing home must not stop a link, but the caller
+    is told that no sweep removes that directory."""
+    blocker = tmp_path / "not-a-dir"
+    blocker.write_text("x")
+    monkeypatch.setenv("R_USER_CACHE_DIR", str(blocker))       # the root cannot be created under a file
+    path, warning = runs.run_dir_or_temp(prefix="link-", client="pytest")
+    try:
+        assert path.is_dir() and stat.S_IMODE(path.stat().st_mode) == 0o700
+        assert blocker not in path.parents and path.name.startswith("spacescans-link-")
+        assert "no sweep removes" in warning and str(path) in warning
+    finally:
+        path.rmdir()
+    monkeypatch.setenv("R_USER_CACHE_DIR", str(tmp_path / "fine"))
+    path, warning = runs.run_dir_or_temp(prefix="link-")
+    assert warning is None and path.parent == tmp_path / "fine" / "R" / "spacescans" / "runs"
+
+    from spacescans.orchestrate import link as link_fn
+
+    link_mod = sys.modules["spacescans.orchestrate.link"]
+    monkeypatch.setattr(link_mod, "_check_data", lambda groups, overlay, data_dir: (
+        {"data_dir": str(data_dir), "data_release": "test", "variables": {}, "datasets": {}}, []))
+    monkeypatch.setenv("R_USER_CACHE_DIR", str(blocker))
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    try:
+        from test_link_unit import COHORT, FakeExecutor
+    finally:
+        sys.path.pop(0)
+    res = link_fn(COHORT, ["noise"], data_dir=tmp_path / "data", executor=FakeExecutor())
+    try:
+        assert res.ok and blocker not in res.run_dir.parents
+        [w] = [w for w in res.warnings if w["code"] == "run_dir"]
+        assert str(res.run_dir) in w["message"]
+    finally:
+        import shutil
+        shutil.rmtree(res.run_dir, ignore_errors=True)
+
+
 def test_orchestrate_exports_the_runs_api():
     import spacescans.orchestrate as o
 
