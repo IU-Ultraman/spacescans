@@ -1031,7 +1031,7 @@ def test_link_without_run_dir_uses_the_per_user_root_owned_by_the_client(tmp_pat
         "sys.exit(p.returncode)"), json.dumps(fake_prefix(tmp_path) + [
             "link", "--request", str(tmp_path / "link.request.json"),
             "--result", str(tmp_path / "link.result.json")])],
-        capture_output=True, text=True, cwd=str(tmp_path), env=env, timeout=180)
+        capture_output=True, text=True, cwd=str(tmp_path), env=env, timeout=180, check=False)
     assert shell.returncode == 0, shell.stderr
     run_dir = Path(json.loads((tmp_path / "link.result.json").read_text())["value"]["run_dir"])
     owner = runs.read_owner(run_dir)
