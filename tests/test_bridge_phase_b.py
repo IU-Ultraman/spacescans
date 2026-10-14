@@ -16,6 +16,7 @@ import datetime as dt
 import hashlib
 import json
 import os
+import shutil
 import signal
 import subprocess
 import sys
@@ -31,8 +32,8 @@ import pytest
 BRIDGE = [sys.executable, "-I", "-u", "-X", "utf8", "-m", "spacescans.bridge"]
 NEW_COMMANDS = {"hello", "catalog", "coverage", "data-status", "data-plan", "data-verify",
                 "data-fetch", "data-import", "data-terms", "custom-validate", "link",
-                "cache-info", "cache-clear", "run", "schema", "quickstart", "resolve", "ping",
-                "templates"}
+                "cache-info", "cache-clear", "runs-sweep", "run", "schema", "quickstart", "resolve",
+                "ping", "templates"}
 COHORT_VALUES = ("P-0001", "P-0002", "-86.1234", "39.7654", "2016-03-04")
 
 
@@ -925,6 +926,118 @@ def test_catalog_and_hello_on_a_base_install(tmp_path):
     assert rows["ndi"]["missing_extras"] == ["geo"] and rows["ndi"]["runnable_here"] is False
     rc, res, _, _ = call(tmp_path, "hello", prefix=prefix)
     assert rc == 0 and res["value"]["catalog"]["templates"] == 25 and res["value"]["data_release"]
+
+
+# --- run directories under the per-user root and their sweep (phase-C decision 2) -------------
+
+def _stale_run_dir(root: Path, name: str) -> Path:
+    """A run directory under ``<root>/runs`` whose owner process has exited."""
+    from spacescans.orchestrate import runs
+
+    p = subprocess.run([sys.executable, "-c", "import os; print(os.getpid())"], capture_output=True,
+                       text=True, check=True)
+    dead = int(p.stdout.strip())
+    d = runs.runs_root(root) / name
+    d.mkdir(parents=True)
+    (d / "input.parquet").write_bytes(b"cohort" * 100)
+    (d / runs.OWNER_FILE).write_text(json.dumps({"schema": 1, "pid": dead, "start_time": 1.0,
+                                                 "host": runs.host_name(), "client": "test",
+                                                 "created_at": "2026-10-13T00:00:00+00:00"}))
+    return d
+
+
+def test_runs_sweep_and_the_cache_commands_remove_dead_owners_run_dirs(tmp_path):
+    from spacescans.orchestrate import runs
+
+    root = tmp_path / "ucache"
+    stale = _stale_run_dir(root, "link-stale")
+    live = runs.runs_root(root) / "link-live"
+    live.mkdir()
+    (live / runs.OWNER_FILE).write_text(json.dumps({"schema": 1, "pid": os.getpid(),
+                                                    "start_time": runs.process_start_time(os.getpid()),
+                                                    "host": runs.host_name()}))
+    # dry run: listed, kept
+    rc, res, _, _ = call(tmp_path, "runs-sweep", {"cache_root": str(root), "dry_run": True})
+    assert rc == 0, res
+    assert res["value"]["removed"] == ["link-stale"] and res["value"]["dry_run"] and stale.exists()
+    assert res["value"]["root"] == str(runs.runs_root(root)) and res["value"]["kept"] == 1
+    # the sweep itself
+    rc, res, _, err = call(tmp_path, "runs-sweep", {"cache_root": str(root)})
+    assert rc == 0, res
+    assert res["value"]["removed"] == ["link-stale"] and res["value"]["kept"] == 1
+    assert res["value"]["bytes"] > 600 and res["value"]["errors"] == []
+    assert not stale.exists() and live.exists()
+    assert "removed 1 run directory" in err and "input.parquet" not in json.dumps(res)
+    # cache-info and cache-clear sweep too and report it under "runs"
+    again = _stale_run_dir(root, "link-stale-2")
+    rc, res, _, _ = call(tmp_path, "cache-info", {"cache_dir": str(tmp_path / "c3"), "cache_root": str(root)})
+    assert rc == 0 and res["value"]["runs"]["removed"] == ["link-stale-2"] and not again.exists()
+    third = _stale_run_dir(root, "link-stale-3")
+    rc, res, _, _ = call(tmp_path, "cache-clear", {"cache_dir": str(tmp_path / "c3"), "cache_root": str(root)})
+    assert rc == 0 and res["value"]["runs"]["removed"] == ["link-stale-3"] and not third.exists()
+    assert res["value"]["runs"]["kept"] == 1
+    # the default root is the per-user one (R_USER_CACHE_DIR here, as R's R_user_dir reads it)
+    env = os.environ.copy()
+    env["R_USER_CACHE_DIR"] = str(tmp_path / "envroot")
+    fourth = _stale_run_dir(tmp_path / "envroot" / "R" / "spacescans", "link-stale-4")
+    rc, res, _, _ = call(tmp_path, "runs-sweep", {}, env=env)
+    assert rc == 0 and res["value"]["removed"] == ["link-stale-4"] and not fourth.exists()
+    assert res["value"]["root"] == str(tmp_path / "envroot" / "R" / "spacescans" / "runs")
+    # argument checks
+    rc, res, _, _ = call(tmp_path, "runs-sweep", {"cache_root": "relative"})
+    assert rc == 1 and res["error"]["kind"] == "config"
+    rc, res, _, _ = call(tmp_path, "runs-sweep", {"dry_run": "yes"})
+    assert rc == 1 and res["error"]["kind"] == "config"
+
+
+def test_link_without_run_dir_uses_the_per_user_root_owned_by_the_client(tmp_path):
+    """The bridge exits before its client reads the results, so the run directory is owned by
+    the client: the one named in SPACESCANS_BRIDGE_PARENT (R), else the bridge's parent."""
+    from spacescans.orchestrate import runs
+
+    root = tmp_path / "ucache"
+    stale = _stale_run_dir(root / "R" / "spacescans", "link-stale")
+    args = {k: v for k, v in link_args(tmp_path).items() if k != "run_dir"}
+    env = fake_env("ok", R_USER_CACHE_DIR=str(root), SPACESCANS_BRIDGE_PARENT=str(os.getpid()))
+    rc, res, _events, err = call(tmp_path, "link", args, prefix=fake_prefix(tmp_path), env=env)
+    assert rc == 0, res["error"] if res else err
+    run_dir = Path(res["value"]["run_dir"])
+    try:
+        assert run_dir.parent == root / "R" / "spacescans" / "runs" and run_dir.name.startswith("link-")
+        assert (run_dir.stat().st_mode & 0o777) == 0o700
+        owner = runs.read_owner(run_dir)
+        assert owner["pid"] == os.getpid()                      # the client, not the bridge
+        assert owner["client"].startswith("spacescans.bridge ") and "pytest 0" in owner["client"]
+        assert not stale.exists()                               # swept before the run
+        assert (run_dir / "exposures.parquet").is_file() and (run_dir / "logs.jsonl").is_file()
+    finally:
+        shutil.rmtree(run_dir, ignore_errors=True)
+    # without SPACESCANS_BRIDGE_PARENT the owner is still the client (the bridge's parent), so
+    # the results outlive the bridge: a sweep keeps them while the client lives
+    env = fake_env("ok", R_USER_CACHE_DIR=str(root))
+    rc, res, _events, err = call(tmp_path, "link", args, prefix=fake_prefix(tmp_path), env=env)
+    assert rc == 0, res["error"] if res else err
+    run_dir = Path(res["value"]["run_dir"])
+    try:
+        assert runs.read_owner(run_dir)["pid"] == os.getpid()
+        rep = runs.sweep(root / "R" / "spacescans")
+        assert rep.removed == [] and run_dir.name in rep.kept and run_dir.is_dir()
+    finally:
+        shutil.rmtree(run_dir, ignore_errors=True)
+    # a client that is gone: its run directory is swept
+    shell = subprocess.run([sys.executable, "-c", (
+        "import json, subprocess, sys; "
+        "p = subprocess.run(json.loads(sys.argv[1]), capture_output=True, text=True); "
+        "sys.exit(p.returncode)"), json.dumps(fake_prefix(tmp_path) + [
+            "link", "--request", str(tmp_path / "link.request.json"),
+            "--result", str(tmp_path / "link.result.json")])],
+        capture_output=True, text=True, cwd=str(tmp_path), env=env, timeout=180)
+    assert shell.returncode == 0, shell.stderr
+    run_dir = Path(json.loads((tmp_path / "link.result.json").read_text())["value"]["run_dir"])
+    owner = runs.read_owner(run_dir)
+    assert owner["pid"] != os.getpid() and not runs.pid_exists(owner["pid"])
+    rep = runs.sweep(root / "R" / "spacescans")
+    assert rep.removed == [run_dir.name] and not run_dir.exists()
 
 
 def test_link_writes_custom_columns_dictionary_rows_from_the_definition(tmp_path):

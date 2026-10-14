@@ -45,7 +45,6 @@ exit codes, timings and fingerprints.
 from __future__ import annotations
 
 import os
-import tempfile
 import threading
 import time
 from collections import OrderedDict
@@ -277,8 +276,14 @@ def _check_data(groups: Mapping[str, list[str]], overlay: Mapping[str, dict],
 # ---------------------------------------------------------------------------
 
 def _run_dir(run_dir: str | os.PathLike | None) -> Path:
+    """The run directory: the caller's (created 0700 when missing), or a new one of
+    :mod:`~spacescans.orchestrate.runs` under the per-user root, owned by this process
+    and swept with the other dead ones later (decision 2)."""
     if run_dir is None:
-        return Path(tempfile.mkdtemp(prefix="spacescans-link-"))   # mode 0700
+        from spacescans import __version__
+        from spacescans.orchestrate import runs
+
+        return runs.create_run_dir(prefix="link-", client=f"spacescans {__version__} link")
     path = Path(os.fspath(run_dir)).expanduser().absolute()
     if path.exists():
         if not path.is_dir():
