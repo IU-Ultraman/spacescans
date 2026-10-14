@@ -229,6 +229,35 @@ test_that("custom datasets are linked under their variable key", {
   expect_equal(unlist(last_request(dir, "data-status")$args$variables), "ndi")
 })
 
+test_that("a custom dataset's columns are described by its definition, not the catalog (decision 3)", {
+  dir <- local_fake_bridge()
+  d <- withr::local_tempdir()
+  csv <- file.path(d, "survey.csv")
+  writeLines(c("FIPS,score,heat", "18097000100,0.5,1.5"), csv)
+  def <- ss_custom_polygon(csv, boundary = "Tract", key_col = "FIPS", value_cols = c("score", "heat"),
+                           name = "Our survey", description = "Scores from our own survey.",
+                           labels = c(score = "Survey score"), units = c(heat = "degC"))
+  opts <- last_request(dir, "custom-validate")$args$options
+  expect_equal(opts$label, "Our survey")
+  expect_equal(opts$description, "Scores from our own survey.")
+  expect_equal(opts$labels, list(score = "Survey score"))
+  expect_equal(opts$units, list(heat = "degC"))
+  res <- link(variables = "ndi", custom = def)
+  # R sends the definition back unchanged, and keeps the rows the bridge wrote for it
+  sent <- last_request(dir, "link")$args$custom[[def$variable_key]]
+  expect_equal(sent$value_labels, list(score = "Survey score"))
+  expect_equal(sent$value_units, list(heat = "degC"))
+  expect_equal(sent$description, "Scores from our own survey.")
+  f <- attr(res, "features")
+  expect_equal(f$feature_name, c("ndi", "score", "heat"))
+  expect_equal(f$short_description, c("fake ndi", "Survey score", "Our survey (heat)"))
+  expect_equal(f$detailed_description[2:3],
+               c("Scores from our own survey.", "Scores from our own survey. Unit: degC."))
+  expect_error(ss_custom_polygon(csv, boundary = "Tract", key_col = "FIPS", value_cols = "score",
+                                 description = c("a", "b")),
+               class = "spacescans_error_config")
+})
+
 test_that("Ctrl-C stops the link, kills the bridge and keeps the run directory", {
   skip_on_os("windows")
   d <- withr::local_tempdir()

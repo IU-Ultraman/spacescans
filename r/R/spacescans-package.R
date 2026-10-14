@@ -38,6 +38,13 @@
 #'   `tools::R_user_dir("spacescans", "cache")`).
 #' * `spacescans.envdir`: where [ss_install()] puts the Python environment.
 #'
+#' Run directories: a call that is given no `run_dir` works in a private
+#' (0700) directory under `tools::R_user_dir("spacescans", "cache")/runs`,
+#' recorded as owned by this R session (`owner.json`: pid, start time, host;
+#' no cohort values). Directories whose owner no longer exists are deleted,
+#' never archived, when the package loads, in [ss_doctor()] and in
+#' [ss_cache_clear()] (the Python side sweeps too); a message says how many.
+#'
 #' @keywords internal
 "_PACKAGE"
 
@@ -53,6 +60,8 @@
   )
   missing <- setdiff(names(defaults), names(options()))
   if (length(missing)) options(defaults[missing])
+  # Run directories left by sessions that no longer exist hold cohort data: remove them.
+  .ss_sweep_and_tell(startup = TRUE)
   invisible()
 }
 

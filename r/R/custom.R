@@ -19,13 +19,18 @@
 #' @param value_cols Columns with the values to link.
 #' @param year_col Column with the year, for yearly data; `NULL` for static.
 #' @param name A label for the dataset (default: the file name).
+#' @param description A sentence describing the dataset (default: one made
+#'   from the boundary or the raster).
 #' @param labels,units Named character vectors of labels and units, keyed by
 #'   value column.
 #' @param paths GeoTIFF paths.
 #' @param years The year of each raster, or `NULL` for one static raster.
 #' @param bands Band numbers to read.
 #' @return A definition: a list of class `ss_custom` (`variable_key`,
-#'   `label`, `boundary`, `value_cols`, ...).
+#'   `label`, `boundary`, `value_cols`, ...). The `features` attribute of
+#'   the [ss_link()] result describes each of its columns from this
+#'   definition: the column's label (else the dataset's `name`), and the
+#'   `description` followed by the column's unit.
 #' @examples
 #' \dontrun{
 #' svi <- ss_custom_polygon("svi_tract.csv", boundary = "Tract",
@@ -34,7 +39,8 @@
 #' }
 #' @export
 ss_custom_polygon <- function(values, boundary = c("Tract", "BG", "ZCTA5", "County"), key_col,
-                              value_cols, year_col = NULL, name = NULL, labels = NULL, units = NULL) {
+                              value_cols, year_col = NULL, name = NULL, labels = NULL, units = NULL,
+                              description = NULL) {
   boundary <- .ss_choice(boundary, c("Tract", "BG", "ZCTA5", "County"), "boundary")
   if (missing(key_col) || !is.character(key_col) || length(key_col) != 1L) {
     .ss_abort("config", "`key_col` must name the column with the geography id.")
@@ -57,7 +63,7 @@ ss_custom_polygon <- function(values, boundary = c("Tract", "BG", "ZCTA5", "Coun
     .ss_abort("config", sprintf("Values file not found: %s", format(values)))
   }
   options <- list(boundary = boundary, key_col = key_col, value_cols = I(value_cols),
-                  year_col = year_col, label = name,
+                  year_col = year_col, label = name, description = .ss_description_arg(description),
                   labels = if (!is.null(labels)) as.list(labels),
                   units = if (!is.null(units)) as.list(units))
   .ss_custom_validate("polygon", normalizePath(path.expand(values)), options)
@@ -66,7 +72,7 @@ ss_custom_polygon <- function(values, boundary = c("Tract", "BG", "ZCTA5", "Coun
 #' @rdname ss_custom_polygon
 #' @export
 ss_custom_raster <- function(paths, years = NULL, bands = 1L, value_cols = NULL, name = NULL,
-                             labels = NULL, units = NULL) {
+                             labels = NULL, units = NULL, description = NULL) {
   if (!is.character(paths) || !length(paths)) .ss_abort("config", "`paths` must be GeoTIFF file paths.")
   missing <- paths[!file.exists(path.expand(paths))]
   if (length(missing)) .ss_abort("config", sprintf("Raster not found: %s", paste(missing, collapse = ", ")))
@@ -77,9 +83,18 @@ ss_custom_raster <- function(paths, years = NULL, bands = 1L, value_cols = NULL,
   if (anyNA(bands) || any(bands < 1L)) .ss_abort("config", "`bands` must be band numbers (1, 2, ...).")
   options <- list(years = if (!is.null(years)) I(as.integer(years)), bands = I(bands),
                   value_cols = if (!is.null(value_cols)) I(value_cols), label = name,
+                  description = .ss_description_arg(description),
                   labels = if (!is.null(labels)) as.list(labels),
                   units = if (!is.null(units)) as.list(units))
   .ss_custom_validate("raster", normalizePath(path.expand(paths)), options)
+}
+
+.ss_description_arg <- function(description) {
+  if (is.null(description)) return(NULL)
+  if (!is.character(description) || length(description) != 1L || is.na(description)) {
+    .ss_abort("config", "`description` must be a single string.")
+  }
+  description
 }
 
 .ss_custom_validate <- function(kind, files, options) {

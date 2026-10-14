@@ -145,7 +145,9 @@
 #'   raises its error.
 #' * `ss_job_attach()` finds a job again from its run directory, for example
 #'   after R restarted. Only jobs started with an explicit `run_dir` survive
-#'   the R session: a run directory under [tempdir()] is removed when R exits.
+#'   the R session: a run directory the package chose itself is tied to the
+#'   session that started the job (the bridge stops with it, and the directory
+#'   is removed by the next sweep once that session is gone).
 #'
 #' @param job A job from `ss_link(wait = FALSE)` or `ss_job_attach()`.
 #' @param timeout Seconds to wait; `Inf` (default) waits until the job ends.

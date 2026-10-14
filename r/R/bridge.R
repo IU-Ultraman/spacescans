@@ -35,7 +35,30 @@
                    POSIXt = "ISO8601", Date = "ISO8601", force = TRUE)
 }
 
-.ss_new_run_dir <- function(parent = tempdir()) {
+# A fresh private (0700) directory. Without `parent` it goes under the per-user
+# run root (tools::R_user_dir("spacescans", "cache")/runs, see runs.R) and gets
+# an owner.json naming this R session, so a later sweep removes it should this
+# session die before it can (phase-C decision 2). With `parent` (output
+# directories under tempdir()) it is an ordinary temp directory.
+.ss_new_run_dir <- function(parent = NULL) {
+  if (is.null(parent)) {
+    root <- tryCatch(.ss_ensure_private_dir(.ss_runs_root()), error = function(e) NULL)
+    if (!is.null(root)) {
+      dir <- tempfile("ss-", tmpdir = root)
+      dir.create(dir, recursive = TRUE, mode = "0700")
+      Sys.chmod(dir, "0700", use_umask = FALSE)
+      dir <- normalizePath(dir)
+      .ss_write_owner(dir)
+      return(dir)
+    }
+    if (!isTRUE(.ss_state$runs_root_warned)) {
+      .ss_state$runs_root_warned <- TRUE
+      warning(sprintf(paste0("spacescans: cannot create the run directory root %s; using tempdir() ",
+                             "for this session (set R_USER_CACHE_DIR to a writable location)."),
+                      .ss_runs_root()), call. = FALSE)
+    }
+    parent <- tempdir()
+  }
   dir <- tempfile("ss-", tmpdir = parent)
   dir.create(dir, recursive = TRUE, mode = "0700")
   Sys.chmod(dir, "0700", use_umask = FALSE)

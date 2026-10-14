@@ -177,6 +177,49 @@ test_that("live: ss_cache_info() and ss_cache_clear() work on an empty cache", {
   ss_cache_clear(cache_dir = root)
 })
 
+test_that("live: R and the bridge keep run directories under one root and sweep each other's", {
+  skip_if_not_live()
+  skip_if_no_command("runs-sweep")
+  local_clean_state()
+  root <- withr::local_tempdir()
+  withr::local_envvar(R_USER_CACHE_DIR = root)
+  runs <- spacescans:::.ss_runs_root()
+  expect_equal(runs, file.path(tools::R_user_dir("spacescans", "cache"), "runs"))
+  # Python computes the same root as tools::R_user_dir() (no cache_root sent)
+  v <- spacescans:::.ss_bridge("runs-sweep", list(dry_run = TRUE))
+  expect_equal(normalizePath(v$root), normalizePath(runs))
+  # a directory R made for a session that is gone: the bridge's sweep removes it
+  p <- processx::process$new("/bin/sh", c("-c", "sleep 0.3"))
+  pid <- p$get_pid()
+  p$wait(10000)
+  stale <- file.path(runs, "ss-gone")
+  dir.create(stale, recursive = TRUE)
+  writeLines("cohort", file.path(stale, "cohort.parquet"))
+  spacescans:::.ss_write_owner(stale, pid = pid)
+  mine <- spacescans:::.ss_new_run_dir()
+  v <- spacescans:::.ss_bridge("runs-sweep", list())
+  expect_equal(unlist(v$removed), "ss-gone")
+  expect_false(dir.exists(stale))
+  expect_true(dir.exists(mine))            # owned by this live session
+  unlink(mine, recursive = TRUE)
+})
+
+test_that("live: a custom definition carries the label, units and description R gave", {
+  skip_if_not_live()
+  skip_if_no_command("custom-validate")
+  local_clean_state()
+  d <- withr::local_tempdir()
+  csv <- file.path(d, "tract_values.csv")
+  writeLines(c("GEOID,score,heat", "18097310100,0.25,1.5", "18097310200,0.75,2.5"), csv)
+  def <- ss_custom_polygon(csv, boundary = "Tract", key_col = "GEOID", value_cols = c("score", "heat"),
+                           name = "Live survey", description = "Scores from a live test.",
+                           labels = c(score = "Survey score"), units = c(heat = "degC"))
+  expect_equal(def$label, "Live survey")
+  expect_equal(def$description, "Scores from a live test.")
+  expect_equal(def$value_labels$score, "Survey score")
+  expect_equal(def$value_units$heat, "degC")
+})
+
 test_that("live: ss_link() links a small cohort and leaves the data directory untouched", {
   skip_if_not_live()
   if (!identical(Sys.getenv("SPACESCANS_LIVE_LINK"), "1")) skip("set SPACESCANS_LIVE_LINK=1 to run a real link")

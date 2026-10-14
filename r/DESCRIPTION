@@ -27,6 +27,7 @@ Imports:
 Suggests:
     arrow,
     bit64,
+    data.table,
     knitr,
     markdown,
     testthat (>= 3.0.0),

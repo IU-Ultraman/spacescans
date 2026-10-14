@@ -140,8 +140,8 @@ if (!is.null(sc$error)) {
 version <- Sys.getenv("SS_FAKE_VERSION", "0.0.0")
 commands <- c("capabilities", "hello", "catalog", "coverage", "data-status", "data-plan",
               "data-verify", "data-fetch", "data-import", "data-terms", "custom-validate", "link",
-              "cache-info", "cache-clear", "run", "schema", "quickstart", "resolve", "templates",
-              "yaml-load", "yaml-dump", "ping")
+              "cache-info", "cache-clear", "runs-sweep", "run", "schema", "quickstart", "resolve",
+              "templates", "yaml-load", "yaml-dump", "ping")
 
 catalog_vars <- list(
   list(key = "ndi", label = "Neighborhood Deprivation Index (NDI)", experiment = "bg_ndi_wi",
@@ -247,6 +247,7 @@ if (is.null(value)) {
       vk <- paste0("custom_", substr(gsub("[^a-z0-9]", "", tolower(basename(files[1]))), 1, 8))
       list(definition = list(
         label = o$label %||% sub("[.][^.]*$", "", basename(files[1])),
+        description = o$description %||% sprintf("User-uploaded %s values.", o$boundary %||% "raster"),
         boundary = if (identical(args$kind, "raster")) "Point" else o$boundary,
         spatial_method = if (identical(args$kind, "raster")) "grid" else "areal",
         coverage_years = list(2010L, 2020L), coverage_region = "CONUS", experiment = "custom",
@@ -255,7 +256,8 @@ if (is.null(value)) {
         geometry = if (identical(args$kind, "raster")) "raster" else "polygon",
         dataset_id = sub("custom_", "", vk), variable_key = vk,
         values_path = if (identical(args$kind, "polygon")) files[1],
-        value_labels = setNames(list(), character()), sha256 = "0"))
+        value_labels = o$labels %||% setNames(list(), character()),
+        value_units = o$units %||% setNames(list(), character()), sha256 = "0"))
     },
     coverage = {
       co <- read_parquet(args$cohort)
@@ -299,8 +301,22 @@ if (is.null(value)) {
           if (na_frac > 0) vals[seq_len(floor(n * na_frac))] <- NA
           with_value <- sum(!is.na(vals))
           cols[[name]] <- vals
-          feats[[length(feats) + 1L]] <- list(feature_name = name, short_description = paste("fake", c),
-                                              detailed_description = paste("fake feature", c, "of", v))
+          # A custom column's row comes from the user's definition (label, unit, description),
+          # as spacescans.custom.feature_rows builds it; a catalog column's from the dictionary.
+          d <- custom[[v]]
+          feats[[length(feats) + 1L]] <- if (!is.null(d)) {
+            own <- d$value_labels[[c]]
+            unit <- d$value_units[[c]]
+            short <- if (!is.null(own) && nzchar(own)) own else if (length(unlist(d$value_cols)) > 1L) {
+              sprintf("%s (%s)", d$label, c)
+            } else d$label %||% c
+            detail <- d$description %||% ""
+            if (!is.null(unit) && nzchar(unit)) detail <- trimws(paste0(detail, " Unit: ", unit, "."))
+            list(feature_name = name, short_description = short, detailed_description = detail)
+          } else {
+            list(feature_name = name, short_description = paste("fake", c),
+                 detailed_description = paste("fake feature", c, "of", v))
+          }
         }
         cov[[length(cov) + 1L]] <- list(variable = v, episodes = n, with_value = with_value,
                                         pct = round(100 * with_value / n, 1))
@@ -326,9 +342,15 @@ if (is.null(value)) {
            warnings = sc$warnings %||% list(), provenance = prov_path)
     },
     `cache-info` = list(cache_dir = args$cache_dir, entries = 2L, bytes = 2048L,
-                        oldest = "2026-10-01T00:00:00", newest = "2026-10-12T00:00:00"),
+                        oldest = "2026-10-01T00:00:00", newest = "2026-10-12T00:00:00",
+                        runs = list(root = file.path(args$cache_root %||% "/fake", "runs"),
+                                    removed = list(), kept = 0L, unknown = list(), bytes = 0)),
     `cache-clear` = list(cache_dir = args$cache_dir, removed = 2L, bytes = 2048L,
-                         older_than_s = args$older_than_s),
+                         older_than_s = args$older_than_s,
+                         runs = list(root = file.path(args$cache_root %||% "/fake", "runs"),
+                                     removed = list(), kept = 0L, unknown = list(), bytes = 0)),
+    `runs-sweep` = list(root = file.path(args$cache_root %||% "/fake", "runs"), dry_run = isTRUE(args$dry_run),
+                        removed = list(), kept = 0L, unknown = list(), bytes = 0, errors = list()),
     templates = list(templates = list(
       list(name = "c3/bg_us_demo", kind = "c3", file = "c3/bg_us_demo.yaml", sha256 = "abc"),
       list(name = "c4/ndi_demo", kind = "c4", file = "c4/ndi_demo.yaml", sha256 = "def"))),
