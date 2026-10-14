@@ -770,12 +770,21 @@ def cmd_report(args: argparse.Namespace) -> int:
     md.append("")
     md.append("## Findings")
     md.append("")
-    measured = [g for g in gate_rows if g["ratio"] is not None]
+    # runs both paths completed (an expected out-of-memory kill has its own check below: both
+    # peaks are where the kernel stopped the step, so their ratio says nothing)
+    measured = [g for g in gate_rows if g["ratio"] is not None
+                and g["size"] not in CASE_BY_NAME[g["case"]].expect_oom]
     if measured:
         worst_ratio = max(measured, key=lambda g: g["ratio"])
-        md.append(f"- Peak RSS: the largest new/old ratio is {worst_ratio['ratio']:.3f} "
-                  f"({worst_ratio['size']} `{worst_ratio['case']}`); the gate allows {TOLERANCE:.2f}. "
-                  f"{sum(1 for g in measured if g['verdict'] == 'PASS')} of {len(measured)} compared runs pass.")
+        n_pass = sum(1 for g in measured if g["verdict"] == "PASS")
+        md.append(f"- Peak RSS: {n_pass} of {len(measured)} compared runs pass; the largest new/old ratio "
+                  f"is {worst_ratio['ratio']:.3f} ({worst_ratio['size']} `{worst_ratio['case']}`), the gate "
+                  f"allows {TOLERANCE:.2f}.")
+        failing = [g for g in measured if g["verdict"] != "PASS"]
+        if failing:
+            md.append("- Over the limit: " + "; ".join(
+                f"{g['size']} `{g['case']}` {fmt(g['new_peak_gib'])} GiB against {fmt(g['old_peak_gib'])} "
+                f"(limit {fmt(g['limit_gib'])})" for g in failing) + ".")
     if slow:
         md.append("- Wall time: these runs took more than 25% longer on the new path: "
                   + "; ".join(f"{g['size']} `{g['case']}` {fmt(g['old_wall_s'], 1)} -> {fmt(g['new_wall_s'], 1)} s "

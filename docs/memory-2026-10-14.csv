@@ -13,6 +13,10 @@ date,size,episodes,case,experiment,variables,mode,source,step,peak_gib,wall_s,st
 2026-10-14,10k,10002,noise,noise,noise,new,measured (RUSAGE_SELF),(orchestrator),0.231,13.0,,,
 2026-10-14,10k,10002,noise,noise,noise,new,measured (RUSAGE_CHILDREN),(total),3.538,13.402,,0,ok
 2026-10-14,100k,100000,noise,noise,noise,old,paper runtime.csv (median of 1 cold run),(total),3.967,84.92,,0,ok
+2026-10-14,100k,100000,noise,noise,noise,new,measured (executor wait4),c3_noise,3.967,84.207,ran,,
+2026-10-14,100k,100000,noise,noise,noise,new,measured (executor wait4),c4_noise,3.777,5.626,ran,,
+2026-10-14,100k,100000,noise,noise,noise,new,measured (RUSAGE_SELF),(orchestrator),0.306,90.456,,,
+2026-10-14,100k,100000,noise,noise,noise,new,measured (RUSAGE_CHILDREN),(total),3.967,91.702,,0,ok
 2026-10-14,1k,1001,temis,temis,temis,old,paper runtime.csv (median of 3 cold runs),(total),4.302,8.51,,0,ok
 2026-10-14,10k,10002,temis,temis,temis,old,paper runtime.csv (median of 3 cold runs),(total),10.015,34.56,,0,ok
 2026-10-14,10k,10002,temis,temis,temis,new,measured (executor wait4),c3_temis,0.644,6.576,ran,,
@@ -20,6 +24,10 @@ date,size,episodes,case,experiment,variables,mode,source,step,peak_gib,wall_s,st
 2026-10-14,10k,10002,temis,temis,temis,new,measured (RUSAGE_SELF),(orchestrator),0.231,72.203,,,
 2026-10-14,10k,10002,temis,temis,temis,new,measured (RUSAGE_CHILDREN),(total),9.591,72.601,,0,ok
 2026-10-14,100k,100000,temis,temis,temis,old,paper runtime.csv (median of 1 cold run),(total),22.509,130.32,,247,oom
+2026-10-14,100k,100000,temis,temis,temis,new,measured (executor wait4),c3_temis,3.965,63.244,ran,,
+2026-10-14,100k,100000,temis,temis,temis,new,measured (executor wait4),c4_temis,22.735,56.214,failed,,
+2026-10-14,100k,100000,temis,temis,temis,new,measured (RUSAGE_SELF),(orchestrator),0.176,121.471,,,
+2026-10-14,100k,100000,temis,temis,temis,new,measured (RUSAGE_CHILDREN),(total),22.735,122.131,,0,oom
 2026-10-14,1k,1001,vnl,vnl,vnl,old,paper runtime.csv (median of 3 cold runs),(total),1.711,14.18,,0,ok
 2026-10-14,10k,10002,vnl,vnl,vnl,old,paper runtime.csv (median of 3 cold runs),(total),2.2,21.87,,0,ok
 2026-10-14,10k,10002,vnl,vnl,vnl,new,measured (executor wait4),c3_vnl,2.12,11.272,ran,,
@@ -27,6 +35,10 @@ date,size,episodes,case,experiment,variables,mode,source,step,peak_gib,wall_s,st
 2026-10-14,10k,10002,vnl,vnl,vnl,new,measured (RUSAGE_SELF),(orchestrator),0.216,22.271,,,
 2026-10-14,10k,10002,vnl,vnl,vnl,new,measured (RUSAGE_CHILDREN),(total),2.12,22.638,,0,ok
 2026-10-14,100k,100000,vnl,vnl,vnl,old,paper runtime.csv (median of 1 cold run),(total),4.428,96.64,,0,ok
+2026-10-14,100k,100000,vnl,vnl,vnl,new,measured (executor wait4),c3_vnl,4.394,81.308,ran,,
+2026-10-14,100k,100000,vnl,vnl,vnl,new,measured (executor wait4),c4_vnl,1.959,11.613,ran,,
+2026-10-14,100k,100000,vnl,vnl,vnl,new,measured (RUSAGE_SELF),(orchestrator),0.273,93.857,,,
+2026-10-14,100k,100000,vnl,vnl,vnl,new,measured (RUSAGE_CHILDREN),(total),4.394,94.769,,0,ok
 2026-10-14,10k,10002,custom_raster,custom,custom_714c9715,old,measured (VmHWM sampler),<runner>,0.365,,,,
 2026-10-14,10k,10002,custom_raster,custom,custom_714c9715,old,measured (VmHWM sampler),c3_customgrid_3940345e,0.647,8.4,,0,
 2026-10-14,10k,10002,custom_raster,custom,custom_714c9715,old,measured (VmHWM sampler),c4_custom_714c9715,0.345,0.498,,0,
@@ -89,6 +101,10 @@ date,size,episodes,case,experiment,variables,mode,source,step,peak_gib,wall_s,st
 2026-10-14,10k,10002,faqsd,faqsd,faqsd,new,measured (RUSAGE_SELF),(orchestrator),0.22,641.3,,,
 2026-10-14,10k,10002,faqsd,faqsd,faqsd,new,measured (RUSAGE_CHILDREN),(total),16.805,641.689,,0,ok
 2026-10-14,100k,100000,faqsd,faqsd,faqsd,old,paper runtime.csv (median of 1 cold run),(total),22.566,459.02,,247,oom
+2026-10-14,100k,100000,faqsd,faqsd,faqsd,new,measured (executor wait4),c3_tract_us,6.562,287.217,ran,,
+2026-10-14,100k,100000,faqsd,faqsd,faqsd,new,measured (executor wait4),c4_tract_faqsd,22.754,178.071,failed,,
+2026-10-14,100k,100000,faqsd,faqsd,faqsd,new,measured (RUSAGE_SELF),(orchestrator),0.175,467.333,,,
+2026-10-14,100k,100000,faqsd,faqsd,faqsd,new,measured (RUSAGE_CHILDREN),(total),22.754,468.052,,0,oom
 2026-10-14,1k,1001,acag,acag,acag,old,paper runtime.csv (median of 3 cold runs),(total),0.925,827.73,,0,ok
 2026-10-14,10k,10002,acag,acag,acag,old,paper runtime.csv (median of 3 cold runs),(total),2.824,944.12,,0,ok
 2026-10-14,10k,10002,acag,acag,acag,new,measured (executor wait4),c3_acag,0.645,7.131,ran,,
