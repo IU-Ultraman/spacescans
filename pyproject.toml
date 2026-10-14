@@ -87,6 +87,7 @@ spacescans = [
     "catalog/templates/c4/*.yaml",
     "data/manifest.json",
     "data/manifest.schema.json",
+    "orchestrate/memory_table.csv",
     "py.typed",
 ]
 

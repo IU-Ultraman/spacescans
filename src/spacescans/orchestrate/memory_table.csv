@@ -1,0 +1,33 @@
+experiment,case,episodes,peak_gib,peak_step,wall_s,outcome,container_gib,source,measured
+noise,noise,1001,3.490,c4_noise,6.5,ok,24,orchestrate.link,2026-10-13
+noise,noise,10002,3.538,c4_noise,13.4,ok,24,orchestrate.link,2026-10-13
+noise,noise,100000,3.967,,84.9,ok,24,web-0.2.7 runner,2026-10-13
+temis,temis,1001,4.302,,8.5,ok,24,web-0.2.7 runner,2026-10-13
+temis,temis,10002,9.591,c4_temis,72.6,ok,24,orchestrate.link,2026-10-13
+temis,temis,100000,22.509,,130.3,oom,24,web-0.2.7 runner,2026-10-13
+vnl,vnl,1001,1.711,,14.2,ok,24,web-0.2.7 runner,2026-10-13
+vnl,vnl,10002,2.120,c3_vnl,22.6,ok,24,orchestrate.link,2026-10-13
+vnl,vnl,100000,4.428,,96.6,ok,24,web-0.2.7 runner,2026-10-13
+custom,custom_raster,10002,0.646,c3_customgrid_3940345e,10.7,ok,24,orchestrate.link,2026-10-13
+custom,custom_bg_csv,10002,6.481,c3_bg,114.8,ok,24,orchestrate.link,2026-10-13
+nhd_bluespace,nhd_bluespace,1001,1.110,,31.0,ok,24,web-0.2.7 runner,2026-10-13
+nhd_bluespace,nhd_bluespace,10002,1.283,,133.2,ok,24,web-0.2.7 runner,2026-10-13
+nhd_bluespace,nhd_bluespace,100000,1.278,,387.2,ok,24,web-0.2.7 runner,2026-10-13
+tiger_proximity,tiger_proximity,1001,1.231,,47.0,ok,24,web-0.2.7 runner,2026-10-13
+tiger_proximity,tiger_proximity,10002,1.471,,89.7,ok,24,web-0.2.7 runner,2026-10-13
+tiger_proximity,tiger_proximity,100000,1.723,,406.5,ok,24,web-0.2.7 runner,2026-10-13
+fara_tract,fara_tract,1001,3.677,,34.7,ok,24,web-0.2.7 runner,2026-10-13
+fara_tract,fara_tract,10002,3.780,,124.9,ok,24,web-0.2.7 runner,2026-10-13
+fara_tract,fara_tract,100000,6.569,,582.2,ok,24,web-0.2.7 runner,2026-10-13
+zcta5_cbp,zcta5_cbp,1001,5.360,,37.9,ok,24,web-0.2.7 runner,2026-10-13
+zcta5_cbp,zcta5_cbp,10002,5.376,,162.8,ok,24,web-0.2.7 runner,2026-10-13
+zcta5_cbp,zcta5_cbp,100000,6.665,,556.8,ok,24,web-0.2.7 runner,2026-10-13
+bg_ndi_wi,bg_ndi_wi,1001,6.752,,70.9,ok,24,web-0.2.7 runner,2026-10-13
+bg_ndi_wi,bg_ndi_wi,10002,6.853,,217.1,ok,24,web-0.2.7 runner,2026-10-13
+bg_ndi_wi,bg_ndi_wi,100000,8.013,,606.5,ok,24,web-0.2.7 runner,2026-10-13
+faqsd,faqsd,1001,4.355,,217.0,ok,24,web-0.2.7 runner,2026-10-13
+faqsd,faqsd,10002,16.829,,559.0,ok,24,web-0.2.7 runner,2026-10-13
+faqsd,faqsd,100000,22.566,,459.0,oom,24,web-0.2.7 runner,2026-10-13
+acag,acag,1001,0.925,,827.7,ok,24,web-0.2.7 runner,2026-10-13
+acag,acag,10002,2.824,,944.1,ok,24,web-0.2.7 runner,2026-10-13
+acag,acag,100000,20.201,,2228.6,ok,24,web-0.2.7 runner,2026-10-13

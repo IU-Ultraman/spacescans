@@ -138,6 +138,14 @@ def _step_failed(exc: BaseException, message: str, hint: str | None,
     if oom:
         hint = (f"step {step} was killed (exit code {rc}), which usually means the machine ran out "
                 "of memory: use fewer threads or a lower memory_limit, or a smaller cohort")
+        episodes = getattr(exc, "episodes", None) or details.get("episodes")
+        details["episodes"] = episodes
+        # the measured memory table (gate M); standard library only, so no pandas on this path
+        from spacescans.orchestrate.memory import oom_note
+
+        note = oom_note(experiment, episodes if isinstance(episodes, int) else None, step=step)
+        if note:
+            hint = f"{hint}; {note}"
     elif hint is None:
         hint = "details.log_tail has the end of the step's output; logs.jsonl in the run directory has all of it"
     return message, hint, details
