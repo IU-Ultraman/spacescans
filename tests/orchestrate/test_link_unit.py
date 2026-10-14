@@ -329,6 +329,31 @@ def test_link_groups_by_catalog_order_keeping_request_order_within_a_source(tmp_
     assert cfg["name"].endswith("_task_run")
 
 
+def test_an_inprocess_link_spills_into_its_run_dir(tmp_path, no_data_check, monkeypatch):
+    """Phase-C review PRIV-4: DuckDB spills to ./.tmp of the process's cwd by default, so an
+    in-process link() spilled cohort-derived tables into the caller's directory, outside
+    the run dir and every sweep. Its executor now gets run_dir/.tmp, where a subprocess
+    step (cwd = run dir) spills already; an executor passed in is left as given."""
+    from spacescans.orchestrate.execute import InProcessExecutor
+
+    engines, fake = [], FakeExecutor()
+
+    def run(self, config, *, data_dir, cwd, on_line, cancel=None):
+        engines.append(self.prepare(config, data_dir)["engine"])
+        return fake.run(config, data_dir=data_dir, cwd=cwd, on_line=on_line, cancel=cancel)
+
+    monkeypatch.setattr(InProcessExecutor, "run", run)
+    monkeypatch.chdir(tmp_path)
+    res = _link(tmp_path, ["noise"], executor="inprocess", threads=1)
+    assert res.ok and len(engines) == 2
+    assert all(e["temp_directory"] == str(res.run_dir / ".tmp") and e["threads"] == 1
+               for e in engines)
+    mine = InProcessExecutor(threads=1)
+    engines.clear()
+    _link(tmp_path / "again", ["noise"], executor=mine)
+    assert mine.temp_directory is None and all("temp_directory" not in e for e in engines)
+
+
 def test_an_identical_c3_step_runs_once_per_link(tmp_path, no_data_check):
     exe = FakeExecutor()
     seen, emit = _events()

@@ -77,6 +77,8 @@ __all__ = ["COHORT_FILE", "LinkConfigError", "LinkResult", "coverage_table", "li
 
 #: The pipeline input inside the run directory (the web's task file name).
 COHORT_FILE = "input.parquet"
+#: Where DuckDB spills in a link's steps: its default (./.tmp) of a step run with cwd = run dir.
+_DUCKDB_SPILL_DIR = ".tmp"
 _RUN_DIR_MODE = 0o700
 
 
@@ -629,6 +631,11 @@ def link(cohort: pd.DataFrame | str | os.PathLike, variables: Sequence[str], *,
     rdir, rdir_warning = _run_dir(run_dir)
     if rdir_warning:
         warnings.append({"code": "run_dir", "message": rdir_warning})
+    if isinstance(executor, str) and executor == "inprocess":
+        # DuckDB spills to ./.tmp of the process's working directory unless told otherwise:
+        # keep an in-process step's spills (cohort-derived tables) in the run dir, where a
+        # subprocess step (cwd = run dir) spills already, never in the caller's directory.
+        exe.temp_directory = os.fspath(rdir / _DUCKDB_SPILL_DIR)
     info = _cohort.to_pipeline_parquet(cohort_in, rdir / COHORT_FILE, variant="zcta5",
                                        pid_as_str=True, columns="required")
     if info.episode_id_overwritten:
