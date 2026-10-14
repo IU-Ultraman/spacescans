@@ -71,6 +71,17 @@ Every suite only reads these directories. The real-run suites check afterwards t
 in the data root is newer than a stamp taken first. Run them one at a time: they are real
 pipeline jobs.
 
+The three `SPACESCANS_WEB_*` suites compare this package with the old web code, web 3991c3b
+(pipeline v0.2.7). The goldens come from that code. They read the old runners' internals
+(`render_yaml`, `_cache_key`, the custom runner), so they need a checkout of that state.
+
+- **Before the web cutover:** the primary checkout works, since web main (31c5dc3) has the
+  same backend.
+- **After the cutover:** the web's runners are shims over this package, and the suites fail
+  on the missing internals (ImportError `_adapter`, no `render_yaml`). Point the three
+  variables at a worktree of the paper tag instead, for example
+  `git -C $A/spacescans-web worktree add $A/spacescans-web-3991c3b paper-jamia-2026`.
+
 To run everything on this Mac:
 
 ```sh
