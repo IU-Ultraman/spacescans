@@ -119,6 +119,16 @@ def _log_tail(value: Any) -> list[str]:
     return lines[-LOG_TAIL_LINES:]
 
 
+def _memory_note(experiment: Any, episodes: int | None, step: Any) -> str | None:
+    """The measured memory need of the source (gate M table), or None; never raises."""
+    try:
+        from spacescans.orchestrate.memory import oom_note
+
+        return oom_note(experiment, episodes, step=step)
+    except Exception:  # noqa: BLE001 - the note only sharpens a hint on the error path
+        return None
+
+
 def _step_failed(exc: BaseException, message: str, hint: str | None,
                  details: dict[str, Any]) -> tuple[str, str | None, dict[str, Any]]:
     step = getattr(exc, "step", None) or details.get("step")
@@ -140,10 +150,7 @@ def _step_failed(exc: BaseException, message: str, hint: str | None,
                 "of memory: use fewer threads or a lower memory_limit, or a smaller cohort")
         episodes = getattr(exc, "episodes", None) or details.get("episodes")
         details["episodes"] = episodes
-        # the measured memory table (gate M); standard library only, so no pandas on this path
-        from spacescans.orchestrate.memory import oom_note
-
-        note = oom_note(experiment, episodes if isinstance(episodes, int) else None, step=step)
+        note = _memory_note(experiment, episodes if isinstance(episodes, int) else None, step)
         if note:
             hint = f"{hint}; {note}"
     elif hint is None:

@@ -129,11 +129,25 @@ class StepFailed(Exception):
         if self.oom:
             hint = ("the step was killed, most often by the out-of-memory killer; lower "
                     "threads or memory_limit, or use a machine with more memory")
-            from spacescans.orchestrate.memory import oom_note
-
-            note = oom_note(self.experiment, self.episodes, step=self.step)
+            note = self.memory_note
             return f"{hint}; {note}" if note else hint
         return f"see the log tail and {self.step}'s lines in logs.jsonl"
+
+    @property
+    def memory_note(self) -> str | None:
+        """For an out-of-memory kill, the measured need of the source (gate M), else None.
+
+        Quoted from :mod:`spacescans.orchestrate.memory` at the measured cohort size
+        nearest to ``episodes``; never raises (a hint must not break the error path).
+        """
+        if not self.oom:
+            return None
+        try:
+            from spacescans.orchestrate.memory import oom_note
+
+            return oom_note(self.experiment, self.episodes, step=self.step)
+        except Exception:  # noqa: BLE001 - the note only sharpens a hint
+            return None
 
     def to_dict(self) -> dict[str, Any]:
         return {"kind": self.kind, "message": str(self), "hint": self.hint,

@@ -113,3 +113,68 @@ def test_run_source_hands_the_cohort_size_to_a_failing_step(tmp_path):
     pd.DataFrame({"episode_id": range(7)}).to_parquet(tmp_path / "input.parquet", index=False)
     assert run_mod._episode_count(tmp_path / "input.parquet") == 7
     assert run_mod._episode_count(tmp_path / "missing.parquet") is None
+
+
+def test_an_upload_quotes_the_measured_case_of_the_same_kind():
+    """``custom`` has two measured cases: a grid step quotes the raster case, c3_bg the BG one."""
+    rows = {r.case: r for r in mem.nearest("custom", 10002)}
+    assert {"custom_raster", "custom_bg_csv"} <= set(rows)
+    grid, bg = rows["custom_raster"], rows["custom_bg_csv"]
+    note = mem.oom_note("custom", 10002, step="c3_customgrid_0badf00d")
+    assert f"{grid.peak_gib:.1f} GiB" in note and grid.peak_step in note
+    assert "is not the one that peaked" not in note            # same kind of step, other upload
+    note = mem.oom_note("custom", 10002, step="c3_bg")
+    assert f"{bg.peak_gib:.1f} GiB" in note and "in step c3_bg" in note
+
+
+def test_the_note_never_breaks_the_error_path(monkeypatch):
+    def boom(*_a, **_k):
+        raise RuntimeError("broken table")
+
+    monkeypatch.setattr(mem, "oom_note", boom)
+    exc = StepFailed("c4_temis", -9, ["x"], experiment="temis", episodes=100000)
+    assert exc.memory_note is None and exc.hint.endswith("more memory")
+    from spacescans.bridge.errors import classify
+
+    b = classify(exc)
+    assert b.kind == "step_failed" and b.details["oom"] is True and "memory" in b.hint
+
+
+class _KilledExecutor:
+    """Every step is killed by the kernel (rc -9), as the out-of-memory killer does."""
+
+    def command(self, config, data_dir):
+        return ["killed", str(config)]
+
+    def run(self, config, *, data_dir, cwd, on_line, cancel=None):
+        from spacescans.orchestrate import StepRun
+
+        return StepRun(rc=-9, seconds=0.01, maxrss_bytes=None, tail=["Killed"])
+
+
+def test_link_warning_for_an_out_of_memory_source_carries_the_note(tmp_path, monkeypatch):
+    """What R's ss_link prints for a failed source is the link warning's message."""
+    import importlib
+
+    import pandas as pd
+
+    from spacescans.orchestrate import link
+
+    link_mod = importlib.import_module("spacescans.orchestrate.link")
+    monkeypatch.setattr(link_mod, "_check_data", lambda groups, overlay, data_dir: (
+        {"data_dir": str(data_dir), "data_release": "test", "variables": {}, "datasets": {}}, []))
+    cohort = pd.DataFrame({"pid": ["A1", "B2", "C3"],
+                           "startDate": ["2014-01-01", "2015-03-01", "2013-06-01"],
+                           "endDate": ["2015-12-31", "2019-12-31", "2017-01-01"],
+                           "longitude": [-86.15, -87.62, -84.39],
+                           "latitude": [39.77, 41.88, 33.75]})
+    res = link(cohort, ["noise"], data_dir=tmp_path / "data", run_dir=tmp_path / "run",
+               executor=_KilledExecutor())
+    assert res.failed == ["noise"]
+    err = res.errors[0]
+    assert (err["kind"], err["rc"]) == ("step_failed", -9)
+    expected = mem.oom_note("noise", 3, step=err["step"])
+    assert expected and expected in err["hint"]
+    w = next(w for w in res.warnings if w["code"] == "step_failed")
+    assert w["message"].startswith(f"step {err['step']} failed: exit code -9")
+    assert expected in w["message"] and "this cohort has 3 episodes" in w["message"]

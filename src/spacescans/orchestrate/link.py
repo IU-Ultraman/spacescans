@@ -523,6 +523,13 @@ def _error_entry(exc: BaseException, exp: str, keys: list[str]) -> dict[str, Any
     return entry
 
 
+def _failure_message(exc: BaseException) -> str:
+    """A failed source's warning text (what R prints); an out-of-memory kill adds the
+    measured memory need of the source at the nearest measured cohort size (gate M)."""
+    note = exc.memory_note if isinstance(exc, StepFailed) else None
+    return f"{exc}; {note}" if note else str(exc)
+
+
 # ---------------------------------------------------------------------------
 # link
 # ---------------------------------------------------------------------------
@@ -642,7 +649,7 @@ def link(cohort: pd.DataFrame | str | os.PathLike, variables: Sequence[str], *,
             steps.extend(getattr(exc, "steps", []))
             failed.append(exp)
             errors.append(_error_entry(exc, exp, exp_keys))
-            warnings.append({"code": exc.kind, "experiment": exp, "message": str(exc)})
+            warnings.append({"code": exc.kind, "experiment": exp, "message": _failure_message(exc)})
             emit(Event("done", exp, data={"ok": False, "kind": exc.kind}))
             stopped = on_error == "stop"
             continue

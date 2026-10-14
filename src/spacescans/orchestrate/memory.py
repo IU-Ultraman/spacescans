@@ -15,15 +15,22 @@ from __future__ import annotations
 
 import csv
 import math
+import re
 from dataclasses import dataclass
 from functools import lru_cache
 from importlib import resources
 
-__all__ = ["MemoryRow", "TABLE_FILE", "nearest", "oom_note", "table"]
+__all__ = ["TABLE_FILE", "MemoryRow", "nearest", "oom_note", "table"]
 
 #: The packaged table (``tools/memory_gate.py report`` rewrites it).
 TABLE_FILE = "memory_table.csv"
 _PACKAGE = "spacescans.orchestrate"
+_UPLOAD_HASH = re.compile(r"_[0-9a-f]{8}$")
+
+
+def _family(step: str) -> str:
+    """A step name without an upload's hash: ``c3_customgrid_3940345e`` -> ``c3_customgrid``."""
+    return _UPLOAD_HASH.sub("", step)
 
 
 @dataclass(frozen=True)
@@ -93,13 +100,17 @@ def oom_note(experiment: str | None, episodes: int | None = None, *,
     """One sentence on the measured memory need of ``experiment`` near ``episodes``.
 
     ``None`` when nothing was measured for the source. ``step`` (the step that was
-    killed) only sharpens the wording when it is the one that peaked in the measurement.
+    killed) picks, among several measured cases of one source (the two upload cases of
+    ``custom``), the one whose peak was in a step of the same kind (``c3_customgrid_*``,
+    ``c3_bg``); it also sharpens the wording when it is not the step that peaked there.
     """
     if not experiment:
         return None
     rows = nearest(experiment, episodes)
     if not rows:
         return None
+    if step:
+        rows = tuple(r for r in rows if r.peak_step and _family(r.peak_step) == _family(step)) or rows
     worst = max(rows, key=lambda r: r.peak_gib)
     n = f"{worst.episodes:,}"
     where = f" in step {worst.peak_step}" if worst.peak_step else ""
@@ -111,6 +122,6 @@ def oom_note(experiment: str | None, episodes: int | None = None, *,
                 f"{where}")
     if episodes and episodes != worst.episodes:
         note += f"; this cohort has {episodes:,} episodes"
-    if step and worst.peak_step and step != worst.peak_step:
+    if step and worst.peak_step and _family(step) != _family(worst.peak_step):
         note += f" (the step that failed here, {step}, is not the one that peaked there)"
     return note
