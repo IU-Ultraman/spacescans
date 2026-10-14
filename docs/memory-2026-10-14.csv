@@ -112,3 +112,7 @@ date,size,episodes,case,experiment,variables,mode,source,step,peak_gib,wall_s,st
 2026-10-14,10k,10002,acag,acag,acag,new,measured (RUSAGE_SELF),(orchestrator),0.261,967.079,,,
 2026-10-14,10k,10002,acag,acag,acag,new,measured (RUSAGE_CHILDREN),(total),2.848,967.92,,0,ok
 2026-10-14,100k,100000,acag,acag,acag,old,paper runtime.csv (median of 1 cold run),(total),20.201,2228.61,,0,ok
+2026-10-14,100k,100000,acag,acag,acag,new,measured (executor wait4),c3_acag,3.961,66.134,ran,,
+2026-10-14,100k,100000,acag,acag,acag,new,measured (executor wait4),c4_acag,20.272,1901.273,ran,,
+2026-10-14,100k,100000,acag,acag,acag,new,measured (RUSAGE_SELF),(orchestrator),0.296,1978.36,,,
+2026-10-14,100k,100000,acag,acag,acag,new,measured (RUSAGE_CHILDREN),(total),20.272,1982.861,,0,ok

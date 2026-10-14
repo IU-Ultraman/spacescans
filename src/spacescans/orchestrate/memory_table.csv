@@ -30,4 +30,4 @@ faqsd,faqsd,10002,16.805,c4_tract_faqsd,641.7,ok,24,orchestrate.link,2026-10-14
 faqsd,faqsd,100000,22.754,c4_tract_faqsd,468.1,oom,24,orchestrate.link,2026-10-14
 acag,acag,1001,0.925,,827.7,ok,24,web-0.2.7 runner,2026-09-29
 acag,acag,10002,2.848,c4_acag,967.9,ok,24,orchestrate.link,2026-10-14
-acag,acag,100000,20.201,,2228.6,ok,24,web-0.2.7 runner,2026-10-13
+acag,acag,100000,20.272,c4_acag,1982.9,ok,24,orchestrate.link,2026-10-14
