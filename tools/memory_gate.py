@@ -72,6 +72,7 @@ CONTAINER_PREFIX = "tier2-c-memory"
 WEB_PREFIX = "/opt/conda/bin/python /opt/conda/bin/spacescans"
 CONTAINER_GIB = 24.0            # Docker Desktop's allocation; MemTotal inside is 23.4 GiB
 TOLERANCE = 1.05                # gate: new <= old * 1.05
+SCOPE_SIZES = ("10k", "100k")   # contract 4.5; 1k is a smoke run and the paper's reference only
 
 BASE_CONFIG = {"experiment": "auto", "buffer": {"shape": "circle", "size": 270, "raster_res_m": 25},
                "version": 1, "input_file": "input.csv"}
@@ -447,12 +448,23 @@ def new_summary(rec: dict) -> dict:
     step_peaks = {s["name"]: s.get("maxrss_bytes") for s in steps if s.get("maxrss_bytes")}
     worst = max(step_peaks, key=step_peaks.get) if step_peaks else None
     sampler = (rec.get("sampler") or {}).get("peaks") or {}
+    # time from the orchestrator's start to its first spawn: the readiness check (data.status),
+    # the custom-definition check and the cohort conversion
+    setup_s = None
+    spawns = [v.get("spawn_ts") for v in ((rec.get("log") or {}).get("steps") or {}).values()
+              if v.get("spawn_ts")]
+    if spawns and link.get("started_utc"):
+        try:
+            setup_s = round((datetime.fromisoformat(min(spawns))
+                             - datetime.fromisoformat(link["started_utc"])).total_seconds(), 1)
+        except ValueError:
+            setup_s = None
     return {
         "peak_bytes": rec.get("children_maxrss_bytes"),
         "orchestrator_bytes": link.get("self_maxrss_bytes"),
         "steps_bytes": step_peaks, "worst_step": worst,
         "sampler_bytes": {k: v.get("vmhwm_bytes") for k, v in sampler.items()},
-        "wall_s": rec.get("wall_s"), "link_wall_s": link.get("link_wall_s"),
+        "wall_s": rec.get("wall_s"), "link_wall_s": link.get("link_wall_s"), "setup_s": setup_s,
         "step_seconds": {s["name"]: s.get("seconds") for s in steps},
         "statuses": {s["name"]: s.get("status") for s in steps},
         "failed": link.get("failed") or [], "skipped": link.get("skipped") or [],
@@ -512,9 +524,11 @@ def cmd_report(args: argparse.Namespace) -> int:
             key = (size, case.name)
             o_rec, n_rec = old.get(key), new.get(key)
             o_src = None
+            o_date = None
             if o_rec is not None:
                 o = old_summary(o_rec)
                 o_src = "measured"
+                o_date = o_rec["meta"]["started_eastern"][:10]
                 o_peak, o_wall = gib(o["peak_bytes"]), o["wall_s"]
                 for step, b in sorted(o["sampler_bytes"].items()):
                     long_rows.append({"date": date, "size": size, "episodes": EPISODES[size],
@@ -532,6 +546,7 @@ def cmd_report(args: argparse.Namespace) -> int:
             elif (size, case.experiment) in paper and not case.custom:
                 p = paper[(size, case.experiment)]
                 o_src = f"paper runtime.csv (median of {p['runs']} cold run{'s' if p['runs'] > 1 else ''})"
+                o_date = p["started_utc"][:10]
                 o_peak, o_wall = round(p["peak_gib"], 3), round(p["wall_s"], 2)
                 long_rows.append({"date": date, "size": size, "episodes": EPISODES[size],
                                   "case": case.name, "experiment": case.experiment,
@@ -586,13 +601,14 @@ def cmd_report(args: argparse.Namespace) -> int:
                     verdict = "PASS" if ratio <= TOLERANCE else "FAIL"
                 gate_rows.append({"size": size, "episodes": EPISODES[size], "case": case.name,
                                   "experiment": case.experiment, "old_peak_gib": o_peak,
-                                  "old_source": o_src, "new_peak_gib": n_peak,
+                                  "old_source": o_src, "old_date": o_date, "new_peak_gib": n_peak,
                                   "new_orchestrator_gib": gib(n["orchestrator_bytes"]) if n else None,
                                   "new_worst_step": n["worst_step"] if n else None,
                                   "new_worst_step_gib": gib(n["steps_bytes"].get(n["worst_step"])) if n and n["worst_step"] else None,
                                   "ratio": round(ratio, 4) if ratio else None,
                                   "limit_gib": round(o_peak * TOLERANCE, 3) if o_peak else None,
                                   "old_wall_s": o_wall, "new_wall_s": n["wall_s"] if n else None,
+                                  "new_setup_s": n["setup_s"] if n else None,
                                   "wall_ratio": round(n["wall_s"] / o_wall, 3) if (n and o_wall) else None,
                                   "verdict": verdict,
                                   "container": n_rec["meta"]["container"] if n_rec else None,
@@ -612,26 +628,27 @@ def cmd_report(args: argparse.Namespace) -> int:
     # ---- the hint's table: per experiment and size, the measured peak -------------------------
     table_rows = []
     for g in gate_rows:
-        peak = g["new_peak_gib"] if g["new_peak_gib"] is not None else g["old_peak_gib"]
-        if peak is None:
-            continue
         n_rec = new.get((g["size"], g["case"]))
-        outcome = "ok"
-        if n_rec is not None:
-            ns = new_summary(n_rec)
-            outcome = "ok" if ns["ok"] else ("oom" if any(e.get("rc") in (-9, 137) for e in ns["errors"]) else "failed")
-            step = ns["worst_step"] or ""
-            source = "orchestrate.link"
-            wall = ns["wall_s"]
-        else:
+        ns = new_summary(n_rec) if n_rec is not None else None
+        n_outcome = None
+        if ns is not None:
+            n_outcome = "ok" if ns["ok"] else (
+                "oom" if any(e.get("rc") in (-9, 137) and not e.get("timed_out") for e in ns["errors"])
+                else "failed")
+        if ns is not None and n_outcome in ("ok", "oom"):
+            outcome, step, source = n_outcome, ns["worst_step"] or "", "orchestrate.link"
+            peak, wall, when = g["new_peak_gib"], ns["wall_s"], n_rec["meta"]["started_eastern"][:10]
+        elif g["old_peak_gib"] is not None:
+            # no usable new-path run (not measured, or failed for a reason other than memory)
             outcome = "oom" if g["size"] in CASE_BY_NAME[g["case"]].expect_oom else "ok"
-            step = ""
-            source = "web-0.2.7 runner"
-            wall = g["old_wall_s"]
+            step, source = "", "web-0.2.7 runner"
+            peak, wall, when = g["old_peak_gib"], g["old_wall_s"], g["old_date"] or date
+        else:
+            continue
         table_rows.append({"experiment": g["experiment"], "case": g["case"], "episodes": g["episodes"],
                            "peak_gib": fmt(peak, 3), "peak_step": step, "wall_s": fmt(wall, 1),
                            "outcome": outcome, "container_gib": f"{CONTAINER_GIB:.0f}",
-                           "source": source, "measured": date})
+                           "source": source, "measured": when})
     table_path = repo / "src" / "spacescans" / "orchestrate" / "memory_table.csv"
     with open(table_path, "w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=list(table_rows[0]) if table_rows else
@@ -699,19 +716,50 @@ def cmd_report(args: argparse.Namespace) -> int:
     md.append("")
     md.append("## Gate: new <= old + 5% (peak RSS)")
     md.append("")
-    md.append("| Size | Source | Old GiB | Old from | New GiB | Orchestrator GiB | Worst step (GiB) | New/old | Old s | New s | Verdict |")
-    md.append("|---|---|---|---|---|---|---|---|---|---|---|")
+    md.append("| Size | Source | Old GiB | Old from | New GiB | Orchestrator GiB | Worst step (GiB) | New/old | Old s | New s | Setup s | Verdict |")
+    md.append("|---|---|---|---|---|---|---|---|---|---|---|---|")
     for g in gate_rows:
         if g["new_peak_gib"] is None and g["verdict"] == "not measured":
             continue
         worst = f"{g['new_worst_step']} ({fmt(g['new_worst_step_gib'])})" if g["new_worst_step"] else ""
         md.append(f"| {g['size']} | `{g['case']}` | {fmt(g['old_peak_gib'])} | {g['old_source'] or ''} | "
                   f"{fmt(g['new_peak_gib'])} | {fmt(g['new_orchestrator_gib'])} | {worst} | "
-                  f"{fmt(g['ratio'], 3)} | {fmt(g['old_wall_s'], 1)} | {fmt(g['new_wall_s'], 1)} | {g['verdict']} |")
-    not_measured = [g for g in gate_rows if g["verdict"] == "not measured"]
+                  f"{fmt(g['ratio'], 3)} | {fmt(g['old_wall_s'], 1)} | {fmt(g['new_wall_s'], 1)} | "
+                  f"{fmt(g['new_setup_s'], 1)} | {g['verdict']} |")
+    md.append("")
+    md.append("Setup s = from the orchestrator's start to its first `spawning` line: `link`'s data readiness "
+              "check (`data.status`), the custom-definition check and the cohort conversion. The old runner "
+              "has no readiness check (the paper's `stage_prep_s` is 0.0 for every run).")
+    not_measured = [g for g in gate_rows if g["verdict"] == "not measured" and g["size"] in SCOPE_SIZES]
     if not_measured:
         md.append("")
         md.append("Not measured on the new path: " + ", ".join(f"{g['size']} `{g['case']}`" for g in not_measured) + ".")
+    slow = [g for g in gate_rows if g["wall_ratio"] and g["wall_ratio"] > 1.25]
+    md.append("")
+    md.append("## Findings")
+    md.append("")
+    measured = [g for g in gate_rows if g["ratio"] is not None]
+    if measured:
+        worst_ratio = max(measured, key=lambda g: g["ratio"])
+        md.append(f"- Peak RSS: the largest new/old ratio is {worst_ratio['ratio']:.3f} "
+                  f"({worst_ratio['size']} `{worst_ratio['case']}`); the gate allows {TOLERANCE:.2f}. "
+                  f"{sum(1 for g in measured if g['verdict'] == 'PASS')} of {len(measured)} compared runs pass.")
+    if slow:
+        md.append("- Wall time: these runs took more than 25% longer on the new path: "
+                  + "; ".join(f"{g['size']} `{g['case']}` {fmt(g['old_wall_s'], 1)} -> {fmt(g['new_wall_s'], 1)} s "
+                              f"(setup {fmt(g['new_setup_s'], 1)} s)" for g in slow)
+                  + ". Where the setup time accounts for the difference, the cost is `link`'s readiness "
+                  "check (`data.status`): its layout check lists every file of the dataset and stats "
+                  "it, and on Docker Desktop's bind mount each stat costs about 3.4 ms (TEMIS: 10,259 "
+                  "files; the prebuilt NHD tile cache: 14,857; the TIGER tile cache: 22,620). On the "
+                  "host the same calls take under 0.1 s. A receipt does not avoid it (the receipt check "
+                  "stats every listed file too). The web adapter calls `run_source`, not `link`, so the "
+                  "web does not pay it. The step times themselves vary from run to run as much as "
+                  "this on the old runner too (the paper's 10k cold repeats: `tiger_proximity` 204, 86 "
+                  "and 90 s; `nhd_bluespace` 187, 131 and 133 s), so wall time is shown, not gated.")
+    for g in gate_rows:
+        if g["size"] in CASE_BY_NAME[g["case"]].expect_oom and g["verdict"] != "not measured":
+            md.append(f"- {g['size']} `{g['case']}`: {g['verdict']}")
     md.append("")
     md.append("## Per-step peaks on the new path (GiB, executor `wait4`)")
     md.append("")
@@ -737,6 +785,24 @@ def cmd_report(args: argparse.Namespace) -> int:
               "(`spacescans.orchestrate.memory`): a `step_failed` with exit code -9/137 then says how much memory "
               "that source needed at the nearest measured cohort size.")
     md.append("- `tools/memory_gate.py`, `tools/memory_gate_measure.py`: how the numbers were produced.")
+    md.append("")
+    md.append("## Reproducing")
+    md.append("")
+    md.append("```sh")
+    md.append("# the package tree to measure, mounted read-only at /src (here: a snapshot of main)")
+    md.append("git archive <rev> src | tar -x -C /scratch/pkg && echo <rev> > /scratch/pkg/REV")
+    md.append("python3 tools/memory_gate.py run --stage /scratch/stage --sizes 10k --modes new --src /scratch/pkg/src")
+    md.append("python3 tools/memory_gate.py run --stage /scratch/stage --sizes 10k --cases custom_raster,custom_bg_csv --modes old")
+    md.append("python3 tools/memory_gate.py run --stage /scratch/stage --sizes 100k --cases noise,vnl,temis,faqsd,fara_tract,bg_ndi_wi,zcta5_cbp,tiger_proximity,nhd_bluespace,acag --modes new --src /scratch/pkg/src")
+    md.append(f"python3 tools/memory_gate.py report --stage /scratch/stage --date {date}")
+    md.append("```")
+    md.append("")
+    md.append("Each run is one `docker run --rm` of the frozen image under the host-wide heavy lock, with the "
+              "data root and the web templates mounted read-only and a scratch mount at `/app/data` for the "
+              "task dir, the cache and the cohort copy (deleted after the run). `<stage>/<size>/<case>/<mode>/record.json` "
+              "holds every number above; `keep/` holds `logs.jsonl`, `status.json`, the rendered configs and the "
+              "cache sidecars; `data_newer` in the record lists files under the data root newer than the run's "
+              "stamp (it must be empty).")
     md.append("")
     (docs / "memory.md").write_text("\n".join(md) + "\n")
 
