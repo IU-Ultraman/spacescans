@@ -105,6 +105,31 @@ def test_owner_alive_rules():
 # records and directories
 # ---------------------------------------------------------------------------------------------
 
+def test_linux_records_survive_a_clock_step_but_not_a_reboot(monkeypatch):
+    """Linux start times are boot time + ticks, and the boot time moves when the wall clock is
+    stepped: a record with its boot id and boot time is judged by the time since boot."""
+    monkeypatch.setattr(runs, "_LINUX", True)
+    monkeypatch.setattr(runs, "pid_exists", lambda pid: True)
+    monkeypatch.setattr(runs, "_boot_id_linux", lambda: "boot-a")
+    started = 1_000_000.0 + 3600                            # an hour after a boot at 1e6
+    rec = {"pid": 4242, "start_time": started, "host": runs.host_name(),
+           "boot_id": "boot-a", "boot_time": 1_000_000.0}
+    # the clock was stepped 30 s forward: btime and every start time read now move by 30 s
+    monkeypatch.setattr(runs, "_boot_time_linux", lambda: 1_000_030.0)
+    monkeypatch.setattr(runs, "process_start_time", lambda pid: started + 30)
+    assert runs.owner_alive(rec) is True
+    # the same shift without a boot record (R's, or an older one) cannot be told from pid reuse
+    assert runs.owner_alive({k: v for k, v in rec.items() if k not in ("boot_id", "boot_time")}) \
+        is False
+    # a pid reused in the same boot, 10 minutes later
+    monkeypatch.setattr(runs, "process_start_time", lambda pid: started + 30 + 600)
+    assert runs.owner_alive(rec) is False
+    # another boot: the recorded process is gone whatever the pid now runs
+    monkeypatch.setattr(runs, "process_start_time", lambda pid: started + 30)
+    monkeypatch.setattr(runs, "_boot_id_linux", lambda: "boot-b")
+    assert runs.owner_alive(rec) is False
+
+
 def test_create_run_dir_is_private_and_owned(tmp_path):
     d = runs.create_run_dir(tmp_path / "root", prefix="link-", client="pytest")
     assert d.parent == tmp_path / "root" / "runs" and d.name.startswith("link-")
@@ -116,7 +141,9 @@ def test_create_run_dir_is_private_and_owned(tmp_path):
     assert owner["host"] == runs.host_name() and owner["client"] == "pytest"
     assert abs(owner["start_time"] - runs.process_start_time(os.getpid())) < 1e-6
     assert stat.S_IMODE((d / runs.OWNER_FILE).stat().st_mode) == 0o600
-    assert set(owner) == {"schema", "pid", "start_time", "host", "client", "created_at"}
+    linux_only = {"boot_id", "boot_time"}
+    assert set(owner) - linux_only == {"schema", "pid", "start_time", "host", "client", "created_at"}
+    assert (linux_only <= set(owner)) == sys.platform.startswith("linux")
     # the record names a process, never cohort values
     assert runs.read_owner(tmp_path) is None
     (tmp_path / runs.OWNER_FILE).write_text("[1, 2]")

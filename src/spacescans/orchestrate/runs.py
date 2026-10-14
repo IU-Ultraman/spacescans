@@ -56,6 +56,7 @@ RUNS_DIRNAME = "runs"
 START_TIME_TOLERANCE_S = 2.0
 _DIR_MODE = 0o700
 _FILE_MODE = 0o600
+_LINUX = sys.platform.startswith("linux")
 
 
 # ---------------------------------------------------------------------------
@@ -118,6 +119,24 @@ def pid_exists(pid: int) -> bool:
     return True
 
 
+def _boot_time_linux() -> float | None:
+    """``btime`` of ``/proc/stat``: the wall-clock boot time, which moves when the clock is stepped."""
+    try:
+        with open("/proc/stat", encoding="ascii", errors="replace") as f:
+            return float(next(int(line.split()[1]) for line in f if line.startswith("btime ")))
+    except (OSError, ValueError, IndexError, StopIteration):
+        return None
+
+
+def _boot_id_linux() -> str | None:
+    """The kernel's id of this boot (``/proc/sys/kernel/random/boot_id``)."""
+    try:
+        with open("/proc/sys/kernel/random/boot_id", encoding="ascii") as f:
+            return f.read().strip() or None
+    except OSError:
+        return None
+
+
 def _start_time_linux(pid: int) -> float | None:
     try:
         with open(f"/proc/{pid}/stat", encoding="ascii", errors="replace") as f:
@@ -125,11 +144,10 @@ def _start_time_linux(pid: int) -> float | None:
         # field 22 (starttime, clock ticks since boot) counted after the ")" that ends comm
         fields = stat[stat.rindex(")") + 2:].split()
         ticks = int(fields[19])
-        with open("/proc/stat", encoding="ascii", errors="replace") as f:
-            btime = next(int(line.split()[1]) for line in f if line.startswith("btime "))
-        return btime + ticks / os.sysconf("SC_CLK_TCK")
-    except (OSError, ValueError, IndexError, StopIteration):
+    except (OSError, ValueError, IndexError):
         return None
+    btime = _boot_time_linux()
+    return None if btime is None else btime + ticks / os.sysconf("SC_CLK_TCK")
 
 
 def _start_time_darwin(pid: int) -> float | None:
@@ -205,10 +223,25 @@ def owner_alive(owner: Mapping[str, Any], *, host: str | None = None) -> bool | 
         return False
     recorded = owner.get("start_time")
     now = process_start_time(pid)
-    comparable = (isinstance(recorded, (int, float)) and not isinstance(recorded, bool)
-                  and now is not None)
+    if not (_number(recorded) and now is not None):
+        return True
     # a pid started at another time than the record says is another process (pid reuse)
-    return not comparable or abs(now - float(recorded)) <= START_TIME_TOLERANCE_S
+    if abs(now - float(recorded)) <= START_TIME_TOLERANCE_S:
+        return True
+    # Linux computes a start time as boot time + ticks, and its boot time moves with every
+    # step of the wall clock: a record that carries its boot id and boot time is compared
+    # by the time since boot instead (another boot means the recorded process is gone).
+    rec_boot_id, rec_btime = owner.get("boot_id"), owner.get("boot_time")
+    if _LINUX and isinstance(rec_boot_id, str) and _number(rec_btime):
+        cur_btime = _boot_time_linux()
+        if _boot_id_linux() == rec_boot_id and cur_btime is not None:
+            return abs((now - cur_btime) - (float(recorded) - float(rec_btime))) \
+                <= START_TIME_TOLERANCE_S
+    return False
+
+
+def _number(x: Any) -> bool:
+    return isinstance(x, (int, float)) and not isinstance(x, bool)
 
 
 # ---------------------------------------------------------------------------
@@ -221,7 +254,8 @@ def write_owner(run_dir: str | os.PathLike, *, pid: int | None = None,
 
     ``client`` names the program (``spacescans 0.3.0 link``, ``spacescans-r
     0.3.0``). The record holds the pid, its start time, the host and the time
-    of writing: never a cohort value.
+    of writing (on Linux also the boot id and boot time, see
+    :func:`owner_alive`): never a cohort value.
     """
     from spacescans import __version__
 
@@ -234,6 +268,10 @@ def write_owner(run_dir: str | os.PathLike, *, pid: int | None = None,
         "client": client or f"spacescans {__version__}",
         "created_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
     }
+    if _LINUX:   # see owner_alive: Linux start times move when the wall clock is stepped
+        boot_id, btime = _boot_id_linux(), _boot_time_linux()
+        if boot_id and btime is not None:
+            record.update(boot_id=boot_id, boot_time=btime)
     path = Path(run_dir) / OWNER_FILE
     fd, tmp = tempfile.mkstemp(dir=path.parent, prefix=f".{OWNER_FILE}.", suffix=".tmp")
     try:
