@@ -153,7 +153,8 @@ class StepFailed(Exception):
         return {"kind": self.kind, "message": str(self), "hint": self.hint,
                 "details": {"step": self.step, "rc": self.rc, "experiment": self.experiment,
                             "timed_out": self.timed_out, "oom": self.oom,
-                            "episodes": self.episodes, "log_tail": list(self.log_tail)},
+                            "episodes": self.episodes, "memory_note": self.memory_note,
+                            "log_tail": list(self.log_tail)},
                 "type": type(self).__name__}
 
 

@@ -100,6 +100,9 @@ def test_bridge_classification_keeps_the_note_and_the_size():
     assert b.kind == "step_failed" and b.details["oom"] is True
     assert b.details["episodes"] == 100000
     assert "measured: temis" in b.hint and "100,000 episodes" in b.hint
+    # R's own step_failed hint replaces the Python one and quotes this field instead
+    assert b.details["memory_note"] == mem.oom_note("temis", 100000, step="c4_temis")
+    assert b.details["memory_note"] in b.hint
     b = classify(StepFailed("c4_temis", 2, ["x"], experiment="temis", episodes=100000))
     assert "measured" not in (b.hint or "")
 

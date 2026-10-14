@@ -151,6 +151,7 @@ def _step_failed(exc: BaseException, message: str, hint: str | None,
         episodes = getattr(exc, "episodes", None) or details.get("episodes")
         details["episodes"] = episodes
         note = _memory_note(experiment, episodes if isinstance(episodes, int) else None, step)
+        details["memory_note"] = note           # R's own hint quotes it (conditions.R)
         if note:
             hint = f"{hint}; {note}"
     elif hint is None:
