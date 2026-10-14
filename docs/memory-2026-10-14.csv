@@ -1,0 +1,98 @@
+date,size,episodes,case,experiment,variables,mode,source,step,peak_gib,wall_s,status,rc,outcome
+2026-10-14,1k,1001,noise,noise,noise,old,measured (VmHWM sampler),<runner>,0.139,,,,
+2026-10-14,1k,1001,noise,noise,noise,old,measured (VmHWM sampler),c3_noise,0.317,1.362,,0,
+2026-10-14,1k,1001,noise,noise,noise,old,measured (VmHWM sampler),c4_noise,3.489,4.004,,0,
+2026-10-14,1k,1001,noise,noise,noise,old,measured (RUSAGE_CHILDREN),(total),3.489,6.03,,0,ok
+2026-10-14,1k,1001,noise,noise,noise,new,measured (executor wait4),c3_noise,0.329,1.548,ran,,
+2026-10-14,1k,1001,noise,noise,noise,new,measured (executor wait4),c4_noise,3.49,4.324,ran,,
+2026-10-14,1k,1001,noise,noise,noise,new,measured (RUSAGE_SELF),(orchestrator),0.195,6.175,,,
+2026-10-14,1k,1001,noise,noise,noise,new,measured (RUSAGE_CHILDREN),(total),3.49,6.503,,0,ok
+2026-10-14,10k,10002,noise,noise,noise,old,paper runtime.csv (median of 3 cold runs),(total),3.537,12.61,,0,ok
+2026-10-14,10k,10002,noise,noise,noise,new,measured (executor wait4),c3_noise,0.646,8.254,ran,,
+2026-10-14,10k,10002,noise,noise,noise,new,measured (executor wait4),c4_noise,3.538,4.411,ran,,
+2026-10-14,10k,10002,noise,noise,noise,new,measured (RUSAGE_SELF),(orchestrator),0.231,13.0,,,
+2026-10-14,10k,10002,noise,noise,noise,new,measured (RUSAGE_CHILDREN),(total),3.538,13.402,,0,ok
+2026-10-14,100k,100000,noise,noise,noise,old,paper runtime.csv (median of 1 cold run),(total),3.967,84.92,,0,ok
+2026-10-14,1k,1001,temis,temis,temis,old,paper runtime.csv (median of 3 cold runs),(total),4.302,8.51,,0,ok
+2026-10-14,10k,10002,temis,temis,temis,old,paper runtime.csv (median of 3 cold runs),(total),10.015,34.56,,0,ok
+2026-10-14,10k,10002,temis,temis,temis,new,measured (executor wait4),c3_temis,0.644,6.576,ran,,
+2026-10-14,10k,10002,temis,temis,temis,new,measured (executor wait4),c4_temis,9.591,30.897,ran,,
+2026-10-14,10k,10002,temis,temis,temis,new,measured (RUSAGE_SELF),(orchestrator),0.231,72.203,,,
+2026-10-14,10k,10002,temis,temis,temis,new,measured (RUSAGE_CHILDREN),(total),9.591,72.601,,0,ok
+2026-10-14,100k,100000,temis,temis,temis,old,paper runtime.csv (median of 1 cold run),(total),22.509,130.32,,247,oom
+2026-10-14,1k,1001,vnl,vnl,vnl,old,paper runtime.csv (median of 3 cold runs),(total),1.711,14.18,,0,ok
+2026-10-14,10k,10002,vnl,vnl,vnl,old,paper runtime.csv (median of 3 cold runs),(total),2.2,21.87,,0,ok
+2026-10-14,10k,10002,vnl,vnl,vnl,new,measured (executor wait4),c3_vnl,2.12,11.272,ran,,
+2026-10-14,10k,10002,vnl,vnl,vnl,new,measured (executor wait4),c4_vnl,1.784,10.574,ran,,
+2026-10-14,10k,10002,vnl,vnl,vnl,new,measured (RUSAGE_SELF),(orchestrator),0.216,22.271,,,
+2026-10-14,10k,10002,vnl,vnl,vnl,new,measured (RUSAGE_CHILDREN),(total),2.12,22.638,,0,ok
+2026-10-14,100k,100000,vnl,vnl,vnl,old,paper runtime.csv (median of 1 cold run),(total),4.428,96.64,,0,ok
+2026-10-14,10k,10002,custom_raster,custom,custom_714c9715,old,measured (VmHWM sampler),<runner>,0.365,,,,
+2026-10-14,10k,10002,custom_raster,custom,custom_714c9715,old,measured (VmHWM sampler),c3_customgrid_3940345e,0.647,8.4,,0,
+2026-10-14,10k,10002,custom_raster,custom,custom_714c9715,old,measured (VmHWM sampler),c4_custom_714c9715,0.345,0.498,,0,
+2026-10-14,10k,10002,custom_raster,custom,custom_714c9715,old,measured (RUSAGE_CHILDREN),(total),0.647,10.304,,0,ok
+2026-10-14,10k,10002,custom_raster,custom,custom_714c9715,new,measured (executor wait4),c3_customgrid_3940345e,0.646,8.256,ran,,
+2026-10-14,10k,10002,custom_raster,custom,custom_714c9715,new,measured (executor wait4),c4_custom_714c9715,0.344,0.624,ran,,
+2026-10-14,10k,10002,custom_raster,custom,custom_714c9715,new,measured (RUSAGE_SELF),(orchestrator),0.387,10.27,,,
+2026-10-14,10k,10002,custom_raster,custom,custom_714c9715,new,measured (RUSAGE_CHILDREN),(total),0.646,10.655,,0,ok
+2026-10-14,10k,10002,custom_bg_csv,custom,custom_18180893,old,measured (VmHWM sampler),<runner>,0.144,,,,
+2026-10-14,10k,10002,custom_bg_csv,custom,custom_18180893,old,measured (VmHWM sampler),c3_bg,6.483,109.36,,0,
+2026-10-14,10k,10002,custom_bg_csv,custom,custom_18180893,old,measured (VmHWM sampler),c4_custom_18180893,0.182,0.667,,0,
+2026-10-14,10k,10002,custom_bg_csv,custom,custom_18180893,old,measured (RUSAGE_CHILDREN),(total),6.483,110.658,,0,ok
+2026-10-14,10k,10002,custom_bg_csv,custom,custom_18180893,new,measured (executor wait4),c3_bg,6.481,111.873,ran,,
+2026-10-14,10k,10002,custom_bg_csv,custom,custom_18180893,new,measured (executor wait4),c4_custom_18180893,0.341,0.744,ran,,
+2026-10-14,10k,10002,custom_bg_csv,custom,custom_18180893,new,measured (RUSAGE_SELF),(orchestrator),0.216,114.461,,,
+2026-10-14,10k,10002,custom_bg_csv,custom,custom_18180893,new,measured (RUSAGE_CHILDREN),(total),6.481,114.819,,0,ok
+2026-10-14,1k,1001,nhd_bluespace,nhd_bluespace,nhd_bluespace,old,paper runtime.csv (median of 3 cold runs),(total),1.11,31.04,,0,ok
+2026-10-14,10k,10002,nhd_bluespace,nhd_bluespace,nhd_bluespace,old,paper runtime.csv (median of 3 cold runs),(total),1.283,133.18,,0,ok
+2026-10-14,10k,10002,nhd_bluespace,nhd_bluespace,nhd_bluespace,new,measured (executor wait4),c3_nhd_bluespace,1.252,143.372,ran,,
+2026-10-14,10k,10002,nhd_bluespace,nhd_bluespace,nhd_bluespace,new,measured (executor wait4),c4_nhd_bluespace,0.286,1.863,ran,,
+2026-10-14,10k,10002,nhd_bluespace,nhd_bluespace,nhd_bluespace,new,measured (RUSAGE_SELF),(orchestrator),0.241,198.516,,,
+2026-10-14,10k,10002,nhd_bluespace,nhd_bluespace,nhd_bluespace,new,measured (RUSAGE_CHILDREN),(total),1.252,198.957,,0,ok
+2026-10-14,100k,100000,nhd_bluespace,nhd_bluespace,nhd_bluespace,old,paper runtime.csv (median of 1 cold run),(total),1.278,387.16,,0,ok
+2026-10-14,1k,1001,tiger_proximity,tiger_proximity,tiger_proximity,old,paper runtime.csv (median of 3 cold runs),(total),1.231,47.0,,0,ok
+2026-10-14,10k,10002,tiger_proximity,tiger_proximity,tiger_proximity,old,paper runtime.csv (median of 3 cold runs),(total),1.471,89.68,,0,ok
+2026-10-14,10k,10002,tiger_proximity,tiger_proximity,tiger_proximity,new,measured (executor wait4),c3_tiger_roads,1.471,164.26,ran,,
+2026-10-14,10k,10002,tiger_proximity,tiger_proximity,tiger_proximity,new,measured (executor wait4),c4_tiger_roads,0.324,1.024,ran,,
+2026-10-14,10k,10002,tiger_proximity,tiger_proximity,tiger_proximity,new,measured (RUSAGE_SELF),(orchestrator),0.227,243.443,,,
+2026-10-14,10k,10002,tiger_proximity,tiger_proximity,tiger_proximity,new,measured (RUSAGE_CHILDREN),(total),1.471,243.939,,0,ok
+2026-10-14,100k,100000,tiger_proximity,tiger_proximity,tiger_proximity,old,paper runtime.csv (median of 1 cold run),(total),1.723,406.47,,0,ok
+2026-10-14,1k,1001,fara_tract,fara_tract,fara_tract,old,paper runtime.csv (median of 3 cold runs),(total),3.677,34.67,,0,ok
+2026-10-14,10k,10002,fara_tract,fara_tract,fara_tract,old,paper runtime.csv (median of 3 cold runs),(total),3.78,124.9,,0,ok
+2026-10-14,10k,10002,fara_tract,fara_tract,fara_tract,new,measured (executor wait4),c3_tract_us,3.783,90.871,ran,,
+2026-10-14,10k,10002,fara_tract,fara_tract,fara_tract,new,measured (executor wait4),c4_tract_fara,1.873,40.041,ran,,
+2026-10-14,10k,10002,fara_tract,fara_tract,fara_tract,new,measured (RUSAGE_SELF),(orchestrator),0.257,131.978,,,
+2026-10-14,10k,10002,fara_tract,fara_tract,fara_tract,new,measured (RUSAGE_CHILDREN),(total),3.783,132.347,,0,ok
+2026-10-14,100k,100000,fara_tract,fara_tract,fara_tract,old,paper runtime.csv (median of 1 cold run),(total),6.569,582.17,,0,ok
+2026-10-14,1k,1001,zcta5_cbp,zcta5_cbp,cbp_zcta5,old,paper runtime.csv (median of 3 cold runs),(total),5.36,37.91,,0,ok
+2026-10-14,10k,10002,zcta5_cbp,zcta5_cbp,cbp_zcta5,old,paper runtime.csv (median of 3 cold runs),(total),5.376,162.82,,0,ok
+2026-10-14,10k,10002,zcta5_cbp,zcta5_cbp,cbp_zcta5,new,measured (executor wait4),c3_zcta5,5.38,103.003,ran,,
+2026-10-14,10k,10002,zcta5_cbp,zcta5_cbp,cbp_zcta5,new,measured (executor wait4),c3_county,1.076,78.771,ran,,
+2026-10-14,10k,10002,zcta5_cbp,zcta5_cbp,cbp_zcta5,new,measured (executor wait4),c4_zcta5_cbp,0.632,1.705,ran,,
+2026-10-14,10k,10002,zcta5_cbp,zcta5_cbp,cbp_zcta5,new,measured (executor wait4),c4_county_cbp,0.558,0.992,ran,,
+2026-10-14,10k,10002,zcta5_cbp,zcta5_cbp,cbp_zcta5,new,measured (RUSAGE_SELF),(orchestrator),0.248,185.011,,,
+2026-10-14,10k,10002,zcta5_cbp,zcta5_cbp,cbp_zcta5,new,measured (RUSAGE_CHILDREN),(total),5.38,185.471,,0,ok
+2026-10-14,100k,100000,zcta5_cbp,zcta5_cbp,cbp_zcta5,old,paper runtime.csv (median of 1 cold run),(total),6.665,556.76,,0,ok
+2026-10-14,1k,1001,bg_ndi_wi,bg_ndi_wi,walkability;ndi,old,paper runtime.csv (median of 3 cold runs),(total),6.752,70.86,,0,ok
+2026-10-14,10k,10002,bg_ndi_wi,bg_ndi_wi,walkability;ndi,old,paper runtime.csv (median of 3 cold runs),(total),6.853,217.11,,0,ok
+2026-10-14,10k,10002,bg_ndi_wi,bg_ndi_wi,ndi;walkability,new,measured (executor wait4),c3_bg,6.483,120.902,ran,,
+2026-10-14,10k,10002,bg_ndi_wi,bg_ndi_wi,ndi;walkability,new,measured (executor wait4),c3_bg_2020,6.856,124.619,ran,,
+2026-10-14,10k,10002,bg_ndi_wi,bg_ndi_wi,ndi;walkability,new,measured (executor wait4),c4_ndi,1.575,6.709,ran,,
+2026-10-14,10k,10002,bg_ndi_wi,bg_ndi_wi,ndi;walkability,new,measured (executor wait4),c4_wi,0.381,1.113,ran,,
+2026-10-14,10k,10002,bg_ndi_wi,bg_ndi_wi,ndi;walkability,new,measured (RUSAGE_SELF),(orchestrator),0.224,253.892,,,
+2026-10-14,10k,10002,bg_ndi_wi,bg_ndi_wi,ndi;walkability,new,measured (RUSAGE_CHILDREN),(total),6.856,254.353,,0,ok
+2026-10-14,100k,100000,bg_ndi_wi,bg_ndi_wi,walkability;ndi,old,paper runtime.csv (median of 1 cold run),(total),8.013,606.52,,0,ok
+2026-10-14,1k,1001,faqsd,faqsd,faqsd,old,paper runtime.csv (median of 3 cold runs),(total),4.355,217.04,,0,ok
+2026-10-14,10k,10002,faqsd,faqsd,faqsd,old,paper runtime.csv (median of 3 cold runs),(total),16.829,558.97,,0,ok
+2026-10-14,10k,10002,faqsd,faqsd,faqsd,new,measured (executor wait4),c3_tract_us,3.783,104.409,ran,,
+2026-10-14,10k,10002,faqsd,faqsd,faqsd,new,measured (executor wait4),c4_tract_faqsd,16.805,536.103,ran,,
+2026-10-14,10k,10002,faqsd,faqsd,faqsd,new,measured (RUSAGE_SELF),(orchestrator),0.22,641.3,,,
+2026-10-14,10k,10002,faqsd,faqsd,faqsd,new,measured (RUSAGE_CHILDREN),(total),16.805,641.689,,0,ok
+2026-10-14,100k,100000,faqsd,faqsd,faqsd,old,paper runtime.csv (median of 1 cold run),(total),22.566,459.02,,247,oom
+2026-10-14,1k,1001,acag,acag,acag,old,paper runtime.csv (median of 3 cold runs),(total),0.925,827.73,,0,ok
+2026-10-14,10k,10002,acag,acag,acag,old,paper runtime.csv (median of 3 cold runs),(total),2.824,944.12,,0,ok
+2026-10-14,10k,10002,acag,acag,acag,new,measured (executor wait4),c3_acag,0.645,7.131,ran,,
+2026-10-14,10k,10002,acag,acag,acag,new,measured (executor wait4),c4_acag,2.848,951.116,ran,,
+2026-10-14,10k,10002,acag,acag,acag,new,measured (RUSAGE_SELF),(orchestrator),0.261,967.079,,,
+2026-10-14,10k,10002,acag,acag,acag,new,measured (RUSAGE_CHILDREN),(total),2.848,967.92,,0,ok
+2026-10-14,100k,100000,acag,acag,acag,old,paper runtime.csv (median of 1 cold run),(total),20.201,2228.61,,0,ok

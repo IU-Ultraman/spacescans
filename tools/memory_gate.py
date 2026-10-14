@@ -665,7 +665,7 @@ def cmd_report(args: argparse.Namespace) -> int:
     md.append("Peak resident set size (GiB) and wall time (s) of one cold run per source, old web runner "
               "(`spacescans-web-backend:frozen-2026-10-12`: web 3991c3b + pipeline 0.2.7) against the new "
               "`orchestrate.link` run in the same image with the package mounted at `/src`. One run at a "
-              "time in an ephemeral container of that image, Docker Desktop with 24 GB (23.4 GiB "
+              "time in an ephemeral container of that image, Docker Desktop's VM with 24 GiB (23.4 GiB "
               "`MemTotal`), 14 CPUs, buffer 270 m, raster resolution 25 m, cold C3 cache, cohorts "
               "`synth_1k` (1,001 episodes), `synth_10k` (10,002) and `synth_100k` (100,000).")
     md.append("")
@@ -760,6 +760,17 @@ def cmd_report(args: argparse.Namespace) -> int:
                   "web does not pay it. The step times themselves vary from run to run as much as "
                   "this on the old runner too (the paper's 10k cold repeats: `tiger_proximity` 204, 86 "
                   "and 90 s; `nhd_bluespace` 187, 131 and 133 s), so wall time is shown, not gated.")
+    pairs = [g for g in gate_rows if g["old_source"] == "measured" and g["wall_ratio"]]
+    if pairs:
+        md.append("- Wall time, like for like: where both paths were measured here, back to back in the "
+                  "same kind of container ("
+                  + "; ".join(f"{g['size']} `{g['case']}` {fmt(g['old_wall_s'], 1)} -> {fmt(g['new_wall_s'], 1)} s, "
+                              f"setup {fmt(g['new_setup_s'], 1)} s" for g in pairs)
+                  + "), the new path took "
+                  + f"{min(g['wall_ratio'] for g in pairs) - 1:.0%} to {max(g['wall_ratio'] for g in pairs) - 1:.0%} "
+                  "longer. The paper's harness takes its old-runner times with nothing else on the machine "
+                  "(`runtime.py`); the new-path runs here shared the host with other work (the heavy lock keeps only heavy "
+                  "runs apart), so the other rows are not a controlled wall-time comparison.")
     for g in gate_rows:
         if g["size"] in CASE_BY_NAME[g["case"]].expect_oom and g["verdict"] != "not measured":
             md.append(f"- {g['size']} `{g['case']}`: {g['verdict']}")
