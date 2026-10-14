@@ -62,6 +62,10 @@ date,size,episodes,case,experiment,variables,mode,source,step,peak_gib,wall_s,st
 2026-10-14,10k,10002,nhd_bluespace,nhd_bluespace,nhd_bluespace,new,measured (RUSAGE_SELF),(orchestrator),0.241,198.516,,,
 2026-10-14,10k,10002,nhd_bluespace,nhd_bluespace,nhd_bluespace,new,measured (RUSAGE_CHILDREN),(total),1.252,198.957,,0,ok
 2026-10-14,100k,100000,nhd_bluespace,nhd_bluespace,nhd_bluespace,old,paper runtime.csv (median of 1 cold run),(total),1.278,387.16,,0,ok
+2026-10-14,100k,100000,nhd_bluespace,nhd_bluespace,nhd_bluespace,new,measured (executor wait4),c3_nhd_bluespace,1.311,311.559,ran,,
+2026-10-14,100k,100000,nhd_bluespace,nhd_bluespace,nhd_bluespace,new,measured (executor wait4),c4_nhd_bluespace,0.375,10.389,ran,,
+2026-10-14,100k,100000,nhd_bluespace,nhd_bluespace,nhd_bluespace,new,measured (RUSAGE_SELF),(orchestrator),0.306,364.938,,,
+2026-10-14,100k,100000,nhd_bluespace,nhd_bluespace,nhd_bluespace,new,measured (RUSAGE_CHILDREN),(total),1.311,366.289,,0,ok
 2026-10-14,1k,1001,tiger_proximity,tiger_proximity,tiger_proximity,old,paper runtime.csv (median of 3 cold runs),(total),1.231,47.0,,0,ok
 2026-10-14,10k,10002,tiger_proximity,tiger_proximity,tiger_proximity,old,paper runtime.csv (median of 3 cold runs),(total),1.471,89.68,,0,ok
 2026-10-14,10k,10002,tiger_proximity,tiger_proximity,tiger_proximity,new,measured (executor wait4),c3_tiger_roads,1.471,164.26,ran,,
@@ -69,6 +73,10 @@ date,size,episodes,case,experiment,variables,mode,source,step,peak_gib,wall_s,st
 2026-10-14,10k,10002,tiger_proximity,tiger_proximity,tiger_proximity,new,measured (RUSAGE_SELF),(orchestrator),0.227,243.443,,,
 2026-10-14,10k,10002,tiger_proximity,tiger_proximity,tiger_proximity,new,measured (RUSAGE_CHILDREN),(total),1.471,243.939,,0,ok
 2026-10-14,100k,100000,tiger_proximity,tiger_proximity,tiger_proximity,old,paper runtime.csv (median of 1 cold run),(total),1.723,406.47,,0,ok
+2026-10-14,100k,100000,tiger_proximity,tiger_proximity,tiger_proximity,new,measured (executor wait4),c3_tiger_roads,1.751,281.118,ran,,
+2026-10-14,100k,100000,tiger_proximity,tiger_proximity,tiger_proximity,new,measured (executor wait4),c4_tiger_roads,0.729,3.232,ran,,
+2026-10-14,100k,100000,tiger_proximity,tiger_proximity,tiger_proximity,new,measured (RUSAGE_SELF),(orchestrator),0.295,347.158,,,
+2026-10-14,100k,100000,tiger_proximity,tiger_proximity,tiger_proximity,new,measured (RUSAGE_CHILDREN),(total),1.751,348.266,,0,ok
 2026-10-14,1k,1001,fara_tract,fara_tract,fara_tract,old,paper runtime.csv (median of 3 cold runs),(total),3.677,34.67,,0,ok
 2026-10-14,10k,10002,fara_tract,fara_tract,fara_tract,old,paper runtime.csv (median of 3 cold runs),(total),3.78,124.9,,0,ok
 2026-10-14,10k,10002,fara_tract,fara_tract,fara_tract,new,measured (executor wait4),c3_tract_us,3.783,90.871,ran,,

@@ -12,10 +12,10 @@ custom,custom_raster,10002,0.646,c3_customgrid_3940345e,10.7,ok,24,orchestrate.l
 custom,custom_bg_csv,10002,6.481,c3_bg,114.8,ok,24,orchestrate.link,2026-10-13
 nhd_bluespace,nhd_bluespace,1001,1.110,,31.0,ok,24,web-0.2.7 runner,2026-09-29
 nhd_bluespace,nhd_bluespace,10002,1.252,c3_nhd_bluespace,199.0,ok,24,orchestrate.link,2026-10-13
-nhd_bluespace,nhd_bluespace,100000,1.278,,387.2,ok,24,web-0.2.7 runner,2026-09-29
+nhd_bluespace,nhd_bluespace,100000,1.311,c3_nhd_bluespace,366.3,ok,24,orchestrate.link,2026-10-14
 tiger_proximity,tiger_proximity,1001,1.231,,47.0,ok,24,web-0.2.7 runner,2026-09-29
 tiger_proximity,tiger_proximity,10002,1.471,c3_tiger_roads,243.9,ok,24,orchestrate.link,2026-10-14
-tiger_proximity,tiger_proximity,100000,1.723,,406.5,ok,24,web-0.2.7 runner,2026-09-29
+tiger_proximity,tiger_proximity,100000,1.751,c3_tiger_roads,348.3,ok,24,orchestrate.link,2026-10-14
 fara_tract,fara_tract,1001,3.677,,34.7,ok,24,web-0.2.7 runner,2026-09-29
 fara_tract,fara_tract,10002,3.783,c3_tract_us,132.3,ok,24,orchestrate.link,2026-10-14
 fara_tract,fara_tract,100000,6.569,,582.2,ok,24,web-0.2.7 runner,2026-09-29

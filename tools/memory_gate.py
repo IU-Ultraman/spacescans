@@ -791,9 +791,10 @@ def cmd_report(args: argparse.Namespace) -> int:
                               f"(setup {fmt(g['new_setup_s'], 1)} s)" for g in slow)
                   + ". Where the setup time accounts for the difference, the cost is `link`'s readiness "
                   "check (`data.status`): its layout check lists every file of the dataset and stats "
-                  "it, and on Docker Desktop's bind mount each stat costs about 3.4 ms (TEMIS: 10,259 "
-                  "files; the prebuilt NHD tile cache: 14,857; the TIGER tile cache: 22,620). On the "
-                  "host the same calls take under 0.1 s. A receipt does not avoid it (the receipt check "
+                  "it, and on Docker Desktop's bind mount a stat costs up to about 3.4 ms while the VM's "
+                  "file-attribute cache is cold (TEMIS: 10,259 files, 34.5 s of setup at 10k but 1.1 s "
+                  "at 100k, so the cache state differs from run to run; the prebuilt NHD tile cache: "
+                  "14,857 files; the TIGER tile cache: 22,620). On the host the same calls take under 0.1 s. A receipt does not avoid it (the receipt check "
                   "stats every listed file too). The web adapter calls `run_source`, not `link`, so the "
                   "web does not pay it. The step times themselves vary from run to run as much as "
                   "this on the old runner too (the paper's 10k cold repeats: `tiger_proximity` 204, 86 "
