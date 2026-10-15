@@ -84,6 +84,10 @@ date,size,episodes,case,experiment,variables,mode,source,step,peak_gib,wall_s,st
 2026-10-14,10k,10002,fara_tract,fara_tract,fara_tract,new,measured (RUSAGE_SELF),(orchestrator),0.257,131.978,,,
 2026-10-14,10k,10002,fara_tract,fara_tract,fara_tract,new,measured (RUSAGE_CHILDREN),(total),3.783,132.347,,0,ok
 2026-10-14,100k,100000,fara_tract,fara_tract,fara_tract,old,paper runtime.csv (median of 1 cold run),(total),6.569,582.17,,0,ok
+2026-10-14,100k,100000,fara_tract,fara_tract,fara_tract,new,measured (executor wait4),c3_tract_us,6.564,269.252,ran,,
+2026-10-14,100k,100000,fara_tract,fara_tract,fara_tract,new,measured (executor wait4),c4_tract_fara,5.191,308.121,ran,,
+2026-10-14,100k,100000,fara_tract,fara_tract,fara_tract,new,measured (RUSAGE_SELF),(orchestrator),0.41,578.927,,,
+2026-10-14,100k,100000,fara_tract,fara_tract,fara_tract,new,measured (RUSAGE_CHILDREN),(total),6.564,579.657,,0,ok
 2026-10-14,1k,1001,zcta5_cbp,zcta5_cbp,cbp_zcta5,old,paper runtime.csv (median of 3 cold runs),(total),5.36,37.91,,0,ok
 2026-10-14,10k,10002,zcta5_cbp,zcta5_cbp,cbp_zcta5,old,paper runtime.csv (median of 3 cold runs),(total),5.376,162.82,,0,ok
 2026-10-14,10k,10002,zcta5_cbp,zcta5_cbp,cbp_zcta5,new,measured (executor wait4),c3_zcta5,5.38,103.003,ran,,
@@ -93,6 +97,12 @@ date,size,episodes,case,experiment,variables,mode,source,step,peak_gib,wall_s,st
 2026-10-14,10k,10002,zcta5_cbp,zcta5_cbp,cbp_zcta5,new,measured (RUSAGE_SELF),(orchestrator),0.248,185.011,,,
 2026-10-14,10k,10002,zcta5_cbp,zcta5_cbp,cbp_zcta5,new,measured (RUSAGE_CHILDREN),(total),5.38,185.471,,0,ok
 2026-10-14,100k,100000,zcta5_cbp,zcta5_cbp,cbp_zcta5,old,paper runtime.csv (median of 1 cold run),(total),6.665,556.76,,0,ok
+2026-10-14,100k,100000,zcta5_cbp,zcta5_cbp,cbp_zcta5,new,measured (executor wait4),c3_zcta5,6.667,329.897,ran,,
+2026-10-14,100k,100000,zcta5_cbp,zcta5_cbp,cbp_zcta5,new,measured (executor wait4),c3_county,5.597,260.699,ran,,
+2026-10-14,100k,100000,zcta5_cbp,zcta5_cbp,cbp_zcta5,new,measured (executor wait4),c4_zcta5_cbp,1.956,6.08,ran,,
+2026-10-14,100k,100000,zcta5_cbp,zcta5_cbp,cbp_zcta5,new,measured (executor wait4),c4_county_cbp,1.84,1.816,ran,,
+2026-10-14,100k,100000,zcta5_cbp,zcta5_cbp,cbp_zcta5,new,measured (RUSAGE_SELF),(orchestrator),0.345,599.634,,,
+2026-10-14,100k,100000,zcta5_cbp,zcta5_cbp,cbp_zcta5,new,measured (RUSAGE_CHILDREN),(total),6.667,601.486,,0,ok
 2026-10-14,1k,1001,bg_ndi_wi,bg_ndi_wi,walkability;ndi,old,paper runtime.csv (median of 3 cold runs),(total),6.752,70.86,,0,ok
 2026-10-14,10k,10002,bg_ndi_wi,bg_ndi_wi,walkability;ndi,old,paper runtime.csv (median of 3 cold runs),(total),6.853,217.11,,0,ok
 2026-10-14,10k,10002,bg_ndi_wi,bg_ndi_wi,ndi;walkability,new,measured (executor wait4),c3_bg,6.483,120.902,ran,,
@@ -102,6 +112,12 @@ date,size,episodes,case,experiment,variables,mode,source,step,peak_gib,wall_s,st
 2026-10-14,10k,10002,bg_ndi_wi,bg_ndi_wi,ndi;walkability,new,measured (RUSAGE_SELF),(orchestrator),0.224,253.892,,,
 2026-10-14,10k,10002,bg_ndi_wi,bg_ndi_wi,ndi;walkability,new,measured (RUSAGE_CHILDREN),(total),6.856,254.353,,0,ok
 2026-10-14,100k,100000,bg_ndi_wi,bg_ndi_wi,walkability;ndi,old,paper runtime.csv (median of 1 cold run),(total),8.013,606.52,,0,ok
+2026-10-14,100k,100000,bg_ndi_wi,bg_ndi_wi,ndi;walkability,new,measured (executor wait4),c3_bg,7.814,305.797,ran,,
+2026-10-14,100k,100000,bg_ndi_wi,bg_ndi_wi,ndi;walkability,new,measured (executor wait4),c3_bg_2020,8.016,309.532,ran,,
+2026-10-14,100k,100000,bg_ndi_wi,bg_ndi_wi,ndi;walkability,new,measured (executor wait4),c4_ndi,2.004,11.702,ran,,
+2026-10-14,100k,100000,bg_ndi_wi,bg_ndi_wi,ndi;walkability,new,measured (executor wait4),c4_wi,0.486,1.264,ran,,
+2026-10-14,100k,100000,bg_ndi_wi,bg_ndi_wi,ndi;walkability,new,measured (RUSAGE_SELF),(orchestrator),0.297,629.279,,,
+2026-10-14,100k,100000,bg_ndi_wi,bg_ndi_wi,ndi;walkability,new,measured (RUSAGE_CHILDREN),(total),8.016,630.15,,0,ok
 2026-10-14,1k,1001,faqsd,faqsd,faqsd,old,paper runtime.csv (median of 3 cold runs),(total),4.355,217.04,,0,ok
 2026-10-14,10k,10002,faqsd,faqsd,faqsd,old,paper runtime.csv (median of 3 cold runs),(total),16.829,558.97,,0,ok
 2026-10-14,10k,10002,faqsd,faqsd,faqsd,new,measured (executor wait4),c3_tract_us,3.783,104.409,ran,,

@@ -18,13 +18,13 @@ tiger_proximity,tiger_proximity,10002,1.471,c3_tiger_roads,243.9,ok,24,orchestra
 tiger_proximity,tiger_proximity,100000,1.751,c3_tiger_roads,348.3,ok,24,orchestrate.link,2026-10-14
 fara_tract,fara_tract,1001,3.677,,34.7,ok,24,web-0.2.7 runner,2026-09-29
 fara_tract,fara_tract,10002,3.783,c3_tract_us,132.3,ok,24,orchestrate.link,2026-10-14
-fara_tract,fara_tract,100000,6.569,,582.2,ok,24,web-0.2.7 runner,2026-09-29
+fara_tract,fara_tract,100000,6.564,c3_tract_us,579.7,ok,24,orchestrate.link,2026-10-14
 zcta5_cbp,zcta5_cbp,1001,5.360,,37.9,ok,24,web-0.2.7 runner,2026-09-29
 zcta5_cbp,zcta5_cbp,10002,5.380,c3_zcta5,185.5,ok,24,orchestrate.link,2026-10-14
-zcta5_cbp,zcta5_cbp,100000,6.665,,556.8,ok,24,web-0.2.7 runner,2026-09-29
+zcta5_cbp,zcta5_cbp,100000,6.667,c3_zcta5,601.5,ok,24,orchestrate.link,2026-10-14
 bg_ndi_wi,bg_ndi_wi,1001,6.752,,70.9,ok,24,web-0.2.7 runner,2026-09-29
 bg_ndi_wi,bg_ndi_wi,10002,6.856,c3_bg_2020,254.4,ok,24,orchestrate.link,2026-10-14
-bg_ndi_wi,bg_ndi_wi,100000,8.013,,606.5,ok,24,web-0.2.7 runner,2026-09-29
+bg_ndi_wi,bg_ndi_wi,100000,8.016,c3_bg_2020,630.1,ok,24,orchestrate.link,2026-10-14
 faqsd,faqsd,1001,4.355,,217.0,ok,24,web-0.2.7 runner,2026-09-29
 faqsd,faqsd,10002,16.805,c4_tract_faqsd,641.7,ok,24,orchestrate.link,2026-10-14
 faqsd,faqsd,100000,22.754,c4_tract_faqsd,468.1,oom,24,orchestrate.link,2026-10-14
