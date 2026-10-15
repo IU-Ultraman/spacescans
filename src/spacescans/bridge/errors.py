@@ -13,10 +13,10 @@ The kinds are design section 3.5's (see ``protocol.ERROR_KINDS``):
   there or not readable is ``data_missing`` (``details.path``);
 * anything else is ``internal``: a bug, reported with its traceback.
 
-Cohort privacy: when an error's ``to_dict()`` message differs from ``str(exc)``
-(``CohortError`` drops the sample value an unrecognised date quotes), the
-traceback is rebuilt from the frames and the safe message, so no cohort value
-reaches the result, the log or the client.
+Cohort privacy: when an error's ``to_dict()`` message differs from ``str(exc)``,
+the traceback is rebuilt from the frames and the safe message, so no value the
+safe message leaves out reaches the result, the log or the client. (A
+``CohortError`` quotes no cohort value in either since PRIV-2, 2026-10-14.)
 """
 from __future__ import annotations
 

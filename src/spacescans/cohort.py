@@ -8,10 +8,12 @@ Ported from spacescans-web ``backend/app`` at commit 3991c3b:
 
 * :func:`detect_date_format` and :func:`parse_date_columns` are
   ``cohort_dates.py`` verbatim (whole-column match, one format shared by
-  startDate and endDate, blanks become NaT).
+  startDate and endDate, blanks become NaT), except that the error for an
+  unrecognised date format no longer quotes the file's first date.
 * :func:`check_upload` is the validation half of
   ``task_manager.save_upload`` (lines 390-470): the PATID alias, the
-  required columns, and the date check and range, with the same messages.
+  required columns, and the date check and range, with the same messages
+  (that one aside).
 * :func:`read_upload_csv` and :func:`to_pipeline_parquet` are
   ``csv_to_parquet`` from ``experiments/bg_ndi_wi.py:84-119`` and its
   ``experiments/zcta5_cbp.py:90-112`` variant. Called the way the web calls
@@ -134,18 +136,16 @@ class CohortError(ValueError):
     def to_dict(self) -> dict[str, Any]:
         """``{"kind", "message", "hint", "details", "type"}`` without cohort values.
 
-        Safe to log and to send to a client. The one message that quotes a
-        value (an unrecognised date format names a sample date) is replaced by
-        the same text without the sample; ``details`` holds the ``code`` and
-        the issues with their row numbers and counts. ``str(self)`` is
-        unchanged, so the web's messages stay as they are.
+        Safe to log and to send to a client, as ``str(self)`` is: no message
+        here quotes a cohort value (see :data:`_DATE_FORMAT_MESSAGE`).
+        ``details`` holds the ``code`` and the issues with their row numbers
+        and counts.
         """
-        issues = [{**i.as_dict(), "message": _safe_message(i.code, i.message)}
-                  for i in self.issues]
+        issues = [i.as_dict() for i in self.issues]
         if issues:
             message = "; ".join(i["message"] for i in issues)
         else:
-            message = _safe_message(self.code, str(self))
+            message = str(self)
         codes = {i["code"] for i in issues} | ({self.code} if self.code else set())
         if any(i["rows"] for i in issues):
             hint = "fix the rows listed in details.issues (1-based row numbers)"
@@ -160,23 +160,17 @@ class CohortError(ValueError):
                 "type": type(self).__name__}
 
 
-_SAFE_MESSAGES = {
-    # detect_date_format's message names a sample value; this is the same text without it.
-    "date_format": (
-        "Unrecognized date format. Dates must use one consistent format across "
-        f"startDate and endDate. Accepted: {ACCEPTED_DATE_EXAMPLES}"
-    ),
-}
-
-
-def _safe_message(code: str | None, message: str) -> str:
-    """``message`` with any quoted cohort value removed (see CohortError.to_dict)."""
-    return _SAFE_MESSAGES.get(code or "", message)
-
-
 # ---------------------------------------------------------------------------
-# Dates (cohort_dates.py, verbatim)
+# Dates (cohort_dates.py, verbatim but for the message below)
 # ---------------------------------------------------------------------------
+
+# detect_date_format's error. 0.2.7's began with the file's first date
+# ("Unrecognized date format: '1985-03-17'. ..."), which the web then wrote into
+# status.json and logs.jsonl; this is the same text without it (PRIV-2, 2026-10-14).
+_DATE_FORMAT_MESSAGE = (
+    "Unrecognized date format. Dates must use one consistent format across "
+    f"startDate and endDate. Accepted: {ACCEPTED_DATE_EXAMPLES}"
+)
 
 
 def _clean(values: pd.Series) -> pd.Series:
@@ -188,8 +182,8 @@ def _clean(values: pd.Series) -> pd.Series:
 def detect_date_format(columns: Iterable[pd.Series]) -> str:
     """Return the one format that parses every non-empty value in `columns`.
 
-    Raises CohortError (a ValueError) naming a failing sample and the
-    accepted formats.
+    Raises CohortError (a ValueError) naming the accepted formats; the
+    message quotes no value.
     """
     non_null = [c.dropna() for c in (_clean(col) for col in columns)]
     non_null = [c for c in non_null if not c.empty]
@@ -204,13 +198,7 @@ def detect_date_format(columns: Iterable[pd.Series]) -> str:
             continue
         return fmt
 
-    sample = str(non_null[0].iloc[0])
-    raise CohortError(
-        f"Unrecognized date format: {sample!r}. Dates must use one consistent "
-        f"format across startDate and endDate. Accepted: "
-        f"{ACCEPTED_DATE_EXAMPLES}",
-        code="date_format",
-    )
+    raise CohortError(_DATE_FORMAT_MESSAGE, code="date_format")
 
 
 def parse_date_columns(

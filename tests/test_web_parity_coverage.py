@@ -8,6 +8,7 @@ fixtures/web_parity/generate.py.
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -26,6 +27,17 @@ CATALOG = {**catalog.payload()["variables"],
 CASES = sorted((FIX / "expected" / "coverage").glob("*.json"))
 
 
+# One deliberate difference from the web 0.2.7 output the coverage fixtures record (PRIV-2,
+# 2026-10-14): 0.2.7's unrecognised-date-format message began with the file's first date;
+# spacescans gives the same text without it.
+_QUOTED_DATE = re.compile(r"^Unrecognized date format: (?:'[^']*'|\"[^\"]*\")\.")
+
+
+def _as_now(message: str) -> str:
+    """The web's 0.2.7 error text as spacescans words it today."""
+    return _QUOTED_DATE.sub("Unrecognized date format.", message)
+
+
 def _jsonable(x: Any) -> Any:
     return json.loads(json.dumps(x))
 
@@ -40,7 +52,7 @@ def test_coverage_matches_web(case, tmp_path):
                "ValueError": ValueError}[rec["error"]["type"]]
         with pytest.raises(exc) as e:
             coverage.compute_coverage(src, rec["variables"], CATALOG)
-        assert str(e.value.args[0]) == rec["error"]["args0"]
+        assert str(e.value.args[0]) == _as_now(rec["error"]["args0"])
         return
     got = coverage.compute_coverage(src, rec["variables"], CATALOG)
     assert _jsonable(got) == rec["result"]

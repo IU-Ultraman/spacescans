@@ -100,9 +100,31 @@ def test_missing_coordinates_and_blank_dates():
 def test_bad_dates_and_timezones_are_errors():
     rep = cohort.validate(_read("bad_format"))
     assert _codes(rep.errors) == ["date_format"]
-    assert rep.errors[0].message.startswith("Unrecognized date format: '19/8/2017'")
+    assert rep.errors[0].message == cohort._DATE_FORMAT_MESSAGE
     tz = _frame(startDate=pd.to_datetime(["2015-01-01"] * 4).tz_localize("UTC"))
     assert "date_timezone" in _codes(cohort.validate(tz).errors)
+
+
+def test_a_date_format_error_quotes_no_cohort_value(tmp_path):
+    """PRIV-2: 0.2.7's message began with the file's first date, and the web wrote it into
+    status.json and logs.jsonl. No path quotes a date now: conversion, upload check, report."""
+    first, bad = "1985-03-17", "1985-13-45"     # row 1 is valid; row 2 cannot be a date
+    text = ("pid,startDate,endDate,longitude,latitude\n"
+            f"P1,{first},1999-12-31,-86.1,39.7\nP2,{bad},2020-01-01,-86.2,39.8\n")
+    src = tmp_path / "input.csv"
+    src.write_text(text)
+    with pytest.raises(cohort.CohortError) as conversion:
+        cohort.to_pipeline_parquet(src, tmp_path / "input.parquet", variant="bg_ndi_wi",
+                                   pid_as_str=False)
+    with pytest.raises(cohort.CohortError) as upload:
+        cohort.check_upload(text.encode(), "input.csv")
+    report = cohort.validate(pd.read_csv(src, dtype=str))
+    for shown in (str(conversion.value), repr(conversion.value),
+                  json.dumps(conversion.value.to_dict()), str(upload.value),
+                  json.dumps(upload.value.to_dict()), json.dumps(report.as_dict())):
+        assert first not in shown and bad not in shown
+    assert str(conversion.value) == conversion.value.to_dict()["message"] \
+        == cohort._DATE_FORMAT_MESSAGE
 
 
 def test_empty_cohort_and_episode_id_column():

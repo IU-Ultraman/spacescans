@@ -782,7 +782,7 @@ def test_cohort_error_never_quotes_the_date_sample():
     sample = "31" + ".12." + "2016"                         # built at run time: frames show source lines
     with pytest.raises(CohortError) as info:
         detect_date_format([pd.Series([sample, "2016-03-04"])])
-    assert sample in str(info.value)                       # the web's message is unchanged
+    assert sample not in str(info.value)                   # PRIV-2: not in the message either
     d = classify(info.value).to_dict()
     assert d["kind"] == "cohort"
     assert sample not in json.dumps(d), d                  # message, details and traceback

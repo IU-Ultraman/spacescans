@@ -22,6 +22,7 @@ from __future__ import annotations
 import hashlib
 import json
 import platform
+import re
 import sys
 from pathlib import Path
 
@@ -43,6 +44,17 @@ SAME_PANDAS_MAJOR = pd.__version__.split(".")[0] == MANIFEST["pandas"].split("."
 
 PARQUET_CASES = sorted((FIX / "expected" / "parquet").glob("*.json"))
 UPLOAD_CASES = sorted((FIX / "expected" / "upload").glob("*.json"))
+
+
+# One deliberate difference from the web 0.2.7 output these fixtures record (PRIV-2,
+# 2026-10-14): 0.2.7's unrecognised-date-format message began with the file's first date;
+# spacescans gives the same text without it.
+_QUOTED_DATE = re.compile(r"^Unrecognized date format: (?:'[^']*'|\"[^\"]*\")\.")
+
+
+def _as_now(message: str) -> str:
+    """The web's 0.2.7 error text as spacescans words it today."""
+    return _QUOTED_DATE.sub("Unrecognized date format.", message)
 
 
 def _sha256(p: Path) -> str:
@@ -110,7 +122,7 @@ def test_csv_to_parquet_matches_web(case, tmp_path):
     if "error" in rec:
         with pytest.raises(ValueError) as e:
             cohort.csv_to_parquet(src, dst, variant=rec["variant"])
-        assert str(e.value) == rec["error"]["message"]
+        assert str(e.value) == _as_now(rec["error"]["message"])
         return
     info = cohort.csv_to_parquet(src, dst, variant=rec["variant"])
     assert_parquet_like_web(dst, rec)
@@ -159,7 +171,7 @@ def test_check_upload_matches_web(case):
         with pytest.raises(ValueError) as e:
             cohort.check_upload(content, rec["filename"])
         assert type(e.value).__name__ in ("CohortError", rec["error"]["type"])
-        assert str(e.value) == rec["error"]["message"]
+        assert str(e.value) == _as_now(rec["error"]["message"])
         # The web deletes input.csv on these errors; the caller does that now.
         assert rec["input_csv_exists"] is False
         return
