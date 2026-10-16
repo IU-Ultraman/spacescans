@@ -12,23 +12,16 @@ which must agree: `pyproject.toml` (`version`), `r/DESCRIPTION` (`Version` and
 
 ## 1. Decisions and accounts (authors)
 
-- [ ] **License (both repositories).** Agents do not choose a license, and this branch leaves
-  every license field as it was (`r/DESCRIPTION`: "Not yet licensed"; no `license` in
-  `pyproject.toml`; no LICENSE file). `tier2-artifacts/docs/PHASE_D.md` (as updated
-  2026-10-16 16:45 EDT) records MIT as the authors' decision and says the lead adds the files
-  at integration. Applying a license means:
-  - a `LICENSE` file at the root of each repository;
-  - `r/LICENSE` in CRAN form for MIT (two lines, `YEAR:` and `COPYRIGHT HOLDER:`) and
-    `License: MIT + file LICENSE` in `r/DESCRIPTION`;
-  - `license = "<SPDX expression>"` in `pyproject.toml`'s `[project]`, with
-    `requires = ["setuptools>=77", "wheel"]` in `[build-system]` (setuptools reads the string
-    form from 77 on, PEP 639, and then picks up the root `LICENSE` by its default
-    `license-files` patterns). Do not add a `License ::` classifier alongside the expression;
-    newer setuptools rejects the combination;
-  - the README's License section and the changelog's "Not yet decided" line;
-  - optionally, removing the license allowance from `.github/scripts/r-check-status.sh`
-    (once the license is standard it matches nothing, so it is harmless if left).
-  These edits have not been built or checked on this branch.
+- [x] **License (both repositories): MIT**, decided by the authors on 2026-10-16 and applied
+  in the package at integration (`tier2/d-integration`): the root `LICENSE` (MIT, "Copyright (c)
+  2026 spacescans authors"); `r/LICENSE` in CRAN form (`YEAR: 2026`, `COPYRIGHT HOLDER:
+  spacescans authors`) with `License: MIT + file LICENSE` in `r/DESCRIPTION`; `license = "MIT"`
+  and `license-files = ["LICENSE"]` in `pyproject.toml` with `setuptools>=77` (PEP 639; the
+  wheel's METADATA carries `License-Expression: MIT` and `License-File: LICENSE`, and there is
+  no `License ::` classifier, which newer setuptools rejects next to the expression); the
+  README, `r/README.md` and the changelog. The R gate (`.github/scripts/r-check-status.sh`) no
+  longer allows the license WARNING: any WARNING fails it. The web repository gets its own
+  `LICENSE` in its integration branch.
 - [ ] **Author metadata.** PyPI shows `authors = [{name = "Regenstrief Institute"}]` and no
   maintainer; the R package lists Xuguang Ai (`aut`, `cre`) and Regenstrief Institute (`aut`).
   Decide whether PyPI should name a maintainer, and the institute's R role (`cph` or `fnd` is
@@ -40,7 +33,8 @@ which must agree: `pyproject.toml` (`version`), `r/DESCRIPTION` (`Version` and
 
 Names on 2026-10-16: `spacescans-pipeline` and `spacescans` are both unregistered on PyPI and
 on TestPyPI (`https://pypi.org/pypi/<name>/json` returns 404); there is no CRAN package
-`spacescans`; there is no `iu-ultraman` universe and no registry repository yet.
+`spacescans`; there is no `iu-ultraman` universe and no registry repository yet. The authors
+decided to reserve `spacescans` as well, as an alias of `spacescans-pipeline` (section 4a).
 
 ## 2. Before tagging (on `main`)
 
@@ -121,6 +115,31 @@ workflow run.
   tag with `SOURCE_DATE_EPOCH=$(git log -1 --format=%ct v0.3.0) python -m build` gives the
   same sha256 as the wheel on PyPI.
 
+## 4a. The PyPI alias `spacescans`
+
+`packaging/spacescans-alias/` is a distribution named `spacescans` with no code: its only
+content is the dependency `spacescans-pipeline==<version>`, so `pip install spacescans` installs
+the real package (without extras) and keeps the name from being taken by someone else. Its
+version and pin move with the main package (`tests/test_pypi_alias.py` fails when they drift),
+and `publish.yml` does not publish it.
+
+- [ ] After `spacescans-pipeline` 0.3.0 is on PyPI (section 4), build and check the alias at the
+  release tag:
+
+  ```sh
+  SOURCE_DATE_EPOCH=$(git log -1 --format=%ct v0.3.0) python -m build packaging/spacescans-alias --outdir dist-alias
+  twine check --strict dist-alias/*
+  ```
+
+- [ ] Upload it once, from an account that will own the project `spacescans` (two-factor
+  authentication on): `twine upload dist-alias/*` with an API token (PyPI, Account settings,
+  API tokens; scope "Entire account" for the first upload, since the project does not exist
+  yet; replace it with a token scoped to `spacescans` afterwards, or add a trusted publisher for
+  the project `spacescans` if later versions should be published by a workflow). Add the
+  co-maintainers on PyPI as for `spacescans-pipeline`.
+- [ ] For later releases, bump `version` and the pin in `packaging/spacescans-alias/pyproject.toml`
+  with the three declarations of the main package, and upload the alias after the main package.
+
 ## 5. The R package
 
 R users of 0.3.0 can install the release from GitHub today:
@@ -131,20 +150,21 @@ spacescans::ss_install()
 ```
 
 `remotes` and `pak` record the commit (`RemoteSha`) in the installed package, and
-`ss_install()` installs `spacescans-pipeline` from that commit's source archive on GitHub.
+`ss_install()` installs `spacescans-pipeline` from that commit's source archive on GitHub. An
+install from r-universe (below) works the same way once the universe exists.
 
 ### r-universe
 
-- [ ] **Blocker, R code (`r/R/install.R`):** r-universe builds from git and records only
-  `RemoteUrl`, `RemoteRef` and `RemoteSha` in the packages it builds (checked on 2026-10-16 in
-  the DESCRIPTION of an r-universe source package: no `RemoteType`, `RemoteUsername` or
-  `RemoteRepo`). `.ss_github_source()` needs those three, the wheel and `pin.json` are not in
-  git, so after an r-universe install `ss_install()` stops with "No spacescans 0.3.0 wheel is
-  bundled with this R package". Before announcing r-universe, make `ss_install()` find the
-  Python package for such installs, for example by reading `RemoteUrl`
-  (`https://github.com/<owner>/<repo>`) with `RemoteSha` when `RemoteType` is absent, and by
-  falling back to PyPI (`spacescans-pipeline==<Config/spacescans/version>`) once the version is
-  published there.
+- [x] **`ss_install()` after an r-universe install** (fixed at integration): r-universe builds
+  from git and records only `RemoteUrl`, `RemoteRef` and `RemoteSha` in the packages it builds
+  (checked on 2026-10-16 in the DESCRIPTION of an r-universe source package: no `RemoteType`,
+  `RemoteUsername` or `RemoteRepo`), and the wheel and `pin.json` are not in git.
+  `.ss_github_source()` now reads the owner and repository from a github.com `RemoteUrl` and
+  installs `spacescans-pipeline` from the source archive of `RemoteSha` (without a recorded
+  commit, from the tag `v<Config/spacescans/version>`); `r/tests/testthat/test-install.R`
+  checks it on synthetic r-universe DESCRIPTION files. Still open for a CRAN version: a fallback
+  to PyPI (`spacescans-pipeline==<Config/spacescans/version>`) for installs without any git
+  metadata.
 - [ ] Create the public repository `IU-Ultraman/IU-Ultraman.r-universe.dev` with this
   `packages.json`:
 
@@ -185,11 +205,10 @@ attaching). The lock should be generated, and checked, on macOS 14 and 15 runner
 
 ### CRAN (later)
 
-`R CMD check --as-cran` on 0.3.0 (section 7) reports the license WARNING and NOTE and nothing
-else about the package. What still stands between the package and CRAN:
+`R CMD check --as-cran` on the integrated 0.3.0 (section 7) reports no license WARNING or
+NOTE any more (MIT is a FOSS license). What still stands between the package and CRAN:
 
-1. **License.** "Not yet licensed" is not a FOSS license: a WARNING and an incoming NOTE now,
-   and CRAN accepts only FOSS licenses. Gone once a standard license is in `DESCRIPTION`.
+1. **License.** Resolved: `MIT + file LICENSE`.
 2. **Platforms.** `SystemRequirements` names macOS 14 or later on Apple silicon as the supported
    platform. CRAN builds and checks on Linux, Windows and macOS and expects packages to work on
    more than one platform. The Python package runs on Linux too (CI), but the R package has no
@@ -208,9 +227,11 @@ else about the package. What still stands between the package and CRAN:
    redirected to a scratch folder). Reviewers may still ask about deleting files at load time.
 5. **A bundled wheel.** CRAN reviewers may object to an archive of non-R code installed at run
    time; a CRAN tarball should not carry `inst/python/*.whl` and should rely on PyPI.
-6. **DESCRIPTION wording.** CRAN asks for software names in single quotes: 'Python' appears
-   unquoted four times in `Description`. The Title and Description say "patient residential
-   histories", while the 0.3.0 documentation speaks of participants and location episodes.
+6. **DESCRIPTION wording.** Resolved at integration: the Title is "Link Time-Referenced
+   Geolocation Data to the Spatial and Contextual Exposome", the Description speaks of location
+   episodes and participants, and 'Python' is quoted. The Title has 76 characters; CRAN's
+   guidance asks for a short title (older versions of R limited it to 65), so a reviewer may ask
+   for a shorter one.
 
 ## 6. After the release
 

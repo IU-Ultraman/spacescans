@@ -1,0 +1,35 @@
+# The PyPI name `spacescans`, kept as an alias of `spacescans-pipeline` (the distribution that
+# holds the code and the `spacescans` import package). It contains no code: installing it
+# installs spacescans-pipeline at the same version. Its version moves with the main package's;
+# build and upload it after spacescans-pipeline (docs/release.md, "The PyPI alias").
+[build-system]
+requires = ["setuptools>=77", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "spacescans"
+version = "0.3.0"
+description = "Alias of spacescans-pipeline: link time-referenced geolocation data to the spatial and contextual exposome"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{name = "Regenstrief Institute"}]
+dependencies = ["spacescans-pipeline==0.3.0"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Operating System :: MacOS",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering",
+]
+
+[project.urls]
+Homepage = "https://www.spacescans.com"
+Repository = "https://github.com/IU-Ultraman/spacescans"
+"Main package" = "https://pypi.org/project/spacescans-pipeline/"
+
+[tool.setuptools]
+# No code: the distribution is metadata plus its dependency on spacescans-pipeline.
+packages = []
