@@ -1,8 +1,12 @@
-"""User-uploaded exposures ("custom exposomes"): validation, definitions, steps.
+"""User-supplied exposures: registered datasets, upload definitions, steps.
 
 A user brings their own values, either a CSV keyed by a Census geography
 (Tract, BG, ZCTA5, County) or a GeoTIFF (one, or one per year, one or several
-bands), and the dataset links like a shipped variable. The pipeline needs no
+bands), and the dataset links like a catalog variable. Registered datasets
+(:func:`register`, phase D) add daily tables, biweekly and daily rasters and
+point/line/polygon features (distance to the nearest feature), prepared once
+under a datasets root with their metadata and linked by name:
+``orchestrate.link(cohort, [...], custom=["my dataset"])``. The pipeline needs no
 new code for either: C4 is ``static_areal`` / ``yearly_areal`` reading a plain
 table with no plugin; for a raster the table is first materialised from the C3
 weights' grid ids and the pixels under them.
@@ -11,6 +15,10 @@ This package holds the domain half of that path, shared by the web app and the
 R package (through the bridge). Storage, ownership and the per-user library
 stay in the web.
 
+Registered datasets
+    :func:`register`, :func:`list_datasets`, :func:`get_dataset`,
+    :func:`update_dataset`, :func:`remove_dataset`, :func:`dataset_definition`,
+    :func:`resolve_custom`, :func:`datasets_root`, :class:`DatasetRecord`.
 Upload
     :func:`preview_csv`, :func:`validate_csv`, :func:`define_polygon`;
     :func:`preview_raster`, :func:`inspect_raster`, :func:`define_raster`.
@@ -20,9 +28,9 @@ Run
 Data
     :func:`provisioned_boundaries`.
 
-Everything imports with the base install. CSV validation needs nothing more;
-the raster functions need the ``[geo]`` extra and raise
-:class:`spacescans._extras.MissingExtraError` without it.
+Everything imports with the base install. CSV validation and polygon tables
+need nothing more; the raster and features functions need the ``[geo]``
+extra and raise :class:`spacescans._extras.MissingExtraError` without it.
 """
 from __future__ import annotations
 
@@ -66,6 +74,7 @@ from spacescans.custom.keys import (
     is_dataset_id,
     variable_key,
 )
+from spacescans.custom.features import nearest_distances
 from spacescans.custom.raster import (
     CONUS_BBOX,
     FULL_READ_MAX_CELLS,
@@ -75,6 +84,25 @@ from spacescans.custom.raster import (
     grid_hash,
     inspect_raster,
     same_grid,
+)
+from spacescans.custom.registry import (
+    DATASETS_DIR_ENV,
+    KINDS,
+    TEMPORAL,
+    VISIBILITY,
+    DatasetError,
+    DatasetExistsError,
+    DatasetNotFoundError,
+    DatasetRecord,
+    dataset_definition,
+    datasets_root,
+    get_dataset,
+    link_overlay,
+    list_datasets,
+    register,
+    remove_dataset,
+    resolve_custom,
+    update_dataset,
 )
 from spacescans.custom.steps import (
     BOUNDARY_C3,
@@ -92,13 +120,18 @@ from spacescans.custom.steps import (
     definitions_from_config,
     first_definition_for_grid,
     grid_tag,
+    is_dated,
+    is_features,
+    kind_c4_step,
     legacy_cache_key,
+    needs_c3,
     output_path,
     parquet_map,
     plan,
     prepare_step,
     render,
     values_path,
+    weights_path,
 )
 from spacescans.custom.table import (
     BOUNDARY_SPEC,
@@ -111,6 +144,11 @@ from spacescans.custom.units import clean_unit, summarise_units, unit_as_typed
 from spacescans.custom.values import MaterialisedValues, materialise_values, value_table
 
 __all__ = [
+    # registered datasets
+    "DATASETS_DIR_ENV", "KINDS", "TEMPORAL", "VISIBILITY", "DatasetRecord", "DatasetError",
+    "DatasetNotFoundError", "DatasetExistsError", "register", "list_datasets", "get_dataset",
+    "update_dataset", "remove_dataset", "dataset_definition", "resolve_custom", "datasets_root",
+    "link_overlay", "nearest_distances",
     # errors
     "CustomExposomeError", "RasterError",
     # keys
@@ -133,7 +171,8 @@ __all__ = [
     "Step", "Context", "RenderContext", "definitions_from_config", "definition_for",
     "grid_tag", "c3_step_for", "c4_step_for", "plan", "parquet_map",
     "first_definition_for_grid", "output_path", "values_path", "render",
-    "prepare_step", "boundary_tag_for_step", "legacy_cache_key",
+    "prepare_step", "boundary_tag_for_step", "legacy_cache_key", "weights_path",
+    "kind_c4_step", "is_dated", "is_features", "needs_c3",
     # values
     "MaterialisedValues", "materialise_values", "value_table",
     # diagnostics

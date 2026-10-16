@@ -58,6 +58,11 @@ def extract_grid_weights(
         if df.empty:
             timings["postprocess"] += time.perf_counter() - t
             continue
+        if "cell_id" not in df.columns and "band_1_cell_id" in df.columns:
+            # A multi-band raster: exact_extract reports each band, prefixed. The cells and
+            # their coverage (so the weights) are the same in every band: use band 1's.
+            df = df.rename(columns={"band_1_cell_id": "cell_id",
+                                    f"band_1_{coverage_stat}": coverage_stat})
         cov_col = None
         for c in df.columns:
             if c.startswith("coverage") and c != "cell_id":

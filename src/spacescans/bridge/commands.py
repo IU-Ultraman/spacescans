@@ -366,8 +366,9 @@ COMMANDS: dict[str, Callable[[dict, Context], Outcome]] = {
 
 
 def _register() -> None:
-    from spacescans.bridge import cmd_catalog, cmd_data, cmd_link
-    for table in (cmd_catalog.COMMANDS, cmd_data.COMMANDS, cmd_link.COMMANDS):
+    from spacescans.bridge import cmd_catalog, cmd_data, cmd_datasets, cmd_link
+    for table in (cmd_catalog.COMMANDS, cmd_data.COMMANDS, cmd_link.COMMANDS,
+                  cmd_datasets.COMMANDS):
         COMMANDS.update(table)
 
 

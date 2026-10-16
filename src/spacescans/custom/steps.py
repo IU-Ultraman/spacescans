@@ -185,6 +185,97 @@ def values_path(ctx: RenderContext, var_key: str) -> Path:
     return Path(ctx.run_dir) / "output" / f"values_{var_key}.parquet"
 
 
+def weights_path(ctx: RenderContext, var_key: str) -> Path:
+    """Where a dataset's run-specific C4 weights live (daily polygon tables, features)."""
+    return Path(ctx.run_dir) / "output" / f"weights_{var_key}.parquet"
+
+
+# --------------------------------------------------------------------------
+# kinds the web's custom runner never had (registered datasets, phase D)
+# --------------------------------------------------------------------------
+
+#: Time structures linked through the ``gridded`` pattern (a date or a period per row).
+DATED = ("daily", "biweekly")
+
+
+def is_features(definition: Mapping[str, Any]) -> bool:
+    """A features dataset: the value is the distance to the nearest feature."""
+    return definition.get("geometry") == "features"
+
+
+def is_dated(definition: Mapping[str, Any]) -> bool:
+    """A daily polygon table, or a daily or biweekly raster."""
+    return (definition.get("geometry") in ("polygon", "raster")
+            and definition.get("temporal") in DATED)
+
+
+def needs_c3(definition: Mapping[str, Any]) -> bool:
+    """Whether the dataset has a C3 step (features have none: distances are computed per run)."""
+    return not is_features(definition)
+
+
+def _years(definition: Mapping[str, Any]) -> list[int]:
+    years = definition.get("coverage_years") or list(_DEFAULT_YEARS)
+    return list(range(int(years[0]), int(years[1]) + 1))
+
+
+def kind_c4_step(var_key: str, definition: Mapping[str, Any]) -> Step | None:
+    """The C4 step of a daily/biweekly or features dataset; None for the web's kinds.
+
+    ``catalog.recipes.custom_c4_step`` asks this first. Both kinds read
+    tables written just before the step renders (:func:`prepare_step`), so
+    the step has ``materialise_values`` set:
+
+    * daily polygon table, daily or biweekly raster: ``gridded`` (the TEMIS
+      pattern) over ``output/values_<key>.parquet`` keyed by ``grid_id`` with
+      ``date`` or ``start_date``/``end_date``; its weights are the raster's
+      grid C3 output, or for a table ``output/weights_<key>.parquet`` (the
+      boundary C3 output with the geography code as ``grid_id``);
+    * features: ``static_areal`` / ``yearly_areal`` over the per-location
+      distances ``output/values_<key>.parquet`` (``geoid[, year], <col>``)
+      through one-to-one weights ``output/weights_<key>.parquet``, so each
+      cohort row's value is its own distance, averaged over its days (and,
+      for yearly data, weighted by the days in each year).
+    """
+    if is_features(definition):
+        yearly = bool(definition.get("year_col"))
+        bind = {"source.file": f"weights_{var_key}", "exposure.file": f"values_{var_key}"}
+        fill: dict[str, Any] = {
+            "linkage_pattern": "yearly_areal" if yearly else "static_areal",
+            "source.join_col": "geoid",
+            "exposure.join_col": "geoid",
+            "exposure.value_cols": list(definition["value_cols"]),
+        }
+        if yearly:
+            fill["exposure.year_col"] = "year"
+        fill["time.years"] = _years(definition)
+        fill["time.temporal_resolution"] = "yearly"
+        fill["time.temporal_mode"] = "yearly"
+    elif is_dated(definition):
+        raster = is_raster(definition)
+        c3 = _recipes.custom_c3_step(definition)
+        bind = {"source.file": c3.name if raster else f"weights_{var_key}",
+                "exposure.file": f"values_{var_key}"}
+        fill = {
+            "linkage_pattern": "gridded",
+            "source.join_col": "grid_id",
+            "exposure.join_col": "grid_id",
+            "exposure.value_cols": list(definition["value_cols"]),
+        }
+        if definition["temporal"] == "daily":
+            fill["exposure.date_col"] = "date"
+        else:
+            fill["exposure.start_col"] = "start_date"
+            fill["exposure.end_col"] = "end_date"
+        fill["time.years"] = _years(definition)
+        fill["time.temporal_resolution"] = definition["temporal"]
+        fill["time.temporal_mode"] = "yearly"
+    else:
+        return None
+    return Step(name=f"c4_{var_key}", template=C4_TEMPLATE, kind="c4", bind=bind, fill=fill,
+                time_block="always", dataset=var_key, materialise_values=True)
+
+
 def _template_of(step: Any) -> str:
     return getattr(step, "template", None) or step.template_relpath
 
@@ -235,23 +326,40 @@ def prepare_step(step: Any, ctx: RenderContext, *,
                  definitions: Mapping[str, Mapping[str, Any]]) -> list[dict[str, str]]:
     """Run-time work a step needs before it renders; returns log records.
 
-    Only a raster dataset's C4 step needs any: its value table is materialised
-    from the C3 weights' grid ids (which must exist by then) into
-    :func:`values_path`. Each record is ``{"level", "source", "msg"}``, the
-    arguments of one web ``logs.jsonl`` line.
+    A raster dataset's C4 step: its value table is materialised from the C3
+    weights' grid ids (which must exist by then) into :func:`values_path`.
+    A daily or biweekly dataset's: the ``gridded`` inputs
+    (:func:`spacescans.custom.dated.materialise_dated`). A features
+    dataset's: the per-location distances and their weights
+    (:func:`spacescans.custom.features.materialise_features`). Each record is
+    ``{"level", "source", "msg"}``, the arguments of one web ``logs.jsonl``
+    line.
     """
     if step.is_c3:
         return []
     var_key = step.name[len("c4_"):]
     definition = definition_for(definitions, var_key)
-    if not is_raster(definition):
+    if is_features(definition):
+        from spacescans.custom.features import materialise_features
+        result = materialise_features(definition, cohort_parquet=ctx.cohort_parquet,
+                                      values_out=values_path(ctx, var_key),
+                                      weights_out=weights_path(ctx, var_key))
+    elif is_dated(definition):
+        from spacescans.custom.dated import materialise_dated
+        result = materialise_dated(definition,
+                                   c3_parquet=output_path(ctx, c3_step_for(definition).name),
+                                   cohort_parquet=ctx.cohort_parquet,
+                                   values_out=values_path(ctx, var_key),
+                                   weights_out=weights_path(ctx, var_key))
+    elif is_raster(definition):
+        from spacescans.custom.values import materialise_values
+        result = materialise_values(
+            definition,
+            c3_parquet=output_path(ctx, c3_step_for(definition).name),
+            out_path=values_path(ctx, var_key),
+        )
+    else:
         return []
-    from spacescans.custom.values import materialise_values
-    result = materialise_values(
-        definition,
-        c3_parquet=output_path(ctx, c3_step_for(definition).name),
-        out_path=values_path(ctx, var_key),
-    )
     return [{"level": "info", "source": step.name, "msg": result.message}]
 
 

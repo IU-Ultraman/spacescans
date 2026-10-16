@@ -460,7 +460,16 @@ def custom_c3_step(definition: Mapping[str, Any] | str, *, dataset: str | None =
 
 
 def custom_c4_step(key: str, definition: Mapping[str, Any]) -> Step:
-    """The C4 step of one custom dataset (the C4 branch of custom.render_yaml, as data)."""
+    """The C4 step of one custom dataset (the C4 branch of custom.render_yaml, as data).
+
+    Kinds the web's runner never had (daily and biweekly datasets, feature
+    distances) come from :func:`spacescans.custom.steps.kind_c4_step`.
+    """
+    from spacescans.custom.steps import kind_c4_step  # lazy: spacescans.custom imports this module
+
+    step = kind_c4_step(key, definition)
+    if step is not None:
+        return step
     c3 = custom_c3_step(definition)
     raster = is_raster(definition)
     year_col = definition.get("year_col")
@@ -502,6 +511,8 @@ def _custom_plan(keys: list[str], overlay: Mapping[str, Any] | None) -> list[Ste
     steps: list[Step] = []
     seen: set[str] = set()
     for key in keys:  # one C3 per distinct boundary or grid, first use first
+        if definition(key).get("geometry") == "features":
+            continue  # no C3: distances are computed in the run (spacescans.custom.features)
         c3 = custom_c3_step(definition(key), dataset=key)
         if c3.name not in seen:
             seen.add(c3.name)
