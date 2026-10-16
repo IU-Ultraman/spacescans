@@ -19,9 +19,9 @@ custom datasets alone.}
 \code{c(pid = "participant_id", startDate = "start", endDate = "end", longitude = "lon", latitude = "lat")}.}
 
 \item{custom}{Your own datasets: a dataset registered with
-\code{\link[=ss_register_dataset]{ss_register_dataset()}} (its name or id, or the record), a definition
-from \code{\link[=ss_custom_polygon]{ss_custom_polygon()}} or \code{\link[=ss_custom_raster]{ss_custom_raster()}}, or a list (or
-character vector) of them.}
+\code{\link[=ss_register_dataset]{ss_register_dataset()}} (its name, id or variable key, or the record),
+a definition from \code{\link[=ss_custom_polygon]{ss_custom_polygon()}} or \code{\link[=ss_custom_raster]{ss_custom_raster()}}, or a
+list (or character vector) of them, linked in that order.}
 }
 \value{
 A data frame with one row per variable: \code{variable},

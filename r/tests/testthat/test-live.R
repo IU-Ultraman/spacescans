@@ -48,7 +48,7 @@ example_script <- function(name) {
 # Run an example script in a fresh environment, its printing captured.
 run_example <- function(name) {
   env <- new.env(parent = globalenv())
-  utils::capture.output(sys.source(example_script(name), envir = env))
+  utils::capture.output(suppressMessages(sys.source(example_script(name), envir = env)))
   env
 }
 

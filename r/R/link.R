@@ -72,9 +72,9 @@
 #'   number).
 #' @param raster_res_m Raster resolution in meters used by areal C3 steps.
 #' @param custom Your own datasets: a dataset registered with
-#'   [ss_register_dataset()] (its name or id, or the record), a definition
-#'   from [ss_custom_polygon()] or [ss_custom_raster()], or a list (or
-#'   character vector) of them.
+#'   [ss_register_dataset()] (its name, id or variable key, or the record),
+#'   a definition from [ss_custom_polygon()] or [ss_custom_raster()], or a
+#'   list (or character vector) of them, linked in that order.
 #' @param cols Your column names for the required columns, for example
 #'   `c(pid = "participant_id", startDate = "start", endDate = "end",
 #'   longitude = "lon", latitude = "lat")`.

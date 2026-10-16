@@ -6,11 +6,13 @@ Authors@R: c(
     person("Xuguang", "Ai", email = "xuguang.ai@outlook.com", role = c("aut", "cre")),
     person("Regenstrief Institute", role = "aut"))
 Description: R client for the 'spacescans' Python pipeline, which links
-    patient residential histories to environmental exposures. The pipeline
-    runs in a separate Python process that the package talks to through JSON
-    request and result files and 'Parquet' tables, so a crash or an interrupt
-    in Python never takes the R session down. 'ss_install()' builds the
-    Python environment with 'uv'.
+    time-referenced geolocation data (location episodes of study
+    participants) to the spatial and contextual exposome and returns one row
+    per participant or per location episode. The pipeline runs in a separate
+    Python process that the package talks to through JSON request and result
+    files and 'Parquet' tables, so a crash or an interrupt in Python never
+    takes the R session down. 'ss_install()' builds the Python environment
+    with 'uv'.
 License: Not yet licensed; all rights reserved until a license is chosen
 URL: https://github.com/IU-Ultraman/spacescans
 BugReports: https://github.com/IU-Ultraman/spacescans/issues
