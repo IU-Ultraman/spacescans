@@ -121,8 +121,8 @@ always complete.
 files), `checksum` (sha256 of the original files' bytes in the order of `details.originals`;
 for one file, that file's sha256), `spacescans_version`, and `details`: kind-specific facts
 (grid, bands and periods of a raster; geometry family, feature counts and extent of features;
-row and key counts and the time span of a table; each prepared file's sha256). A record never
-holds values from the data.
+row and key counts and the time span of a table; each prepared file's sha256): counts, time
+spans and extents, never an individual value from the data.
 
 In a link a dataset's columns appear under its variable key `custom_<first 8 hex of id>`
 (coverage table, provenance, feature dictionary rows built from the variables' descriptions

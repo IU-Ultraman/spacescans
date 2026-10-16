@@ -142,9 +142,10 @@ class DatasetRecord:
     ``spacescans_version``: the package version that prepared it.
 
     ``details`` holds kind-specific facts the steps and a user interface need
-    (grid, bands, periods, geometry family, row and feature counts, the
-    prepared files' sha256); never data values. ``root`` is where the record
-    was read from (not stored).
+    (grid, bands, periods, geometry family, row and feature counts, time span,
+    extent, the prepared files' sha256): counts, spans and extents, never an
+    individual value from the data. ``root`` is where the record was read
+    from (not stored).
     """
 
     id: str

@@ -45,8 +45,9 @@ class Prepared:
 
     ``key``: the record's ``key``; ``variables``: ``[{name, unit,
     description}]``; ``files``: prepared files relative to the dataset
-    directory; ``details``: kind-specific facts (no data values; includes
-    ``prepared_sha256``); ``originals``: ``[{name, sha256, bytes, path}]`` in
+    directory; ``details``: kind-specific facts (counts, spans, extents, no
+    individual values; includes ``prepared_sha256``); ``originals``:
+    ``[{name, sha256, bytes, path}]`` in
     checksum order; ``description``: the default description.
     """
 
