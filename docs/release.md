@@ -68,7 +68,11 @@ decided to reserve `spacescans` as well, as an alias of `spacescans-pipeline` (s
     ```
     ````
 
-  - if the version changes, change all three declarations.
+  - README "Install", next sentence: once the alias is uploaded (section 4a), "(Once released,
+    `pip install spacescans` installs the same package: ...)" becomes "`pip install spacescans`
+    installs the same package (an alias of `spacescans-pipeline`, without extras)";
+  - if the version changes, change all three declarations, and the alias's `version` and its
+    pin in `packaging/spacescans-alias/pyproject.toml` (`tests/test_pypi_alias.py` checks them).
 - [ ] The README examples run: in a fresh environment with the release candidate installed and
   a data directory holding NPS Soundscape Noise (`spacescans data fetch noise`), the README's
   "Link" example returns one row per participant (`pid`, `l50dba_exi`, `l50dba_imp`,
@@ -293,3 +297,41 @@ The same check as the GitHub R gate (`NOT_CRAN=true`, `SPACESCANS_PYTHON` = an e
 this branch's 0.3.0 Python package; `--no-manual`): `Status: 1 WARNING` (the license),
 `.github/scripts/r-check-status.sh` passes, tests 596 passed, 18 skipped (live and install
 tests), 0 failed.
+
+### Integrated 0.3.0 (`tier2/d-integration`, 2026-10-16)
+
+Phase D2 merged tracks A, B, E and F and applied the lead's decisions of PHASE_D 7.1 (the
+blank-id rule, the participant-level documentation, both feature-distance routes, the MIT
+license, the R Title, the PyPI alias, the r-universe install fix). Checked on the integrated
+branch (CPython 3.12 on macOS arm64 unless noted):
+
+- **Build** (`git archive` of the branch head, `SOURCE_DATE_EPOCH` = commit time, build 1.6.1,
+  twine 7.0.0): `spacescans_pipeline-0.3.0-py3-none-any.whl` about 462 kB (209 files,
+  1,306,683 bytes uncompressed; METADATA `License-Expression: MIT`, `License-File: LICENSE`)
+  and `spacescans_pipeline-0.3.0.tar.gz` about 485 kB (with `LICENSE` and the 49 top-level
+  test modules); the alias `spacescans-0.3.0-py3-none-any.whl` (2,494 bytes, metadata and
+  `LICENSE` only) and its sdist. `twine check --strict` PASSED for all four.
+- **Fresh environments from the wheels:** the alias wheel installed with `--find-links` to the
+  dist folder brings `spacescans==0.3.0` and `spacescans-pipeline==0.3.0`; `import spacescans`
+  reports 0.3.0; `spacescans --help` and `init-config` (4 templates) work; with `[geo]`,
+  `spacescans quickstart` writes the 10-row weights table.
+- **Python suites:** plain 1317 passed, 72 skipped, 1 xfailed, 0 failed; with the opt-in parity
+  suites (goldens web-0.2.7, a web clone at 31c5dc3, the custom examples, the paper's R1
+  outputs) 1724 passed, 26 skipped, 1 xfailed, 0 failed; GitHub's base job (`BASE_MARKERS`,
+  base install, CPython 3.10) 1131 passed, 46 skipped, 1 xfailed, 0 failed; gate A4 on the real
+  data root 15 passed (all 13 golden runs without a problem, 23 minutes); the real-data
+  participant gate, the real bridge link and step runs and the registered-dataset links 20
+  passed; the Linux CI image (`tier2-ci-linux:py312`, amd64, `--init`, all extras,
+  `-m "not golden"`) 1309 passed, 67 skipped, 1 xfailed, 0 failed.
+- **README example** on the real NPS noise data: 3 participant rows (`pid`, `l50dba_exi`,
+  `l50dba_imp`, `l50dba_nat`, first-appearance order), 4 episode rows with `episode_id`, every
+  participant value equal to the day-weighted mean of its episode values (1e-9). A registered
+  daily county table linked on the real 2010 county boundaries matched an independent
+  reference at both levels (1e-9, missing days included).
+- **R:** `R CMD check --as-cran` of the built tarball (no `SPACESCANS_PYTHON` or `NOT_CRAN`; R
+  user directories in a scratch folder): `Status: 2 NOTEs`, the CRAN incoming "New submission"
+  and this machine's HTML Tidy; no license WARNING or NOTE; tests 700 passed, 47 skipped,
+  0 failed. The GitHub R gate (`NOT_CRAN=true`, `SPACESCANS_PYTHON` = the integrated package,
+  `--no-manual`): `Status: OK`, `r-check-status.sh` passes, tests 803 passed, 24 skipped,
+  0 failed. The live suite with real links against the integrated package: 22 tests,
+  111 expectations, 0 failed.
