@@ -21,7 +21,7 @@ spacescans in-process (the R package today; the web later). Implementation:
 
 ```json
 {"protocol": 1, "command": "run",
- "client": {"name": "spacescans-r", "version": "0.2.7", "protocol_range": [1, 1]},
+ "client": {"name": "spacescans-r", "version": "0.3.0", "protocol_range": [1, 1]},
  "verbose": false,
  "args": {"config": {"name": "...", "...": "..."}, "data_dir": "/abs", "output_dir": "/abs",
           "threads": 2, "memory_limit": "4GB", "temp_directory": "/abs", "strict": false}}
@@ -35,7 +35,7 @@ a `protocol` error with exit code 2.
 
 ```json
 {"protocol": 1, "ok": true, "command": "run",
- "spacescans": {"version": "0.2.7", "code_fp": "sha256:...", "python": "3.12.13",
+ "spacescans": {"version": "0.3.0", "code_fp": "sha256:...", "python": "3.12.13",
                 "executable": "/.../bin/python", "platform": "macOS-26.7.1-arm64", "pid": 123},
  "elapsed_s": 1.23, "value": {}, "warnings": [], "error": null}
 ```
@@ -131,7 +131,7 @@ scalar). Paths must be absolute.
 
 | command | args | value |
 |---|---|---|
-| `hello` (alias `capabilities`) | — | `spacescans.capabilities()` (version, code_fp, extras, registry, native libraries, `catalog` {`hash`, `templates`, `variables`, `experiments`, `variables_sha256`, `features_sha256`}, `data_release`) plus `protocol`, `protocol_range`, `commands` |
+| `hello` (alias `capabilities`) | — | `spacescans.capabilities()` (version, code_fp, extras, registry, `flags` (0.3.0 adds `output_level` and `fara_missing_skip`), native libraries, `catalog` {`hash`, `templates`, `variables`, `experiments`, `variables_sha256`, `features_sha256`}, `data_release`) plus `protocol`, `protocol_range`, `commands` |
 | `catalog` | `variables`, `custom`, `data_dir` (all optional) | `{"variables": [{key, label, ..., value_cols, columns, requires, datasets, steps, templates, patterns, plugins, missing_extras, runnable_here, custom}], "experiments", "features", "catalog", "data_release"}`; with `data_dir` each row gains `status`, `usable`, `next` and the value gains `status` (`data.status`) |
 | `coverage` | `cohort` (.parquet or .csv), `variables`, `custom` | `{"episodes", "patients", "variables": [{variable, coverage_years, episodes, episodes_in_time_window, episodes_in_region, episodes_covered, pct, warnings, boundary, display_unit, temporal}]}`; counts are episodes (rows) |
 | `data-status` | `variables`, `datasets`, `data_dir`, `deep`, `manifest` | `data.status(...).to_dict()` |
@@ -141,10 +141,15 @@ scalar). Paths must be absolute.
 | `data-import` | `dataset`, `paths`, `data_dir`, `move`, `manifest` | `data.import_files(...).to_dict()` |
 | `data-terms` | `dataset`, `manifest` | `data.terms(dataset)` |
 | `custom-validate` | `kind` (`polygon`, `raster`, `check`), `files`, `options` {`boundary`, `key_col`, `value_cols`, `year_col`, `name`, `description`, `labels`, `units`; raster: `years`, `bands`}; `check`: `definition`, `key`, `deep` | `{"kind", "definition", "key"}`; the definition goes back unchanged into `link`'s `custom` |
-| `link` | `cohort`, `variables`, `custom`, `data_dir`, `run_dir` (default: a new 0700 directory under `tools::R_user_dir("spacescans", "cache")/runs` with an `owner.json` naming the client process, swept once that process is gone), `buffer_m` (270), `raster_res_m` (25), `cache_dir` (WeightCache root, v2 keys; none = no cache), `executor` (`subprocess`/`inprocess`), `threads`, `memory_limit`, `on_error` (`stop`/`continue`), `reserved_names`, `cancel_grace_s` (7), `output_level` (`participant`, the default, or `episode`; see below) | `{"exposures": <run_dir/exposures.parquet>, "level", "output_level", "rows", "episodes", "patients", "columns", "features": <run_dir/feature_dictionary.csv>, "coverage", "steps", "failed", "skipped", "warnings", "provenance": <run_dir/provenance.json>, "run_dir", "seconds"}`; the dictionary describes a catalog column with the catalog's row and a custom column with its definition (label, unit, description) |
+| `link` | `cohort`, `variables`, `custom` (`{variable key: definition}`; a registered dataset is resolved with `datasets-get` first), `data_dir`, `run_dir` (default: a new 0700 directory under `tools::R_user_dir("spacescans", "cache")/runs` with an `owner.json` naming the client process, swept once that process is gone), `buffer_m` (270), `raster_res_m` (25), `cache_dir` (WeightCache root, v2 keys; none = no cache), `executor` (`subprocess`/`inprocess`), `threads`, `memory_limit`, `on_error` (`stop`/`continue`), `reserved_names`, `cancel_grace_s` (7), `output_level` (`participant`, the default, or `episode`; see below) | `{"exposures": <run_dir/exposures.parquet>, "level", "output_level", "rows", "episodes", "patients", "columns", "features": <run_dir/feature_dictionary.csv>, "coverage", "steps", "failed", "skipped", "warnings", "provenance": <run_dir/provenance.json>, "run_dir", "seconds"}`; the dictionary describes a catalog column with the catalog's row and a custom column with its definition (label, unit, description) |
 | `cache-info` | `cache_dir`, `key_format` (`v2`), `cache_root` (optional) | `{"cache_dir", "key_format", "entries", "bytes", "oldest", "newest", "temp_files", "temp_bytes", "runs"}`; `runs` is the run-directory sweep below |
 | `cache-clear` | `cache_dir`, `key_format`, `older_than_s`, `cache_root` (optional) | `{"cache_dir", "key_format", "older_than_s", "removed", "kept", "bytes", "runs"}` (`WeightCache.clear`, then the sweep) |
 | `runs-sweep` | `cache_root` (optional: the per-user cache root, default `tools::R_user_dir("spacescans", "cache")` as Python computes it), `dry_run` | `{"root": <cache_root>/runs, "dry_run", "removed": [dir names], "kept", "unknown": [dir names], "bytes", "errors"}`: run directories under the root whose owner process (its `owner.json`: pid, start time, host) no longer exists are deleted, never archived; a live owner is kept; a record from another host, or none, is left alone (`unknown`) |
+| `datasets-register` | `files` (absolute paths), `name`, `kind` (`polygon_table`, `raster`, `features`), `temporal` (`static`, `yearly`, `biweekly`, `daily`), `periods` (optional, parallel to `files`: a year or a date per file), `key`, `variables`, `metadata` {`source`, `version`, `description`, `license_note`, `visibility`, `owner`}, `overwrite`, `dataset_id`, `root` (all optional) | `{"dataset", "key"}`: the record and its variable key `custom_<first 8 hex of id>` |
+| `datasets-list` | `root` (optional) | `{"root", "datasets": [record, ...]}`, oldest first |
+| `datasets-get` | `name` (the name in any case, the id or the variable key), `root` | `{"dataset", "key", "definition"}`; pass `variables + key` and `custom = {key: definition}` to `link` |
+| `datasets-update` | `name`, `new_name`, `metadata`, `variables` (units and descriptions), `root` | `{"dataset", "key"}` |
+| `datasets-remove` | `name`, `root` | `{"removed": record}` |
 | `schema` | — | `{"model": "DatasetConfig", "schema": <JSON schema>}` |
 | `resolve` | `config` (mapping or absolute YAML path), `data_dir`, `output_dir`, `strict` | `{"config": <validated, paths resolved>, "unknown_keys", "config_source"}` |
 | `run` | as `resolve`, plus `threads`, `memory_limit`, `temp_directory` | `{"output", "format", "rows", "columns", "name", "linkage_pattern", "output_grouping", "seconds", "maxrss_bytes", "engine", "config", "config_source", "unknown_keys"}` |
@@ -173,9 +178,24 @@ repeat it):
   episodes, with_value, pct, patients, patients_with_value}`: `with_value` and
   `pct` count episodes.
 
-`provenance.json` records `run.output_level`. A cohort column name never
-clashes at the participant level (the table holds `pid` and the variables
-only); `reserved_names` are still honoured.
+`provenance.json` records `run.output_level` and `cohort.rows_without_pid`.
+A row with a blank `pid` belongs to no participant: `link` refuses it as a
+`cohort` error (`pid_missing`) before any step runs, and the participant
+table would leave such a row out rather than pool it. Where two location
+episodes of one participant overlap in time, each contributes its own days.
+A cohort column name never clashes at the participant level (the table holds
+`pid` and the variables only); `reserved_names` are still honoured.
+
+The `datasets-*` commands are the registry of `spacescans.custom`
+(`docs/custom-datasets.md`). Every one takes an optional absolute `root`
+(default `$SPACESCANS_DATASETS_DIR`, else the per-user data directory). A
+record is `DatasetRecord.to_dict()` (`id`, `name`, `kind`, `temporal`, `key`,
+`variables`, `source`, `version`, `description`, `license_note`,
+`visibility`, `owner`, `created_utc`, `files`, `checksum`,
+`spacescans_version`, `details`) plus `path` (the dataset directory) and
+`variable_key`. Registry errors are `config` errors whose messages name files,
+columns and counts, never a data value. `visibility` is recorded, not
+enforced: the web application enforces it.
 
 `link` reads the cohort, checks it with `cohort.validate` (errors are
 `cohort` errors with row numbers) and passes only the five required columns

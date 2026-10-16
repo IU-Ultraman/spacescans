@@ -39,7 +39,7 @@ application, the Python API, the command line and the R package run the same cod
   `link(custom=[...])` accepts their names or ids. Kinds: tables keyed by 2010 census tract,
   block group, ZCTA or county (time-invariant, yearly, or daily with a date column); rasters
   (time-invariant, yearly, biweekly or daily, one GeoTIFF per period on a common grid); and
-  point, line or polygon features (time-invariant or yearly), linked as the distance in metres
+  point, line or polygon features (time-invariant or yearly), linked as the distance in meters
   to the nearest feature.
 - `spacescans.custom` upload checks for CSV tables and GeoTIFF rasters, dataset definitions,
   and the steps that link them, shared with the web application.

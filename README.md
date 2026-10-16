@@ -34,8 +34,9 @@ Once version 0.3.0 is published on PyPI:
 pip install "spacescans-pipeline[geo]"
 ```
 
-The distribution is called `spacescans-pipeline`; you import `spacescans`. It needs Python
-3.10 to 3.13 on Linux or macOS. The base install is light; the extras add what each kind of
+The distribution is called `spacescans-pipeline`; you import `spacescans`. (Once released,
+`pip install spacescans` installs the same package: `spacescans` on PyPI is an alias of
+`spacescans-pipeline`, without extras.) It needs Python 3.10 to 3.13 on Linux or macOS. The base install is light; the extras add what each kind of
 source needs:
 
 | Extra | Needed for | Adds |
@@ -75,6 +76,9 @@ One row per location episode; a participant who moved has one row per location.
 | `startDate`, `endDate` | first and last day at the location: `2017-08-19` (ISO, preferred) or `8/19/2017` |
 | `longitude`, `latitude` | the location, in decimal degrees |
 
+Every row needs a `pid` and a location: the cohort check refuses a file with a blank `pid` or a
+missing, non-numeric or out-of-range coordinate, or with an `endDate` before its `startDate`,
+before anything runs. A blank date is allowed, with a warning: that episode contributes no days.
 Only these five columns are written to disk, into a private (0700) run directory; other columns
 stay in your session. Cohort values (identifiers, dates, coordinates) never appear in messages,
 events, warnings or provenance.
@@ -107,7 +111,7 @@ by_episode = link(cohort, ["noise"], data_dir="~/ss-data", output_level="episode
 ```
 
 `cohort` can also be the path of a CSV file. Other arguments: `buffer_m` (buffer radius in
-metres, default 270), `raster_res_m` (default 25), `cache` (a directory that keeps spatial
+meters, default 270), `raster_res_m` (default 25), `cache` (a directory that keeps spatial
 weights between calls, so further sources on the same geography reuse them), `custom`
 (registered datasets, below), `on_error` (`"stop"` or `"continue"` when a source fails),
 `threads` and `memory_limit` (DuckDB limits per step). `spacescans.catalog.variables()` lists
@@ -132,6 +136,16 @@ days of the episode in that period, first and last day included. Only periods wi
 estimate count, separately for each variable; a participant with no contributing day keeps
 their row, with missing values. This is the same as averaging the episode values, each
 weighted by its contributing days.
+
+- **Overlapping location episodes.** When two episodes of one participant overlap in time, each
+  contributes its own days: a calendar day that both cover counts once for each of the two
+  locations, so the participant value is a mean over episode-days, not over calendar days. Trim
+  the overlaps in your cohort if a day should count only once.
+- **Derived variables** are derived from the participant's means: FARA Food Access's flags (such
+  as `LILATracts_1And10`) are recoded from the participant's mean rates and urban share, so they
+  stay 0 or 1, and each ACAG `_nbm` (non-biomass) column is the participant's mean of the species
+  minus the participant's mean of its biomass part (`_bm`). At the episode level the same rules
+  apply to each episode's means.
 
 With `output_level="episode"` the result has one row per location episode, with `episode_id`
 (the 0-based row number of the episode in your input) and the variables.
@@ -163,7 +177,7 @@ custom.remove_dataset("pm_biweekly")
 | --- | --- | --- | --- |
 | `polygon_table` | CSV keyed by 2010 census tract, block group, ZIP Code Tabulation Area or county | `static`, `yearly` (a year column), `daily` (a date column) | area-weighted mean over the buffer |
 | `raster` | GeoTIFF: one, or one per period on a common grid | `static`, `yearly`, `biweekly`, `daily` | buffer-weighted mean of the cells |
-| `features` | points, lines or polygons (one geometry type per dataset) with a coordinate reference system, as GeoPackage, GeoJSON or zipped Shapefile | `static`, `yearly` (one file per year, or a year column) | distance in metres to the nearest feature (`<name>_dist_m` unless you name the variable) |
+| `features` | points, lines or polygons (one geometry type per dataset) with a coordinate reference system, as GeoPackage, GeoJSON, zipped Shapefile or GeoParquet | `static`, `yearly` (one file per year, or a year column) | distance in meters from the location to the nearest feature (`<name>_dist_m` unless you name the variable) |
 
 `register()` also takes `key` (for tables), `variables` (name, unit and description of each
 value), `metadata` (source, version, description, license note) and `overwrite`. A record has
@@ -265,8 +279,20 @@ Every linkage runs in two steps, both driven by YAML configs and the same DuckDB
 | `tiger_proximity` | distance from each location to the nearest primary and secondary road, per year | TIGER roads |
 | `nhd_proximity` | distance from each location to the nearest flowline, waterbody, area and coastline | NHD |
 
-`proximity` does both steps for a features dataset in one: the distance from each location to
-the nearest point, line or polygon, weighted by episode days. Registered features use it.
+Distances to your own point, line or polygon features take one of two routes, which give the
+same exact nearest-feature distance:
+
+- **Registered features** (`custom.register(..., kind="features")`, then `link(custom=[...])`;
+  also R's `ss_register_dataset()` and the web application's feature uploads): the distances
+  from each location to the nearest feature are computed at the start of each link
+  (`spacescans.custom.features`, in EPSG:5070 meters) and aggregated by the `static_areal` or
+  `yearly_areal` C4 pattern. No C3 step.
+- **Hand-written YAML** run with `spacescans run`: the `proximity` pattern does both steps in
+  one. Its config names the features (`source.file`: one vector or GeoParquet file, or one per
+  year of `time.years`, or one file with `source.year_col`), the output column
+  (`exposure.value_cols`, default `distance_m`) and optionally `source.category_col` (one
+  column per category); distances are in meters in `buffer.aea_crs` (an Albers equal-area
+  projection of the conterminous US) and `time.output_grouping` applies as in every C4 config.
 
 ### C4 patterns
 
@@ -278,7 +304,7 @@ the nearest point, line or polygon, weighted by episode days. Registered feature
 | `cbp_fallback` | yearly | ZCTA values, falling back to county values where there is no ZCTA value | Community Organization Density |
 | `fara_tract` | yearly | `yearly_areal` with the FARA flag recodes (needs `rda`) | FARA |
 | `faqsd_daily_areal` | daily | daily tract values with day-level overlap | EPA FAQSD |
-| `gridded` | yearly, daily | per-period raster values over the C3 cell weights (needs `geo`) | VIIRS, TEMIS |
+| `gridded` | yearly, biweekly, daily | per-period values over the C3 weights of raster cells or polygons (needs `geo`) | VIIRS, TEMIS; registered daily tables and daily or biweekly rasters |
 | `acag_multi` | biweekly | the ACAG species over the C3 cell weights (needs `geo`, `nc`) | ACAG |
 | `precomputed_areal` | yearly | per-(location, year) values such as road distances, weighted by days | TIGER distances |
 | `precomputed_static` | time-invariant | per-location values such as water distances, weighted by days | NHD distances |

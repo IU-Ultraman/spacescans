@@ -40,7 +40,9 @@ period (start and end included). Days outside the data's periods, and periods wh
 missing (no geography with a value, only nodata pixels), contribute nothing; an episode with no
 contributing day has no value. A participant-level result pools the same sums over all of the
 participant's episodes (`output_level="participant"`, the default of `orchestrate.link`;
-`output_level="episode"` gives one row per location episode).
+`output_level="episode"` gives one row per location episode). Each episode contributes its own
+days, also where two episodes of one participant overlap in time (a shared calendar day then
+counts once for each location).
 
 Within a period, geographies or pixels with a missing value are left out of both the numerator
 and the denominator of the buffer-weighted mean.
@@ -171,7 +173,10 @@ The value is the planar distance in EPSG:5070 (NAD83 / Conus Albers) meters from
 search is exact (a nearest-neighbor query over every feature of the period, with no search
 radius), so the value does not depend on how far away the nearest feature is or on the other
 locations in the cohort. For yearly features each year with a file is a period; days in years
-without a file contribute nothing. Within the continental US a Conus Albers distance differs
+without a file contribute nothing. The distances are computed by `spacescans.custom.features`
+at the start of each link and aggregated by `static_areal` / `yearly_areal`; registered
+features do not use the generic `proximity` linkage pattern, which computes the same exact
+distance for hand-written YAML configs run with `spacescans run` (see the README). Within the continental US a Conus Albers distance differs
 from the geodesic one by at most about 1.5 percent (median 0.35 percent over random segments of
 0.1-50 km), the same projection the catalog's road and water distances use.
 
@@ -179,7 +184,7 @@ from the geodesic one by at most about 1.5 percent (median 0.35 percent over ran
 
 | dataset | C3 step | C4 step |
 |---|---|---|
-| static or yearly table | the shipped boundary step (shared with the catalog sources on that boundary) | `static_areal` / `yearly_areal` over `values.parquet` |
+| static or yearly table | the package's boundary step (shared with the catalog sources on that boundary) | `static_areal` / `yearly_areal` over `values.parquet` |
 | daily table | the boundary step | `gridded` over the table's rows for the cohort's geographies and dates (`output/values_<key>.parquet`, written before the step) |
 | static or yearly raster | `grid_weights` on the first raster (one per grid) | `static_areal` / `yearly_areal` over the pixels under the cohort |
 | daily or biweekly raster | `grid_weights` on the first raster | `gridded` over the pixels per period (periods overlapping the cohort's dates only) |
