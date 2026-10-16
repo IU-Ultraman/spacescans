@@ -6,7 +6,12 @@
 # Further opt-ins:
 #   SPACESCANS_LIVE_DATA_DIR  a data directory to read (status checks only;
 #                             the tests verify that nothing in it changed)
-#   SPACESCANS_LIVE_LINK=1    also run a small real ss_link() (needs the data)
+#   SPACESCANS_LIVE_LINK=1    also run small real links: the registered-dataset
+#                             example (no catalog data needed) and, with the data
+#                             directory (walkability and noise), the minimal
+#                             example and links at both output levels
+#
+# Registry tests skip while the installed spacescans has no dataset registry.
 
 skip_if_not_live <- function() {
   if (!identical(Sys.getenv("SPACESCANS_LIVE"), "1")) skip("live bridge tests need SPACESCANS_LIVE=1")
@@ -21,6 +26,38 @@ live_caps <- function() {
 skip_if_no_command <- function(command) {
   cmds <- unlist(live_caps()$commands)
   if (!command %in% cmds) skip(sprintf("the installed bridge has no '%s' command yet", command))
+}
+
+skip_if_not_live_link <- function() {
+  if (!identical(Sys.getenv("SPACESCANS_LIVE_LINK"), "1")) skip("set SPACESCANS_LIVE_LINK=1 to run a real link")
+}
+
+# A registry in a temporary directory for the calling test; skips when the
+# installed spacescans has none yet.
+local_live_registry <- function(env = parent.frame()) {
+  root <- withr::local_tempdir(.local_envir = env)
+  withr::local_options(spacescans.datasets_dir = root, .local_envir = env)
+  e <- tryCatch(ss_datasets(), error = identity)
+  if (inherits(e, "error")) {
+    if (grepl("has no dataset registry", conditionMessage(e), fixed = TRUE)) {
+      skip("the installed spacescans has no dataset registry yet")
+    }
+    stop(e)
+  }
+  root
+}
+
+example_script <- function(name) {
+  path <- system.file("examples", name, package = "spacescans")
+  if (!nzchar(path)) path <- test_path("..", "..", "inst", "examples", name)
+  normalizePath(path)
+}
+
+# Run an example script in a fresh environment, its printing captured.
+run_example <- function(name) {
+  env <- new.env(parent = globalenv())
+  utils::capture.output(sys.source(example_script(name), envir = env))
+  env
 }
 
 live_data_dir <- function() {
@@ -57,6 +94,8 @@ test_that("live: hello reports protocol 1 and the commands", {
   caps <- live_caps()
   expect_equal(as.integer(caps$protocol), 1L)
   expect_true(all(c("capabilities", "hello", "run", "schema", "templates") %in% unlist(caps$commands)))
+  expect_true(all(c("dataset-register", "dataset-list", "dataset-get", "dataset-remove") %in%
+                    unlist(caps$commands)))
   v <- ss_version()
   expect_equal(v$protocol, 1L)
   expect_equal(v$python_package, spacescans:::.ss_expected()$version)
@@ -233,7 +272,7 @@ test_that("live: ss_link() links a small cohort and leaves the data directory un
   local_untouched(d)
   withr::local_envvar(R_USER_CACHE_DIR = withr::local_tempdir())
   co <- live_cohort()
-  res <- ss_link(co, "walkability", data_dir = d, progress = FALSE, threads = 2)
+  res <- ss_link(co, "walkability", output_level = "episode", data_dir = d, progress = FALSE, threads = 2)
   expect_equal(nrow(res), nrow(co))
   expect_equal(res$note, co$note)
   expect_true(ncol(res) > ncol(co))
@@ -244,7 +283,8 @@ test_that("live: ss_link() links a small cohort and leaves the data directory un
   runs <- spacescans:::.ss_runs_root()
   expect_equal(list.files(runs, all.files = TRUE, no.. = TRUE), character())
   # kept on request: there, private, owned by this session; the C3 step is a cache hit
-  res2 <- ss_link(co, "walkability", data_dir = d, progress = FALSE, threads = 2, keep = TRUE)
+  res2 <- ss_link(co, "walkability", output_level = "episode", data_dir = d, progress = FALSE,
+                  threads = 2, keep = TRUE)
   rd <- attr(res2, "spacescans")$run_dir
   on.exit(unlink(rd, recursive = TRUE), add = TRUE)
   expect_equal(dirname(rd), normalizePath(runs))
@@ -276,4 +316,129 @@ test_that("live: a real link describes a custom dataset's column by its definiti
   expect_equal(f$short_description, "Live survey")
   expect_equal(f$detailed_description, "Scores from a live test. Unit: points.")
   expect_equal(list.files(spacescans:::.ss_runs_root(), all.files = TRUE, no.. = TRUE), character())
+})
+
+# --- phase D: output levels and registered datasets -----------------------------
+
+test_that("live: participant level is the day-weighted mean of the episode level (walkability)", {
+  skip_if_not_live()
+  skip_if_not_live_link()
+  skip_if_no_command("link")
+  local_clean_state()
+  d <- live_data_dir()
+  local_untouched(d)
+  withr::local_envvar(R_USER_CACHE_DIR = withr::local_tempdir())
+  co <- live_cohort()
+  ep <- ss_link(co, "walkability", output_level = "episode", data_dir = d, progress = FALSE, threads = 2)
+  res <- ss_link(co, "walkability", data_dir = d, progress = FALSE, threads = 2)
+  expect_equal(attr(res, "output_level"), "participant")
+  expect_equal(names(res), c("pid", "NatWalkInd"))
+  expect_equal(res$pid, unique(co$pid))
+  # walkability is time-invariant: every day of an episode with a value contributes
+  days <- as.numeric(co$endDate - co$startDate) + 1
+  want <- vapply(unique(co$pid), function(p) {
+    k <- co$pid == p & !is.na(ep$NatWalkInd)
+    if (!any(k)) NA_real_ else stats::weighted.mean(ep$NatWalkInd[k], days[k])
+  }, numeric(1), USE.NAMES = FALSE)
+  expect_equal(res$NatWalkInd, want, tolerance = 1e-9)
+  cov <- attr(res, "coverage")
+  expect_equal(cov$participants, length(unique(co$pid)))
+  expect_equal(cov$with_value, sum(!is.na(res$NatWalkInd)))
+  expect_equal(attr(res, "provenance")$output_level, "participant")
+})
+
+test_that("live: the minimal example (three participants, NPS noise) runs and checks itself", {
+  skip_if_not_live()
+  skip_if_not_live_link()
+  skip_if_no_command("link")
+  local_clean_state()
+  d <- live_data_dir()
+  if (!isTRUE(attr(ss_data_status("noise", data_dir = d), "ready"))) skip("the noise data is not in the data directory")
+  local_untouched(d)
+  withr::local_envvar(R_USER_CACHE_DIR = withr::local_tempdir())
+  withr::local_options(spacescans.data_dir = d)
+  env <- run_example("minimal-example.R")            # stops if P2's value is not the weighted mean
+  expect_equal(env$res$pid, c("P1", "P2", "P3"))
+  expect_equal(names(env$res), c("pid", "l50dba_exi", "l50dba_imp", "l50dba_nat"))
+  expect_false(anyNA(env$res$l50dba_exi))
+  expect_equal(nrow(env$episodes), 4L)
+  expect_equal(attr(env$res, "coverage")$pct, 100)
+})
+
+test_that("live: registered datasets: register, list, get and remove (polygon table)", {
+  skip_if_not_live()
+  skip_if_no_command("dataset-register")
+  local_clean_state()
+  root <- local_live_registry()
+  csv <- file.path(withr::local_tempdir(), "county_scores.csv")
+  writeLines(c("GEOID,score", "18097,0.25", "18057,0.75"), csv)
+  rec <- ss_register_dataset(csv, name = "county_scores", kind = "polygon_table", temporal = "static",
+                             key = "County", variables = data.frame(name = "score", unit = "points"),
+                             source = "live test", version = "1")
+  expect_s3_class(rec, "ss_dataset")
+  expect_equal(rec$name, "county_scores")
+  expect_equal(rec$variables$name, "score")
+  expect_equal(rec$visibility, "private")
+  expect_true(length(rec$files) >= 1L)
+  expect_true(file.exists(csv))                                   # the original stays
+  ls <- ss_datasets()
+  expect_equal(ls$name, "county_scores")
+  expect_equal(normalizePath(attr(ls, "root")), normalizePath(root))
+  expect_equal(ss_dataset(rec$id)$name, "county_scores")
+  expect_error(ss_register_dataset(csv, name = "county_scores", kind = "polygon_table",
+                                   temporal = "static", key = "County"),
+               class = "spacescans_error_config")
+  expect_message(ss_remove_dataset("county_scores"), "Removed")
+  expect_equal(nrow(ss_datasets()), 0L)
+  expect_error(ss_dataset("county_scores"), class = "spacescans_error_config")
+})
+
+test_that("live: the registered-dataset example links a features dataset by name", {
+  skip_if_not_live()
+  skip_if_not_live_link()
+  skip_if_no_command("dataset-register")
+  skip_if_no_geo()
+  local_clean_state()
+  local_live_registry()
+  withr::local_envvar(R_USER_CACHE_DIR = withr::local_tempdir())
+  withr::local_options(spacescans.data_dir = withr::local_tempdir())   # no catalog data needed
+  env <- run_example("registered-dataset.R")
+  expect_equal(env$rec$variables$name, "example_parks_dist_m")
+  expect_equal(names(env$res), c("pid", "example_parks_dist_m"))
+  expect_equal(env$res$pid, c("P1", "P2", "P3"))
+  expect_true(env$res$example_parks_dist_m[1] > 0 && env$res$example_parks_dist_m[1] < 10000)
+  expect_equal(nrow(ss_datasets()), 0L)                           # the example removed it
+})
+
+test_that("live: a features dataset at participant level is the day-weighted mean of its episodes", {
+  skip_if_not_live()
+  skip_if_not_live_link()
+  skip_if_no_command("dataset-register")
+  skip_if_no_geo()
+  local_clean_state()
+  local_live_registry()
+  withr::local_envvar(R_USER_CACHE_DIR = withr::local_tempdir())
+  d <- withr::local_tempdir()
+  # the example's cohort (P2 has two location episodes) and three points
+  co <- data.frame(
+    pid = c("P1", "P2", "P2", "P3"),
+    startDate = as.Date(c("2015-01-01", "2014-03-01", "2016-07-01", "2017-01-01")),
+    endDate = as.Date(c("2017-12-31", "2016-06-30", "2019-12-31", "2018-06-30")),
+    longitude = c(-86.1581, -87.6298, -84.3880, -122.4194),
+    latitude = c(39.7684, 41.8781, 33.7490, 37.7749)
+  )
+  parks <- file.path(withr::local_tempdir(), "parks.geojson")
+  pt <- function(x, y) sprintf('{"type": "Feature", "properties": {}, "geometry": {"type": "Point", "coordinates": [%s, %s]}}', x, y)
+  writeLines(sprintf('{"type": "FeatureCollection", "features": [%s]}',
+                     paste(pt(-86.17, 39.78), pt(-87.62, 41.88), pt(-84.37, 33.76), sep = ", ")), parks)
+  ss_register_dataset(parks, name = "parks", kind = "features", temporal = "static")
+  ep <- ss_link(co, character(), custom = "parks", output_level = "episode", data_dir = d, progress = FALSE)
+  res <- ss_link(co, character(), custom = "parks", data_dir = d, progress = FALSE)
+  expect_equal(res$pid, c("P1", "P2", "P3"))
+  days <- as.numeric(co$endDate - co$startDate) + 1
+  want <- vapply(unique(co$pid), function(p) {
+    k <- co$pid == p & !is.na(ep$parks_dist_m)
+    if (!any(k)) NA_real_ else stats::weighted.mean(ep$parks_dist_m[k], days[k])
+  }, numeric(1), USE.NAMES = FALSE)
+  expect_equal(res$parks_dist_m, want, tolerance = 1e-9)
 })

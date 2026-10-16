@@ -4,7 +4,7 @@
 \name{spacescans-package}
 \alias{spacescans}
 \alias{spacescans-package}
-\title{spacescans: link patient residential histories to environmental exposures}
+\title{spacescans: link time-referenced geolocation data to the exposome}
 \description{
 The package is a client of the \code{spacescans} Python pipeline. Every call
 starts \verb{python -m spacescans.bridge} in a separate process, hands it a JSON
@@ -24,9 +24,14 @@ the columns they produce.
 is missing; \code{\link[=ss_fetch]{ss_fetch()}} downloads it (resumably); \code{\link[=ss_data_verify]{ss_data_verify()}},
 \code{\link[=ss_data_import]{ss_data_import()}} and \code{\link[=ss_data_terms]{ss_data_terms()}} manage it.
 \item \code{\link[=ss_coverage]{ss_coverage()}} estimates coverage before a run; \code{\link[=ss_link]{ss_link()}} links a
-cohort to variables and returns it with the exposure columns; with
-\code{wait = FALSE} it returns a job (\code{\link[=ss_job_status]{ss_job_status()}}).
-\item \code{\link[=ss_custom_polygon]{ss_custom_polygon()}} and \code{\link[=ss_custom_raster]{ss_custom_raster()}} bring your own data.
+cohort of location episodes to variables and returns one row per
+participant (or, with \code{output_level = "episode"}, the cohort with the
+exposure columns added); with \code{wait = FALSE} it returns a job
+(\code{\link[=ss_job_status]{ss_job_status()}}).
+\item \code{\link[=ss_register_dataset]{ss_register_dataset()}}, \code{\link[=ss_datasets]{ss_datasets()}}, \code{\link[=ss_dataset]{ss_dataset()}} and
+\code{\link[=ss_remove_dataset]{ss_remove_dataset()}} keep your own data in a registry, linked by name;
+\code{\link[=ss_custom_polygon]{ss_custom_polygon()}} and \code{\link[=ss_custom_raster]{ss_custom_raster()}} build one-off
+definitions.
 \item \code{\link[=ss_cache_info]{ss_cache_info()}} and \code{\link[=ss_cache_clear]{ss_cache_clear()}} manage the C3 weight cache.
 \item \code{\link[=ss_run]{ss_run()}} runs one pipeline config (a YAML file or an R list);
 \code{\link[=ss_quickstart]{ss_quickstart()}} runs the bundled demo; \code{\link[=ss_config_schema]{ss_config_schema()}},
@@ -46,6 +51,9 @@ after Ctrl-C before its process tree is killed (default 10).
 \item \code{spacescans.data_dir}: the data directory (set by \code{\link[=ss_data_dir]{ss_data_dir()}}).
 \item \code{spacescans.cache_dir}: the C3 cache root (default
 \code{tools::R_user_dir("spacescans", "cache")}).
+\item \code{spacescans.datasets_dir}: the registry of your own datasets (default:
+the environment variable \code{SPACESCANS_DATASETS_DIR}, else the Python
+package's directory; see \code{\link[=ss_datasets]{ss_datasets()}}).
 \item \code{spacescans.envdir}: where \code{\link[=ss_install]{ss_install()}} puts the Python environment.
 }
 

@@ -1,9 +1,11 @@
 # spacescans (R)
 
-Link residential histories to the spatial and contextual exposome from R. `ss_link()` takes a
-cohort of residential episodes, links each one to the exposure sources you choose, and returns
-your data frame with one column per exposure variable. The work is done by the spacescans Python
-package, which the R package runs in a separate process.
+Link time-referenced geolocation data to the spatial and contextual exposome from R. `ss_link()`
+takes a cohort of location episodes (a participant, a location and the days spent there), links
+each one to the exposure sources you choose, and returns one row per participant with one column
+per exposure variable, or, with `output_level = "episode"`, your data frame with the exposure
+columns added. The work is done by the spacescans Python package, which the R package runs in a
+separate process.
 
 ## Quick start
 
@@ -18,24 +20,36 @@ ss_install()                                   # once: the matching Python envir
 ss_data_dir("~/ss-data")
 ss_data_status(c("ndi", "walkability"))        # what is missing, and the next call
 ss_fetch(c("ndi", "walkability"))              # resumable downloads
-res <- ss_link(cohort, c("ndi", "walkability"))
+res <- ss_link(cohort, c("ndi", "walkability"))                          # one row per participant
+ep <- ss_link(cohort, c("ndi", "walkability"), output_level = "episode")  # one row per episode
 attr(res, "coverage"); attr(res, "features"); attr(res, "provenance")
 ```
 
 `ss_install()` needs [uv](https://docs.astral.sh/uv/) (for example `brew install uv`). It builds a
 private Python environment and installs the spacescans Python package from the same GitHub commit
 as the R package. `ss_catalog()` lists every exposure variable; the TEMIS ultraviolet source also
-needs `ss_install(extras = "hdf4")`.
+needs `ss_install(extras = "hdf4")`. No exposure data ships with the package: `ss_fetch()`
+downloads each catalog source from its provider or from the project mirror, where the provider's
+terms allow it.
+
+A minimal example with three synthetic participants and the NPS noise model (the catalog source
+whose files are all on the mirror; `ss_fetch("noise")` downloads about 1.2 GB) is installed with
+the package and shown in the "Getting started" vignette:
+
+```r
+source(system.file("examples", "minimal-example.R", package = "spacescans"))
+```
 
 ## Your cohort
 
-`cohort` is your own data: one row per residential episode, with these five columns.
+`cohort` is your own data, time-referenced geolocation data: one row per location episode, with
+these five columns.
 
 | Column | Content |
 | --- | --- |
-| `pid` | Patient identifier |
-| `startDate`, `endDate` | First and last day at the address, as `2017-08-19` or `8/19/2017` |
-| `longitude`, `latitude` | The geocoded residence, in decimal degrees |
+| `pid` | Participant identifier |
+| `startDate`, `endDate` | First and last day at the location, as `2017-08-19` or `8/19/2017` |
+| `longitude`, `latitude` | The geocoded location, in decimal degrees |
 
 ```csv
 pid,startDate,endDate,longitude,latitude
@@ -44,9 +58,9 @@ P001,2015-07-01,2018-12-31,-86.2760,39.8010
 P002,2014-03-15,2019-12-31,-84.5120,39.1031
 ```
 
-A patient who moved has one row per address. Keep the file anywhere on your computer, preferably
-in a local, access-controlled project folder rather than a cloud-synced one, and either read it
-into R yourself or give `ss_link()` its path:
+A participant who moved has one row per location. Keep the file anywhere on your computer,
+preferably in a local, access-controlled project folder rather than a cloud-synced one, and either
+read it into R yourself or give `ss_link()` its path:
 
 ```r
 cohort <- read.csv("~/projects/my-study/cohort.csv")
@@ -58,13 +72,47 @@ res <- ss_link("~/projects/my-study/cohort.csv", c("ndi", "walkability"))   # .c
 If your columns have other names, map them with `cols`:
 
 ```r
-res <- ss_link(cohort, "ndi", cols = c(pid = "patient_id", startDate = "start",
+res <- ss_link(cohort, "ndi", cols = c(pid = "participant_id", startDate = "start",
                                       endDate = "end", longitude = "lon", latitude = "lat"))
 ```
 
-Your other columns (age, diagnoses and so on) stay in R and come back unchanged in `res`, in your
-row order. During the run only the five columns above are written, to a private temporary folder
-that is deleted afterwards.
+During the run only the five columns above are written, to a private temporary folder that is
+deleted afterwards; your other columns (age, diagnoses and so on) stay in R.
+
+## Output levels
+
+| `output_level` | Rows | Columns | Linkage rates (`attr(res, "coverage")`) |
+| --- | --- | --- | --- |
+| `"participant"` (default) | one per participant, in order of first appearance | `pid` (your id's type) and the exposures | share of participants with a value |
+| `"episode"` | one per location episode, in your order | your columns, unchanged, and the exposures | share of episodes with a value |
+
+A participant's value is the mean of their episode values weighted by contributing days: the days
+of each episode that fall in a source period (year, two weeks or day) with an estimate, first and
+last day included; a time-invariant source counts every day of the episode. Days are counted per
+variable, and a participant with no contributing day is kept with a missing value. `?ss_link`
+gives the formula.
+
+## Your own data
+
+Register a dataset once and link it by name later, like a catalog variable:
+
+```r
+ss_register_dataset("~/data/svi_2020_tract.csv", name = "svi_2020", kind = "polygon_table",
+                    temporal = "static", key = "Tract", source = "CDC/ATSDR SVI 2020")
+ss_datasets()                                       # what is registered
+res <- ss_link(cohort, "ndi", custom = "svi_2020")
+ss_remove_dataset("svi_2020")
+```
+
+Registration checks and prepares the files once and stores them, with a record of their metadata,
+in a registry directory (by default the Python package's, `~/Library/Application
+Support/spacescans/datasets` on macOS; the option `spacescans.datasets_dir` or the environment
+variable `SPACESCANS_DATASETS_DIR` moves it). Kinds: `"polygon_table"` (a CSV keyed by a 2010
+tract, block group, ZCTA or county; static, yearly or daily), `"raster"` (GeoTIFFs on one grid;
+static, yearly, biweekly or daily) and `"features"` (points, lines or polygons; the variable is the
+distance in metres to the nearest feature; static or yearly). A dataset registered from Python is
+visible from R and the other way round. `ss_custom_polygon()` and `ss_custom_raster()` still build
+one-off definitions that point at your files where they are.
 
 ## How it works
 
@@ -80,11 +128,12 @@ directory records the R session that owns it; one left behind by a session that 
 deleted (never archived) the next time the package loads, or by `ss_doctor()` or
 `ss_cache_clear()`.
 
-Functions: `ss_install()`, `ss_use_python()`, `ss_doctor()`, `ss_version()`;
+Functions: `ss_install()`, `ss_use_python()`, `ss_python()`, `ss_doctor()`, `ss_version()`;
 `ss_catalog()`, `ss_features()`; `ss_data_dir()`, `ss_data_status()`,
 `ss_fetch()`, `ss_data_verify()`, `ss_data_import()`, `ss_data_terms()`;
 `ss_coverage()`, `ss_link()` and the job functions `ss_job_status()`,
 `ss_job_wait()`, `ss_job_cancel()`, `ss_job_result()`, `ss_job_attach()`;
+`ss_register_dataset()`, `ss_datasets()`, `ss_dataset()`, `ss_remove_dataset()`;
 `ss_custom_polygon()`, `ss_custom_raster()`; `ss_cache_info()`,
 `ss_cache_clear()`; and the tier-1 interface `ss_run()`, `ss_quickstart()`,
 `ss_templates()`, `ss_config_schema()`, `ss_validate()`, `ss_read_config()`,
@@ -136,14 +185,18 @@ R CMD build r && R CMD check --no-manual spacescans_*.tar.gz
 ```
 
 Most tests run against a fake bridge (`tests/testthat/fixtures/fake_bridge.R`,
-an Rscript that speaks protocol 1 from canned values), so they need no Python.
+an Rscript that speaks protocol 1 from canned values and keeps a file-backed
+dataset registry), so they need no Python.
 Tests of the real bridge run when `SPACESCANS_PYTHON` points at an environment
 with spacescans installed (for example the repository's `.venv/bin/python`);
 otherwise they skip. `tests/testthat/test-live.R` also needs
 `SPACESCANS_LIVE=1`; each of its tests skips while the installed bridge does
-not list the command it uses. `SPACESCANS_LIVE_DATA_DIR` (read only, checked
-unchanged afterwards) and `SPACESCANS_LIVE_LINK=1` enable the data-status and
-real-link tests. The `ss_install()` tests also need
+not list the command it uses (or has no dataset registry).
+`SPACESCANS_LIVE_LINK=1` adds real links: the registered-dataset example
+(`inst/examples/registered-dataset.R`, no catalog data needed) and, with
+`SPACESCANS_LIVE_DATA_DIR` (read only, checked unchanged afterwards; it must
+hold the noise and walkability data), the minimal example
+(`inst/examples/minimal-example.R`) and links at both output levels. The `ss_install()` tests also need
 `SPACESCANS_TEST_INSTALL=true` plus `SPACESCANS_TEST_WHEEL=<wheel>` (install from
 a wheel) or `SPACESCANS_TEST_GITHUB_SHA=<pushed commit>` (install from GitHub).
 

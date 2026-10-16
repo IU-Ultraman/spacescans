@@ -1,4 +1,4 @@
-#' spacescans: link patient residential histories to environmental exposures
+#' spacescans: link time-referenced geolocation data to the exposome
 #'
 #' The package is a client of the `spacescans` Python pipeline. Every call
 #' starts `python -m spacescans.bridge` in a separate process, hands it a JSON
@@ -16,9 +16,14 @@
 #'   is missing; [ss_fetch()] downloads it (resumably); [ss_data_verify()],
 #'   [ss_data_import()] and [ss_data_terms()] manage it.
 #' * [ss_coverage()] estimates coverage before a run; [ss_link()] links a
-#'   cohort to variables and returns it with the exposure columns; with
-#'   `wait = FALSE` it returns a job ([ss_job_status()]).
-#' * [ss_custom_polygon()] and [ss_custom_raster()] bring your own data.
+#'   cohort of location episodes to variables and returns one row per
+#'   participant (or, with `output_level = "episode"`, the cohort with the
+#'   exposure columns added); with `wait = FALSE` it returns a job
+#'   ([ss_job_status()]).
+#' * [ss_register_dataset()], [ss_datasets()], [ss_dataset()] and
+#'   [ss_remove_dataset()] keep your own data in a registry, linked by name;
+#'   [ss_custom_polygon()] and [ss_custom_raster()] build one-off
+#'   definitions.
 #' * [ss_cache_info()] and [ss_cache_clear()] manage the C3 weight cache.
 #' * [ss_run()] runs one pipeline config (a YAML file or an R list);
 #'   [ss_quickstart()] runs the bundled demo; [ss_config_schema()],
@@ -36,6 +41,9 @@
 #' * `spacescans.data_dir`: the data directory (set by [ss_data_dir()]).
 #' * `spacescans.cache_dir`: the C3 cache root (default
 #'   `tools::R_user_dir("spacescans", "cache")`).
+#' * `spacescans.datasets_dir`: the registry of your own datasets (default:
+#'   the environment variable `SPACESCANS_DATASETS_DIR`, else the Python
+#'   package's directory; see [ss_datasets()]).
 #' * `spacescans.envdir`: where [ss_install()] puts the Python environment.
 #'
 #' Run directories: a call that is given no `run_dir` works in a private
