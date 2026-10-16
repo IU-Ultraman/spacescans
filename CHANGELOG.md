@@ -18,7 +18,12 @@ application, the Python API, the command line and the R package run the same cod
   returns one row per location episode, as before. Linkage rates are computed at the level of
   the output (share of participants, or share of episodes). The R package (`ss_link()`), the
   bridge protocol and the web application use the same default and option. YAML configs keep
-  `time.output_grouping` (`patient` or `episode`); the CLI templates now state it.
+  `time.output_grouping` (`patient` or `episode`); the CLI templates now state it. Overlapping
+  location episodes each contribute their own days; FARA's flags and ACAG's `_nbm` columns are
+  derived from the participant's means. A row with a blank `pid` belongs to no participant: the
+  participant-level merge leaves it out (the web application's rule) and `link()` records the
+  count in `provenance["cohort"]["rows_without_pid"]`; `cohort.validate` still refuses such rows
+  before a link starts.
 - **FARA Food Access** drops tracts with missing values from both the numerator and the
   denominator of the buffer-weighted mean, like every other source. Up to 0.2.7 such tracts
   stayed in the denominator, so values differ from 0.2.7 where a buffer overlaps a tract with
@@ -56,12 +61,17 @@ application, the Python API, the command line and the R package run the same cod
 - The engine block of a config sets DuckDB threads, memory limit and spill directory.
 - A source that runs out of memory reports how much memory it needed in measured runs
   (`docs/memory.md`).
+- `packaging/spacescans-alias/`: the PyPI name `spacescans`, an alias with no code that installs
+  `spacescans-pipeline` at the same version (uploaded by hand after the main package; see
+  `docs/release.md`).
 
 ### R package
 
 - First release: `ss_install()` builds a private Python environment with uv; `ss_link()`,
   background jobs, catalog, data, coverage, custom-data and cache functions run the Python
   package through the bridge in a separate process. See `r/README.md` and `r/NEWS.md`.
+- `ss_install()` also works after an install from r-universe, which records only `RemoteUrl`,
+  `RemoteRef` and `RemoteSha`: it installs the Python package from that commit's source archive.
 
 ### License
 
