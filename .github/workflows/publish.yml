@@ -9,20 +9,53 @@ permissions:
   contents: read  # the test gate; build-and-publish asks for more below
 
 jobs:
+  # A PyPI version can never be uploaded twice, so refuse before anything runs
+  # unless the workflow was started from a release tag ("Use workflow from":
+  # Tags, v<version>) whose version every declaration agrees with: pyproject,
+  # and the R package's Version and Config/spacescans/version in r/DESCRIPTION.
+  version-tag:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - name: The ref is a v<version> tag and every declared version matches it
+        run: |
+          case "$GITHUB_REF" in
+            refs/tags/v*) ;;
+            *) echo "::error::start this workflow from a release tag (Use workflow from: Tags), not $GITHUB_REF"; exit 1 ;;
+          esac
+          tag="${GITHUB_REF#refs/tags/v}"
+          py="$(sed -n 's/^version = "\(.*\)"$/\1/p' pyproject.toml | head -n 1)"
+          r="$(sed -n 's/^Version: *//p' r/DESCRIPTION)"
+          cfg="$(sed -n 's/^Config\/spacescans\/version: *//p' r/DESCRIPTION)"
+          echo "tag $tag; pyproject $py; r/DESCRIPTION Version $r, Config/spacescans/version $cfg"
+          if [ "$tag" != "$py" ] || [ "$tag" != "$r" ] || [ "$tag" != "$cfg" ]; then
+            echo "::error::the tag and the declared versions differ"
+            exit 1
+          fi
+
   # Tests gate: the same workflows CI runs, on the same commit, so the gate
   # cannot drift from CI (base matrix on Linux and macOS, every extras job,
   # the macOS 14 arm64 geo job, and R CMD check of the R package in r/,
   # which ships with the same version and tag).
   test-base:
+    needs: version-tag
     uses: ./.github/workflows/test.yml
   test-extras:
+    needs: version-tag
     uses: ./.github/workflows/test-extras.yml
   r-check:
+    needs: version-tag
     uses: ./.github/workflows/r-check.yml
 
   build-and-publish:
     needs: [test-base, test-extras, r-check]
     runs-on: ubuntu-24.04
+    # The PyPI trusted publisher for spacescans-pipeline names this workflow
+    # (publish.yml) and this environment; protection rules on the environment
+    # (required reviewers, tags v*) are set in the repository settings.
+    environment:
+      name: pypi
+      url: https://pypi.org/project/spacescans-pipeline/
     permissions:
       id-token: write   # for PyPI Trusted Publishing (OIDC)
       contents: write   # for gh release
@@ -32,9 +65,12 @@ jobs:
         with: {python-version: "3.12"}
       - run: pip install build twine
       - name: Build wheel + sdist
-        run: python -m build
+        # SOURCE_DATE_EPOCH = the commit time makes the wheel reproducible: it is
+        # byte-identical to the one r/tools/build-wheel.sh bundles into the R
+        # package at the same commit, so a pin.json can point at this file.
+        run: SOURCE_DATE_EPOCH="$(git log -1 --format=%ct)" python -m build
       - name: twine check
-        run: twine check dist/*
+        run: twine check --strict dist/*
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
       - name: GitHub Release
