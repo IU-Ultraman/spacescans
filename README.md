@@ -344,9 +344,10 @@ the release procedure is [docs/release.md](https://github.com/IU-Ultraman/spaces
 
 ## License
 
-No license has been chosen yet (TODO for the authors); until one is, all rights are reserved.
-The exposure data are not covered by this repository: each catalog source keeps its provider's
-terms, which `spacescans data status` prints.
+spacescans is released under the MIT License
+([LICENSE](https://github.com/IU-Ultraman/spacescans/blob/main/LICENSE)); the R package in
+`r/` is released under the same license. The license covers the software only: each catalog
+source keeps its provider's terms, which `spacescans data status` prints.
 
 ---
 

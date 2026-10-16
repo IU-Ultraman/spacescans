@@ -63,6 +63,7 @@ application, the Python API, the command line and the R package run the same cod
   background jobs, catalog, data, coverage, custom-data and cache functions run the Python
   package through the bridge in a separate process. See `r/README.md` and `r/NEWS.md`.
 
-### Not yet decided
+### License
 
-- No license has been chosen for this repository (see `docs/release.md`).
+- Released under the MIT License (`LICENSE`; the R package in `r/` under the same license, with
+  the CRAN-form `r/LICENSE`).

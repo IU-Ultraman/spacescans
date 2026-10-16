@@ -13,7 +13,7 @@ Description: R client for the 'spacescans' Python pipeline, which links
     files and 'Parquet' tables, so a crash or an interrupt in Python never
     takes the R session down. 'ss_install()' builds the Python environment
     with 'uv'.
-License: Not yet licensed; all rights reserved until a license is chosen
+License: MIT + file LICENSE
 URL: https://github.com/IU-Ultraman/spacescans
 BugReports: https://github.com/IU-Ultraman/spacescans/issues
 Depends:

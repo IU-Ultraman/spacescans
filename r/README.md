@@ -202,5 +202,8 @@ hold the noise and walkability data), the minimal example
 `SPACESCANS_TEST_INSTALL=true` plus `SPACESCANS_TEST_WHEEL=<wheel>` (install from
 a wheel) or `SPACESCANS_TEST_GITHUB_SHA=<pushed commit>` (install from GitHub).
 
-`R CMD check` reports one WARNING, "Non-standard license specification",
-until a licence is chosen.
+## License
+
+MIT (`LICENSE`), as the Python package. The license covers the software only: each catalog
+source keeps its provider's terms (`ss_data_terms()` shows a dataset's license, attribution and
+terms).

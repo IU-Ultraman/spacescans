@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=68", "wheel"]
+requires = ["setuptools>=77", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -8,8 +8,8 @@ version = "0.3.0"
 description = "Link time-referenced geolocation data (location episodes) to the spatial and contextual exposome: spatial weights (C3) and day-weighted linkage (C4), per participant or per episode"
 readme = "README.md"
 requires-python = ">=3.10"
-# TODO(author): no license has been chosen. Add `license = "<SPDX id>"` and
-# `license-files = ["LICENSE"]` here once the license is decided (docs/release.md).
+license = "MIT"
+license-files = ["LICENSE"]
 authors = [{name = "Regenstrief Institute"}]
 keywords = ["exposome", "geospatial", "ehr", "patient-exposure-linkage"]
 classifiers = [

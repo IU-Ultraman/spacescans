@@ -2,8 +2,8 @@ name: R CMD check
 # The R package in r/, the client of the Python bridge, on its supported platform:
 # Apple silicon (macOS 14), R 4.6, CPython 3.12. The Python package from the same commit is
 # installed and given to the tests as SPACESCANS_PYTHON, so the bridge tests run instead of
-# skipping. The gate: no ERROR and no WARNING except the licence one, which stays until a
-# licence is chosen (.github/scripts/r-check-status.sh). NOTEs do not fail it.
+# skipping. The gate: no ERROR and no WARNING (.github/scripts/r-check-status.sh). NOTEs do
+# not fail it.
 on:
   push:
     branches: [main]
