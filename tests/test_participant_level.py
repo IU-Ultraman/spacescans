@@ -957,3 +957,20 @@ def test_participant_means_weights_episode_means_by_their_days():
     assert np.isnan(out["b"])                           # no contributing day
     assert out["c"] == pytest.approx(2.0)               # NaN mean with days > 0 is skipped
     assert list(out.index) == ["a", "b", "c"]
+
+
+def test_custom_linkage_report_counts_participants_at_the_participant_level(tmp_path):
+    """The upload path's linkage report reads the C4 output: participant rows are counted as
+    participants (the episode wording is the web's, kept for episode rows)."""
+    from spacescans import custom
+
+    csv = tmp_path / "vals.csv"
+    csv.write_text("GEOID10,green\n180973201001,1.5\n")
+    d = custom.define_polygon(csv, boundary="BG", key_col="GEOID10", value_cols=["green"])
+    key = d["variable_key"]
+    run_dir = tmp_path / "run"
+    (run_dir / "output").mkdir(parents=True)
+    pd.DataFrame({"PATID": ["a", "b", "c", "d"], "green": [1.0, 2.0, np.nan, 3.0]}).to_parquet(
+        run_dir / "output" / f"c4_{key}.parquet", index=False)
+    [record] = custom.diagnostics(run_dir, [key], {key: d})
+    assert record["msg"] == f"{key}.green: 75.0% of participants linked (3/4)"
