@@ -38,6 +38,16 @@
   directory written by 0.2 is read as episode level.
 * `ss_link()` refuses, with an `ss_install()` hint, a Python package that
   returns episodes when participants were asked for.
+* `ss_install()` works after an install from r-universe: it reads the
+  repository from `RemoteUrl` and installs the Python package from the
+  recorded commit (`RemoteSha`), or from the tag of the package version when
+  no commit is recorded.
+
+## Package
+
+* Released under the MIT License (`LICENSE`).
+* Title: "Link Time-Referenced Geolocation Data to the Spatial and
+  Contextual Exposome".
 
 ## Documentation
 
@@ -48,3 +58,7 @@
   NPS noise model, the catalog source whose files are all on the project
   mirror) and `inst/examples/registered-dataset.R` (a registered features
   dataset, no catalog data needed). The live tests run both.
+* `?ss_link` and the vignette state two rules of the participant level:
+  overlapping location episodes each contribute their own days, and
+  variables derived after aggregation (the FARA flags, the ACAG `_nbm`
+  columns) are derived from the participant's means.

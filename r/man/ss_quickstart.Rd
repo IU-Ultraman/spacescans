@@ -29,9 +29,10 @@ the run summary.}
 As \code{\link[=ss_run]{ss_run()}}.
 }
 \description{
-Runs a small C3 weight computation (\code{boundary_overlap_fast}) on the sample
-counties and patients that ship with the Python package. Needs the \code{geo}
-extra. Useful to check that an installation works end to end.
+Runs a small C3 weight computation (\code{boundary_overlap_fast}) on the
+synthetic sample counties and locations that come with the Python package.
+Needs the \code{geo} extra. Useful to check that an installation works; it runs
+one spatial-weighting step, not a linkage.
 }
 \examples{
 \dontrun{

@@ -26,7 +26,7 @@
 #' The C3 weight cache
 #'
 #' [ss_link()] keeps the C3 weights it computes (which census units, grid
-#' cells or features each residential buffer overlaps) in the user cache
+#' cells or features each location's buffer overlaps) in the user cache
 #' directory, so linking the same cohort with the same buffer again skips
 #' the slowest steps. Each entry is keyed by the cohort's coordinates, the
 #' buffer and raster settings, the code and data fingerprints and the

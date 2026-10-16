@@ -94,7 +94,11 @@ estimate, and $d_{et}$ is the number of days of that overlap, first and last
 day included. A time-invariant source counts every day of the episode. Days
 are counted per variable, so a participant can have a value for one variable
 and not for another; a participant with no contributing day is kept, with a
-missing value.
+missing value. Where two location episodes of one participant overlap in
+time, each contributes its own days, so a calendar day both cover counts once
+for each location. Variables derived after aggregation (the FARA flags, the
+ACAG `_nbm` columns) are derived from the participant's means; see
+`?ss_link`.
 
 | | `"participant"` (default) | `"episode"` |
 |---|---|---|

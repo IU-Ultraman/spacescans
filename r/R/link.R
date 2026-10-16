@@ -20,17 +20,27 @@
 #' \eqn{d_{et}}{d_et} is the number of days of the overlap (first and last day
 #' included). A time-invariant source counts every day of the episode. The
 #' contributing days are counted per variable, and a participant with no
-#' contributing day gets a missing value. With `output_level = "episode"`
-#' the result is the cohort itself with the exposure columns added, one row
-#' per location episode, as in spacescans 0.2.
+#' contributing day gets a missing value. Where two location episodes of a
+#' participant overlap in time, each contributes its own days: a calendar
+#' day both cover counts once for each location (trim the overlaps first if
+#' a day should count once). Variables derived after aggregation come from
+#' the participant's means: the FARA flags (such as `LILATracts_1And10`) are
+#' recoded from the participant's mean rates and urban share, so they stay 0
+#' or 1, and an ACAG `_nbm` (non-biomass) column is the participant's mean of
+#' the species minus the participant's mean of its biomass part (`_bm`).
+#' With `output_level = "episode"` the result is the cohort itself with the
+#' exposure columns added, one row per location episode, as in spacescans
+#' 0.2.
 #'
 #' What happens, in order:
 #' 1. The Python bridge is checked once per session (versions, protocol).
 #' 2. The cohort is checked in R: `cols` maps your column names; `PATID` in
 #'    any case stands in for `pid`; `pid` becomes text; dates become `Date`
 #'    (date-times are converted with a warning; text dates must use one
-#'    format, `2017-08-19` or `8/19/2017`); coordinates must be present and
-#'    in range. Problems are reported with row numbers, never values.
+#'    format, `2017-08-19` or `8/19/2017`); every row needs a `pid` (a blank
+#'    one is an error, so no row is left out of a participant table) and
+#'    coordinates that are present and in range. Problems are reported with
+#'    row numbers, never values.
 #' 3. Only the five columns `pid`, `startDate`, `endDate`, `longitude` and
 #'    `latitude` are written, to `cohort.parquet` in a private run directory
 #'    (mode 0700, under `tools::R_user_dir("spacescans", "cache")/runs` unless
