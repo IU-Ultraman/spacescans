@@ -8,19 +8,24 @@ vignette: >
 
 ```{r setup, include = FALSE}
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>", eval = FALSE)
+example_file <- function(name) system.file("examples", name, package = "spacescans")
 ```
 
-spacescans links patient residential histories to environmental exposures:
-for every residential episode (a patient, an address as longitude and
-latitude, and the dates they lived there) it computes area- or
+spacescans links time-referenced geolocation data to the spatial and
+contextual exposome. Its input is a cohort of location episodes: a
+participant, a location (longitude and latitude) and the first and last day
+spent there. For every location episode it computes area- or
 buffer-weighted exposures such as the Neighborhood Deprivation Index,
-walkability, noise, night-time lights or air pollution.
+walkability, noise, night-time lights or air pollution, or the distance to
+the nearest feature, and by default it returns one row per participant.
 
 The R package is a client of the spacescans Python pipeline. Every call
 starts `python -m spacescans.bridge` in a separate process and exchanges
 JSON files and Parquet tables with it, so a crash or Ctrl-C in Python never
 takes your R session down. The code below does not run when this vignette
-is built, because it needs the Python environment and the exposure data.
+is built, because it needs the Python environment and the exposure data;
+the two example scripts it shows are installed with the package and run by
+the package's live tests.
 
 ## 1. Install the Python side once
 
@@ -34,19 +39,21 @@ ss_doctor()           # interpreter, versions, extras, folders, disk, data
 `tools::R_user_dir("spacescans", "data")` and never touches the Python on
 your `PATH`. TEMIS needs one more extra: `ss_install(extras = "hdf4")`. If
 your IT department provides an interpreter, point the package at it with
-`ss_use_python()` or the `SPACESCANS_PYTHON` environment variable.
+`ss_use_python()` or the `SPACESCANS_PYTHON` environment variable. The
+supported platform is macOS 14 or later on Apple silicon.
 
 ## 2. Choose a data directory and get the data
 
-No exposure data ships with spacescans; the catalog says where each dataset
-comes from, and `ss_fetch()` downloads what you need.
+No exposure data ships with spacescans. The catalog says where each dataset
+comes from, and `ss_fetch()` downloads what you need from the providers or
+from the project mirror, where the providers' terms allow it.
 
 ```{r}
 ss_data_dir("~/ss-data")              # or set SPACESCANS_DATA_DIR
 ss_catalog()                          # the variables, years, data and extras
-ss_data_status(c("ndi", "walkability"))
-ss_fetch(c("ndi", "walkability"), dry_run = TRUE)   # what would be downloaded
-ss_fetch(c("ndi", "walkability"))     # resumable; shared files only once
+ss_data_status("noise")
+ss_fetch("noise", dry_run = TRUE)     # what would be downloaded (about 1.2 GB)
+ss_fetch("noise")                     # resumable; shared files only once
 ```
 
 Some provider datasets (for example EPA FAQSD) require you to accept their
@@ -55,15 +62,62 @@ you, a script passes `accept_terms =`. Keep the data directory on a local
 disk: spacescans warns when it, the cache or a run directory is inside
 iCloud Drive, OneDrive, Dropbox or Box.
 
-## 3. Link a cohort
+## 3. A minimal example
 
-A cohort has one row per residential episode with the columns `pid`,
+Three synthetic participants and the NPS noise model (Mennitt et al.), the
+catalog source whose files are all on the project mirror. The script is
+installed with the package:
+`source(system.file("examples", "minimal-example.R", package = "spacescans"))`.
+
+```{r, file = example_file("minimal-example.R")}
+```
+
+`res` has one row per participant (`P1`, `P2`, `P3`) and the columns `pid`,
+`l50dba_exi`, `l50dba_imp` and `l50dba_nat`; `episodes` is the cohort with
+the same three columns added, one row per location episode. The last line
+checks the participant-level rule on P2, who has two location episodes.
+
+## 4. Output levels
+
+`ss_link()` returns one row per participant unless you ask for
+`output_level = "episode"`. For participant *i* and variable *v* the value
+is the mean of the participant's episode values weighted by contributing
+days:
+
+$$\bar{x}_{iv} = \frac{\sum_{e \in E_i} \sum_{t \in T_{ev}} d_{et}\, z_{etv}}{\sum_{e \in E_i} \sum_{t \in T_{ev}} d_{et}}$$
+
+where $E_i$ are the participant's location episodes, $z_{etv}$ is the
+spatial estimate (a buffer-weighted mean, or the distance to the nearest
+feature) for episode $e$ in source period $t$ (a year, two weeks or a day),
+$T_{ev}$ are the source periods that overlap the episode and have an
+estimate, and $d_{et}$ is the number of days of that overlap, first and last
+day included. A time-invariant source counts every day of the episode. Days
+are counted per variable, so a participant can have a value for one variable
+and not for another; a participant with no contributing day is kept, with a
+missing value.
+
+| | `"participant"` (default) | `"episode"` |
+|---|---|---|
+| rows | one per participant, in order of first appearance | one per location episode, in your order |
+| columns | `pid` (your id's type) and the exposures | your columns, unchanged, and the exposures |
+| `attr(res, "coverage")` | share of participants with a value | share of episodes with a value |
+
+Both carry `attr(res, "features")` (what each column means),
+`attr(res, "provenance")` (versions, code fingerprint, data receipts, cache
+keys; no cohort values) and `attr(res, "output_level")`. `ss_coverage()`
+estimates before a run how many location episodes fall inside each
+variable's years and region; it counts episodes at either level, because it
+looks only at dates and locations.
+
+## 5. Link your cohort
+
+A cohort has one row per location episode with the columns `pid`,
 `startDate`, `endDate`, `longitude` and `latitude`. Other names can be
 mapped with `cols`, and `PATID` is accepted for `pid`.
 
 ```{r, eval = TRUE}
 cohort <- data.frame(
-  patient_id = c("A", "A", "B"),
+  participant_id = c("A", "A", "B"),
   start = as.Date(c("2015-01-01", "2017-06-01", "2016-03-15")),
   end = as.Date(c("2017-05-31", "2019-12-31", "2019-12-31")),
   lon = c(-86.158, -86.131, -85.680),
@@ -74,17 +128,14 @@ cohort
 ```
 
 ```{r}
-ss_coverage(cohort, c("ndi", "walkability"),
-            cols = c(pid = "patient_id", startDate = "start", endDate = "end",
-                     longitude = "lon", latitude = "lat"))
+cols <- c(pid = "participant_id", startDate = "start", endDate = "end",
+          longitude = "lon", latitude = "lat")
+ss_coverage(cohort, c("ndi", "walkability"), cols = cols)
 
-res <- ss_link(cohort, c("ndi", "walkability"),
-               cols = c(pid = "patient_id", startDate = "start", endDate = "end",
-                        longitude = "lon", latitude = "lat"))
-res                       # your columns, unchanged, plus the exposure columns
-attr(res, "coverage")     # per variable: episodes, episodes with a value, %
-attr(res, "features")     # what each new column means
-attr(res, "provenance")   # versions, code fingerprint, data receipts, cache keys
+res <- ss_link(cohort, c("ndi", "walkability"), cols = cols)
+res                       # pid, ndi, NatWalkInd: one row for A, one for B
+ep <- ss_link(cohort, c("ndi", "walkability"), cols = cols, output_level = "episode")
+ep                        # your columns, unchanged, plus ndi and NatWalkInd
 ```
 
 What `ss_link()` does, in order:
@@ -97,26 +148,26 @@ What `ss_link()` does, in order:
 3. checks that the data and the Python extras are in place, and otherwise
    tells you the exact `ss_fetch()` or `ss_install()` call to run;
 4. runs the pipeline, showing progress; Ctrl-C stops it cleanly;
-5. joins the exposures back onto your data frame by row, keeping its types
-   and attributes, and warns when a variable matched fewer than 90% of the
-   episodes;
+5. returns the participant table, or joins the exposures back onto your
+   data frame by row (keeping its types and attributes), and warns when a
+   variable has a value for fewer than 90% of the rows;
 6. deletes the run directory (unless `keep = TRUE`). Should R be killed
    before it can, the next session's package load (or `ss_doctor()`,
    `ss_cache_clear()`) deletes it, since it holds the five cohort columns.
 
-The C3 weights (which units each residential buffer overlaps) are cached
-under `tools::R_user_dir("spacescans", "cache")`, so linking the same cohort
-again is fast. They can reveal where people lived: see `ss_cache_info()`
-and clear them with `ss_cache_clear()` when a project ends.
+The C3 weights (which units each buffer around a location overlaps) are
+cached under `tools::R_user_dir("spacescans", "cache")`, so linking the
+same cohort again is fast. They can reveal where people were: see
+`ss_cache_info()` and clear them with `ss_cache_clear()` when a project
+ends.
 
-## 4. Long runs as background jobs
+## 6. Long runs as background jobs
 
 ```{r}
-job <- ss_link(cohort, c("ndi", "noise", "vnl"), cols = c(pid = "patient_id",
-               startDate = "start", endDate = "end", longitude = "lon", latitude = "lat"),
+job <- ss_link(cohort, c("ndi", "noise", "vnl"), cols = cols,
                wait = FALSE, run_dir = "~/ss-runs/noise-vnl")
 ss_job_status(job)
-res <- ss_job_result(job)          # waits, joins as above, then removes the run directory
+res <- ss_job_result(job)          # waits, builds the result as above, removes the run directory
 ```
 
 `ss_job_result()` removes the run directory once it has the result (pass
@@ -125,33 +176,66 @@ res <- ss_job_result(job)          # waits, joins as above, then removes the run
 `ss_job_result()` call above, find it again from its run directory:
 
 ```{r}
-job <- ss_job_attach("~/ss-runs/noise-vnl", cohort = cohort,
-                     cols = c(pid = "patient_id", startDate = "start", endDate = "end",
-                              longitude = "lon", latitude = "lat"))
+job <- ss_job_attach("~/ss-runs/noise-vnl", cohort = cohort, cols = cols)
 ss_job_status(job)
 res <- ss_job_result(job)          # or ss_job_cancel(job) to stop it
 ```
 
-## 5. Your own exposure data
+## 7. Your own data
 
-```{r}
-svi <- ss_custom_polygon("svi_tract.csv", boundary = "Tract", key_col = "FIPS",
-                         value_cols = "RPL_THEMES", name = "CDC SVI")
-res <- ss_link(cohort, "ndi", custom = svi, cols = c(pid = "patient_id",
-               startDate = "start", endDate = "end", longitude = "lon", latitude = "lat"))
+Register a dataset once and link it by name in later sessions, like a
+catalog variable. Registration checks and prepares the files and stores
+them, with a record of their metadata, in a registry directory (see
+`?ss_datasets`); your original files are no longer needed by the link. A
+dataset is a table keyed by a Census geography (static, yearly or daily),
+GeoTIFF rasters (static, yearly, biweekly or daily, on one grid), or point,
+line or polygon features, whose variable is the distance to the nearest
+feature. This example needs no catalog data:
+
+```{r, file = example_file("registered-dataset.R")}
 ```
 
-`ss_custom_raster()` does the same for GeoTIFFs (one, or one per year).
+`ss_datasets()` lists what is registered, `ss_dataset()` shows one record,
+`ss_update_dataset()` changes its name, metadata or variable units,
+`ss_remove_dataset()` deletes one, and `ss_link(custom = )` takes names,
+ids or records, alone or with catalog variables. A table names its Census
+geography in `key`, with the key column when it is not called `GEOID10`,
+`GEOID` or the like:
 
-## 6. When something goes wrong
+```{r}
+svi <- ss_register_dataset("~/data/svi_2020_tract.csv", name = "SVI 2020",
+                           kind = "polygon_table", temporal = "static",
+                           key = list(boundary = "tract", column = "FIPS"),
+                           variables = data.frame(name = "RPL_THEMES", unit = "percentile",
+                                                  description = "Overall SVI percentile"),
+                           source = "CDC/ATSDR SVI 2020", version = "2020")
+res <- ss_link(cohort, "ndi", custom = "SVI 2020", cols = cols)
+
+# Rasters: one GeoTIFF per period; the period comes from the file name or `periods`.
+pm <- ss_register_dataset(c("pm_2016a.tif", "pm_2016b.tif"), name = "PM2.5 biweekly",
+                          kind = "raster", temporal = "biweekly",
+                          periods = as.Date(c("2016-01-01", "2016-01-15")))
+```
+
+For a one-off dataset that you do not want to register,
+`ss_custom_polygon()` (a CSV keyed by a Census geography, static or yearly)
+and `ss_custom_raster()` (GeoTIFFs, one or one per year) build a definition
+that points at your files where they are:
+
+```{r}
+own <- ss_custom_polygon("svi_tract.csv", boundary = "Tract", key_col = "FIPS",
+                         value_cols = "RPL_THEMES", name = "CDC SVI")
+res <- ss_link(cohort, "ndi", custom = own, cols = cols)
+```
+
+## 8. When something goes wrong
 
 Every error inherits from `spacescans_error` and has a class for its kind,
 so a script can react to exactly what it expects:
 
 ```{r}
 res <- tryCatch(
-  ss_link(cohort, "faqsd", cols = c(pid = "patient_id", startDate = "start",
-          endDate = "end", longitude = "lon", latitude = "lat")),
+  ss_link(cohort, "faqsd", cols = cols),
   spacescans_error_data_missing = function(e) {
     message(conditionMessage(e))    # includes the ss_fetch() call to run
     NULL

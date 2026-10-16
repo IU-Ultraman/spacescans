@@ -34,10 +34,12 @@ tree (default: option \code{spacescans.interrupt_grace}, 10).}
 \item{run_dir}{The job's run directory.}
 
 \item{cohort}{For \code{ss_job_attach()} of a link job: the cohort data frame
-the job was started with, so the result can be joined back onto it. It
-is compared with the cohort file in the run directory. Without it,
-\code{ss_job_result()} returns the exposures with an \code{episode_id} column
-(the 0-based row number in the cohort).}
+the job was started with. It is compared with the cohort file in the
+run directory; an episode-level result is joined back onto it, and a
+participant-level result gets \code{pid} in the type of its id column.
+Without it, \code{ss_job_result()} returns, at episode level, the exposures
+with an \code{episode_id} column (the 0-based row number in the cohort) and,
+at participant level, the participant table with \code{pid} as text.}
 
 \item{cols}{Column mapping used when the job was started (see
 \code{\link[=ss_link]{ss_link()}}).}
@@ -64,8 +66,8 @@ it).
 seconds, then kills its whole process tree. Completed C3 steps stay in
 the cache, so running the same link again is fast.
 \item \code{ss_job_result()} waits (unless \code{wait = FALSE}) and returns what the
-finished command returns (for \code{ss_link()}, the linked data frame), or
-raises its error.
+finished command returns (for \code{ss_link()}, the participant table or the
+linked cohort, by \code{output_level}), or raises its error.
 \item \code{ss_job_attach()} finds a job again from its run directory, for example
 after R restarted. Only jobs started with an explicit \code{run_dir} survive
 the R session: a run directory the package chose itself is tied to the

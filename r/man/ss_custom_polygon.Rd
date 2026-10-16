@@ -75,7 +75,10 @@ one or more bands (needs the \code{geo} extra).
 \details{
 The definition points at your files where they are; keep them in place
 until the link has run. Pass it to \code{ss_link(custom = )}; its key
-(\verb{custom_<id>}) is added to the variables automatically.
+(\verb{custom_<id>}) is added to the variables automatically. To prepare a
+dataset once and link it by name in later sessions (also daily tables,
+biweekly or daily rasters, and point, line or polygon features), register
+it with \code{\link[=ss_register_dataset]{ss_register_dataset()}} instead.
 }
 \examples{
 \dontrun{

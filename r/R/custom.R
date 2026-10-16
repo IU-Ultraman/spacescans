@@ -10,7 +10,10 @@
 #'
 #' The definition points at your files where they are; keep them in place
 #' until the link has run. Pass it to `ss_link(custom = )`; its key
-#' (`custom_<id>`) is added to the variables automatically.
+#' (`custom_<id>`) is added to the variables automatically. To prepare a
+#' dataset once and link it by name in later sessions (also daily tables,
+#' biweekly or daily rasters, and point, line or polygon features), register
+#' it with [ss_register_dataset()] instead.
 #'
 #' @param values Path of a CSV file, or a data frame (written to a CSV file
 #'   of its own under [tempdir()] for this session).
