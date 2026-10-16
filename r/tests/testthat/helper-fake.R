@@ -26,9 +26,12 @@ local_fake_bridge <- function(scenario = list(), env = parent.frame()) {
   withr::local_envvar(
     SS_FAKE_SCENARIO = file.path(dir, "scenario.json"),
     SS_FAKE_LOG = file.path(dir, "log"),
+    SS_FAKE_REGISTRY = file.path(dir, "registry", "registry.json"),
     SS_FAKE_VERSION = spacescans:::.ss_expected()$version,
+    SPACESCANS_DATASETS_DIR = NA,
     .local_envir = env
   )
+  withr::local_options(spacescans.datasets_dir = NULL, .local_envir = env)
   reset_spacescans_state()
   st <- spacescans:::.ss_state
   st$python <- list(path = wrapper, source = "ss_use_python()")

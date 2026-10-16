@@ -7,6 +7,7 @@
 ss_link(
   cohort,
   variables,
+  output_level = c("participant", "episode"),
   data_dir = ss_data_dir(),
   buffer_m = 270L,
   raster_res_m = 25L,
@@ -23,24 +24,33 @@ ss_link(
 )
 }
 \arguments{
-\item{cohort}{A data frame with one row per residential episode, or the
+\item{cohort}{A data frame with one row per location episode, or the
 path of a CSV or Parquet file.}
 
 \item{variables}{Catalog variable keys, for example
-\code{c("ndi", "walkability")} (see \code{\link[=ss_catalog]{ss_catalog()}}). Keys of \code{custom}
-datasets are added automatically.}
+\code{c("ndi", "walkability")} (see \code{\link[=ss_catalog]{ss_catalog()}}). The variables of
+\code{custom} datasets are added automatically, so \code{character()} links the
+custom datasets alone.}
+
+\item{output_level}{\code{"participant"} (default): one row per participant,
+each variable averaged over the participant's location episodes
+weighted by contributing days (see Details). \code{"episode"}: one row per
+location episode, your data frame with the exposure columns added.}
 
 \item{data_dir}{The data directory (default \code{\link[=ss_data_dir]{ss_data_dir()}}).}
 
-\item{buffer_m}{Residential buffer radius in metres (whole number).}
+\item{buffer_m}{Buffer radius around each location in metres (whole
+number).}
 
 \item{raster_res_m}{Raster resolution in metres used by areal C3 steps.}
 
-\item{custom}{A custom dataset from \code{\link[=ss_custom_polygon]{ss_custom_polygon()}} or
-\code{\link[=ss_custom_raster]{ss_custom_raster()}}, or a list of them.}
+\item{custom}{Your own datasets: a dataset registered with
+\code{\link[=ss_register_dataset]{ss_register_dataset()}} (its name or id, or the record), a definition
+from \code{\link[=ss_custom_polygon]{ss_custom_polygon()}} or \code{\link[=ss_custom_raster]{ss_custom_raster()}}, or a list (or
+character vector) of them.}
 
 \item{cols}{Your column names for the required columns, for example
-\code{c(pid = "patient_id", startDate = "start", endDate = "end", longitude = "lon", latitude = "lat")}.}
+\code{c(pid = "participant_id", startDate = "start", endDate = "end", longitude = "lon", latitude = "lat")}.}
 
 \item{cache}{\code{TRUE} (default) keeps C3 weights in the user cache
 directory (\code{tools::R_user_dir("spacescans", "cache")}, see
@@ -67,18 +77,43 @@ at once (see \code{\link[=ss_job_status]{ss_job_status()}}). Only a job with an 
 survives the R session.}
 }
 \value{
-The cohort data frame with the exposure columns added, and
-attributes \code{features} (the feature dictionary of the new columns),
-\code{coverage} (per variable: episodes, episodes with a value, percentage),
-\code{provenance} (versions, code fingerprint, data receipts, cache keys,
-threads, platform; no cohort values) and \code{spacescans} (steps, failed
-and skipped sources, warnings). With \code{wait = FALSE}, a job.
+Participant level: a data frame with \code{pid} and one column per
+exposure, one row per participant (a data.table when \code{cohort} is one).
+Episode level: the cohort data frame with the exposure columns added.
+Both carry the attributes \code{output_level}, \code{features} (the feature
+dictionary of the exposure columns), \code{coverage} (the linkage rates: per
+variable, the rows of the result, the rows with a value and their
+percentage; participants or episodes, by level), \code{provenance}
+(versions, code fingerprint, data receipts, cache keys, threads,
+platform; no cohort values) and \code{spacescans} (steps, failed and skipped
+sources, warnings). With \code{wait = FALSE}, a job.
 }
 \description{
-Computes environmental exposures for every residential episode of a
-cohort and returns the cohort with the exposure columns added.
+Computes exposures for every location episode of a cohort and returns
+them per participant (the default) or per location episode.
 }
 \details{
+A cohort is time-referenced geolocation data: one row per location
+episode, that is a participant, a location (longitude and latitude) and
+the first and last day spent there. A participant who moved has one row
+per location.
+
+\strong{Output level.} With \code{output_level = "participant"} (the default) the
+result has one row per participant: for each variable, the mean of the
+participant's episode values weighted by the days that contribute to
+them. For participant \emph{i} and variable \emph{v} it is
+\deqn{\bar{x}_{iv} = \frac{\sum_{e \in E_i} \sum_{t \in T_{ev}} d_{et} z_{etv}}{\sum_{e \in E_i} \sum_{t \in T_{ev}} d_{et}}}{x_iv = sum_e sum_t d_et z_etv / sum_e sum_t d_et}
+where \eqn{E_i} are the participant's episodes, \eqn{z_{etv}}{z_etv} is the
+spatial estimate (buffer-weighted mean, or distance to the nearest
+feature) for episode \eqn{e} in source period \eqn{t}, \eqn{T_{ev}}{T_ev}
+are the periods that overlap the episode and have an estimate, and
+\eqn{d_{et}}{d_et} is the number of days of the overlap (first and last day
+included). A time-invariant source counts every day of the episode. The
+contributing days are counted per variable, and a participant with no
+contributing day gets a missing value. With \code{output_level = "episode"}
+the result is the cohort itself with the exposure columns added, one row
+per location episode, as in spacescans 0.2.
+
 What happens, in order:
 \enumerate{
 \item The Python bridge is checked once per session (versions, protocol).
@@ -99,10 +134,14 @@ downloads anything.
 it to stop, waits up to 10 seconds (option
 \code{spacescans.interrupt_grace}) and then kills its process tree.
 Completed C3 steps stay in the cache.
-\item The exposures are joined back onto your data frame by row (the
-\code{episode_id} of row \emph{i} is \emph{i - 1}); its column types, class and
-attributes are kept. An exposure column whose name is already taken
-gets the suffix \verb{_<experiment>_dup}, as in the web app.
+\item Participant level: the table has \code{pid} (with the type of your id
+column) and one column per exposure, one row per participant in the
+order they first appear in the cohort, including participants without
+any value. Episode level: the exposures are joined back onto your data
+frame by row (the \code{episode_id} of row \emph{i} is \emph{i - 1}); its column
+types, class and attributes are kept, and an exposure column whose
+name is already taken gets the suffix \verb{_<experiment>_dup}, as in the
+web app.
 \item With \code{keep = FALSE} the run directory is deleted after success; cache
 entries stay. After an error it is kept and its path printed. A run
 directory the package chose itself is recorded as owned by this R
@@ -113,8 +152,13 @@ or \code{\link[=ss_cache_clear]{ss_cache_clear()}} (in any session of yours) del
 \examples{
 \dontrun{
 ss_data_dir("~/ss-data")
-res <- ss_link(cohort, c("ndi", "walkability"))
-attr(res, "coverage")
+res <- ss_link(cohort, c("ndi", "walkability"))      # one row per participant
+attr(res, "coverage")                                # linkage rates
 attr(res, "features")
+ep <- ss_link(cohort, "ndi", output_level = "episode")  # one row per location episode
 }
+}
+\seealso{
+\code{\link[=ss_coverage]{ss_coverage()}} estimates, per location episode, how much of the
+cohort a variable covers before you link.
 }

@@ -13,6 +13,9 @@
 #   SS_FAKE_LOG       directory; each request is copied there as
 #                     <seq>-<command>.json with a <seq>-<command>.seen.json
 #                     recording what the fake saw (cohort columns, modes)
+#   SS_FAKE_REGISTRY  JSON file holding the fake dataset registry (the
+#                     dataset-* commands; a "root" argument gets its own
+#                     file under that root instead)
 
 suppressMessages({
   library(jsonlite)
@@ -92,7 +95,7 @@ emit("start", command = command, pid = Sys.getpid(), protocol = 1L)
 for (ev in sc$events %||% list()) do.call(emit, ev)
 
 is_abs <- function(p) is.character(p) && length(p) == 1L && startsWith(p, "/")
-for (key in c("cohort", "data_dir", "run_dir", "cache_dir", "output_dir")) {
+for (key in c("cohort", "data_dir", "run_dir", "cache_dir", "output_dir", "root")) {
   if (!is.null(args[[key]]) && !is_abs(args[[key]])) fail("config", sprintf("argument '%s' must be an absolute path", key))
 }
 
@@ -141,7 +144,8 @@ version <- Sys.getenv("SS_FAKE_VERSION", "0.0.0")
 commands <- c("capabilities", "hello", "catalog", "coverage", "data-status", "data-plan",
               "data-verify", "data-fetch", "data-import", "data-terms", "custom-validate", "link",
               "cache-info", "cache-clear", "runs-sweep", "run", "schema", "quickstart", "resolve",
-              "templates", "yaml-load", "yaml-dump", "ping")
+              "templates", "yaml-load", "yaml-dump", "ping", "dataset-register", "dataset-list",
+              "dataset-get", "dataset-remove")
 
 catalog_vars <- list(
   list(key = "ndi", label = "Neighborhood Deprivation Index (NDI)", experiment = "bg_ndi_wi",
@@ -173,6 +177,49 @@ var_status <- function(v, missing) {
        download_bytes = if (bad) 1234567 else 0, disk_bytes = 2345678,
        `next` = if (bad) sprintf("spacescans data fetch --dataset %s_panel", v) else "")
 }
+
+
+# --- the fake dataset registry (dataset-* commands, registered names in link) --
+
+registry_root <- function() {
+  if (!is.null(args$root)) return(args$root)
+  env <- Sys.getenv("SPACESCANS_DATASETS_DIR", "")
+  if (nzchar(env)) return(env)
+  dirname(Sys.getenv("SS_FAKE_REGISTRY", file.path(tempdir(), "fake-registry", "registry.json")))
+}
+registry_file <- function() {
+  if (is.null(args$root) && !nzchar(Sys.getenv("SPACESCANS_DATASETS_DIR", "")) &&
+      nzchar(Sys.getenv("SS_FAKE_REGISTRY", ""))) {
+    return(Sys.getenv("SS_FAKE_REGISTRY"))
+  }
+  file.path(registry_root(), "registry.json")
+}
+read_registry <- function() {
+  f <- registry_file()
+  if (file.exists(f)) read_json(f, simplifyVector = FALSE) else list()
+}
+write_registry <- function(reg) {
+  f <- registry_file()
+  dir.create(dirname(f), recursive = TRUE, showWarnings = FALSE)
+  writeLines(toJSON(if (length(reg)) reg else I(list()), auto_unbox = TRUE, null = "null", digits = NA), f)
+}
+find_dataset <- function(reg, ref) {
+  for (i in seq_along(reg)) {
+    if (identical(reg[[i]]$name, ref) || identical(reg[[i]]$id, ref)) return(i)
+  }
+  NA_integer_
+}
+dataset_or_fail <- function(reg, ref) {
+  i <- find_dataset(reg, ref)
+  if (is.na(i)) {
+    fail("config", sprintf("no registered dataset named or with id %s", ref),
+         details = list(name_or_id = ref))
+  }
+  i
+}
+# The variable key a registered dataset links under, and its value columns.
+registered_key <- function(d) paste0("reg_", d$name)
+registered_cols <- function(d) vapply(d$variables, function(v) v$name, "")
 
 value <- sc$value
 if (is.null(value)) {
@@ -263,6 +310,10 @@ if (is.null(value)) {
       co <- read_parquet(args$cohort)
       seen$cohort_columns <- names(co)
       vars <- unlist(args$variables)
+      if (length(unlist(args$datasets)) && !isTRUE(sc$ignore_datasets)) {
+        reg <- read_registry()
+        for (ref in unlist(args$datasets)) vars <- c(vars, registered_key(reg[[dataset_or_fail(reg, ref)]]))
+      }
       list(row_count = nrow(co), variables = setNames(lapply(vars, function(v) list(
         coverage_years = list(2012L, 2022L), patients_in_time_window = nrow(co),
         patients_in_region = nrow(co), patients_covered = nrow(co), coverage_pct = 100,
@@ -276,10 +327,33 @@ if (is.null(value)) {
       seen$cohort_mode <- as.character(file.info(args$cohort)$mode)
       seen$cache_dir_mode <- if (!is.null(args$cache_dir)) as.character(file.info(args$cache_dir)$mode)
       seen$data_dir_env <- Sys.getenv("SPACESCANS_DATA_DIR")
+      seen$datasets_dir_env <- Sys.getenv("SPACESCANS_DATASETS_DIR")
       n <- nrow(co)
-      vars <- unlist(args$variables)
+      vars <- unlist(args$variables) %||% character()
       custom <- args$custom %||% list()
+      # Registered datasets (names or ids) link under a key of their own.
+      registered <- list()
+      reg <- if (length(unlist(args$datasets))) read_registry() else list()
+      for (ref in unlist(args$datasets)) {
+        d <- reg[[dataset_or_fail(reg, ref)]]
+        registered[[registered_key(d)]] <- d
+        vars <- c(vars, registered_key(d))
+      }
+      if (!length(vars)) fail("config", "at least one variable must be selected")
+      # A bridge from before output levels ignores the field and writes episodes.
+      level <- if (isTRUE(sc$ignore_level)) "episode" else args$output_level %||% "participant"
+      seen$output_level <- args$output_level
       reserved <- unlist(args$reserved_names)
+      # Days of each episode (start and end included); blank dates contribute none.
+      days <- as.numeric(as.Date(co$endDate) - as.Date(co$startDate)) + 1
+      pids <- unique(co$pid)
+      if (isTRUE(sc$bad_pids)) pids <- rev(pids)
+      per_participant <- function(vals) {
+        vapply(pids, function(p) {
+          k <- co$pid == p & !is.na(vals) & !is.na(days)
+          if (!any(k)) NA_real_ else sum(days[k] * vals[k]) / sum(days[k])
+        }, numeric(1), USE.NAMES = FALSE)
+      }
       cols <- list()
       feats <- list()
       cov <- list()
@@ -287,23 +361,26 @@ if (is.null(value)) {
       for (i in seq_along(vars)) {
         v <- vars[i]
         vc <- if (!is.null(custom[[v]])) unlist(custom[[v]]$value_cols) else
-          switch(v, walkability = "NatWalkInd", temis = "uvi", v)
+          if (!is.null(registered[[v]])) registered_cols(registered[[v]]) else
+          switch(v, walkability = "NatWalkInd", temis = "uvi", noise = c("l50dba_exi", "l50dba_imp", "l50dba_nat"), v)
         emit("step_start", exp = v, step = paste0("c3_", v), i = i - 1L, n = length(vars),
              overall = round((i - 1) / length(vars), 3))
         emit("progress", step = paste0("c3_", v), frac = 0.5, overall = round((i - 0.5) / length(vars), 3),
              text = "[overlap_fast] tile 50/100 ( 50.0%)")
         emit("step_end", step = paste0("c3_", v), rc = 0L, seconds = 0.1, maxrss_bytes = 1e8)
         na_frac <- as.numeric(sc$na_frac[[v]] %||% 0)
-        with_value <- n
+        has <- rep(FALSE, if (level == "participant") length(pids) else n)
         for (c in vc) {
-          name <- if (c %in% reserved) paste0(c, "_", v, "_dup") else c
+          name <- if (level == "episode" && c %in% reserved) paste0(c, "_", v, "_dup") else c
           vals <- round(seq_len(n) / 7 + i, 4)
           if (na_frac > 0) vals[seq_len(floor(n * na_frac))] <- NA
-          with_value <- sum(!is.na(vals))
+          if (level == "participant") vals <- per_participant(vals)
+          has <- has | !is.na(vals)
           cols[[name]] <- vals
           # A custom column's row comes from the user's definition (label, unit, description),
           # as spacescans.custom.feature_rows builds it; a catalog column's from the dictionary.
           d <- custom[[v]]
+          r <- registered[[v]]
           feats[[length(feats) + 1L]] <- if (!is.null(d)) {
             own <- d$value_labels[[c]]
             unit <- d$value_units[[c]]
@@ -313,33 +390,60 @@ if (is.null(value)) {
             detail <- d$description %||% ""
             if (!is.null(unit) && nzchar(unit)) detail <- trimws(paste0(detail, " Unit: ", unit, "."))
             list(feature_name = name, short_description = short, detailed_description = detail)
+          } else if (!is.null(r)) {
+            rv <- Filter(function(x) identical(x$name, c), r$variables)[[1]]
+            list(feature_name = name, short_description = r$name,
+                 detailed_description = trimws(paste0(rv$description %||% r$description %||% "",
+                                                       if (!is.null(rv$unit)) paste0(" Unit: ", rv$unit, "."))))
           } else {
             list(feature_name = name, short_description = paste("fake", c),
                  detailed_description = paste("fake feature", c, "of", v))
           }
         }
-        cov[[length(cov) + 1L]] <- list(variable = v, episodes = n, with_value = with_value,
-                                        pct = round(100 * with_value / n, 1))
+        with_value <- sum(has)
+        cov[[length(cov) + 1L]] <- if (level == "participant" && !identical(sc$coverage_shape, "patients")) {
+          list(variable = v, experiment = v, participants = length(pids), with_value = with_value,
+               pct = round(100 * with_value / length(pids), 2), episodes = n)
+        } else if (level == "participant") {
+          # A bridge that keeps the episode-shaped records and adds the participant counts.
+          list(variable = v, experiment = v, episodes = n, with_value = n, pct = 100,
+               patients = length(pids), patients_with_value = with_value)
+        } else {
+          list(variable = v, episodes = n, with_value = with_value, pct = round(100 * with_value / n, 1))
+        }
         steps[[length(steps) + 1L]] <- list(name = paste0("c3_", v), status = "ran", seconds = 0.1,
                                             rc = 0L, maxrss_bytes = 1e8, cache_key = paste0("key_", v))
       }
-      ids <- seq_len(n) - 1
-      if (isTRUE(sc$bad_ids)) ids <- rev(ids)
-      ex <- data.frame(episode_id = ids)
-      for (nm in names(cols)) ex[[nm]] <- cols[[nm]]
-      exp_path <- file.path(args$run_dir, "exposures.parquet")
-      write_parquet(ex, exp_path, schema = parquet_schema(episode_id = "INT64"))
+      if (level == "participant") {
+        ex <- data.frame(pid = pids, stringsAsFactors = FALSE)
+        for (nm in names(cols)) ex[[nm]] <- cols[[nm]]
+        exp_path <- file.path(args$run_dir, "exposures.parquet")
+        write_parquet(ex, exp_path)
+      } else {
+        ids <- seq_len(n) - 1
+        if (isTRUE(sc$bad_ids)) ids <- rev(ids)
+        ex <- data.frame(episode_id = ids)
+        for (nm in names(cols)) ex[[nm]] <- cols[[nm]]
+        exp_path <- file.path(args$run_dir, "exposures.parquet")
+        write_parquet(ex, exp_path, schema = parquet_schema(episode_id = "INT64"))
+      }
       feat_path <- file.path(args$run_dir, "feature_dictionary.csv")
       write.csv(do.call(rbind, lapply(feats, as.data.frame)), feat_path, row.names = FALSE)
       prov_path <- file.path(args$run_dir, "provenance.json")
       writeLines(toJSON(list(spacescans = list(version = version, code_fp = "sha256:fake"),
-                             variables = vars, buffer_m = args$buffer_m, threads = args$threads,
+                             variables = vars, output_level = if (!isTRUE(sc$ignore_level)) level,
+                             buffer_m = args$buffer_m, threads = args$threads,
                              cache = list(dir = args$cache_dir), platform = "macOS-15.0-arm64"),
                         auto_unbox = TRUE, null = "null"), prov_path)
-      list(exposures = exp_path, rows = n, episodes = n, patients = length(unique(co$pid)),
-           features = feat_path, coverage = cov, steps = steps,
-           failed = as.list(unlist(sc$failed)), skipped = list(),
-           warnings = sc$warnings %||% list(), provenance = prov_path)
+      out <- list(exposures = exp_path, rows = nrow(ex), episodes = n, patients = length(unique(co$pid)),
+                  features = feat_path, coverage = cov, steps = steps,
+                  failed = as.list(unlist(sc$failed)), skipped = list(),
+                  warnings = sc$warnings %||% list(), provenance = prov_path)
+      if (!isTRUE(sc$ignore_level) && !isTRUE(sc$no_level_echo)) {
+        out$output_level <- level
+        out$participants <- length(unique(co$pid))
+      }
+      out
     },
     `cache-info` = list(cache_dir = args$cache_dir, entries = 2L, bytes = 2048L,
                         oldest = "2026-10-01T00:00:00", newest = "2026-10-12T00:00:00",
@@ -354,6 +458,48 @@ if (is.null(value)) {
     templates = list(templates = list(
       list(name = "c3/bg_us_demo", kind = "c3", file = "c3/bg_us_demo.yaml", sha256 = "abc"),
       list(name = "c4/ndi_demo", kind = "c4", file = "c4/ndi_demo.yaml", sha256 = "def"))),
+    `dataset-register` = {
+      reg <- read_registry()
+      paths <- unlist(args$paths)
+      seen$paths <- paths
+      seen$datasets_dir_env <- Sys.getenv("SPACESCANS_DATASETS_DIR")
+      missing_files <- paths[!file.exists(paths)]
+      if (length(missing_files)) fail("config", sprintf("file not found: %s", missing_files[1]))
+      i <- find_dataset(reg, args$name)
+      if (!is.na(i) && !isTRUE(args$overwrite)) {
+        fail("config", sprintf("a dataset named %s is already registered", args$name),
+             details = list(name = args$name), hint = "pass overwrite=True to replace it")
+      }
+      vars <- args$variables %||% switch(args$kind,
+        polygon_table = list(list(name = "value")),
+        raster = list(list(name = "band1")),
+        features = list(list(name = paste0(args$name, "_dist_m"), unit = "m")))
+      md <- args$metadata %||% list()
+      rec <- list(id = paste(sample(c(0:9, letters[1:6]), 32, replace = TRUE), collapse = ""),
+                  name = args$name, kind = args$kind, temporal = args$temporal, key = args$key,
+                  variables = vars, source = md$source, version = md$version,
+                  description = md$description, license_note = md$license_note,
+                  visibility = md$visibility %||% "private", owner = md$owner,
+                  created_utc = "2026-10-16T20:00:00Z",
+                  files = as.list(sprintf("prepared/part-%d.parquet", seq_along(paths))),
+                  checksum = "sha256:fake", spacescans_version = version)
+      if (!is.na(i)) reg[[i]] <- rec else reg[[length(reg) + 1L]] <- rec
+      write_registry(reg)
+      list(dataset = rec, root = registry_root())
+    },
+    `dataset-list` = list(datasets = read_registry(), root = registry_root()),
+    `dataset-get` = {
+      reg <- read_registry()
+      list(dataset = reg[[dataset_or_fail(reg, args$name_or_id)]], root = registry_root())
+    },
+    `dataset-remove` = {
+      reg <- read_registry()
+      i <- dataset_or_fail(reg, args$name_or_id)
+      rec <- reg[[i]]
+      reg[[i]] <- NULL
+      write_registry(reg)
+      list(dataset = rec, root = registry_root())
+    },
     ping = list(pong = TRUE, echo = args$echo),
     fail("protocol", sprintf("unknown command '%s'", command), exit = 2L)
   )

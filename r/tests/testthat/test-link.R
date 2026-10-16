@@ -5,7 +5,7 @@ link <- function(cohort = fake_cohort(), variables = c("ndi", "walkability"), ..
 test_that("ss_link() joins the exposures onto the cohort, keeping its types and attributes", {
   dir <- local_fake_bridge()
   co <- fake_cohort()
-  res <- link(co)
+  res <- link(co, output_level = "episode")
   expect_equal(names(res), c(names(co), "ndi", "NatWalkInd"))
   expect_identical(res[names(co)], structure(co, coverage = NULL), ignore_attr = TRUE)
   expect_s3_class(res$sex, "factor")
@@ -21,6 +21,9 @@ test_that("ss_link() joins the exposures onto the cohort, keeping its types and 
   expect_equal(info$steps$name, c("c3_ndi", "c3_walkability"))
   expect_equal(info$patients, 4L)
   expect_null(info$run_dir)
+  expect_equal(attr(res, "output_level"), "episode")
+  expect_equal(info$output_level, "episode")
+  expect_equal(last_request(dir, "link")$args$output_level, "episode")
 })
 
 test_that("only the five cohort columns reach Python, in a private run directory that is removed", {
@@ -33,7 +36,9 @@ test_that("only the five cohort columns reach Python, in a private run directory
   expect_equal(seen$run_dir_mode, "700")
   expect_equal(seen$cohort_mode, "600")
   expect_false(dir.exists(req$args$run_dir))
-  expect_equal(unlist(req$args$reserved_names), names(fake_cohort()))
+  expect_length(unlist(req$args$reserved_names), 0L)     # a participant table takes no user names
+  expect_equal(req$args$output_level, "participant")      # the default, always sent
+  expect_null(req$args$datasets)
   expect_equal(req$args$executor, "subprocess")
   expect_equal(req$args$buffer_m, 270L)
   expect_equal(req$client$name, "spacescans-r")
@@ -66,20 +71,21 @@ test_that("columns whose names are taken get the web's _<exp>_dup suffix", {
   dir <- local_fake_bridge()
   co <- fake_cohort()
   co$ndi <- "user value"
-  res <- link(co, "ndi")
+  res <- link(co, "ndi", output_level = "episode")
+  expect_equal(unlist(last_request(dir, "link")$args$reserved_names), names(co))
   expect_equal(res$ndi, rep("user value", 6))
   expect_true("ndi_ndi_dup" %in% names(res))
 })
 
 test_that("a variable with fewer than 90% matched episodes warns", {
   dir <- local_fake_bridge(list(link = list(na_frac = list(walkability = 0.5))))
-  expect_warning(res <- link(), "only 50.0% of episodes got a walkability value")
+  expect_warning(res <- link(output_level = "episode"), "only 50.0% of episodes got a walkability value")
   expect_equal(sum(is.na(res$NatWalkInd)), 3L)
 })
 
 test_that("episode ids that do not match the cohort are an internal error", {
   dir <- local_fake_bridge(list(link = list(bad_ids = TRUE)))
-  e <- tryCatch(link(), error = identity)
+  e <- tryCatch(link(output_level = "episode"), error = identity)
   expect_s3_class(e, "spacescans_error_internal")
   expect_match(conditionMessage(e), "episode_id 0..5")
   expect_true(dir.exists(e$run_dir))
@@ -192,6 +198,8 @@ test_that("arguments are checked before Python starts", {
   expect_error(ss_link(fake_cohort(), "ndi", buffer_m = 0), "`buffer_m` must be .* at least 1", class = "spacescans_error_config")
   expect_error(ss_link(fake_cohort(), character()), class = "spacescans_error_config")
   expect_error(ss_link(fake_cohort(), "ndi", threads = 0), class = "spacescans_error_config")
+  expect_error(ss_link(fake_cohort(), "ndi", output_level = "patient"), '"participant", "episode"',
+               class = "spacescans_error_config")
   bad <- fake_cohort()
   bad$latitude[2] <- NA
   expect_error(ss_link(bad, "ndi"), class = "spacescans_error_cohort")
@@ -320,7 +328,7 @@ test_that("each link warning is shown once (review F4)", {
 
 test_that("an error while joining keeps the run directory and says how to remove it (review P4)", {
   dir <- local_fake_bridge(list(link = list(bad_ids = TRUE)))
-  e <- tryCatch(link(), error = identity)
+  e <- tryCatch(link(output_level = "episode"), error = identity)
   expect_s3_class(e, "spacescans_error_internal")
   expect_match(conditionMessage(e), paste0("Run directory kept at ", e$run_dir), fixed = TRUE)
   expect_match(conditionMessage(e), "unlink(", fixed = TRUE)
@@ -359,7 +367,7 @@ test_that("a data.table comes back extendable by reference, the input untouched 
   dir <- local_fake_bridge()
   co <- dt_fun("as.data.table")(fake_cohort())
   before <- names(co)
-  res <- link(co)
+  res <- link(co, output_level = "episode")
   expect_s3_class(res, "data.table")
   expect_equal(names(co), before)
   expect_null(attr(co, "features"))
@@ -377,4 +385,124 @@ test_that("bridges that must not outlive R are told R's pid; a persistent job is
   job <- link(run_dir = rd, wait = FALSE)
   ss_job_wait(job, progress = FALSE)
   expect_equal(attr(last_request(dir, "link"), "seen")$bridge_parent, "")
+})
+
+# --- participant level (phase D: the default) ----------------------------------
+
+test_that("by default ss_link() returns one row per participant, in order of first appearance", {
+  dir <- local_fake_bridge()
+  co <- fake_cohort()
+  res <- link(co)
+  expect_s3_class(res, "data.frame")
+  expect_equal(names(res), c("pid", "ndi", "NatWalkInd"))      # no dates, coordinates or episode ids
+  expect_equal(res$pid, c("A", "B", "C", "D"))
+  expect_equal(nrow(res), 4L)
+  # the fake bridge weights each episode by its days (366 for every fake episode)
+  ep <- round(seq_len(6) / 7 + 1, 4)
+  expect_equal(res$ndi, c(mean(ep[1:2]), ep[3], mean(ep[4:5]), ep[6]))
+  expect_equal(attr(res, "output_level"), "participant")
+  cov <- attr(res, "coverage")
+  expect_equal(names(cov)[1:4], c("variable", "participants", "with_value", "pct"))
+  expect_equal(cov$participants, c(4L, 4L))
+  expect_equal(cov$pct, c(100, 100))
+  expect_equal(attr(res, "features")$feature_name, c("ndi", "NatWalkInd"))
+  expect_equal(attr(res, "provenance")$output_level, "participant")
+  info <- attr(res, "spacescans")
+  expect_equal(info$output_level, "participant")
+  expect_equal(info$participants, 4L)
+  expect_equal(info$episodes, 6L)
+  expect_null(attr(res, "study"))                 # a new table, not the user's data frame
+  expect_equal(last_request(dir, "link")$args$output_level, "participant")
+})
+
+test_that("pid keeps the type of the user's id column, whatever it is called", {
+  dir <- local_fake_bridge()
+  co <- fake_cohort()
+  co$pid <- c(101L, 101L, 7L, 55L, 55L, 9L)
+  res <- link(co, "ndi")
+  expect_identical(res$pid, c(101L, 7L, 55L, 9L))
+  co$pid <- factor(c("x", "x", "y", "z", "z", "w"), levels = c("w", "x", "y", "z"))
+  res <- link(co, "ndi")
+  expect_identical(res$pid, factor(c("x", "y", "z", "w"), levels = c("w", "x", "y", "z")))
+  names(co)[names(co) == "pid"] <- "participant_id"
+  res <- link(co, "ndi", cols = c(pid = "participant_id"))
+  expect_equal(names(res), c("pid", "ndi"))
+  expect_equal(as.character(res$pid), c("x", "y", "z", "w"))
+})
+
+test_that("participants without a value are kept with NA, and a low linkage rate counts participants", {
+  dir <- local_fake_bridge(list(link = list(na_frac = list(walkability = 0.5))))
+  expect_warning(res <- link(), "only 50.0% of participants got a walkability value")
+  expect_equal(res$pid, c("A", "B", "C", "D"))
+  expect_equal(is.na(res$NatWalkInd), c(TRUE, TRUE, FALSE, FALSE))
+  cov <- attr(res, "coverage")
+  expect_equal(cov$with_value[cov$variable == "walkability"], 2L)
+})
+
+test_that("a participant table that does not match the cohort is an internal error", {
+  dir <- local_fake_bridge(list(link = list(bad_pids = TRUE)))
+  e <- tryCatch(link(), error = identity)
+  expect_s3_class(e, "spacescans_error_internal")
+  expect_match(conditionMessage(e), "expected 4 participants in order of first appearance")
+  expect_true(dir.exists(e$run_dir))
+  unlink(e$run_dir, recursive = TRUE)
+})
+
+test_that("a bridge that returns episodes for a participant request is refused with the ss_install() hint", {
+  dir <- local_fake_bridge(list(link = list(ignore_level = TRUE)))
+  e <- tryCatch(link(), error = identity)
+  expect_s3_class(e, "spacescans_error_protocol")
+  expect_match(conditionMessage(e), "returned one row per location episode")
+  expect_match(e$hint, "ss_install()", fixed = TRUE)
+  unlink(e$run_dir, recursive = TRUE)
+  # the same bridge still gives what an episode-level request asks for
+  res <- link(output_level = "episode")
+  expect_equal(nrow(res), 6L)
+})
+
+test_that("a participant table is recognised by its shape when the bridge does not echo the level", {
+  dir <- local_fake_bridge(list(link = list(no_level_echo = TRUE)))
+  res <- link()
+  expect_equal(attr(res, "output_level"), "participant")
+  expect_equal(res$pid, c("A", "B", "C", "D"))
+})
+
+test_that("linkage rates a bridge reports as patients are shown per participant", {
+  dir <- local_fake_bridge(list(link = list(coverage_shape = "patients",
+                                            na_frac = list(walkability = 0.5))))
+  expect_warning(res <- link(), "only 50.0% of participants")
+  cov <- attr(res, "coverage")
+  expect_equal(names(cov)[1:4], c("variable", "participants", "with_value", "pct"))
+  expect_equal(cov$participants, c(4L, 4L))
+  expect_equal(cov$with_value, c(4L, 2L))
+  expect_equal(cov$pct, c(100, 50))
+  expect_false(any(c("patients", "patients_with_value") %in% names(cov)))
+})
+
+test_that("a data.table cohort gives a data.table participant table (review F7)", {
+  pkg <- "data.table"
+  skip_if_not_installed(pkg)
+  dt_fun <- function(name) getExportedValue(pkg, name)
+  dir <- local_fake_bridge()
+  co <- dt_fun("as.data.table")(fake_cohort())
+  res <- link(co)
+  expect_s3_class(res, "data.table")
+  expect_equal(names(res), c("pid", "ndi", "NatWalkInd"))
+  expect_equal(attr(res, "output_level"), "participant")
+  expect_no_warning(dt_fun("set")(res, j = "flag", value = 1L))
+})
+
+test_that("no participant id reaches job.json or the request", {
+  dir <- local_fake_bridge()
+  co <- fake_cohort()
+  co$pid <- c("PIDQ1", "PIDQ1", "PIDQ2", "PIDQ3", "PIDQ3", "PIDQ4")
+  res <- link(co, keep = TRUE)
+  rd <- attr(res, "spacescans")$run_dir
+  on.exit(unlink(rd, recursive = TRUE))
+  for (f in c("job.json", "request.json", "result.json", "events.jsonl")) {
+    expect_false(any(grepl("PIDQ", readLines(file.path(rd, f)), fixed = TRUE)), label = f)
+  }
+  job <- jsonlite::read_json(file.path(rd, "job.json"))
+  expect_equal(job$meta$output_level, "participant")
+  expect_equal(job$meta$participants, 4L)
 })

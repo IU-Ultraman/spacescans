@@ -7,29 +7,35 @@
 ss_coverage(cohort, variables, cols = NULL, custom = NULL)
 }
 \arguments{
-\item{cohort}{A data frame with one row per residential episode, or the
+\item{cohort}{A data frame with one row per location episode, or the
 path of a CSV or Parquet file.}
 
 \item{variables}{Catalog variable keys, for example
-\code{c("ndi", "walkability")} (see \code{\link[=ss_catalog]{ss_catalog()}}). Keys of \code{custom}
-datasets are added automatically.}
+\code{c("ndi", "walkability")} (see \code{\link[=ss_catalog]{ss_catalog()}}). The variables of
+\code{custom} datasets are added automatically, so \code{character()} links the
+custom datasets alone.}
 
 \item{cols}{Your column names for the required columns, for example
-\code{c(pid = "patient_id", startDate = "start", endDate = "end", longitude = "lon", latitude = "lat")}.}
+\code{c(pid = "participant_id", startDate = "start", endDate = "end", longitude = "lon", latitude = "lat")}.}
 
-\item{custom}{A custom dataset from \code{\link[=ss_custom_polygon]{ss_custom_polygon()}} or
-\code{\link[=ss_custom_raster]{ss_custom_raster()}}, or a list of them.}
+\item{custom}{Your own datasets: a dataset registered with
+\code{\link[=ss_register_dataset]{ss_register_dataset()}} (its name or id, or the record), a definition
+from \code{\link[=ss_custom_polygon]{ss_custom_polygon()}} or \code{\link[=ss_custom_raster]{ss_custom_raster()}}, or a list (or
+character vector) of them.}
 }
 \value{
 A data frame with one row per variable: \code{variable},
 \code{coverage_pct} (or \code{pct}), episodes in the time window, in the region,
-covered, and notes.
+covered, and notes; attribute \code{episodes}, the number of location
+episodes.
 }
 \description{
-For each variable, how many cohort episodes fall inside its years and
-region, from the catalog's coverage years and a bounding box for the
-contiguous US. It runs no pipeline step and needs no data. Like
-\code{\link[=ss_link]{ss_link()}}, only the five required columns are handed to Python.
+For each variable, how many location episodes of the cohort fall inside
+its years and region, from the catalog's coverage years and a bounding
+box for the contiguous US. It runs no pipeline step and needs no data.
+Like \code{\link[=ss_link]{ss_link()}}, only the five required columns are handed to Python.
+The estimate counts location episodes whatever output level you link
+at: it checks dates and locations, before any value exists.
 }
 \examples{
 \dontrun{

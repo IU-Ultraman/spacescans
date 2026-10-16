@@ -7,7 +7,7 @@ wait_for <- function(cond, timeout = 15) {
 test_that("wait = FALSE returns a job whose result is the linked cohort", {
   dir <- local_fake_bridge(list(link = list(sleep_s = 1)))
   co <- fake_cohort()
-  job <- ss_link(co, "ndi", data_dir = tempdir(), cache = FALSE, wait = FALSE)
+  job <- ss_link(co, "ndi", output_level = "episode", data_dir = tempdir(), cache = FALSE, wait = FALSE)
   expect_s3_class(job, "ss_job")
   st <- ss_job_status(job)
   expect_equal(st$state, "running")
@@ -39,8 +39,8 @@ test_that("a job with an explicit run_dir can be attached again, with or without
   dir <- local_fake_bridge(list(link = list(sleep_s = 0.5)))
   co <- fake_cohort()
   rd <- file.path(withr::local_tempdir(), "job1")
-  job <- ss_link(co, c("ndi", "walkability"), data_dir = tempdir(), cache = FALSE, wait = FALSE,
-                 run_dir = rd, keep = TRUE)
+  job <- ss_link(co, c("ndi", "walkability"), output_level = "episode", data_dir = tempdir(),
+                 cache = FALSE, wait = FALSE, run_dir = rd, keep = TRUE)
   expect_true(wait_for(function() ss_job_status(job)$state != "running"))
   again <- ss_job_attach(rd, cohort = co)
   expect_equal(ss_job_status(again)$state, "succeeded")
@@ -83,4 +83,39 @@ test_that("a step counts as done only when it ends with rc 0 (review rux F8)", {
   st$handle(list(ev = "step_end", step = "c4_vnl", rc = -15L, cancelled = TRUE, overall = 0.65))
   expect_equal(st$frac, 0.3)
   expect_equal(st$overall, 0.65)
+})
+
+test_that("a participant-level job gives the participant table, attached with or without the cohort", {
+  dir <- local_fake_bridge(list(link = list(sleep_s = 0.5)))
+  co <- fake_cohort()
+  co$pid <- c(11L, 11L, 12L, 13L, 13L, 14L)
+  rd <- file.path(withr::local_tempdir(), "job3")
+  job <- ss_link(co, c("ndi", "walkability"), data_dir = tempdir(), cache = FALSE, wait = FALSE,
+                 run_dir = rd, keep = TRUE)
+  res <- ss_job_result(job, progress = FALSE)
+  expect_identical(res$pid, c(11L, 12L, 13L, 14L))
+  expect_equal(names(res), c("pid", "ndi", "NatWalkInd"))
+  again <- ss_job_result(ss_job_attach(rd, cohort = co))
+  expect_identical(again$pid, res$pid)                      # the cohort gives back the id type
+  expect_equal(again$ndi, res$ndi)
+  bare <- ss_job_result(ss_job_attach(rd))
+  expect_identical(bare$pid, c("11", "12", "13", "14"))     # without it, ids are text
+  expect_equal(bare$ndi, res$ndi)
+  expect_equal(attr(bare, "output_level"), "participant")
+})
+
+test_that("a job.json written before output levels existed is read as episode level", {
+  dir <- local_fake_bridge()
+  co <- fake_cohort()
+  rd <- file.path(withr::local_tempdir(), "job4")
+  job <- ss_link(co, "ndi", output_level = "episode", data_dir = tempdir(), cache = FALSE,
+                 wait = FALSE, run_dir = rd, keep = TRUE)
+  ss_job_wait(job, progress = FALSE)
+  info <- jsonlite::read_json(file.path(rd, "job.json"))
+  info$meta$output_level <- NULL                             # as spacescans 0.2 wrote it
+  info$meta$participants <- NULL
+  writeLines(jsonlite::toJSON(info, auto_unbox = TRUE, null = "null"), file.path(rd, "job.json"))
+  res <- ss_job_result(ss_job_attach(rd, cohort = co))
+  expect_equal(names(res), c(names(co), "ndi"))
+  expect_equal(attr(res, "output_level"), "episode")
 })
