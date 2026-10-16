@@ -12,11 +12,11 @@ a year column (``key={"year_column": ...}``, default a column called
 WGS84 by definition), drops empty geometries, repairs invalid polygons,
 refuses data that does not touch the continental US, and writes the
 geometries alone (no attribute columns) as GeoParquet in EPSG:5070 (NAD83 /
-Conus Albers, metres): ``features.parquet``, or ``features_<year>.parquet``
+Conus Albers, meters): ``features.parquet``, or ``features_<year>.parquet``
 per year.
 
 The linked value is one column (default ``<name>_dist_m``): the planar
-distance in EPSG:5070 metres from the location (the cohort row's point, no
+distance in EPSG:5070 meters from the location (the cohort row's point, no
 buffer) to the nearest feature, 0 inside a polygon. The search is exact
 (an STR-tree nearest query over every feature of the period), so the result
 does not depend on how far away the nearest feature is or on the other
@@ -211,7 +211,7 @@ def _variable(variables: Any, name: str, family: str) -> dict:
     var = dict(vars_[0])
     var["unit"] = var.get("unit") or "m"
     var["description"] = var.get("description") or (
-        f"Distance to the nearest {family} of {name} (metres, EPSG:5070)")
+        f"Distance to the nearest {family} of {name} (meters, EPSG:5070)")
     return var
 
 
@@ -317,7 +317,7 @@ def prepare_features(inputs: Sequence[Input], work: Path, *, name: str, temporal
                     details=details, originals=originals,
                     description=f"Registered {temporal} {family} features ({details['feature_count']:,}"
                                 f" features{when}); value: distance to the nearest feature in "
-                                "metres.")
+                                "meters.")
 
 
 def features_definition(record: DatasetRecord) -> dict[str, Any]:
@@ -380,7 +380,7 @@ def nearest_distances(x: np.ndarray, y: np.ndarray, geometries: Sequence[Any]) -
 
 
 def cohort_points(cohort_parquet: str | os.PathLike) -> Any:
-    """``geoid``, ``x``, ``y`` (EPSG:5070 metres) of each cohort row, as the steps see them.
+    """``geoid``, ``x``, ``y`` (EPSG:5070 meters) of each cohort row, as the steps see them.
 
     ``geoid`` is the row's episode id, exactly as the pipeline's
     ``demo_conus`` adapter derives it from ``input.parquet``.

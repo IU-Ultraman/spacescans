@@ -265,7 +265,7 @@ def test_the_run_is_reported_like_any_custom_link(world):
                                            "t_daily", "site_m", "sites_static_dist_m"]
     feats = res.features.set_index("feature_name")
     assert feats.loc["site_m", "short_description"] == "Distance to the nearest point of " \
-                                                       "Sites yearly (metres, EPSG:5070)"
+                                                       "Sites yearly (meters, EPSG:5070)"
     keys = [custom.get_dataset(n, world["root"]).variable_key for n in world["names"]]
     assert res.coverage["variable"].tolist() == keys
     prov = res.provenance["custom"]

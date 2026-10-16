@@ -27,7 +27,7 @@ Three kinds (``kind``) and their time structure (``temporal``):
     Point, line or polygon geometries (one geometry family per dataset) in a
     GeoPackage, GeoJSON or zipped Shapefile, ``static`` or ``yearly`` (one
     file per year, or a year column). The linked value is the distance in
-    metres from each location to the nearest feature. Prepared as GeoParquet
+    meters from each location to the nearest feature. Prepared as GeoParquet
     in EPSG:5070 (one file per year for a yearly dataset).
 
 Registration validates everything it can before anything is stored, and the
@@ -577,7 +577,7 @@ def register(paths: Any, *, name: str, kind: str, temporal: str,
     ``{"name", "unit", "description"}`` (tables may add ``"column"``, the
     file's column, when the name differs; rasters may add ``"band"``).
     Defaults: every numeric column of a table; band 1 of a raster, named after
-    the dataset; for features one distance column ``<name>_dist_m`` (metres).
+    the dataset; for features one distance column ``<name>_dist_m`` (meters).
 
     ``metadata``: ``source``, ``version``, ``description``, ``license_note``,
     ``visibility`` (``"private"``, the default, or ``"deployment"``) and

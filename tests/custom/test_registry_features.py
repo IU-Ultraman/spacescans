@@ -42,7 +42,7 @@ def test_static_points_become_geoparquet_in_conus_albers(tmp_path, root):
     assert rec.files == ["features.parquet"] and rec.key is None
     assert rec.variables == [{"name": "superfund_sites_dist_m", "unit": "m",
                               "description": "Distance to the nearest point of Superfund sites "
-                                             "(metres, EPSG:5070)"}]
+                                             "(meters, EPSG:5070)"}]
     stored = gpd.read_parquet(rec.path("features.parquet"))
     assert stored.crs.to_epsg() == 5070
     assert list(stored.columns) == ["geometry"]           # no attribute columns kept
