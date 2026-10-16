@@ -4,20 +4,24 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "spacescans-pipeline"
-version = "0.2.7"
-description = "Config-driven environmental exposure linkage pipeline (C3 boundary/grid weights + C4 patient TWA)"
+version = "0.3.0"
+description = "Link time-referenced geolocation data (location episodes) to the spatial and contextual exposome: spatial weights (C3) and day-weighted linkage (C4), per participant or per episode"
 readme = "README.md"
 requires-python = ">=3.10"
+# TODO(author): no license has been chosen. Add `license = "<SPDX id>"` and
+# `license-files = ["LICENSE"]` here once the license is decided (docs/release.md).
 authors = [{name = "Regenstrief Institute"}]
 keywords = ["exposome", "geospatial", "ehr", "patient-exposure-linkage"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Science/Research",
-    "Operating System :: OS Independent",
+    "Operating System :: MacOS",
+    "Operating System :: POSIX :: Linux",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Scientific/Engineering",
 ]
 
@@ -63,8 +67,10 @@ dev = [
 spacescans = "spacescans.cli:main"
 
 [project.urls]
+Homepage = "https://www.spacescans.com"
 Repository = "https://github.com/IU-Ultraman/spacescans"
 Issues = "https://github.com/IU-Ultraman/spacescans/issues"
+Changelog = "https://github.com/IU-Ultraman/spacescans/blob/main/CHANGELOG.md"
 
 [tool.setuptools.packages.find]
 where = ["src"]
