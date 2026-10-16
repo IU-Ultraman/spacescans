@@ -6,6 +6,8 @@
   `output_level = c("participant", "episode")` chooses the level; use
   `output_level = "episode"` for the behaviour of 0.2 (your data frame with
   the exposure columns added, one row per location episode).
+* `output_level` is the third argument of `ss_link()`: a call that passed
+  `data_dir` by position must name it (`data_dir = `).
 
 ## New features
 
