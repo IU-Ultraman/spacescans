@@ -72,6 +72,71 @@ test_that("a GitHub install points ss_install() at the same commit's source arch
   expect_equal(old$url, url)
 })
 
+# An r-universe build records only RemoteUrl, RemoteRef and RemoteSha (no RemoteType,
+# RemoteUsername or RemoteRepo). The DESCRIPTION is written as r-universe writes it and read
+# back with packageDescription(), as ss_install() reads the installed one.
+.synthetic_description <- function(fields) {
+  lib <- withr::local_tempdir(.local_envir = parent.frame())
+  dir.create(file.path(lib, "spacescans"))
+  base <- c(Package = "spacescans", Type = "Package",
+            Title = "Link Time-Referenced Geolocation Data to the Spatial and Contextual Exposome",
+            Version = "0.3.0", License = "MIT + file LICENSE",
+            "Config/spacescans/version" = "0.3.0", "Config/spacescans/protocol" = "1",
+            Repository = "https://iu-ultraman.r-universe.dev", NeedsCompilation = "no")
+  all <- base
+  all[names(fields)] <- fields                                     # replace or add, by name
+  write.dcf(as.data.frame(as.list(all), check.names = FALSE, optional = TRUE),
+            file.path(lib, "spacescans", "DESCRIPTION"))
+  utils::packageDescription("spacescans", lib.loc = lib)
+}
+
+test_that("an r-universe install points ss_install() at the recorded commit", {
+  sha <- strrep("d4", 20)
+  desc <- .synthetic_description(c(RemoteUrl = "https://github.com/IU-Ultraman/spacescans",
+                                   RemoteRef = "v0.3.0", RemoteSha = sha))
+  expect_null(desc[["RemoteType"]])
+  src <- spacescans:::.ss_github_source(desc)
+  url <- sprintf("https://github.com/IU-Ultraman/spacescans/archive/%s.tar.gz", sha)
+  expect_equal(src$kind, "github")
+  expect_equal(src$url, url)
+  expect_equal(src$commit, sha)
+  expect_equal(src$repo, "IU-Ultraman/spacescans")
+  expect_equal(spacescans:::.ss_requirement(src, "geo"), paste0("spacescans-pipeline[geo] @ ", url))
+  local_mocked_bindings(.ss_pin = function() list())               # r-universe ships no wheel or pin
+  expect_identical(spacescans:::.ss_find_wheel(github = src), src)
+  # the same with a ".git" URL, a trailing slash, or remotes::install_git()'s RemoteType
+  for (u in c("https://github.com/IU-Ultraman/spacescans.git", "https://github.com/IU-Ultraman/spacescans/")) {
+    expect_equal(spacescans:::.ss_github_source(.synthetic_description(c(RemoteUrl = u, RemoteSha = sha)))$url, url)
+  }
+  git <- .synthetic_description(c(RemoteType = "xgit", RemoteUrl = "https://github.com/IU-Ultraman/spacescans.git",
+                                  RemoteSubdir = "r", RemoteRef = "HEAD", RemoteSha = sha))
+  expect_equal(spacescans:::.ss_github_source(git)$url, url)
+})
+
+test_that("an r-universe install without a commit uses the tag of the package version", {
+  desc <- .synthetic_description(c(RemoteUrl = "https://github.com/IU-Ultraman/spacescans",
+                                   RemoteRef = "v0.3.0"))
+  src <- spacescans:::.ss_github_source(desc)
+  expect_equal(src$url, "https://github.com/IU-Ultraman/spacescans/archive/refs/tags/v0.3.0.tar.gz")
+  expect_equal(src$commit, "v0.3.0")
+  # the version is the Python package's (Config/spacescans/version), not the R Version field
+  other <- .synthetic_description(c(RemoteUrl = "https://github.com/IU-Ultraman/spacescans",
+                                    "Config/spacescans/version" = "0.3.1"))
+  expect_match(spacescans:::.ss_github_source(other)$url, "/refs/tags/v0[.]3[.]1[.]tar[.]gz$")
+})
+
+test_that("RemoteUrl outside github.com, or a malformed commit, gives no source archive", {
+  sha <- strrep("e5", 20)
+  gh <- function(...) spacescans:::.ss_github_source(.synthetic_description(c(...)))
+  expect_null(gh(RemoteUrl = "https://gitlab.com/IU-Ultraman/spacescans", RemoteSha = sha))
+  expect_null(gh(RemoteUrl = "http://github.com/IU-Ultraman/spacescans", RemoteSha = sha))
+  expect_null(gh(RemoteUrl = "https://github.com/IU-Ultraman/spacescans/tree/main/r", RemoteSha = sha))
+  expect_null(gh(RemoteUrl = "https://github.com/IU-Ultraman/spacescans", RemoteSha = "abc123"))
+  expect_null(gh(RemoteType = "local", RemoteUrl = "https://github.com/IU-Ultraman/spacescans",
+                 RemoteSha = sha))
+  expect_null(gh(Repository = "CRAN"))                              # no remote fields at all
+})
+
 test_that("installs that did not come from GitHub give no source archive", {
   sha <- strrep("b2", 20)
   gh <- function(...) spacescans:::.ss_github_source(list(...))

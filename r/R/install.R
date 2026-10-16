@@ -23,11 +23,12 @@
 #' the package's `python/` directory (checked against `pin.json`), the
 #' `wheelhouse` directory, and the URL recorded in `pin.json` (downloaded and
 #' checked against its SHA-256). When there is none, as in an R package
-#' installed from GitHub with `remotes::install_github()` or pak before a
-#' release, `spacescans-pipeline` is installed from the source archive of the
-#' same GitHub commit, which those tools record in the installed package's
-#' `RemoteSha` field. The pipeline is pure Python, so building it compiles
-#' nothing.
+#' installed from GitHub with `remotes::install_github()` or pak, or from
+#' r-universe, `spacescans-pipeline` is installed from the source archive of
+#' the same GitHub commit, which those tools record in the installed package's
+#' `RemoteSha` field (r-universe records the repository as `RemoteUrl`; without
+#' a recorded commit, the tag of this package's version, `v<version>`, is
+#' used). The pipeline is pure Python, so building it compiles nothing.
 #'
 #' @param extras Python extras to add: any of `"geo"`, `"rda"`, `"nc"`,
 #'   `"hdf4"` (TEMIS needs `"hdf4"`). Extras already installed stay installed.
@@ -220,17 +221,24 @@ ss_install <- function(extras = c("geo", "rda", "nc"), python = "3.12", envdir =
   .ss_abort("install",
     sprintf("No spacescans %s wheel is bundled with this R package.", want),
     hint = paste0("Install the R package with remotes::install_github(\"IU-Ultraman/spacescans\", ",
-                  "subdir = \"r\") so ss_install() can fetch the matching Python package, or pass ",
+                  "subdir = \"r\") or from r-universe so ss_install() can fetch the matching ",
+                  "Python package, or pass ",
                   "ss_install(wheel = \"spacescans_pipeline-", want, "-py3-none-any.whl\") ",
                   "built with r/tools/build-wheel.sh."))
 }
 
 .ss_wheel_source <- function(path) list(kind = "wheel", path = path)
 
-# The GitHub commit this R package was installed from, as remotes and pak
-# record it in the installed DESCRIPTION (RemoteSha and friends; older
-# remotes wrote GithubSHA1), or NULL for any other kind of install.
-.ss_github_source <- function(desc = suppressWarnings(utils::packageDescription("spacescans"))) {
+# The GitHub commit this R package was installed from, or NULL for any other
+# kind of install. Two ways of recording it in the installed DESCRIPTION:
+# * remotes and pak: RemoteType "github" with RemoteUsername, RemoteRepo and
+#   RemoteSha (older remotes wrote GithubSHA1 and friends);
+# * r-universe (and remotes::install_git() of a GitHub URL): no RemoteType or
+#   a git one, and only RemoteUrl, RemoteRef and RemoteSha; the owner and the
+#   repository come from RemoteUrl, which must be a github.com repository URL.
+#   Without a commit, the tag of this package's version (v<version>) is used.
+.ss_github_source <- function(desc = suppressWarnings(utils::packageDescription("spacescans")),
+                              version = .ss_desc_version(desc)) {
   if (!is.list(desc)) return(NULL)
   pick <- function(...) {
     for (k in c(...)) if (!is.null(desc[[k]]) && !is.na(desc[[k]]) && nzchar(desc[[k]])) return(desc[[k]])
@@ -238,13 +246,44 @@ ss_install <- function(extras = c("geo", "rda", "nc"), python = "3.12", envdir =
   }
   type <- pick("RemoteType") %||% (if (!is.null(pick("GithubSHA1"))) "github")
   sha <- pick("RemoteSha", "GithubSHA1")
-  user <- pick("RemoteUsername", "GithubUsername")
-  repo <- pick("RemoteRepo", "GithubRepo")
-  host <- pick("RemoteHost") %||% "api.github.com"
-  if (!identical(type, "github") || is.null(sha) || is.null(user) || is.null(repo)) return(NULL)
-  if (!grepl("^[0-9a-f]{40}$", sha) || !host %in% c("api.github.com", "github.com")) return(NULL)
+  if (identical(type, "github")) {
+    user <- pick("RemoteUsername", "GithubUsername")
+    repo <- pick("RemoteRepo", "GithubRepo")
+    host <- pick("RemoteHost") %||% "api.github.com"
+    if (is.null(sha) || is.null(user) || is.null(repo)) return(NULL)
+    if (!grepl("^[0-9a-f]{40}$", sha) || !host %in% c("api.github.com", "github.com")) return(NULL)
+  } else {
+    if (!is.null(type) && !type %in% c("git", "git2r", "xgit")) return(NULL)
+    where <- .ss_github_repo_url(pick("RemoteUrl"))
+    if (is.null(where)) return(NULL)
+    user <- where[["user"]]
+    repo <- where[["repo"]]
+    if (is.null(sha)) {
+      if (is.null(version) || is.na(version) || !grepl("^[0-9]+(\\.[0-9]+)*$", version)) return(NULL)
+      tag <- paste0("v", version)
+      url <- sprintf("https://github.com/%s/%s/archive/refs/tags/%s.tar.gz", user, repo, tag)
+      return(list(kind = "github", url = url, commit = tag, repo = paste(user, repo, sep = "/")))
+    }
+    if (!grepl("^[0-9a-f]{40}$", sha)) return(NULL)
+  }
   url <- sprintf("https://github.com/%s/%s/archive/%s.tar.gz", user, repo, sha)
   list(kind = "github", url = url, commit = sha, repo = paste(user, repo, sep = "/"))
+}
+
+# Owner and repository of a github.com repository URL (https, optional ".git" or
+# trailing slash), or NULL for anything else.
+.ss_github_repo_url <- function(url) {
+  if (is.null(url) || length(url) != 1L || is.na(url)) return(NULL)
+  m <- regmatches(url, regexec("^https://(www\\.)?github\\.com/([A-Za-z0-9-]+)/([A-Za-z0-9._-]+?)(\\.git)?/?$",
+                               url, perl = TRUE))[[1]]
+  if (!length(m)) return(NULL)
+  list(user = m[[3]], repo = m[[4]])
+}
+
+# The Python package version this R package expects, from a DESCRIPTION.
+.ss_desc_version <- function(desc) {
+  if (!is.list(desc)) return(NULL)
+  desc[["Config/spacescans/version"]] %||% desc[["Version"]]
 }
 
 # What uv installs for a source, with the requested extras.

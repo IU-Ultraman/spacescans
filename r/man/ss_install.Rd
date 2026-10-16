@@ -69,11 +69,12 @@ The wheel is looked for in this order: the \code{wheel} argument, the wheel in
 the package's \verb{python/} directory (checked against \code{pin.json}), the
 \code{wheelhouse} directory, and the URL recorded in \code{pin.json} (downloaded and
 checked against its SHA-256). When there is none, as in an R package
-installed from GitHub with \code{remotes::install_github()} or pak before a
-release, \code{spacescans-pipeline} is installed from the source archive of the
-same GitHub commit, which those tools record in the installed package's
-\code{RemoteSha} field. The pipeline is pure Python, so building it compiles
-nothing.
+installed from GitHub with \code{remotes::install_github()} or pak, or from
+r-universe, \code{spacescans-pipeline} is installed from the source archive of
+the same GitHub commit, which those tools record in the installed package's
+\code{RemoteSha} field (r-universe records the repository as \code{RemoteUrl}; without
+a recorded commit, the tag of this package's version, \verb{v<version>}, is
+used). The pipeline is pure Python, so building it compiles nothing.
 }
 \examples{
 \dontrun{
