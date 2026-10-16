@@ -190,10 +190,14 @@ def _given(value: Any, temporal: str, name: str) -> dict[str, Any]:
         if year is None:
             raise DatasetError(f"{name}: the year given for it is not a year in 1900-2100")
         return {"year": year}
-    if temporal == "biweekly" and isinstance(value, (tuple, list)) and len(value) == 2:
+    if isinstance(value, (tuple, list)) and len(value) == 2:
         start, end = parse_date(value[0]), parse_date(value[1])
         if start is None or end is None:
             raise DatasetError(f"{name}: the period given for it is not two dates")
+        if temporal == "daily":
+            if start != end:
+                raise DatasetError(f"{name}: a daily file covers one day, not a period")
+            return {"start": start}
         return {"start": start, "end": end}
     start = parse_date(value)
     if start is None:

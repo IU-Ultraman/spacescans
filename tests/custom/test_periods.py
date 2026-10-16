@@ -73,6 +73,14 @@ def test_yearly_periods_from_names_mapping_and_manifest():
         assign_periods([("a.tif", None)], "yearly", manifest)
 
 
+def test_a_daily_file_may_be_given_as_a_one_day_period():
+    one = (date(2016, 1, 2), "2016-01-02")
+    assert assign_periods([("a.tif", one)], "daily") == [
+        Period(start=date(2016, 1, 2), end=date(2016, 1, 2))]
+    with pytest.raises(DatasetError, match="a daily file covers one day"):
+        assign_periods([("a.tif", ("2016-01-02", "2016-01-03"))], "daily")
+
+
 def test_daily_periods_are_single_days():
     out = assign_periods([("t_20160102.tif", None), ("t_20160101.tif", None)], "daily")
     assert out == [Period(start=date(2016, 1, 2), end=date(2016, 1, 2)),
