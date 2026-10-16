@@ -23,6 +23,20 @@ the data root (``/project``), the upload files' container paths, and the cohort 
 whose frame is asserted equal first). FAQSD's C4 table is compared after its recipe
 renames, which the web writes back into the parquet and ``link`` applies in memory.
 
+The goldens are episode-level: every run here calls ``link(..., output_level="episode")``.
+
+One deliberate difference from web 0.2.7 (manuscript comment C-19, package 0.3): FARA leaves
+a tract without a value out of the buffer mean's denominator as well as its numerator, like
+every other source; the goldens were made with the old rule (a missing value counted as
+zero). So for ``fara_tract`` the C4 table is held, at the same tolerance, to a recomputation
+under the new rule (:func:`_fara_c19_expected`: the module's join and column selection, our
+own aggregation) and to the golden on every rate cell the two rules agree on (no
+buffer-year of the episode mixes tracts with and without the value). Keys, row order and
+missing-value masks must be the golden's (the rule changes no missingness), and the partial
+and result.csv must carry the C4 table's values. The counts go to ``a4_summary.json``
+under ``c19``. The fan-in test reads the golden FARA partial, so it still checks only the
+fan-in.
+
 The data root is only read: before each run a stamp is touched in the output dir and
 afterwards no file under the data root may be newer (macOS ``.DS_Store`` files, which
 Finder writes, are reported but not counted). Wall time and each step's peak RSS go to
@@ -65,6 +79,10 @@ _TOL = os.environ.get("SPACESCANS_A4_TOL", "cross")
 #: The steps' command prefix (default: this interpreter, ``python -I -u -m spacescans``);
 #: in the frozen image the web's ``/opt/conda/bin/python /opt/conda/bin/spacescans``.
 _PREFIX = os.environ.get("SPACESCANS_A4_PREFIX")
+
+#: The runs whose values differ from the goldens on purpose (C-19, see the module docstring).
+C19_RUNS = frozenset({"fara_tract"})
+C19_TABLE = "c4_tract_fara.parquet"
 
 WEB_PREFIX = "/opt/conda/bin/python /opt/conda/bin/spacescans"
 WEB_DATA = "/project"
@@ -220,7 +238,8 @@ class A4:
                       run_dir=run_dir, buffer_m=MANIFEST["params"]["buffer_m"],
                       raster_res_m=MANIFEST["params"]["raster_res_m"], custom=custom,
                       cache=WeightCache(cache_dir, key_format="legacy-v1"),
-                      executor=executor, on_event=LogWriter.for_run_dir(run_dir))
+                      executor=executor, on_event=LogWriter.for_run_dir(run_dir),
+                      output_level="episode")
         wall = time.monotonic() - t0
         newer = _newer_files(self.data, stamp)
         record = {"result": result, "run_dir": result.run_dir, "subs": subs,
@@ -248,6 +267,120 @@ def a4(tmp_path_factory) -> A4:
 # ---------------------------------------------------------------------------
 # comparisons
 # ---------------------------------------------------------------------------
+
+def _fara_c19_expected(run_dir: Path, data_root: Path):
+    """FARA's episode-level C4 table under the C-19 rule, and the rate cells it changes.
+
+    The module's column selection (v1's R indices) and its SQLite join of the C3 weights to
+    each year's table are reused, so tract keys compare as in the run; the aggregation is
+    our own: per variable and year the weighted mean over the tracts WITH a value, per
+    episode the day-weighted mean over the years with a value, then the module's recodes.
+    A rate cell is "affected" when some year of the episode (days > 0) mixes tracts with and
+    without the value: only there do the old and the new rule differ.
+    """
+    import sqlite3
+
+    import numpy as np
+    import pandas as pd
+    import yaml
+
+    from spacescans.io.readers import read_table
+    from spacescans.linkage import fara_linkage as fl
+
+    cfg = yaml.safe_load((run_dir / "pipeline_configs" / "c4_tract_fara.yaml").read_text())
+
+    def at_root(p: str) -> Path:
+        return Path(p) if Path(p).is_absolute() else Path(data_root) / p
+
+    raw = read_table(at_root(cfg["exposure"]["file"]), key=cfg["exposure"].get("key"))
+    labels = pd.read_csv(at_root(cfg["exposure"]["label_file"]))["var"].tolist()
+    buffer = read_table(Path(cfg["source"]["file"]))
+    fara = raw[raw["year"] >= 2013]
+    fara = fara.iloc[:, [c - 1 for c in list(range(3, 16)) + [18] + list(range(32, 36))
+                         + list(range(37, 85))]].copy()
+    rates = [fara.columns[c - 1] for c in list(range(1, 14)) + list(range(15, 67))][1:]
+    years = sorted(fara["year"].unique().astype(int))
+    cohort = pd.read_parquet(run_dir / "input.parquet")
+    ep = pd.DataFrame({"PATID": cohort["pid"].astype(str), "geoid": cohort["episode_id"].astype(int),
+                       "start": pd.to_datetime(cohort["startDate"]),
+                       "end": pd.to_datetime(cohort["endDate"])})
+    num = pd.DataFrame(0.0, index=ep["geoid"], columns=rates)
+    den = pd.DataFrame(0.0, index=ep["geoid"], columns=rates)
+    affected = pd.DataFrame(False, index=ep["geoid"], columns=rates)
+    con = sqlite3.connect(":memory:")
+    try:
+        buffer.to_sql("b", con, index=False)
+        for y in years:
+            fara[fara["year"] == y][["Fips"] + rates].to_sql("t", con, index=False,
+                                                             if_exists="replace")
+            j = pd.read_sql("SELECT geoid, value AS w, t.* FROM b LEFT OUTER JOIN t "
+                            "ON b.GEOID10 = t.Fips", con)
+            lo = ep["start"].where(ep["start"] > pd.Timestamp(f"{y}-01-01"), pd.Timestamp(f"{y}-01-01"))
+            hi = ep["end"].where(ep["end"] < pd.Timestamp(f"{y}-12-31"), pd.Timestamp(f"{y}-12-31"))
+            d = ((hi - lo).dt.days + 1)
+            d = pd.Series(np.where(ep["start"].notna() & ep["end"].notna() & (d > 0),
+                                   d.fillna(0), 0.0), index=ep["geoid"].to_numpy())
+            for v in rates:
+                val = pd.to_numeric(j[v], errors="coerce")
+                has = val.notna() & j["w"].notna()
+                z = ((val * j["w"]).where(has).groupby(j["geoid"]).sum(min_count=1)
+                     / j["w"].where(has).groupby(j["geoid"]).sum(min_count=1)).reindex(d.index)
+                lacks = (val.isna() & j["w"].notna() & (j["w"] > 0)).groupby(j["geoid"]).any()
+                mixed = (lacks.reindex(d.index, fill_value=False)
+                         & has.groupby(j["geoid"]).any().reindex(d.index, fill_value=False))
+                use = z.notna() & (d > 0)
+                num[v] += np.where(use, z.fillna(0.0) * d, 0.0)
+                den[v] += np.where(use, d, 0.0)
+                affected[v] |= (mixed & (d > 0)).to_numpy()
+    finally:
+        con.close()
+    means = num / den.where(den > 0)
+    table = pd.concat([ep[["PATID", "geoid"]].reset_index(drop=True),
+                       means.reset_index(drop=True)], axis=1)
+    table = fl._apply_fara_recode(table)
+    return table[["PATID", "geoid"] + labels], affected.reset_index(drop=True), labels, rates
+
+
+def _c19_checks(golden, new, rec_dir: Path, a4: A4, tol) -> tuple[list[str], dict]:
+    """The FARA table against the C-19 recomputation, and against the golden where the rules agree."""
+    import numpy as np
+
+    gc = _golden_compare()
+    expected, affected, labels, rates = _fara_c19_expected(rec_dir, a4.data)
+    problems = [f"vs C-19 recomputation: {d}" for d in gc.compare_tables(
+        expected[list(new.columns)], new, tol=tol)]
+    g, n = gc.canonical_table(golden), gc.canonical_table(new)
+    e_aff = affected.set_index(expected["geoid"].to_numpy()).reindex(
+        n["geoid"].astype(int).to_numpy()).fillna(False)
+    if list(g.columns) != list(n.columns) or len(g) != len(n) or \
+            (g["geoid"].astype(int).to_numpy() != n["geoid"].astype(int).to_numpy()).any():
+        return problems + ["keys or columns differ from the golden"], {}
+    agree = differ = 0
+    max_abs = 0.0
+    for col in labels:
+        gf, nf = g[col].to_numpy(float), n[col].to_numpy(float)
+        if (np.isnan(gf) != np.isnan(nf)).any():
+            problems.append(f"{col}: missing-value mask differs from the golden")
+            continue
+        if col not in rates:
+            continue                      # a recoded flag: held to the recomputation above
+        rtol, atol = tol.for_column(col)
+        same = np.isclose(nf, gf, rtol=rtol, atol=atol, equal_nan=True)
+        free = ~e_aff[col].to_numpy(bool)
+        if not same[free].all():
+            problems.append(f"{col}: {int((~same[free]).sum())} unaffected cell(s) differ from "
+                            "the golden")
+        agree += int(free.sum())
+        differ += int((~same).sum())
+        both = ~np.isnan(gf) & ~np.isnan(nf)
+        if both.any():
+            max_abs = max(max_abs, float(np.abs(nf - gf)[both].max()))
+    evidence = {"rule": "C-19: units without a value leave the FARA buffer mean's denominator",
+                "rate_cells_where_rules_agree": agree,
+                "rate_cells_affected": int(e_aff[[c for c in labels if c in rates]].to_numpy().sum()),
+                "rate_cells_differing_from_golden": differ,
+                "max_abs_vs_golden": max_abs}
+    return problems, evidence
 
 def _host_to_web(text: str, rec: dict, a4: A4, *, sha8: str | None) -> str:
     from spacescans.orchestrate.execute import default_prefix
@@ -321,6 +454,12 @@ def _compare_run(name: str, rec: dict, a4: A4) -> tuple[list[str], dict]:
         g, n = pd.read_parquet(gpath), pd.read_parquet(npath)
         if rec_of.rename_in_place and rec_of.renames and gpath.name.startswith("c4_"):
             n = n.rename(columns=dict(rec_of.renames))
+        if name in C19_RUNS and gpath.name == C19_TABLE:
+            diffs, evidence["c19"] = _c19_checks(g, n, run_dir, a4, tol)
+            if diffs:
+                problems.append(f"output/{gpath.name}: " + "; ".join(diffs))
+            tables[gpath.name] = {"rows": len(g), "c19": True}
+            continue
         diffs = gc.compare_tables(g, n, tol=tol, c3=gpath.name.startswith("c3_"))
         if diffs:
             problems.append(f"output/{gpath.name}: " + "; ".join(diffs))
@@ -340,10 +479,22 @@ def _compare_run(name: str, rec: dict, a4: A4) -> tuple[list[str], dict]:
     exp = golden_run["experiment"]
     part_path = run_dir / "output" / f"result_{exp}.csv"
     result.partials[exp].to_csv(part_path, index=False)
-    diffs = gc.compare_result_csv(gdir / "output" / f"result_{exp}.as_written.csv", part_path,
-                                  tol=tol, canonical=True)
-    if diffs:
-        problems.append(f"result_{exp}.csv: " + "; ".join(diffs))
+    c19 = name in C19_RUNS
+    if c19:     # C-19: the partial carries the C4 table's values (checked above)
+        import numpy as np
+
+        part = result.partials[exp].set_index("episode_id")
+        c4 = pd.read_parquet(run_dir / "output" / C19_TABLE).set_index("geoid")
+        cols = [c for c in part.columns if c != "pid"]
+        if sorted(part.index) != sorted(c4.index) or not cols or not all(
+                np.array_equal(part[c].to_numpy(float), c4.loc[part.index, c].to_numpy(float),
+                               equal_nan=True) for c in cols):
+            problems.append(f"result_{exp}.csv: values are not the C4 table's")
+    else:
+        diffs = gc.compare_result_csv(gdir / "output" / f"result_{exp}.as_written.csv",
+                                      part_path, tol=tol, canonical=True)
+        if diffs:
+            problems.append(f"result_{exp}.csv: " + "; ".join(diffs))
 
     # result.csv: the cohort as uploaded plus link's exposures, in input order
     cohort_text = pd.read_csv(a4.cohort_csv, dtype=str, keep_default_na=False)
@@ -353,10 +504,21 @@ def _compare_run(name: str, rec: dict, a4: A4) -> tuple[list[str], dict]:
     full = pd.concat([cohort_text, exposures.drop(columns=["episode_id"])], axis=1)
     res_path = run_dir / "output" / "result.csv"
     full.to_csv(res_path, index=False)
-    diffs = gc.compare_result_csv(gdir / "output" / "result.csv", res_path, tol=tol,
-                                  canonical=False)
-    if diffs:
-        problems.append("result.csv: " + "; ".join(diffs))
+    if c19:     # C-19: exposures are the partial's values in input order; missing as the golden's
+        part = result.partials[exp].sort_values("episode_id").reset_index(drop=True)
+        if not exposures.reset_index(drop=True).equals(
+                part.drop(columns=["pid"])[list(exposures.columns)]):
+            problems.append("result.csv: exposures are not the partial's values")
+        g_res = gc.read_text_frame(gdir / "output" / "result.csv")
+        n_res = gc.read_text_frame(res_path)
+        for col in [c for c in g_res.columns if c not in cohort_text.columns]:
+            if ((g_res[col] == "") != (n_res[col] == "")).any():
+                problems.append(f"result.csv {col}: missing cells differ from the golden")
+    else:
+        diffs = gc.compare_result_csv(gdir / "output" / "result.csv", res_path, tol=tol,
+                                      canonical=False)
+        if diffs:
+            problems.append("result.csv: " + "; ".join(diffs))
     g_res = gc.read_text_frame(gdir / "output" / "result.csv")
     n_res = gc.read_text_frame(res_path)
     num_cols = [c for c in g_res.columns if c not in cohort_text.columns]
@@ -485,6 +647,8 @@ def test_fan_in_of_every_run_matches_fanin_all(a4: A4) -> None:
         path = a4.out / "runs" / f"tier2-golden-{run}" / "output" / f"result_{exp}.csv"
         if not path.is_file():
             pytest.skip(f"run {run} has not written its partial in {a4.out}")
+        if run in C19_RUNS:         # its values differ on purpose (C-19); this checks the fan-in
+            path = GOLDEN / run / "output" / f"result_{exp}.as_written.csv"
         partials[exp] = pd.read_csv(path, dtype={"pid": str})
     overlay, _subs = a4.custom_for("custom_raster")
     variables = list(fan["variables"])

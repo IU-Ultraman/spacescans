@@ -387,6 +387,41 @@ def test_gridded_daily(cohort, tmp_path):
     _assert_participant(part, _two_stage(episodes, ep, days), _pids(episodes))
 
 
+def test_gridded_daily_polygon_table_with_boundary_weights(cohort, tmp_path):
+    """A table of daily values per tract linked like a daily raster: the weights are a
+    boundary C3 table (GEOID10, weight column ``value``) joined on the table's key."""
+    pytest.importorskip("exactextract")
+    from spacescans.linkage.gridded_linkage import run_gridded
+
+    path, episodes = cohort
+    rng = np.random.default_rng(17)
+    tracts = [f"18097{t:06d}" for t in range(100, 3100, 100)]
+    weights = _weights(episodes, rng, "GEOID10", tracts, weight="value")
+    dates = pd.date_range("2015-01-01", "2015-12-31")
+    rows = [{"tract": t, "day": d, "heat": np.nan if rng.random() < 0.2 else float(rng.normal(30, 4))}
+            for t in tracts[:26] for d in dates]
+    table = pd.DataFrame(rows)
+    weights.to_parquet(tmp_path / "w.parquet", index=False)
+    table.to_parquet(tmp_path / "x.parquet", index=False)
+
+    def config(grouping, out):
+        return DatasetConfig(
+            name="daily_table", linkage_pattern="gridded", geometry_type="polygon",
+            source=SourceConfig(file=str(tmp_path / "w.parquet"), join_col="GEOID10"),
+            buffer=_buffer(path),
+            exposure=ExposureConfig(file=str(tmp_path / "x.parquet"), join_col="tract",
+                                    value_cols=["heat"], date_col="day"),
+            time=TimeConfig(years=[2015], temporal_resolution="daily", output_grouping=grouping),
+            engine=EngineConfig(), output=OutputConfig(path=str(out)))
+
+    ep, part = _run_both(run_gridded, config, tmp_path)
+    defined = _defined_areal(weights.rename(columns={"GEOID10": "tract"}), table, "tract", "heat",
+                             "day", weight="value")
+    days = {"heat": _days_for(episodes, [(d, d, d) for d in dates], defined)}
+    assert _multi(episodes, days) >= 3
+    _assert_participant(part, _two_stage(episodes, ep, days), _pids(episodes))
+
+
 def _windows(start: str, end: str, step_days: int = 14):
     starts = pd.date_range(start, end, freq=f"{step_days}D")
     return [(s, s, s + pd.Timedelta(days=step_days - 1)) for s in starts]
