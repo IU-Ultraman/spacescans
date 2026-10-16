@@ -153,6 +153,10 @@ scalar). Paths must be absolute.
 | `yaml-load` | `path` or `text` | `{"config", "path"}` |
 | `yaml-dump` | `config`, `path` (optional), `as_config` (default true) | `{"text", "path"}`; written with `yaml.safe_dump(sort_keys=False)` |
 | `ping` | `echo`, `sleep_s`, `fail_kind`, `exit_code`, `signal` | `{"pong", "echo", "slept_s"}`; diagnostics for client tests |
+| `dataset-register` | `paths` (absolute), `name`, `kind`, `temporal`, `key`, `variables` (names or `{name, unit, description}`), `metadata` {`description`, `source`, `version`, `license_note`, `visibility`, `owner`}, `root`, `overwrite`, `options` (further keyword arguments of `register()`) | `{"dataset": <record>, "root"}`: `spacescans.custom.register(...)` (see Registered datasets) |
+| `dataset-list` | `root` | `{"datasets": [<record>], "root"}` |
+| `dataset-get` | `name_or_id`, `root` | `{"dataset": <record>, "root"}`; an unknown name or id is a `config` error with `details.name_or_id` |
+| `dataset-remove` | `name_or_id`, `root` | `{"dataset": <the removed record>, "root"}` |
 
 `link` reads the cohort, checks it with `cohort.validate` (errors are
 `cohort` errors with row numbers) and passes only the five required columns
@@ -172,6 +176,24 @@ allow 10 s before killing the bridge.
 thread only waits, so SIGINT/SIGTERM are honoured within about 0.1 s even
 during a long C call. `run` and `resolve` wrap scalars where the schema allows
 only lists (R serialises length-1 vectors as scalars).
+
+## Registered datasets (phase D)
+
+`dataset-*` (`src/spacescans/bridge/cmd_datasets.py`) call the registry of
+`spacescans.custom`: `register(paths, *, name, kind, temporal, key=None,
+variables=None, metadata=None, root=None, overwrite=False)`, `list_datasets(root=None)`,
+`get_dataset(name_or_id, root=None)` and `remove_dataset(name_or_id, root=None)`.
+A `<record>` is a `DatasetRecord` as JSON: `id`, `name`, `kind`
+(`polygon_table`, `raster`, `features`), `temporal` (`static`, `yearly`,
+`biweekly`, `daily`), `key`, `variables`, `source`, `version`, `description`,
+`license_note`, `visibility` (`private`, `deployment`), `owner`, `created_utc`,
+`files` (prepared files, relative to the dataset's folder), `checksum`,
+`spacescans_version`. `root` in a value is the registry directory: the
+argument, else `$SPACESCANS_DATASETS_DIR`, else
+`platformdirs.user_data_dir("spacescans")/datasets` (`null` when that cannot
+be computed). The registry's own errors keep their kind (validation is
+`config`); `register()` arguments it does not take are `config`; a spacescans
+without the registry answers `internal` with `details.missing`.
 
 ## Versioning
 
