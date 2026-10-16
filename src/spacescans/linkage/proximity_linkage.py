@@ -1,8 +1,12 @@
 # common_v2/linkage/proximity_linkage.py
 """Nearest-feature distance: from each location to the nearest point, line or polygon.
 
-The generic proximity pattern (the catalog's road and water distances have their
-own tiled C3 patterns, ``tiger_proximity`` and ``nhd_proximity``). Config:
+The generic proximity pattern, for hand-written YAML configs (``spacescans run``).
+The catalog's road and water distances have their own tiled C3 patterns
+(``tiger_proximity``, ``nhd_proximity``), and registered ``features`` datasets
+(:mod:`spacescans.custom`) do not use this pattern either: they compute the same
+exact distance in :mod:`spacescans.custom.features` at the start of a link and
+aggregate it with ``static_areal`` / ``yearly_areal``. Config:
 
 * ``source.file``: the features — one vector file (``.parquet`` is read as
   GeoParquet, anything else with ``geopandas.read_file``), or for a yearly

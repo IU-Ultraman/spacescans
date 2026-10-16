@@ -25,7 +25,9 @@ per-location distances (one row per cohort row and, for yearly data, per
 year with a file) and :func:`spacescans.custom.steps` links them with the
 ``static_areal`` / ``yearly_areal`` patterns: a location's value over an
 episode is the mean of its yearly distances weighted by the days the episode
-spends in each year that has data.
+spends in each year that has data. (The generic ``proximity`` linkage pattern
+computes the same exact distance for hand-written YAML configs; registered
+datasets do not go through it.)
 """
 from __future__ import annotations
 
