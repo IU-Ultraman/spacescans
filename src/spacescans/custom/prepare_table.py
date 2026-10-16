@@ -246,7 +246,7 @@ def _variables(variables: Any, header: Sequence[str], taken: Sequence[str],
 
 
 def _plain(col: str) -> bool:
-    from spacescans.custom.prepare import RESERVED_NAMES, _IDENTIFIER
+    from spacescans.custom.prepare import _IDENTIFIER, RESERVED_NAMES
     return bool(_IDENTIFIER.fullmatch(col)) and len(col) <= 60 and col.lower() not in RESERVED_NAMES
 
 

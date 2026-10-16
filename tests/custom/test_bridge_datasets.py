@@ -25,7 +25,8 @@ def call(tmp: Path, command: str, args: dict | None = None):
                                "args": args or {}}))
     env = {k: v for k, v in os.environ.items() if k != "SPACESCANS_DATASETS_DIR"}
     p = subprocess.run(BRIDGE + [command, "--request", str(req), "--result", str(res)],
-                       capture_output=True, text=True, cwd=str(tmp), timeout=180, env=env)
+                       capture_output=True, text=True, cwd=str(tmp), timeout=180, env=env,
+                       check=False)
     return p.returncode, json.loads(res.read_text()) if res.exists() else None
 
 

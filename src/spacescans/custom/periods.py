@@ -29,6 +29,7 @@ from calendar import monthrange
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
+from itertools import pairwise
 from pathlib import Path
 from typing import Any
 
@@ -276,7 +277,7 @@ def assign_periods(files: Sequence[tuple[str, Any]], temporal: str,
             raise DatasetError(f"{files[i][0]}: a biweekly period of {days} days (expected 1-"
                                f"{limit}); give start and end dates in a manifest")
         ends[i] = end
-    for a, b in zip(order, order[1:]):
+    for a, b in pairwise(order):
         if ends[a] >= starts[b]:
             raise DatasetError(f"the periods of {files[a][0]} and {files[b][0]} overlap")
     return [Period(start=starts[i], end=ends[i]) for i in range(len(raw))]

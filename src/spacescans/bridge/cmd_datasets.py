@@ -19,7 +19,13 @@ from __future__ import annotations
 
 from typing import Any
 
-from spacescans.bridge.args import bool_arg, mapping_arg, path_arg, path_list_arg, str_arg
+from spacescans.bridge.args import (
+    bool_arg,
+    mapping_arg,
+    path_arg,
+    path_list_arg,
+    str_arg,
+)
 from spacescans.bridge.errors import BridgeError
 
 Outcome = tuple[Any, list]

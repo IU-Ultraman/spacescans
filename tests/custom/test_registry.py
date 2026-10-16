@@ -20,7 +20,6 @@ import pyarrow.parquet as pq
 import pytest
 
 from spacescans import custom
-from spacescans.custom import registry as reg
 
 # Distinctive cell values: no refusal message may contain any of them.
 SECRET_KEY = "18097999917"
@@ -174,8 +173,8 @@ def test_bad_names_are_refused(static_csv, root, name, match):
 
 @pytest.mark.parametrize("kw,match", [
     ({"kind": "csv"}, "kind must be one of"),
-    ({"temporal": "biweekly"}, "temporal must be one of 'static', 'yearly', 'daily' for a "
-                               "polygon_table"),
+    ({"temporal": "biweekly"}, ("temporal must be one of 'static', 'yearly', 'daily' for a "
+                                "polygon_table")),
     ({"metadata": {"licence": "x"}}, "unknown metadata field"),
     ({"metadata": {"visibility": "public"}}, "visibility must be one of"),
     ({"metadata": {"source": 3}}, "must be a string"),
