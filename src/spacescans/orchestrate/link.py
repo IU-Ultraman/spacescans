@@ -159,12 +159,12 @@ def web_name_suffix(run_dir: str | os.PathLike) -> str:
 # argument checks
 # ---------------------------------------------------------------------------
 
-def _variables(variables: Sequence[str]) -> list[str]:
+def _variables(variables: Sequence[str], *, allow_empty: bool = False) -> list[str]:
     if isinstance(variables, (str, bytes)):
         raise LinkConfigError("variables must be a list of variable keys, not a single string",
                               details={"variables": "a string"})
     keys = list(dict.fromkeys(variables))
-    if not keys:
+    if not keys and not allow_empty:
         raise LinkConfigError("at least one variable must be selected")
     bad = [k for k in keys if not isinstance(k, str) or not k]
     if bad:
@@ -179,25 +179,29 @@ def _positive_int(name: str, value: Any, *, unit: str = "") -> int:
     return value
 
 
-def _custom_overlay(custom: Mapping[str, Any] | None, keys: list[str]
-                    ) -> tuple[dict[str, dict], list[dict]]:
-    """Requested custom definitions, checked deeply (#15); unrequested ones are dropped."""
-    if custom is None:
-        return {}, []
-    if not isinstance(custom, Mapping):
-        raise LinkConfigError("custom must map variable keys to dataset definitions")
-    from spacescans.custom import check_definition
+def _custom_overlay(custom: Any, keys: list[str]
+                    ) -> tuple[list[str], dict[str, dict], list[dict]]:
+    """The selection with the custom datasets, their definitions checked deeply (#15), warnings.
 
-    overlay: dict[str, dict] = {}
-    warnings: list[dict] = []
-    for key, definition in custom.items():
-        if key not in keys:
-            warnings.append({"code": "custom_unused", "variable": key,
-                             "message": f"{key}: a definition was given but the variable "
-                                        "was not selected; it was ignored"})
-            continue
-        overlay[key] = check_definition(definition, key=key, deep=True)
-    return overlay, warnings
+    ``custom`` maps variable keys to definitions (unrequested ones are
+    dropped with a warning) or lists registered datasets (names, ids,
+    records) and definitions, which join the selection
+    (``spacescans.custom.link_overlay``).
+    """
+    if custom is None:
+        if not keys:
+            raise LinkConfigError("at least one variable must be selected")
+        return keys, {}, []
+    from spacescans.custom import DatasetRecord, link_overlay
+
+    if isinstance(custom, bytes) or not isinstance(custom, (str, Mapping, Sequence,
+                                                            DatasetRecord)):
+        raise LinkConfigError("custom must map variable keys to dataset definitions or list "
+                              "registered datasets")
+    keys, overlay, warnings = link_overlay(custom, keys)
+    if not keys:
+        raise LinkConfigError("at least one variable must be selected")
+    return keys, overlay, warnings
 
 
 def _groups(keys: list[str], overlay: Mapping[str, dict]) -> OrderedDict[str, list[str]]:
@@ -602,7 +606,7 @@ def link(cohort: pd.DataFrame | str | os.PathLike, variables: Sequence[str], *,
     t0 = time.monotonic()
     emit = on_event if on_event is not None else (lambda _ev: None)
 
-    keys = _variables(variables)
+    keys = _variables(variables, allow_empty=custom is not None)
     buffer_m = _positive_int("buffer_m", buffer_m, unit=" of metres")
     raster_res_m = _positive_int("raster_res_m", raster_res_m, unit=" of metres")
     if on_error not in ("stop", "continue"):
@@ -620,7 +624,7 @@ def link(cohort: pd.DataFrame | str | os.PathLike, variables: Sequence[str], *,
         cohort_in = _cohort.read_upload_csv(cohort_in, variant="zcta5", pid_as_str=True)
     # The checks the bridge makes (row numbers, never values), before any file is written.
     _cohort.validate(cohort_in).raise_for_errors()
-    overlay, warnings = _custom_overlay(custom, keys)
+    keys, overlay, warnings = _custom_overlay(custom, keys)
     groups = _groups(keys, overlay)
     root = _data.resolve_data_dir(data_dir)
     data_summary, data_warnings = _check_data(groups, overlay, root)

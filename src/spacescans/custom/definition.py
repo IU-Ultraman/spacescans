@@ -520,9 +520,12 @@ def raster_bands(definition: Mapping[str, Any]) -> tuple[list[str], list[int], l
 # Fields JSON writers turn into scalars when they hold one element (R's
 # jsonlite with auto_unbox=TRUE), and fields they turn into [] or {} when empty
 # or NULL. check_definition undoes both.
-_LIST_FIELDS = ("value_cols", "bands", "band_nodata", "coverage_years")
+_LIST_FIELDS = ("value_cols", "bands", "band_nodata", "coverage_years", "coverage_dates")
 _MAP_FIELDS = ("value_labels", "value_units")
-_NULLABLE_FIELDS = ("year_col", "values_path", "owner_uid")
+_NULLABLE_FIELDS = ("year_col", "values_path", "owner_uid", "date_col")
+#: Geometries of a definition: the upload path's two, and registered features.
+GEOMETRIES = ("polygon", "raster", "features")
+_DATED = ("daily", "biweekly")
 
 
 def _sha256_path(path: str) -> str:
@@ -564,11 +567,13 @@ def check_definition(definition: Mapping[str, Any], *, key: str | None = None,
             d[f] = None
     if "band_nodata" in d and d["band_nodata"] is None:   # [null], unboxed
         d["band_nodata"] = [None]
-    if isinstance(d.get("rasters"), Mapping):            # one raster, unboxed
-        d["rasters"] = [d["rasters"]]
-    if isinstance(d.get("rasters"), list):
-        d["rasters"] = [{**r, "year": None} if isinstance(r, Mapping) and r.get("year") in ({}, [])
-                        else r for r in d["rasters"]]
+    for files_field in ("rasters", "feature_files"):
+        if isinstance(d.get(files_field), Mapping):      # one file, unboxed
+            d[files_field] = [d[files_field]]
+        if isinstance(d.get(files_field), list):
+            d[files_field] = [{**r, "year": None}
+                              if isinstance(r, Mapping) and r.get("year") in ({}, []) else r
+                              for r in d[files_field]]
     if isinstance(d.get("grid"), Mapping) and d["grid"].get("nodata") in ({}, []):
         d["grid"] = {**d["grid"], "nodata": None}
 
@@ -594,6 +599,7 @@ def check_definition(definition: Mapping[str, Any], *, key: str | None = None,
         d["coverage_years"] = [int(y) for y in years]
 
     geometry = d.get("geometry")
+    temporal = d.get("temporal")
     if geometry == "polygon":
         boundary = d.get("boundary")
         if boundary not in BOUNDARY_SPEC:
@@ -608,7 +614,15 @@ def check_definition(definition: Mapping[str, Any], *, key: str | None = None,
         path = d.get("values_path")
         if not isinstance(path, str) or not path:
             raise CustomExposomeError(f"{name}: values_path is missing; define it from a file path")
+        if temporal == "biweekly":
+            raise CustomExposomeError(f"{name}: a polygon table is static, yearly or daily")
+        if (temporal == "daily") != bool(d.get("date_col")):
+            raise CustomExposomeError(f"{name}: date_col is set exactly for a daily table")
+        if temporal == "daily" and d.get("year_col"):
+            raise CustomExposomeError(f"{name}: a daily table has a date column, not a year column")
         checks = [(path, d.get("sha256"))]
+    elif geometry == "features":
+        checks = _check_features(d, name)
     elif geometry == "raster":
         if not (isinstance(d.get("grid_hash"), str) and re.fullmatch(r"[0-9a-f]{8}", d["grid_hash"])):
             raise CustomExposomeError(f"{name}: grid_hash must be 8 hex characters")
@@ -621,13 +635,16 @@ def check_definition(definition: Mapping[str, Any], *, key: str | None = None,
         yearly = any(r.get("year") is not None for r in rasters)
         if yearly != bool(d.get("year_col")):
             raise CustomExposomeError(f"{name}: year_col must be 'year' exactly when the rasters carry years")
+        if temporal in _DATED:
+            _check_periods(rasters, name)
         try:
             raster_bands(d)
         except ValueError as exc:
             raise CustomExposomeError(str(exc)) from None
         checks = [(r["path"], r.get("sha256")) for r in rasters]
     else:
-        raise CustomExposomeError(f"{name}: geometry must be 'polygon' or 'raster', not {geometry!r}")
+        raise CustomExposomeError(f"{name}: geometry must be 'polygon' or 'raster' (or "
+                                  f"'features', a registered dataset), not {geometry!r}")
 
     if files or deep:
         for path, sha in checks:
@@ -637,3 +654,46 @@ def check_definition(definition: Mapping[str, Any], *, key: str | None = None,
                 raise CustomExposomeError(
                     f"{name}: {path} has changed since the dataset was defined; define it again")
     return d
+
+
+def _check_periods(rasters: Sequence[Mapping[str, Any]], name: str) -> None:
+    """Daily/biweekly rasters: each file has ISO ``start`` <= ``end`` and no year."""
+    from datetime import date
+
+    for r in rasters:
+        try:
+            start = date.fromisoformat(str(r.get("start")))
+            end = date.fromisoformat(str(r.get("end")))
+        except ValueError:
+            raise CustomExposomeError(
+                f"{name}: every daily or biweekly raster needs ISO 'start' and 'end' dates"
+            ) from None
+        if end < start:
+            raise CustomExposomeError(f"{name}: a raster's period ends before it starts")
+        if r.get("year") is not None:
+            raise CustomExposomeError(f"{name}: a dated raster carries dates, not a year")
+
+
+def _check_features(d: dict[str, Any], name: str) -> list[tuple[str, Any]]:
+    """A features definition: one value column, a geometry family, files per year."""
+    cols = d.get("value_cols") or []
+    if len(cols) != 1:
+        raise CustomExposomeError(f"{name}: a features dataset links exactly one column")
+    if d.get("feature_type") not in ("point", "line", "polygon"):
+        raise CustomExposomeError(f"{name}: feature_type must be 'point', 'line' or 'polygon'")
+    files = d.get("feature_files")
+    if not files or not all(isinstance(f, Mapping) and isinstance(f.get("path"), str)
+                            and f["path"] for f in files):
+        raise CustomExposomeError(f"{name}: feature_files must list each file's path")
+    years = [f.get("year") for f in files]
+    if d.get("year_col"):
+        if d["year_col"] != "year" or any(y is None for y in years):
+            raise CustomExposomeError(f"{name}: yearly features need year_col 'year' and a year "
+                                      "for every file")
+        if len(set(years)) != len(years):
+            raise CustomExposomeError(f"{name}: two feature files carry the same year")
+    elif len(files) != 1 or years[0] is not None:
+        raise CustomExposomeError(f"{name}: static features are one file without a year")
+    if d.get("join_col") != "geoid" or d.get("key_col") != "geoid":
+        raise CustomExposomeError(f"{name}: a features dataset joins on geoid")
+    return [(f["path"], f.get("sha256")) for f in files]

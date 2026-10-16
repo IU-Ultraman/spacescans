@@ -57,19 +57,48 @@ def raster_diagnosis(run_dir: str | Path, var_key: str, definition: Mapping[str,
     )
 
 
+def features_diagnosis(run_dir: str | Path, var_key: str, definition: Mapping[str, Any]) -> str:
+    """For features a distance always exists when the period has a file; a poor
+    rate means the cohort's dates fall outside the years with files."""
+    files = definition.get("feature_files") or []
+    years = sorted(int(f["year"]) for f in files if f.get("year") is not None)
+    if not years:
+        return (f"{var_key}: the features file holds no usable geometry for these locations "
+                "(no distance could be computed).")
+    return (f"{var_key}: the feature files cover {len(years)} year(s), {years[0]}-{years[-1]}; "
+            "days of an episode in other years get no value.")
+
+
+def _covered_codes(definition: Mapping[str, Any]) -> set[str]:
+    """The geography codes of an uploaded CSV, or of a registered table's Parquet."""
+    import pandas as pd
+    path = str(definition["values_path"])
+    key_col = definition["key_col"]
+    if path.lower().endswith(".parquet"):
+        import duckdb
+        q = '"' + key_col.replace('"', '""') + '"'
+        lit = path.replace("'", "''")
+        with duckdb.connect() as con:
+            rows = con.execute(f"SELECT DISTINCT CAST({q} AS VARCHAR) FROM read_parquet('{lit}')"
+                               ).fetchall()
+        return {str(r[0]).strip() for r in rows if r[0] is not None}
+    uploaded = pd.read_csv(path, dtype=str, usecols=[key_col])
+    return set(uploaded[key_col].str.strip())
+
+
 def coverage_diagnosis(run_dir: str | Path, var_key: str, definition: Mapping[str, Any]) -> str:
     """Say WHY a custom column linked poorly: which geographies the cohort's
     buffers touched versus which the uploaded file covers. Never raises."""
     import pandas as pd
+    if definition.get("geometry") == "features":
+        return features_diagnosis(run_dir, var_key, definition)
     if is_raster(definition):
         return raster_diagnosis(run_dir, var_key, definition)
     try:
         c3_name = c3_step_for(definition).name
         weights = pd.read_parquet(Path(run_dir) / "output" / f"{c3_name}.parquet")
         touched = set(weights[definition["join_col"]].astype(str))
-        uploaded = pd.read_csv(definition["values_path"], dtype=str,
-                               usecols=[definition["key_col"]])
-        covered = set(uploaded[definition["key_col"]].str.strip())
+        covered = _covered_codes(definition)
     except Exception as exc:  # diagnostics must never fail a run
         return f"{var_key}: could not compare geographies ({exc!r})"
 
@@ -80,6 +109,9 @@ def coverage_diagnosis(run_dir: str | Path, var_key: str, definition: Mapping[st
         return f"{len(counts)} state{'s' if len(counts) != 1 else ''}: {shown}{more}"
 
     common = touched & covered
+    dates = definition.get("coverage_dates") or []
+    when = (f" The file's dates run from {dates[0]} to {dates[1]}; days outside them get no "
+            "value." if len(dates) == 2 else "")
     return (
         f"{var_key}: the cohort's buffers touch {len(touched):,} distinct "
         f"{definition['boundary']} codes across {_states(touched)}; the uploaded "
@@ -89,6 +121,7 @@ def coverage_diagnosis(run_dir: str | Path, var_key: str, definition: Mapping[st
            "those geographies, or run it on a cohort from that region."
            if not common else
            "Episodes outside the file's geographies get no value.")
+        + when
     )
 
 
@@ -113,6 +146,8 @@ def diagnostics(run_dir: str | Path, variables: Sequence[str],
             out.append(_record("warning", f"{var_key}: could not read {parquet.name}: {exc!r}"))
             continue
         definition = definition_for(definitions, var_key)
+        # An episode-level output keeps the per-row geoid; a participant-level one has none.
+        unit = "episodes" if "geoid" in df.columns else "participants"
         low = False
         for col in definition["value_cols"]:
             if col not in df.columns:
@@ -123,7 +158,7 @@ def diagnostics(run_dir: str | Path, variables: Sequence[str],
             low = low or matched < LOW_LINKAGE
             out.append(_record(
                 level,
-                f"{var_key}.{col}: {matched:.1%} of episodes linked "
+                f"{var_key}.{col}: {matched:.1%} of {unit} linked "
                 f"({int(df[col].notna().sum()):,}/{len(df):,})",
             ))
         if low:
