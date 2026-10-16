@@ -1,17 +1,17 @@
 Package: spacescans
 Type: Package
-Title: Link Patient Residential Histories to Environmental Exposures
+Title: Link Time-Referenced Geolocation Data to the Spatial and Contextual Exposome
 Version: 0.3.0
 Authors@R: c(
     person("Xuguang", "Ai", email = "xuguang.ai@outlook.com", role = c("aut", "cre")),
     person("Regenstrief Institute", role = "aut"))
-Description: R client for the 'spacescans' Python pipeline, which links
+Description: R client for the 'spacescans' 'Python' pipeline, which links
     time-referenced geolocation data (location episodes of study
     participants) to the spatial and contextual exposome and returns one row
     per participant or per location episode. The pipeline runs in a separate
-    Python process that the package talks to through JSON request and result
-    files and 'Parquet' tables, so a crash or an interrupt in Python never
-    takes the R session down. 'ss_install()' builds the Python environment
+    'Python' process that the package talks to through JSON request and result
+    files and 'Parquet' tables, so a crash or an interrupt in 'Python' never
+    takes the R session down. 'ss_install()' builds the 'Python' environment
     with 'uv'.
 License: MIT + file LICENSE
 URL: https://github.com/IU-Ultraman/spacescans
