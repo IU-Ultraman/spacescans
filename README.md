@@ -179,8 +179,10 @@ custom.remove_dataset("pm_biweekly")
 | `raster` | GeoTIFF: one, or one per period on a common grid | `static`, `yearly`, `biweekly`, `daily` | buffer-weighted mean of the cells |
 | `features` | points, lines or polygons (one geometry type per dataset) with a coordinate reference system, as GeoPackage, GeoJSON, zipped Shapefile or GeoParquet | `static`, `yearly` (one file per year, or a year column) | distance in meters from the location to the nearest feature (`<name>_dist_m` unless you name the variable) |
 
-`register()` also takes `key` (for tables), `variables` (name, unit and description of each
-value), `metadata` (source, version, description, license note) and `overwrite`. A record has
+`register()` also takes `key` (a table's geography and key column, such as
+`{"boundary": "tract", "column": "GEOID"}`; for features optionally a year column or a layer),
+`variables` (name, unit and description of each value), `metadata` (source, version,
+description, license note, visibility, owner) and `overwrite`. A record has
 an `id`, a `name` unique in its library, the checksum of the original files and the spacescans
 version that prepared it. The library lives in `root=`, else
 `$SPACESCANS_DATASETS_DIR`, else the user data directory (`platformdirs.user_data_dir("spacescans")`
