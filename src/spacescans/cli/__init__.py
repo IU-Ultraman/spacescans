@@ -7,7 +7,7 @@ import sys
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="spacescans",
-        description="Run SpaceScans pipeline configs (C3 weights / C4 patient TWA).",
+        description="Run spacescans pipeline configs (C3 spatial weights, C4 exposure linkage).",
     )
     sub = parser.add_subparsers(dest="cmd", required=True, metavar="<subcommand>")
 
@@ -18,7 +18,8 @@ def main(argv: list[str] | None = None) -> int:
     p_run.add_argument("--output-dir", help="Override output root")
 
     # `quickstart` (filled in Task 11)
-    p_qs = sub.add_parser("quickstart", help="Run an end-to-end demo on bundled sample data")
+    p_qs = sub.add_parser("quickstart",
+                          help="Run one C3 spatial-weighting step on the bundled synthetic data")
     p_qs.add_argument("--output-dir", help="Where to write demo outputs")
 
     # `init-config` (filled in Task 10)
