@@ -10,8 +10,9 @@ thread and writes three files into ``run_dir``:
 * ``feature_dictionary.csv`` - the dictionary rows for the columns produced;
 * ``provenance.json`` - versions, fingerprints, cache keys; never cohort values.
 
-The value is ``{exposures, level, rows, episodes, patients, columns, features,
-coverage, steps, failed, skipped, warnings, provenance, run_dir}``.
+The value is ``{exposures, level, output_level, rows, episodes, patients, columns,
+features, coverage, steps, failed, skipped, warnings, provenance, run_dir}``
+(``level`` and ``output_level`` both echo the request's level).
 
 Events (design 3.6): the orchestrator's events are relayed as ``plan``,
 ``step_start``, ``cache_hit``, ``spawn``, ``progress`` (at most 4 per second per
@@ -421,7 +422,8 @@ def cmd_link(args: dict, ctx) -> Outcome:
         warnings.append({"code": "failed", "experiment": exp,
                          "message": f"{exp}: failed; its columns are missing from the result"})
     value = {
-        "exposures": str(exp_path), "level": output_level, "rows": len(exposures),
+        "exposures": str(exp_path), "level": output_level, "output_level": output_level,
+        "rows": len(exposures),
         "episodes": co.rows, "patients": co.patients, "columns": columns, "features": str(feat_path),
         "coverage": _records(getattr(result, "coverage", None)),
         "steps": to_jsonable(list(getattr(result, "steps", None) or [])),

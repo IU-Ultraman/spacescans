@@ -477,7 +477,7 @@ def test_link_runs_orchestrate_link_and_streams_events(tmp_path, monkeypatch):
     run = tmp_path / "run"
     assert v["exposures"] == str(run / "exposures.parquet") and v["run_dir"] == str(run)
     # the participant level is the default: one row per participant, pid then the variables
-    assert v["level"] == "participant"
+    assert v["level"] == v["output_level"] == "participant"
     assert v["rows"] == v["patients"] == 2 and v["episodes"] == 4
     ex = pd.read_parquet(v["exposures"])
     assert ex["pid"].is_unique and len(ex) == 2
@@ -564,7 +564,7 @@ def test_link_at_the_episode_level_keeps_one_row_per_episode(tmp_path):
                          prefix=fake_prefix(tmp_path), env=fake_env("ok"))
     assert rc == 0, res["error"]
     v = res["value"]
-    assert v["level"] == "episode" and v["rows"] == v["episodes"] == 4
+    assert v["level"] == v["output_level"] == "episode" and v["rows"] == v["episodes"] == 4
     ex = pd.read_parquet(v["exposures"])
     assert list(ex["episode_id"]) == [0, 1, 2, 3] and v["columns"][0] == "episode_id"
     assert all(c["episodes"] == 4 and c["with_value"] == 4 for c in v["coverage"])
