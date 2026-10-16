@@ -141,7 +141,7 @@ scalar). Paths must be absolute.
 | `data-import` | `dataset`, `paths`, `data_dir`, `move`, `manifest` | `data.import_files(...).to_dict()` |
 | `data-terms` | `dataset`, `manifest` | `data.terms(dataset)` |
 | `custom-validate` | `kind` (`polygon`, `raster`, `check`), `files`, `options` {`boundary`, `key_col`, `value_cols`, `year_col`, `name`, `description`, `labels`, `units`; raster: `years`, `bands`}; `check`: `definition`, `key`, `deep` | `{"kind", "definition", "key"}`; the definition goes back unchanged into `link`'s `custom` |
-| `link` | `cohort`, `variables`, `custom`, `data_dir`, `run_dir` (default: a new 0700 directory under `tools::R_user_dir("spacescans", "cache")/runs` with an `owner.json` naming the client process, swept once that process is gone), `buffer_m` (270), `raster_res_m` (25), `cache_dir` (WeightCache root, v2 keys; none = no cache), `executor` (`subprocess`/`inprocess`), `threads`, `memory_limit`, `on_error` (`stop`/`continue`), `reserved_names`, `cancel_grace_s` (7) | `{"exposures": <run_dir/exposures.parquet>, "rows", "episodes", "patients", "columns", "features": <run_dir/feature_dictionary.csv>, "coverage", "steps", "failed", "skipped", "warnings", "provenance": <run_dir/provenance.json>, "run_dir", "seconds"}`; the dictionary describes a catalog column with the catalog's row and a custom column with its definition (label, unit, description) |
+| `link` | `cohort`, `variables`, `custom`, `data_dir`, `run_dir` (default: a new 0700 directory under `tools::R_user_dir("spacescans", "cache")/runs` with an `owner.json` naming the client process, swept once that process is gone), `buffer_m` (270), `raster_res_m` (25), `cache_dir` (WeightCache root, v2 keys; none = no cache), `executor` (`subprocess`/`inprocess`), `threads`, `memory_limit`, `on_error` (`stop`/`continue`), `reserved_names`, `cancel_grace_s` (7), `output_level` (`participant`, the default, or `episode`; see below) | `{"exposures": <run_dir/exposures.parquet>, "level", "output_level", "rows", "episodes", "patients", "columns", "features": <run_dir/feature_dictionary.csv>, "coverage", "steps", "failed", "skipped", "warnings", "provenance": <run_dir/provenance.json>, "run_dir", "seconds"}`; the dictionary describes a catalog column with the catalog's row and a custom column with its definition (label, unit, description) |
 | `cache-info` | `cache_dir`, `key_format` (`v2`), `cache_root` (optional) | `{"cache_dir", "key_format", "entries", "bytes", "oldest", "newest", "temp_files", "temp_bytes", "runs"}`; `runs` is the run-directory sweep below |
 | `cache-clear` | `cache_dir`, `key_format`, `older_than_s`, `cache_root` (optional) | `{"cache_dir", "key_format", "older_than_s", "removed", "kept", "bytes", "runs"}` (`WeightCache.clear`, then the sweep) |
 | `runs-sweep` | `cache_root` (optional: the per-user cache root, default `tools::R_user_dir("spacescans", "cache")` as Python computes it), `dry_run` | `{"root": <cache_root>/runs, "dry_run", "removed": [dir names], "kept", "unknown": [dir names], "bytes", "errors"}`: run directories under the root whose owner process (its `owner.json`: pid, start time, host) no longer exists are deleted, never archived; a live owner is kept; a record from another host, or none, is left alone (`unknown`) |
@@ -153,6 +153,29 @@ scalar). Paths must be absolute.
 | `yaml-load` | `path` or `text` | `{"config", "path"}` |
 | `yaml-dump` | `config`, `path` (optional), `as_config` (default true) | `{"text", "path"}`; written with `yaml.safe_dump(sort_keys=False)` |
 | `ping` | `echo`, `sleep_s`, `fail_kind`, `exit_code`, `signal` | `{"pong", "echo", "slept_s"}`; diagnostics for client tests |
+
+`link`'s result shape follows `output_level` (the value's `level` and `output_level` both
+repeat it):
+
+* `participant` (the default): `exposures.parquet` has `pid` (text) and the
+  variables' columns in the requested order, one row per participant id of the
+  cohort in order of first appearance; participants without any value are
+  included, with missing values; no dates, coordinates or episode ids. A
+  participant's value is the mean over all of their location episodes and
+  source periods weighted by the days that contribute a value (the episode
+  means weighted by their contributing days); missing when no day contributes.
+  `rows` is the participant count. `coverage` rows are `{variable, experiment,
+  participants, with_value, pct, episodes}`: `with_value` and `pct` count
+  participants with a value.
+* `episode`: `exposures.parquet` has `episode_id` (0..n-1, input order) and
+  the columns in source order, one row per input row (the 0.2.x result);
+  `rows` is the episode count; `coverage` rows are `{variable, experiment,
+  episodes, with_value, pct, patients, patients_with_value}`: `with_value` and
+  `pct` count episodes.
+
+`provenance.json` records `run.output_level`. A cohort column name never
+clashes at the participant level (the table holds `pid` and the variables
+only); `reserved_names` are still honoured.
 
 `link` reads the cohort, checks it with `cohort.validate` (errors are
 `cohort` errors with row numbers) and passes only the five required columns

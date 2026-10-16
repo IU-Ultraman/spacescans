@@ -10,6 +10,7 @@ from spacescans.io.writers import write_table
 from spacescans.linkage.helpers import (
     apply_transforms,
     load_patients,
+    load_weights,
     prepare_episodes,
     resolve_output_grouping,
 )
@@ -21,8 +22,15 @@ from spacescans.pipeline.registry import register_pattern, get_reader
 
 @register_pattern("gridded")
 def run_gridded(config: DatasetConfig, engine: AggregationEngine) -> Path:
+    """Weighted means per period (a date, or a start/end window), then over the episode's days.
+
+    The weights join the values on ``source.join_col`` / ``exposure.join_col``
+    (both ``grid_id`` by default: raster cells), so a table of dated values
+    per polygon links the same way with boundary weights (a weight column
+    named ``value`` is read as ``weight``).
+    """
     patients = load_patients(config)
-    weights = read_table(config.source.file, key=config.source.key)
+    weights = load_weights(config.source.file, key=config.source.key, weight_col="weight")
 
     # Load exposure: use plugin if specified, otherwise read as table
     if config.plugin:
@@ -35,7 +43,8 @@ def run_gridded(config: DatasetConfig, engine: AggregationEngine) -> Path:
     joined = engine.join(
         weights,
         exposure,
-        JoinSpec(left_key="grid_id", right_key="grid_id", how="inner"),
+        JoinSpec(left_key=config.source.join_col or "grid_id",
+                 right_key=config.exposure.join_col or "grid_id", how="inner"),
     )
 
     # Determine temporal mode: daily (single date col) vs windowed (start_date + end_date)

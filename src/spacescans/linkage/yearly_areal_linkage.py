@@ -3,7 +3,14 @@ from __future__ import annotations
 from pathlib import Path
 from spacescans.io.readers import read_table
 from spacescans.io.writers import write_table
-from spacescans.linkage.helpers import apply_transforms, build_episode_periods, load_patients, load_weights, resolve_output_grouping
+from spacescans.linkage.helpers import (
+    DAYS_SUFFIX,
+    apply_transforms,
+    build_episode_periods,
+    load_patients,
+    load_weights,
+    resolve_output_grouping,
+)
 from spacescans.models.config import DatasetConfig
 from spacescans.models.protocols import AggregationEngine
 from spacescans.models.specs import JoinSpec, TemporalAggSpec, WeightedAggSpec
@@ -60,6 +67,8 @@ def run_yearly_areal(config: DatasetConfig, engine: AggregationEngine) -> Path:
             period_col="period_id",
             value_cols=config.exposure.value_cols,
             weight_col="overlap_days",
+            # <col>__days: the input the CBP fallback forms participant means from
+            days_suffix=DAYS_SUFFIX if config.time.contributing_days else None,
         ),
     )
     return write_table(result, config.output.path)

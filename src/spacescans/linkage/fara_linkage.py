@@ -1,8 +1,15 @@
 """FARA tract-level linkage — yearly areal + recode binary flags + column selection.
 
-Matches v1 C4_Linkage_TRACT_FARA.py exactly: uses legacy SQL temporal weighting,
-applies apply_fara_recode for 13 binary flag columns, selects final columns from
-varnameCountRemoved.csv, and fills NaN with 0.
+Ported from v1 C4_Linkage_TRACT_FARA.py: the legacy SQL yearly area weighting
+and temporal weighting, apply_fara_recode for the 13 binary flag columns, and
+the final columns from varnameCountRemoved.csv. Missing values follow the rule
+of every other source: a tract without a value for a variable in a year (or
+without a FARA row at all) is left out of that year's buffer mean, from the
+numerator and the denominator alike, and a year without a defined value is
+left out of the temporal mean. A buffer with no valued tract stays missing.
+(v1 kept such tracts' weights in the denominator, which counted a missing value
+as zero, and ended with fillna(0); this port did both up to v0.2.6 and kept
+the denominator rule until 0.3.0.)
 """
 from __future__ import annotations
 
@@ -92,7 +99,13 @@ def compute_yearly_area_weighted_exposures_sql(
     weight_col: str = "value",
     merge_how: str = "inner",
 ) -> pd.DataFrame:
-    """Replicate the legacy SQLite yearly area-weighted aggregation workflow."""
+    """Yearly area-weighted means per episode (the legacy SQLite workflow).
+
+    Per variable, ``SUM(var * w) / SUM(w over the units where var is not
+    missing)``: units without a value (including tracts absent from the year's
+    table, which the LEFT JOIN leaves NULL) drop from both sums. NULL when no
+    unit has a value.
+    """
     value_cols = list(value_cols)
     con = sqlite3.connect(":memory:")
 
@@ -117,7 +130,9 @@ def compute_yearly_area_weighted_exposures_sql(
             dat2.to_sql("dat2", con, index=False, if_exists="replace")
 
             select_parts = ", ".join(
-                f"SUM({var}*{weight_col})/SUM({weight_col}) AS {var}" for var in value_cols
+                f"SUM({var}*{weight_col})"
+                f"/SUM(CASE WHEN {var} IS NOT NULL THEN {weight_col} END) AS {var}"
+                for var in value_cols
             )
             query = f"SELECT id, {select_parts} FROM dat2 GROUP BY id;"
             result = pd.read_sql(query, con)
@@ -267,14 +282,13 @@ def _apply_fara_recode(dat: pd.DataFrame) -> pd.DataFrame:
 
 @register_pattern("fara_tract")
 def run_fara_tract(config: DatasetConfig, engine: AggregationEngine) -> Path:
-    """FARA tract linkage with recode flags — matches v1 exactly.
+    """FARA tract linkage with recode flags.
 
-    Sprint 11 Phase A: dispatches on ``time.output_grouping``. The default
-    ``patient`` branch is byte-identical to the pre-Sprint-11 v1 behavior
-    (single PATID groupby). The ``episode`` branch groups by ``(PATID,
-    geoid)`` so the FARA C4 output carries one row per episode, mirroring
-    the precomputed_areal / precomputed_static / yearly_areal Phase A
-    contracts and enabling spacescans-web's episode-level result join.
+    Dispatches on ``time.output_grouping``: ``patient`` gives one row per
+    participant (the day-weighted mean over all of a participant's episodes
+    and years with a defined value, v1's grouping); ``episode`` groups by
+    ``(PATID, geoid)``, one row per episode. The 13 binary flags are recoded
+    from the aggregated rates of the output row, at either level.
     """
     grouping = resolve_output_grouping(config)
     vsehr_rh = load_patients(config)

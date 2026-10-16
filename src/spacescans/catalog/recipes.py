@@ -30,12 +30,19 @@ A renderer turns a :class:`Step` plus ``run_dir``, ``cohort_parquet``,
 7. for each ``path, value`` in ``step.fill``: set the dotted ``path`` to a
    (deep) copy of ``value``, creating missing parent mappings
 8. if ``step.time_block == "always"``: ``cfg.setdefault("time", {})``; then if
-   ``"time" in cfg``: ``cfg["time"]["output_grouping"] = "episode"``
+   ``"time" in cfg``: ``cfg["time"]["output_grouping"]`` is set from the run's
+   ``output_level`` (:data:`OUTPUT_GROUPING`): ``"patient"`` for
+   ``"participant"`` (the default), ``"episode"`` for ``"episode"``. A step
+   whose output a later step reads per episode (``step.episode_rows``: the ZBP
+   linkage the CBP fallback completes) is ``"episode"`` at both levels and,
+   at the participant level, also gets ``contributing_days: true``
 9. ``cfg["output"]["path"] = str(run_dir / "output" / f"{step.name}.parquet")``
 
 Setting an existing key keeps its place and a new key is appended, which is
 why the order matters. The web checks the C3 cache before rendering and
-writes no YAML on a hit. :func:`render_config` implements these rules;
+writes no YAML on a hit. With ``output_level="episode"`` the result is the
+web 0.2.7 YAML byte for byte (gate A0); the participant level differs from it
+only in the ``time`` block of C4 steps. :func:`render_config` implements these rules;
 :func:`spacescans.orchestrate.render.render` applies it to a step and a
 ``RunContext``, and ``spacescans.custom.render`` to a custom step.
 
@@ -110,6 +117,11 @@ class Step:
     custom raster C4 step: ``output/values_<dataset>.parquet`` (bound to
     ``exposure.file``) must be written from the C3 weights before rendering,
     as the web's ``custom._materialise_raster_values`` does.
+
+    ``episode_rows`` marks a C4 step whose output another C4 step of the same
+    source reads per episode (the ZBP linkage that ``cbp_fallback``
+    completes): it renders one row per episode at every output level, with
+    each value's contributing days at the participant level (render rule 8).
     """
 
     name: str
@@ -124,6 +136,7 @@ class Step:
     meta_raster_res: bool = False
     dataset: str | None = None
     materialise_values: bool = False
+    episode_rows: bool = False
 
     def __post_init__(self) -> None:
         if self.kind not in (_C3, _C4):
@@ -157,7 +170,7 @@ class Step:
             "bind": dict(self.bind), "fill": copy.deepcopy(dict(self.fill)),
             "time_block": self.time_block, "meta_boundary": self.meta_boundary,
             "meta_raster_res": self.meta_raster_res, "dataset": self.dataset,
-            "materialise_values": self.materialise_values,
+            "materialise_values": self.materialise_values, "episode_rows": self.episode_rows,
         }
 
 
@@ -265,9 +278,9 @@ def _c3(name: str, template: str, tag: str, *, raster: bool, meta_boundary: str 
                 time_block=time_block)
 
 
-def _c4(name: str, template: str, **bind: str) -> Step:
+def _c4(name: str, template: str, *, episode_rows: bool = False, **bind: str) -> Step:
     # keyword "source__file" -> dotted path "source.file"
-    return Step(name=name, template=template, kind=_C4,
+    return Step(name=name, template=template, kind=_C4, episode_rows=episode_rows,
                 bind={k.replace("__", "."): v for k, v in bind.items()})
 
 
@@ -315,7 +328,10 @@ _RECIPE_LIST: tuple[Recipe, ...] = (
             _c3("c3_zcta5", "c3/zcta5_us_demo.yaml", "ZCTA5", raster=True, meta_raster_res=True),
             _c3("c3_county", "c3/county_us_demo.yaml", "COUNTY", raster=True,
                 meta_raster_res=True),
-            _c4("c4_zcta5_cbp", "c4/zcta5_cbp_demo.yaml", source__file="c3_zcta5"),
+            # ZBP per episode: the fallback below reads it per episode at both output
+            # levels (with contributing days for the participant means).
+            _c4("c4_zcta5_cbp", "c4/zcta5_cbp_demo.yaml", episode_rows=True,
+                source__file="c3_zcta5"),
             # County CBP for episodes whose ZIP has no ZBP row; it reads the ZBP
             # C4 output as exposure.zbp_file (one C4 feeds another).
             _c4("c4_county_cbp", "c4/county_cbp_demo.yaml",
@@ -559,6 +575,21 @@ def legacy_cache_key(step: Step, input_sha256: str, *, buffer_m: Any, raster_res
 #: ``engine`` keys a renderer may set (EngineConfig's DuckDB resource caps).
 ENGINE_KEYS: tuple[str, ...] = ("threads", "memory_limit", "temp_directory")
 
+#: The output levels a link can return: one row per participant (the default)
+#: or one row per location episode (an input row).
+OUTPUT_LEVELS: tuple[str, ...] = ("participant", "episode")
+DEFAULT_OUTPUT_LEVEL = "participant"
+#: The C4 ``time.output_grouping`` each output level renders (render rule 8).
+OUTPUT_GROUPING: Mapping[str, str] = _FrozenMap({"participant": "patient", "episode": "episode"})
+
+
+def check_output_level(output_level: Any) -> str:
+    """``output_level`` if it is one of :data:`OUTPUT_LEVELS`, else ``ValueError``."""
+    if output_level not in OUTPUT_LEVELS:
+        raise ValueError(f"output_level must be one of {', '.join(map(repr, OUTPUT_LEVELS))}, "
+                         f"got {output_level!r}")
+    return output_level
+
 
 def _set_path(cfg: dict, dotted: str, value: Any, *, create: bool, step: Step) -> None:
     *parents, leaf = dotted.split(".")
@@ -576,18 +607,23 @@ def _set_path(cfg: dict, dotted: str, value: Any, *, create: bool, step: Step) -
 
 def render_config(step: Step, template: Mapping[str, Any], *, run_dir: Any, cohort_parquet: Any,
                   buffer_m: Any, raster_res_m: Any, name_suffix: str = "",
-                  engine: Mapping[str, Any] | None = None) -> dict[str, Any]:
+                  engine: Mapping[str, Any] | None = None,
+                  output_level: str = DEFAULT_OUTPUT_LEVEL) -> dict[str, Any]:
     """Apply the render contract (module docstring, rules 1-9) to a parsed template.
 
     Pure: ``template`` is not modified and nothing is read or written.
-    ``yaml.safe_dump(result, sort_keys=False)`` is the web's YAML byte for byte
-    when ``engine`` is None. ``engine`` (R only) sets ``engine.threads`` /
-    ``memory_limit`` / ``temp_directory`` for every value that is not None.
-    Raises ``ValueError`` when the template lacks a mapping a ``bind`` path
-    needs (the web raised for a missing ``source``/``exposure``).
+    ``yaml.safe_dump(result, sort_keys=False)`` is the web 0.2.7 YAML byte for
+    byte when ``engine`` is None and ``output_level`` is ``"episode"``.
+    ``engine`` (R only) sets ``engine.threads`` / ``memory_limit`` /
+    ``temp_directory`` for every value that is not None. ``output_level``
+    (``"participant"``, the default, or ``"episode"``) sets the C4 row
+    (rule 8). Raises ``ValueError`` for an unknown ``output_level`` and when
+    the template lacks a mapping a ``bind`` path needs (the web raised for a
+    missing ``source``/``exposure``).
     """
     from pathlib import Path
 
+    check_output_level(output_level)
     run_dir = Path(run_dir)
     cfg = copy.deepcopy(dict(template))
     for top in ("buffer", "output"):
@@ -607,7 +643,10 @@ def render_config(step: Step, template: Mapping[str, Any], *, run_dir: Any, coho
     if step.time_block == "always":
         cfg.setdefault("time", {})
     if "time" in cfg:
-        cfg["time"]["output_grouping"] = "episode"
+        episode_rows = step.episode_rows or output_level == "episode"
+        cfg["time"]["output_grouping"] = "episode" if episode_rows else OUTPUT_GROUPING[output_level]
+        if step.episode_rows and output_level == "participant":
+            cfg["time"]["contributing_days"] = True
     if engine:
         unknown = sorted(set(engine) - set(ENGINE_KEYS))
         if unknown:

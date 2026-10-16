@@ -1,9 +1,10 @@
 """Render a step's pipeline config: the packaged template with the run's fields filled.
 
-``render(step, ctx)`` is pure and gives exactly the dict the web's
-``render_yaml`` builds, for every runner and the upload path (gate A0); the
-rules are the render contract in :mod:`spacescans.catalog.recipes`, applied
-by :func:`spacescans.catalog.recipes.render_config`. ``write_config`` writes
+``render(step, ctx)`` is pure; at ``ctx.output_level == "episode"`` it gives
+exactly the dict the web's 0.2.7 ``render_yaml`` builds, for every runner and
+the upload path (gate A0); the rules are the render contract in
+:mod:`spacescans.catalog.recipes`, applied by
+:func:`spacescans.catalog.recipes.render_config`. ``write_config`` writes
 it where the web does, ``run_dir/pipeline_configs/<step>.yaml``, with
 ``yaml.safe_dump(cfg, sort_keys=False)``.
 
@@ -36,13 +37,16 @@ def render_template(step: Step, template: Mapping[str, Any], ctx: Any) -> dict[s
 
     ``ctx`` is a :class:`~spacescans.orchestrate.context.RunContext` or any
     object with ``run_dir``, ``cohort_parquet``, ``buffer_m``,
-    ``raster_res_m`` and ``name_suffix`` (``engine`` and ``feature_caches``
-    are optional; without them the result is the web's config).
+    ``raster_res_m`` and ``name_suffix`` (``engine``, ``feature_caches`` and
+    ``output_level`` are optional; without the first two, and with
+    ``output_level="episode"``, the result is the web 0.2.7 config; without
+    ``output_level`` the participant level applies).
     """
     cfg = _recipes.render_config(
         step, template, run_dir=Path(ctx.run_dir), cohort_parquet=ctx.cohort_parquet,
         buffer_m=ctx.buffer_m, raster_res_m=ctx.raster_res_m, name_suffix=ctx.name_suffix,
-        engine=getattr(ctx, "engine", None))
+        engine=getattr(ctx, "engine", None),
+        output_level=getattr(ctx, "output_level", _recipes.DEFAULT_OUTPUT_LEVEL))
     caches = getattr(ctx, "feature_caches", None)
     source = cfg.get("source")
     if caches and isinstance(source, dict) and source.get("road_cache_dir") in caches:

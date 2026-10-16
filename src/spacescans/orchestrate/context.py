@@ -38,6 +38,10 @@ class RunContext:
 
     ``buffer_m`` and ``raster_res_m`` are used as given: the web passes its
     config's JSON values, and ``270`` and ``270.0`` render (and key) differently.
+
+    ``output_level``: ``"participant"`` (the default; every C4 step writes one
+    row per participant) or ``"episode"`` (one row per location episode, the
+    web 0.2.7 configs); see ``catalog.recipes.render_config`` rule 8.
     """
 
     run_dir: Path
@@ -48,6 +52,7 @@ class RunContext:
     name_suffix: str = ""
     overlay: Mapping[str, dict] | None = None
     engine: Mapping[str, Any] | None = None
+    output_level: str = "participant"
 
     def __post_init__(self) -> None:
         for name in ("run_dir", "cohort_parquet", "data_dir"):
@@ -59,6 +64,9 @@ class RunContext:
             raise TypeError("RunContext.name_suffix must be a string")
         if self.overlay is not None and not isinstance(self.overlay, Mapping):
             raise TypeError("RunContext.overlay must be a mapping of definitions")
+        from spacescans.catalog.recipes import check_output_level
+
+        check_output_level(self.output_level)
         if self.engine is not None:
             if not isinstance(self.engine, Mapping):
                 raise TypeError("RunContext.engine must be a mapping")
@@ -70,12 +78,14 @@ class RunContext:
     @classmethod
     def from_task_dir(cls, task_dir: str | os.PathLike, *, data_dir: str | os.PathLike,
                       buffer_m: Any = 270, raster_res_m: Any = 25,
-                      overlay: Mapping[str, dict] | None = None) -> RunContext:
+                      overlay: Mapping[str, dict] | None = None,
+                      output_level: str = "participant") -> RunContext:
         """The context the web runners use for ``task_dir``."""
         task = Path(os.fspath(task_dir))
         return cls(run_dir=task, cohort_parquet=task / "input.parquet", data_dir=data_dir,
                    buffer_m=buffer_m, raster_res_m=raster_res_m,
-                   name_suffix=f"_task_{task.name[-8:]}", overlay=overlay)
+                   name_suffix=f"_task_{task.name[-8:]}", overlay=overlay,
+                   output_level=output_level)
 
     def output_path(self, step_name: str) -> Path:
         """``run_dir/output/<step_name>.parquet``."""

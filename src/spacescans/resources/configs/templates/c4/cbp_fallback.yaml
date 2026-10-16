@@ -31,6 +31,10 @@ time:
   years: [2013, 2014, 2015, 2016, 2017, 2018, 2019]
   temporal_resolution: yearly
   temporal_mode: yearly
+  # One row per participant: the mean over all of a participant's location episodes
+  # and years, each weighted by the days that contribute a value (as orchestrate.link's
+  # default output_level "participant"). "episode" gives one row per episode.
+  output_grouping: patient
 
 engine:
   backend: duckdb

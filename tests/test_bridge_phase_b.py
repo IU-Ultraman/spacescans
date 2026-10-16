@@ -158,6 +158,8 @@ class StepStandIn:
             own = (cfg.get("exposure") or {}).get("value_cols") if name.startswith("c4_custom_") else None
             for j, col in enumerate(own or _value_cols(name)):
                 df[col] = cohort["episode_id"].astype(float) * 0.5 + j
+            if (cfg.get("time") or {}).get("output_grouping", "patient") == "patient":
+                df = df.drop(columns=["geoid"]).groupby("PATID", as_index=False, sort=False).mean()
         df.to_parquet(out, index=False)
         return StepRun(rc=0, seconds=0.05, maxrss_bytes=123456, tail=[])
 
@@ -474,16 +476,20 @@ def test_link_runs_orchestrate_link_and_streams_events(tmp_path, monkeypatch):
     v = res["value"]
     run = tmp_path / "run"
     assert v["exposures"] == str(run / "exposures.parquet") and v["run_dir"] == str(run)
-    assert v["rows"] == v["episodes"] == 4 and v["patients"] == 2
+    # the participant level is the default: one row per participant, pid then the variables
+    assert v["level"] == v["output_level"] == "participant"
+    assert v["rows"] == v["patients"] == 2 and v["episodes"] == 4
     ex = pd.read_parquet(v["exposures"])
-    assert list(ex["episode_id"]) == [0, 1, 2, 3]
-    produced = [c for c in v["columns"] if c != "episode_id"]
-    assert v["columns"][0] == "episode_id" and len(produced) >= 2 and "pid" not in v["columns"]
+    assert ex["pid"].is_unique and len(ex) == 2
+    produced = [c for c in v["columns"] if c != "pid"]
+    assert v["columns"][0] == "pid" and len(produced) >= 2 and "episode_id" not in v["columns"]
     feats = pd.read_csv(v["features"])
     assert list(feats.columns) == ["feature_name", "short_description", "detailed_description"]
     assert list(feats["feature_name"]) == produced
     assert {c["variable"] for c in v["coverage"]} == {"ndi", "walkability"}
-    assert all(c["episodes"] == 4 and c["with_value"] == 4 for c in v["coverage"])
+    assert all(c["participants"] == 2 and c["with_value"] == 2 and c["episodes"] == 4
+               for c in v["coverage"])
+    assert json.loads(Path(v["provenance"]).read_text())["run"]["output_level"] == "participant"
     assert [(s["name"], s["status"]) for s in v["steps"]] == [
         ("c3_bg", "ran"), ("c3_bg_2020", "ran"), ("c4_ndi", "ran"), ("c4_wi", "ran")]
     c3_keys = {s["name"]: s["cache_key"] for s in v["steps"] if s["name"].startswith("c3_")}
@@ -553,6 +559,24 @@ def test_link_runs_orchestrate_link_and_streams_events(tmp_path, monkeypatch):
     assert rc == 0 and res["value"]["entries"] == 0
 
 
+def test_link_at_the_episode_level_keeps_one_row_per_episode(tmp_path):
+    rc, res, _, _ = call(tmp_path, "link", link_args(tmp_path, output_level="episode"),
+                         prefix=fake_prefix(tmp_path), env=fake_env("ok"))
+    assert rc == 0, res["error"]
+    v = res["value"]
+    assert v["level"] == v["output_level"] == "episode" and v["rows"] == v["episodes"] == 4
+    ex = pd.read_parquet(v["exposures"])
+    assert list(ex["episode_id"]) == [0, 1, 2, 3] and v["columns"][0] == "episode_id"
+    assert all(c["episodes"] == 4 and c["with_value"] == 4 for c in v["coverage"])
+    assert not [w for w in res["warnings"] if w["code"] == "row_count"]
+
+
+def test_link_rejects_an_unknown_output_level(tmp_path):
+    rc, res, _, _ = call(tmp_path, "link", link_args(tmp_path, output_level="patient"),
+                         prefix=fake_prefix(tmp_path), env=fake_env("ok"))
+    assert rc != 0 and res["error"]["kind"] == "config" and "output_level" in res["error"]["message"]
+
+
 def test_link_verbose_streams_lines(tmp_path):
     rc, res, events, _ = call(tmp_path, "link", link_args(tmp_path), prefix=fake_prefix(tmp_path),
                               env=fake_env("ok"), verbose=True)
@@ -568,7 +592,7 @@ def test_link_lists_a_failed_source_with_its_step_and_hint(tmp_path):
     assert rc == 0, res["error"]
     v = res["value"]
     assert v["failed"] == ["bg_ndi_wi"] and v["skipped"] == []
-    assert list(pd.read_parquet(v["exposures"]).columns) == ["episode_id"]
+    assert list(pd.read_parquet(v["exposures"]).columns) == ["pid"]
     assert [(s["name"], s["status"], s["rc"]) for s in v["steps"]] == [("c3_bg", "failed", -9)]
     w = next(w for w in res["warnings"] if w["code"] == "step_failed")
     assert w["experiment"] == "bg_ndi_wi" and "c3_bg" in w["message"] and "memory" in w["message"]

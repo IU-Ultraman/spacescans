@@ -114,6 +114,8 @@ def diagnostics(run_dir: str | Path, variables: Sequence[str],
             continue
         definition = definition_for(definitions, var_key)
         low = False
+        # a C4 output rendered at the participant level has one row per participant (no geoid)
+        unit = "episodes" if "geoid" in df.columns else "participants"
         for col in definition["value_cols"]:
             if col not in df.columns:
                 out.append(_record("warning", f"{var_key}: value column {col!r} missing from output"))
@@ -123,7 +125,7 @@ def diagnostics(run_dir: str | Path, variables: Sequence[str],
             low = low or matched < LOW_LINKAGE
             out.append(_record(
                 level,
-                f"{var_key}.{col}: {matched:.1%} of episodes linked "
+                f"{var_key}.{col}: {matched:.1%} of {unit} linked "
                 f"({int(df[col].notna().sum()):,}/{len(df):,})",
             ))
         if low:

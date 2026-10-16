@@ -34,6 +34,7 @@ class GeometryType(str, Enum):
     POLYGON = "polygon"
     RASTER = "raster"
     LINE = "line"
+    POINT = "point"      # point features (the proximity pattern's nearest distance)
 
 
 # --- AEA CRS default ---
@@ -56,6 +57,7 @@ class SourceConfig(BaseModel):
     category_col: str | None = None
     county_file: str | None = None  # path to county boundary shapefile (tiger_proximity)
     road_cache_dir: str | None = None  # disk cache for filtered TIGER roads (tiger_proximity)
+    year_col: str | None = None  # proximity, yearly: the feature attribute holding the year
 
 
 class BufferConfig(BaseModel):
@@ -92,12 +94,29 @@ class ExposureConfig(BaseModel):
 
 
 class TimeConfig(BaseModel):
+    """When a C4 step links, and what one output row is.
+
+    ``output_grouping`` is the row: ``"patient"`` (the default; one row per
+    participant, PATID) or ``"episode"`` (one row per location episode, PATID
+    and geoid). A participant's value is the mean over all of their episodes
+    and source periods weighted by the days that contribute a value
+    (``sum(d * z) / sum(d)``, missing periods and units excluded), which is
+    the episode means weighted by each episode's contributing days. The
+    user-facing name is ``output_level`` (``"participant"`` | ``"episode"``),
+    which ``catalog.recipes.render_config`` maps onto this key.
+
+    ``contributing_days`` (yearly_areal only): also write, per value column,
+    the days that contributed to it as ``<column>__days``. The CBP fallback
+    reads them from its ZBP input to form participant means exactly.
+    """
+
     years: list[int] | None = None
     start_date: str | None = None
     end_date: str | None = None
     temporal_resolution: str = "yearly"
     temporal_mode: str = "yearly"
     output_grouping: str = "patient"  # "patient" | "episode"
+    contributing_days: bool = False
 
 
 class EngineConfig(BaseModel):

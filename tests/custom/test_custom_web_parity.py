@@ -340,6 +340,7 @@ def test_plan_and_rendered_yaml_match_the_web(web, selection, monkeypatch, tmp_p
     pd.DataFrame({"geoid": range(len(ids)), "grid_id": ids, "weight": 1.0}).to_parquet(
         task_dir / "output" / "c3_customgrid_745b4463.parquet", index=False)
     ctx = custom.Context(run_dir=task_dir, cohort_parquet=task_dir / "input.parquet",
+                         output_level="episode",     # the web 0.2.7 configs
                          buffer_m=500, raster_res_m=50, name_suffix="_task_1234abcd")
     tables = 0
     for web_step, step in zip(theirs, ours):
@@ -456,6 +457,7 @@ def test_r1_definition_is_rebuilt_from_the_example_rasters(r1, examples):
 def test_r1_plan_and_yaml_are_reproduced(r1, load_template):
     run_dir = Path("/app/data/tasks/paper-A-custom")
     ctx = custom.Context(run_dir=run_dir, cohort_parquet=run_dir / "input.parquet",
+                         output_level="episode",     # the web 0.2.7 configs
                          buffer_m=r1.config["buffer"]["size"],
                          raster_res_m=r1.config["buffer"]["raster_res_m"],
                          name_suffix="_task_A-custom")

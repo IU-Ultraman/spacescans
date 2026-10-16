@@ -30,13 +30,19 @@ class WeightedAggSpec(BaseModel):
 
 
 class TemporalAggSpec(BaseModel):
-    """Long-table oriented temporal aggregation."""
+    """Long-table oriented temporal aggregation.
+
+    ``days_suffix``: when set, each value column also gets the sum of the
+    weights that contributed to it (under SKIP, the rows where it is not
+    missing) as ``<col><output_suffix><days_suffix>``.
+    """
     group_by: str | list[str] = "PATID"
     period_col: str = "period_id"
     value_cols: list[str]
     weight_col: str = "overlap_days"
     missing_policy: MissingPolicy = MissingPolicy.SKIP
     output_suffix: str | None = None
+    days_suffix: str | None = None
 
 
 class DateRangeJoinSpec(BaseModel):

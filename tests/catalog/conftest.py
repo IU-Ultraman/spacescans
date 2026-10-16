@@ -83,8 +83,12 @@ def _set(cfg: dict, dotted: str, value, *, create: bool) -> None:
     node[leaf] = value
 
 
-def render_reference(step, *, run_dir: Path, buffer_m, raster_res_m, name_suffix: str) -> str:
-    """Follow the render contract in spacescans.catalog.recipes, return the YAML text."""
+def render_reference(step, *, run_dir: Path, buffer_m, raster_res_m, name_suffix: str,
+                     output_level: str = "episode") -> str:
+    """Follow the render contract in spacescans.catalog.recipes, return the YAML text.
+
+    ``output_level="episode"`` (the default here) is the web 0.2.7 YAML.
+    """
     import yaml
 
     from spacescans.catalog import template
@@ -102,7 +106,10 @@ def render_reference(step, *, run_dir: Path, buffer_m, raster_res_m, name_suffix
     if step.time_block == "always":
         cfg.setdefault("time", {})
     if "time" in cfg:
-        cfg["time"]["output_grouping"] = "episode"
+        per_episode = output_level == "episode" or step.episode_rows
+        cfg["time"]["output_grouping"] = "episode" if per_episode else "patient"
+        if step.episode_rows and output_level == "participant":
+            cfg["time"]["contributing_days"] = True
     cfg["output"]["path"] = str(run_dir / "output" / f"{step.name}.parquet")
     return yaml.safe_dump(cfg, sort_keys=False)
 

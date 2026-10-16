@@ -108,6 +108,42 @@ def load_weights(path: str, *, key: str | None = None, weight_col: str = "weight
     return df
 
 
+#: Suffix of a value column's contributing days (``TimeConfig.contributing_days``).
+DAYS_SUFFIX = "__days"
+
+
+def participant_means(
+    episodes: pd.DataFrame,
+    value_cols: list[str],
+    *,
+    patid_col: str = "PATID",
+    days_suffix: str = DAYS_SUFFIX,
+) -> pd.DataFrame:
+    """Participant means from per-episode means and their contributing days.
+
+    ``episodes`` has one row per episode with ``<col>`` (the episode's mean)
+    and ``<col><days_suffix>`` (the days that contributed to it) for every
+    value column. A participant's value is ``sum(days * mean) / sum(days)``
+    over the episodes whose mean is defined and whose days are positive,
+    which is the day-weighted mean over all of their episode-periods; it is
+    missing when no day contributes. One row per participant that has any
+    episode row, in order of first appearance.
+    """
+    import numpy as np
+
+    keys = episodes[patid_col]
+    out = pd.DataFrame({patid_col: pd.unique(keys)})
+    for col in value_cols:
+        x = pd.to_numeric(episodes[col], errors="coerce").to_numpy(dtype=float)
+        d = pd.to_numeric(episodes[f"{col}{days_suffix}"], errors="coerce").to_numpy(dtype=float)
+        ok = ~np.isnan(x) & ~np.isnan(d) & (d > 0)
+        num = pd.Series(np.where(ok, x * d, 0.0)).groupby(keys.to_numpy(), sort=False).sum()
+        den = pd.Series(np.where(ok, d, 0.0)).groupby(keys.to_numpy(), sort=False).sum()
+        mean = (num / den.where(den > 0)).reindex(out[patid_col].to_numpy())
+        out[col] = mean.to_numpy()
+    return out
+
+
 def resolve_output_grouping(config) -> str:
     """Return the validated output_grouping literal.
 

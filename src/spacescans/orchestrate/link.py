@@ -23,13 +23,25 @@
    ``"continue"`` runs them all. Completed sources only are merged.
 6. **Merge** each source into its partial (``_merge.write_partial``'s table;
    the upload path's linkage report first), then **fan in** onto the cohort's
-   episodes: a column whose name is taken by the cohort, by
-   ``reserved_names`` or by an earlier source gets ``_<experiment>_dup``.
-   Within one source a value column an earlier variable already produced
-   (two custom datasets that both call their column ``value``) gets
-   ``_<variable>_dup`` instead of being dropped as the web's merge drops it.
-   Every rename is reported as a ``renamed`` warning, and the feature
-   dictionary lists renamed columns under their new names.
+   participants or episodes: a column whose name is taken by ``reserved_names``
+   or by an earlier source (and, at the episode level, by the cohort) gets
+   ``_<experiment>_dup``. Within one source a value column an earlier variable
+   already produced (two custom datasets that both call their column
+   ``value``) gets ``_<variable>_dup`` instead of being dropped as the web's
+   merge drops it. Every rename is reported as a ``renamed`` warning, and the
+   feature dictionary lists renamed columns under their new names.
+
+**Output level.** ``output_level="participant"`` (the default) renders every
+C4 step with ``time.output_grouping: patient``: a participant's value is the
+mean over all of their location episodes and source periods weighted by the
+days that contribute a value (equivalently, the episode means weighted by
+their contributing days), missing when no day contributes. ``exposures`` then
+has one row per participant id of the cohort, in order of first appearance
+(participants without any value included), columns ``pid`` and the variables'
+columns in the requested order; no dates, coordinates or episode ids.
+``output_level="episode"`` is the web 0.2.7 result: one row per input row,
+``episode_id`` and the columns in source order. Linkage rates (``coverage``)
+count the rows of the output table: participants or episodes.
 
 The run directory is laid out like a web task directory (``input.parquet``,
 ``pipeline_configs/<step>.yaml``, ``output/<step>.parquet``) and step configs
@@ -72,8 +84,8 @@ if TYPE_CHECKING:
     from spacescans.orchestrate.cache import WeightCache
     from spacescans.orchestrate.execute import Executor
 
-__all__ = ["COHORT_FILE", "LinkConfigError", "LinkResult", "coverage_table", "link",
-           "web_name_suffix"]
+__all__ = ["COHORT_FILE", "OUTPUT_LEVELS", "LinkConfigError", "LinkResult", "coverage_table",
+           "link", "web_name_suffix"]
 
 #: The pipeline input inside the run directory (the web's task file name).
 COHORT_FILE = "input.parquet"
@@ -103,9 +115,14 @@ class LinkConfigError(ValueError):
 class LinkResult:
     """What :func:`link` produced (contract 5.3, plus ``partials`` and ``errors``).
 
-    ``exposures``: ``episode_id`` (0..n-1, input order) and the exposure
-    columns, one row per input row. ``features``: feature-dictionary rows of
-    those columns. ``coverage``: per linked variable ``variable``,
+    ``exposures``: at the participant level (``output_level``, the default)
+    ``pid`` and the exposure columns, one row per participant in order of
+    first appearance; at the episode level ``episode_id`` (0..n-1, input
+    order) and the exposure columns, one row per input row. ``features``:
+    feature-dictionary rows of those columns. ``coverage``: per linked
+    variable, at the participant level ``variable``, ``experiment``,
+    ``participants``, ``with_value``, ``pct``, ``episodes`` (``with_value``
+    and ``pct`` count participants); at the episode level ``variable``,
     ``experiment``, ``episodes``, ``with_value``, ``pct``, ``patients``,
     ``patients_with_value`` (``episodes``/``with_value`` count rows).
     ``steps``: every step's :class:`~spacescans.orchestrate.run.StepRecord`.
@@ -130,11 +147,16 @@ class LinkResult:
     run_dir: Path
     partials: dict[str, pd.DataFrame] = field(default_factory=dict)
     errors: list[dict] = field(default_factory=list)
+    output_level: str = "participant"
 
     @property
     def ok(self) -> bool:
         """Every requested source completed."""
         return not self.failed and not self.skipped
+
+
+#: The output levels ``link`` returns (see the module docstring).
+OUTPUT_LEVELS: tuple[str, ...] = ("participant", "episode")
 
 
 @dataclass(frozen=True)
@@ -386,25 +408,39 @@ def _executor_name(executor: Any) -> str:
 # results
 # ---------------------------------------------------------------------------
 
+#: ``coverage_table`` columns per output level.
+COVERAGE_COLUMNS: Mapping[str, tuple[str, ...]] = {
+    "episode": ("variable", "experiment", "episodes", "with_value", "pct", "patients",
+                "patients_with_value"),
+    "participant": ("variable", "experiment", "participants", "with_value", "pct", "episodes"),
+}
+
+
 def coverage_table(partials: Mapping[str, pd.DataFrame], groups: Mapping[str, Sequence[str]],
                    cohort_keys: pd.DataFrame, overlay: Mapping[str, dict] | None = None,
-                   col_renames: Mapping[str, Mapping[str, Mapping[str, str]]] | None = None
-                   ) -> pd.DataFrame:
-    """Per variable: episodes, episodes with any value, pct, and the same for patients.
+                   col_renames: Mapping[str, Mapping[str, Mapping[str, str]]] | None = None,
+                   *, level: str = "episode") -> pd.DataFrame:
+    """Per variable: the share of the output table's rows with any value (linkage rate).
 
-    ``cohort_keys`` holds ``pid`` and ``episode_id`` for every input row;
-    ``partials`` maps a completed source to its partial table. A variable's
-    columns are its catalog ``value_cols`` after the source's renames (FAQSD)
-    and its own clash renames (``col_renames[experiment][variable]``, see
+    Episode level: episodes, episodes with any value, pct, and the same for
+    patients. Participant level: participants, participants with any value,
+    pct, and the cohort's episode count. ``cohort_keys`` holds ``pid`` and
+    ``episode_id`` for every input row; ``partials`` maps a completed source
+    to its partial table (at ``level``). A variable's columns are its catalog
+    ``value_cols`` after the source's renames (FAQSD) and its own clash
+    renames (``col_renames[experiment][variable]``, see
     :func:`~spacescans.orchestrate.run.clash_renames`).
     """
     import pandas as pd
 
     from spacescans import catalog
+    from spacescans.orchestrate import merge
 
+    participant = level == "participant"
     rows = []
     episodes = len(cohort_keys)
     patients = int(cohort_keys["pid"].nunique())
+    people = merge.participant_keys(cohort_keys) if participant else None
     for exp, part in partials.items():
         renames = dict(catalog.recipe(exp).renames)
         own = (col_renames or {}).get(exp, {})
@@ -412,6 +448,17 @@ def coverage_table(partials: Mapping[str, pd.DataFrame], groups: Mapping[str, Se
             cols = [renames.get(c, c) for c in catalog.variable(key, overlay=overlay or None).value_cols]
             cols = [dict(own.get(key, {})).get(c, c) for c in cols]
             cols = [c for c in cols if c in part.columns]
+            if participant:
+                with_value = 0
+                if cols:
+                    joined = people.merge(part[["pid"] + cols], on="pid", how="left")
+                    with_value = int(joined[cols].notna().any(axis=1).sum())
+                n = len(people)
+                rows.append({"variable": key, "experiment": exp, "participants": n,
+                             "with_value": with_value,
+                             "pct": round(100.0 * with_value / n, 2) if n else 0.0,
+                             "episodes": episodes})
+                continue
             if cols:
                 joined = cohort_keys.merge(part[["pid", "episode_id"] + cols],
                                            on=["pid", "episode_id"], how="left")
@@ -424,8 +471,8 @@ def coverage_table(partials: Mapping[str, pd.DataFrame], groups: Mapping[str, Se
                          "with_value": with_value,
                          "pct": round(100.0 * with_value / episodes, 2) if episodes else 0.0,
                          "patients": patients, "patients_with_value": patients_with})
-    return pd.DataFrame(rows, columns=["variable", "experiment", "episodes", "with_value", "pct",
-                                       "patients", "patients_with_value"])
+    return pd.DataFrame(rows, columns=list(COVERAGE_COLUMNS["participant" if participant
+                                                         else "episode"]))
 
 
 def _fan_in_names(partials: Mapping[str, pd.DataFrame], reserved: Sequence[str]
@@ -447,22 +494,30 @@ def _fan_in_names(partials: Mapping[str, pd.DataFrame], reserved: Sequence[str]
 
 
 def _fan_in(cohort_keys: pd.DataFrame, partials: Mapping[str, pd.DataFrame],
-            taken: Sequence[str]) -> tuple[pd.DataFrame, list[tuple[str, str, str]]]:
-    """``episode_id`` plus every source's columns, one row per input row, input order;
-    and :func:`_fan_in_names` of those columns."""
+            taken: Sequence[str], *, level: str = "episode"
+            ) -> tuple[pd.DataFrame, list[tuple[str, str, str]]]:
+    """The key column plus every source's columns; and :func:`_fan_in_names` of those columns.
+
+    Episode level: ``episode_id``, one row per input row, input order.
+    Participant level: ``pid``, one row per participant, order of first appearance.
+    """
     from spacescans.orchestrate import merge
 
     reserved = sorted({c for c in taken if c not in merge.KEYS})
     fanned = merge.fan_in(cohort_keys[["pid"]], list(partials.items()), reserved=reserved,
-                          drop_episode_id=False)
-    if len(fanned) != len(cohort_keys):
-        raise RuntimeError(f"fan-in produced {len(fanned)} rows for {len(cohort_keys)} episodes "
-                           "(a source returned duplicate episode rows)")
+                          drop_episode_id=False, level=level)
+    if level == "participant":
+        key, expected, unit = "pid", len(merge.participant_keys(cohort_keys)), "participants"
+    else:
+        key, expected, unit = "episode_id", len(cohort_keys), "episodes"
+    if len(fanned) != expected:
+        raise RuntimeError(f"fan-in produced {len(fanned)} rows for {expected} {unit} "
+                           f"(a source returned duplicate {unit[:-1]} rows)")
     cols = [c for c in fanned.columns if c not in merge.KEYS]
     names = _fan_in_names(partials, reserved)
     if [final for _, _, final in names] != cols:     # pragma: no cover - mirrors merge.fan_in
         raise RuntimeError("fan-in column names do not follow the _<experiment>_dup rule")
-    return fanned[["episode_id"] + cols].reset_index(drop=True), names
+    return fanned[[key] + cols].reset_index(drop=True), names
 
 
 def _features(columns: Sequence[str],
@@ -566,8 +621,13 @@ def link(cohort: pd.DataFrame | str | os.PathLike, variables: Sequence[str], *,
          on_error: Literal["stop", "continue"] = "stop",
          reserved_names: Sequence[str] = (),
          on_event: Callable[[Event], Any] | None = None,
-         cancel: threading.Event | None = None) -> LinkResult:
+         cancel: threading.Event | None = None,
+         output_level: Literal["participant", "episode"] = "participant") -> LinkResult:
     """Link ``cohort`` to ``variables``; see the module docstring for the steps.
+
+    ``output_level``: ``"participant"`` (the default; one row per participant,
+    the day-weighted mean over their location episodes) or ``"episode"`` (one
+    row per input row); see "Output level" in the module docstring.
 
     ``cohort``: a table or a CSV path with ``pid`` (or a PATID alias),
     ``startDate``, ``endDate``, ``longitude``, ``latitude``; only these five
@@ -614,8 +674,15 @@ def link(cohort: pd.DataFrame | str | os.PathLike, variables: Sequence[str], *,
                               f"got {memory_limit!r}")
     if isinstance(reserved_names, (str, bytes)):
         raise LinkConfigError("reserved_names must be a list of column names")
+    if output_level not in OUTPUT_LEVELS:
+        raise LinkConfigError(f"output_level must be 'participant' or 'episode', got {output_level!r}",
+                              details={"output_level": repr(output_level)})
+    participant = output_level == "participant"
     cohort_in = cohort if isinstance(cohort, pd.DataFrame) else Path(os.fspath(cohort))
-    taken = list(_cohort_columns(cohort_in)) + [str(c) for c in reserved_names]
+    # The episode-level result sits next to the cohort's own columns; the participant
+    # table is pid and the variables only.
+    cohort_cols = list(_cohort_columns(cohort_in))
+    taken = ([] if participant else cohort_cols) + [str(c) for c in reserved_names]
     if not isinstance(cohort_in, pd.DataFrame):     # read once, as to_pipeline_parquet would
         cohort_in = _cohort.read_upload_csv(cohort_in, variant="zcta5", pid_as_str=True)
     # The checks the bridge makes (row numbers, never values), before any file is written.
@@ -650,7 +717,8 @@ def link(cohort: pd.DataFrame | str | os.PathLike, variables: Sequence[str], *,
     ctx = _LinkContext(run_dir=rdir, cohort_parquet=rdir / COHORT_FILE, data_dir=root,
                        buffer_m=buffer_m, raster_res_m=raster_res_m,
                        name_suffix=web_name_suffix(rdir), overlay=overlay or None, engine=engine,
-                       feature_caches=_feature_caches(planned, data_summary, rdir) or None)
+                       feature_caches=_feature_caches(planned, data_summary, rdir) or None,
+                       output_level=output_level)
 
     distinct = {(s.name, s.cache_tag) if s.is_c3 else (s.name, exp)
                 for exp, steps in planned.items() for s in steps}
@@ -710,8 +778,8 @@ def link(cohort: pd.DataFrame | str | os.PathLike, variables: Sequence[str], *,
         if stats.low:
             emit(Event("warning", exp, data={**stats.as_log_fields(), "level": "warning"}))
             warnings.append({"code": "low_match", "experiment": exp, "pct": stats.match_pct,
-                             "matched": stats.matched_n, "episodes": stats.cohort_n,
-                             "message": f"{exp}: {stats.match_pct}% of episodes got a value "
+                             "matched": stats.matched_n, stats.unit: stats.cohort_n,
+                             "message": f"{exp}: {stats.match_pct}% of {stats.unit} got a value "
                                         f"({stats.matched_n}/{stats.cohort_n})"})
         partials[exp] = table
         if col_renames:
@@ -719,20 +787,27 @@ def link(cohort: pd.DataFrame | str | os.PathLike, variables: Sequence[str], *,
         emit(Event("done", exp, data={"ok": True, "rows": len(table),
                                       "matched": stats.matched_n, "pct": stats.match_pct}))
 
+    from spacescans.orchestrate import merge as _merge
+
     cohort_keys = pd.read_parquet(rdir / COHORT_FILE, columns=["pid", "episode_id"])
-    exposures, names = _fan_in(cohort_keys, partials, taken)
-    columns = [c for c in exposures.columns if c != "episode_id"]
+    exposures, names = _fan_in(cohort_keys, partials, taken, level=output_level)
     origins = _column_origins(names, groups, within, overlay)
+    if participant:     # pid, then the variables in the requested order
+        exposures = _merge.order_by_variables(
+            exposures, {col: origin[1] for col, origin in origins.items()}, keys)
+    columns = [c for c in exposures.columns if c not in ("episode_id", "pid")]
     warnings.extend(_rename_warnings(names, origins))
-    coverage = coverage_table(partials, groups, cohort_keys, overlay, col_renames=within)
+    coverage = coverage_table(partials, groups, cohort_keys, overlay, col_renames=within,
+                              level=output_level)
     ended = datetime.now(timezone.utc)
     prov = _provenance.build(
         ctx=ctx, groups=groups, overlay=overlay, steps=steps, cache=weight_cache,
         executor=_executor_name(executor), threads=threads, memory_limit=memory_limit,
         on_error=on_error, data_summary=data_summary, cohort_info=info,
         started=started, ended=ended, seconds=time.monotonic() - t0,
-        failed=failed, skipped=skipped, columns=columns)
+        failed=failed, skipped=skipped, columns=columns, output_level=output_level)
     return LinkResult(exposures=exposures, features=_features(columns, origins, overlay),
                       coverage=coverage,
                       steps=steps, failed=failed, skipped=skipped, warnings=warnings,
-                      provenance=prov, run_dir=rdir, partials=partials, errors=errors)
+                      provenance=prov, run_dir=rdir, partials=partials, errors=errors,
+                      output_level=output_level)

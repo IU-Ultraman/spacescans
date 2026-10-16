@@ -128,12 +128,13 @@ def test_every_template_the_path_renders_is_listed():
 @pytest.fixture
 def rendered(tmp_path, load_template):
     """Render a step against the real templates; return the config and the run dir."""
-    def _render(step, variables, definitions, run_dir=None, buffer_m=270, raster_res_m=25):
+    def _render(step, variables, definitions, run_dir=None, buffer_m=270, raster_res_m=25,
+                output_level="participant"):
         run_dir = run_dir or (tmp_path / "task-abcdef12")
         run_dir.mkdir(parents=True, exist_ok=True)
         ctx = custom.Context(run_dir=run_dir, cohort_parquet=run_dir / "input.parquet",
                              buffer_m=buffer_m, raster_res_m=raster_res_m,
-                             name_suffix=f"_task_{run_dir.name[-8:]}")
+                             name_suffix=f"_task_{run_dir.name[-8:]}", output_level=output_level)
         for _rec in custom.prepare_step(step, ctx, definitions=definitions):
             pass
         cfg = custom.render(step, load_template(step.template), ctx,
@@ -170,15 +171,18 @@ def test_c4_without_coverage_years_uses_the_shipped_window(rendered):
     assert cfg["time"]["years"] == list(range(2013, 2020))
 
 
-def test_c4_always_sets_episode_grouping(rendered):
+def test_c4_always_sets_the_output_levels_grouping(rendered):
     for key, definition in ((A, TRACT_DEF), (C, YEARLY_DEF)):
-        cfg, _ = rendered(custom.c4_step_for(key), [key], {key: definition})
+        cfg, _ = rendered(custom.c4_step_for(key), [key], {key: definition},
+                          output_level="episode")
         assert cfg["time"]["output_grouping"] == "episode"
+        cfg, _ = rendered(custom.c4_step_for(key), [key], {key: definition})
+        assert cfg["time"]["output_grouping"] == "patient"      # the participant level
 
 
 def test_c3_gets_episode_grouping_and_the_task_buffer(rendered):
     cfg, run_dir = rendered(custom.c3_step_for("Tract"), [A], {A: TRACT_DEF},
-                            buffer_m=500, raster_res_m=50)
+                            buffer_m=500, raster_res_m=50, output_level="episode")
     assert cfg["buffer"]["buffer_m"] == 500
     # boundary_overlap_fast rasterises at this resolution, and it is part of
     # the cache key: the template's default must not survive.

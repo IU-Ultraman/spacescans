@@ -36,6 +36,10 @@ FLAGS: dict[str, bool] = {
     "config_from_dict": True,        # load_config_dict / Pipeline.from_dict
     "engine_options": True,          # engine.threads / memory_limit / temp_directory
     "unavailable_pattern_error": True,  # registry raises UnavailablePatternError
+    # output_level ("participant" | "episode") in orchestrate.link, render_config, RunContext,
+    # the merge functions and the bridge's link; participant means in every C4 pattern (0.3)
+    "output_level": True,
+    "fara_missing_skip": True,       # FARA leaves tracts without a value out of the buffer mean (0.3)
 }
 
 _DISTRIBUTIONS = (

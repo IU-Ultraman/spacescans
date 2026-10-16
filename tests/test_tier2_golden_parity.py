@@ -1,5 +1,9 @@
 """The merged tier-2 modules against the golden web 0.2.7 runs on synth_1k.
 
+The goldens are EPISODE-level runs: every context here renders with
+``output_level="episode"`` (the participant level, the default since 0.3, differs
+from the web 0.2.7 YAML in the C4 ``time`` block only).
+
 The goldens (tests/golden/web-0.2.7, or $SPACESCANS_GOLDEN_DIR, read at import) were captured
 by tier2/golden from the frozen web backend. Here the catalog, orchestrate, custom and cohort
 modules reproduce them together:
@@ -82,7 +86,7 @@ def _ctx(run: dict, config: dict, task_dir: Path, **kw) -> RunContext:
     return RunContext.from_task_dir(task_dir, data_dir="/project",
                                     buffer_m=config["buffer"]["size"],
                                     raster_res_m=config["buffer"].get("raster_res_m", 25),
-                                    overlay=_overlay(run, config), **kw)
+                                    overlay=_overlay(run, config), output_level="episode", **kw)
 
 
 def _render_reference():
@@ -169,7 +173,7 @@ def test_render_reproduces_the_render_matrix(combo, tmp_path):
     overlay = _matrix_overlay(combo)
     task_dir = Path(combo["task_dir"])
     kw = {"data_dir": "/project", "buffer_m": combo["buffer_m"],
-          "raster_res_m": combo["raster_res_m"], "overlay": overlay}
+          "raster_res_m": combo["raster_res_m"], "overlay": overlay, "output_level": "episode"}
     ctx = RunContext.from_task_dir(task_dir, **kw)
     elsewhere = RunContext.from_task_dir(tmp_path / task_dir.name, **kw)
     steps = catalog.plan(combo["experiment"], combo["variables"], overlay=overlay)
@@ -198,7 +202,7 @@ def test_legacy_keys_match_the_render_matrix(combo):
     # render_matrix.py keyed every combination on the shared noise/input.parquet
     ctx = RunContext(run_dir=Path(combo["task_dir"]), cohort_parquet=ROOT / "noise" / "input.parquet",
                      data_dir="/project", buffer_m=combo["buffer_m"],
-                     raster_res_m=combo["raster_res_m"], overlay=overlay)
+                     raster_res_m=combo["raster_res_m"], overlay=overlay, output_level="episode")
     legacy = WeightCache(Path("/nonexistent-cache"), key_format="legacy-v1")
     steps = catalog.plan(combo["experiment"], combo["variables"], overlay=overlay)
     expected = [rec["cache_key"] for rec in combo["steps"] if "cache_key" in rec]
