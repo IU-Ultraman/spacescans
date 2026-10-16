@@ -235,3 +235,16 @@ def test_cbp_fallback_patient_level_zbp_input_keeps_the_v1_rule_with_a_warning(t
     with pytest.warns(UserWarning, match="v1 rule"):
         cap = _run(tmp_path, "patient")
     assert cap["group_by"] == ["PATID"]
+
+
+def test_cbp_fallback_per_episode_needs_a_per_episode_zbp_input(tmp_path):
+    from spacescans.linkage import cbp_fallback_linkage as mod
+
+    patient_rows = pd.DataFrame({"PATID": ["a"], "r_civic": [1.0], "r_bowling": [2.0]})
+    with patch.object(mod, "load_patients", return_value=pd.DataFrame(
+            {"PATID": ["a"], "geoid": [0], "start": ["2017-01-01"], "end": ["2017-12-31"]})), \
+         patch.object(mod, "load_weights", return_value=pd.DataFrame()), \
+         patch.object(mod, "read_table", side_effect=lambda path, **kw: patient_rows.copy()), \
+         patch.object(mod, "apply_transforms", side_effect=lambda df, *a, **kw: df):
+        with pytest.raises(ValueError, match="ZBP input per episode"):
+            mod.run_cbp_fallback(_make_config(tmp_path, "episode"), MagicMock())

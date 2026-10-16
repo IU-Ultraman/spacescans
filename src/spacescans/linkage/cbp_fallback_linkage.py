@@ -90,6 +90,9 @@ def run_cbp_fallback(config: DatasetConfig, engine: AggregationEngine) -> Path:
     exact = (grouping == "patient" and geo is not None
              and all(d in linked_zbp.columns for d in zbp_days.values()))
     per_episode = grouping == "episode" or exact
+    if grouping == "episode" and geo is None:
+        raise ValueError("cbp_fallback at episode grouping needs the ZBP input per episode "
+                         "(link ZBP with time.output_grouping: episode)")
     if grouping == "patient" and not exact:
         warnings.warn(LEGACY_PATIENT_SPLIT_WARNING, stacklevel=2)
     # The rows of each branch: (PATID, geoid) per episode, PATID per patient (v1).
