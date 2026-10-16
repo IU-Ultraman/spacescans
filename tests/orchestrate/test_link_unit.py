@@ -102,6 +102,9 @@ class FakeExecutor:
                 vals = cohort["episode_id"].astype(float) * 0.5 + j
                 df[col] = [None if i in self.missing_value_rows else v
                            for i, v in enumerate(vals)]
+            if (cfg.get("time") or {}).get("output_grouping", "patient") == "patient":
+                # one row per participant, as a C4 step rendered at the participant level
+                df = df.drop(columns=["geoid"]).groupby("PATID", as_index=False, sort=False).mean()
         df.to_parquet(out, index=False)
         return StepRun(rc=0, seconds=0.05, maxrss_bytes=1000 + len(self.calls), tail=[])
 
@@ -297,15 +300,27 @@ def test_cancel_raises_run_cancelled(tmp_path):
 
 
 def test_partial_applies_faqsd_renames_and_can_rewrite_in_place(tmp_path):
-    ctx = _ctx(tmp_path)
+    ctx = _ctx(tmp_path, output_level="episode")
     run_source("faqsd", ["faqsd"], ctx, cache=None, executor=FakeExecutor())
     table, stats = partial("faqsd", ["faqsd"], ctx)
     assert list(table.columns) == ["pid", "episode_id", "faqsd_o3", "faqsd_pm25"]
-    assert stats.matched_n == len(COHORT) and not stats.low
+    assert stats.matched_n == len(COHORT) and not stats.low and stats.level == "episode"
     c4 = ctx.run_dir / "output" / "c4_tract_faqsd.parquet"
     assert "o3" in pd.read_parquet(c4).columns
     partial("faqsd", ["faqsd"], ctx, rewrite_in_place=True)
     assert "faqsd_o3" in pd.read_parquet(c4).columns
+
+
+def test_partial_at_the_participant_level_has_one_row_per_participant(tmp_path):
+    ctx = _ctx(tmp_path)                       # output_level defaults to participant
+    assert ctx.output_level == "participant"
+    run_source("faqsd", ["faqsd"], ctx, cache=None, executor=FakeExecutor())
+    cfg = yaml.safe_load((ctx.run_dir / "pipeline_configs" / "c4_tract_faqsd.yaml").read_text())
+    assert cfg["time"]["output_grouping"] == "patient"
+    table, stats = partial("faqsd", ["faqsd"], ctx)
+    assert list(table.columns) == ["pid", "faqsd_o3", "faqsd_pm25"]
+    assert stats.level == "participant" and stats.unit == "participants"
+    assert stats.cohort_n == stats.matched_n == COHORT["pid"].nunique()
 
 
 # ---------------------------------------------------------------------------
@@ -317,9 +332,46 @@ def _link(tmp_path, variables, **kw):
     return link(COHORT, variables, data_dir=tmp_path / "data", run_dir=tmp_path / "run", **kw)
 
 
+def test_link_returns_one_row_per_participant_by_default(tmp_path, no_data_check):
+    """The participant level (the default): pid then the variables in the requested order,
+    one row per participant in order of first appearance; linkage rates per participant."""
+    res = _link(tmp_path, ["noise", "walkability", "ndi"])
+    assert res.output_level == "participant"
+    assert list(res.partials) == ["bg_ndi_wi", "noise"]           # sources still run in catalog order
+    assert list(res.exposures.columns) == ["pid", "l50dba_exi", "l50dba_imp", "l50dba_nat",
+                                           "NatWalkInd", "ndi"]
+    assert list(res.exposures["pid"]) == ["A1", "B2", "C3"]
+    # the fake writes each participant's mean of its episode values (0.5 * row): A1 = rows 0, 1
+    assert list(res.exposures["ndi"]) == [0.25, 1.0, 1.5]
+    assert list(res.features["feature_name"]) == list(res.exposures.columns[1:])
+    assert list(res.coverage.columns) == ["variable", "experiment", "participants", "with_value",
+                                          "pct", "episodes"]
+    assert (res.coverage["participants"] == 3).all() and (res.coverage["with_value"] == 3).all()
+    assert (res.coverage["episodes"] == len(COHORT)).all()
+    assert res.provenance["run"]["output_level"] == "participant"
+    for step in ("c4_noise", "c4_wi", "c4_ndi"):
+        cfg = yaml.safe_load((res.run_dir / "pipeline_configs" / f"{step}.yaml").read_text())
+        assert cfg["time"]["output_grouping"] == "patient", step
+
+
+def test_a_participant_without_any_value_is_kept_with_missing_values(tmp_path, no_data_check):
+    """Rows 2 (B2's only episode) has no value: B2 stays in the table, missing, in place."""
+    res = _link(tmp_path, ["noise"], executor=FakeExecutor(missing_value_rows={2}))
+    assert list(res.exposures["pid"]) == ["A1", "B2", "C3"]
+    assert res.exposures.loc[1, ["l50dba_exi", "l50dba_imp", "l50dba_nat"]].isna().all()
+    cov = res.coverage.set_index("variable").loc["noise"]
+    assert (cov["participants"], cov["with_value"], cov["pct"]) == (3, 2, 66.67)
+
+
+def test_output_level_must_be_participant_or_episode(tmp_path, no_data_check):
+    with pytest.raises(LinkConfigError, match="output_level"):
+        _link(tmp_path, ["noise"], output_level="patient")
+
+
 def test_link_groups_by_catalog_order_keeping_request_order_within_a_source(tmp_path,
                                                                              no_data_check):
-    res = _link(tmp_path, ["noise", "walkability", "ndi"])
+    res = _link(tmp_path, ["noise", "walkability", "ndi"], output_level="episode")
+    assert res.output_level == "episode"
     assert list(res.partials) == ["bg_ndi_wi", "noise"]
     assert list(res.exposures.columns) == ["episode_id", "NatWalkInd", "ndi", "l50dba_exi",
                                            "l50dba_imp", "l50dba_nat"]
@@ -333,6 +385,9 @@ def test_link_groups_by_catalog_order_keeping_request_order_within_a_source(tmp_
     # the config names carry the web's task suffix (last 8 chars of the run dir name)
     cfg = yaml.safe_load((res.run_dir / "pipeline_configs" / "c3_bg.yaml").read_text())
     assert cfg["name"].endswith("_task_run")
+    cfg = yaml.safe_load((res.run_dir / "pipeline_configs" / "c4_noise.yaml").read_text())
+    assert cfg["time"]["output_grouping"] == "episode"
+    assert res.provenance["run"]["output_level"] == "episode"
 
 
 def test_an_inprocess_link_spills_into_its_run_dir(tmp_path, no_data_check, monkeypatch):
@@ -406,7 +461,7 @@ def test_on_error_stop_skips_the_rest_and_continue_runs_them(tmp_path, no_data_c
                 executor=FakeExecutor(fail={"c4_noise"}))
     assert res.failed == ["noise"] and res.skipped == ["vnl"]
     assert list(res.partials) == ["bg_ndi_wi"]
-    assert list(res.exposures.columns) == ["episode_id", "NatWalkInd"]
+    assert list(res.exposures.columns) == ["pid", "NatWalkInd"]
     err = res.errors[0]
     assert (err["kind"], err["experiment"], err["step"], err["rc"]) == (
         "step_failed", "noise", "c4_noise", 3)
@@ -423,10 +478,16 @@ def test_name_clashes_get_the_web_dup_suffix(tmp_path, no_data_check):
     res = _link(tmp_path, ["noise", "walkability"], reserved_names=["NatWalkInd", "age"])
     assert "NatWalkInd_bg_ndi_wi_dup" in res.exposures.columns
     assert "NatWalkInd" not in res.exposures.columns
-    # a cohort column of the same name is taken too, as in the web fan-in
+    # at the participant level the table is pid and the variables: a cohort column clashes
+    # with nothing there
     df = COHORT.assign(l50dba_exi=1.0)
+    res_p = link(df, ["noise"], data_dir=tmp_path / "data", run_dir=tmp_path / "run_p",
+                 executor=FakeExecutor())
+    assert list(res_p.exposures.columns) == ["pid", "l50dba_exi", "l50dba_imp", "l50dba_nat"]
+    assert not [w for w in res_p.warnings if w["code"] == "renamed"]
+    # at the episode level a cohort column of the same name is taken too, as in the web fan-in
     res2 = link(df, ["noise"], data_dir=tmp_path / "data", run_dir=tmp_path / "run2",
-                executor=FakeExecutor())
+                executor=FakeExecutor(), output_level="episode")
     assert "l50dba_exi_noise_dup" in res2.exposures.columns
     # every rename is reported, and the renamed column keeps its dictionary row (review F6)
     renamed = [w for w in res2.warnings if w["code"] == "renamed"]
@@ -444,11 +505,26 @@ def test_name_clashes_get_the_web_dup_suffix(tmp_path, no_data_check):
         "pid", "startDate", "endDate", "longitude", "latitude", "episode_id"]
 
 
+def test_low_match_at_the_participant_level_counts_participants(tmp_path, no_data_check):
+    log_dir = tmp_path / "run"
+    log_dir.mkdir()
+    res = _link(tmp_path, ["noise"], executor=FakeExecutor(missing_value_rows={0, 1}),
+                on_event=LogWriter.for_run_dir(log_dir))        # rows 0, 1 = A1's episodes
+    low = [w for w in res.warnings if w["code"] == "low_match"]
+    assert low and low[0]["pct"] == 66.67 and low[0]["participants"] == 3
+    assert "of participants got a value (2/3)" in low[0]["message"]
+    rec = [json.loads(line) for line in (log_dir / "logs.jsonl").read_text().splitlines()
+           if '"event"' in line]
+    assert list(rec[0]) == ["ts", "level", "experiment_key", "event", "match_pct", "cohort_n",
+                            "matched_n", "output_level"]
+    assert rec[0]["output_level"] == "participant"
+
+
 def test_low_match_is_a_warning_and_a_web_log_record(tmp_path, no_data_check):
     log_dir = tmp_path / "run"
     log_dir.mkdir()
     res = _link(tmp_path, ["noise"], executor=FakeExecutor(missing_value_rows={0, 1}),
-                on_event=LogWriter.for_run_dir(log_dir))
+                on_event=LogWriter.for_run_dir(log_dir), output_level="episode")
     low = [w for w in res.warnings if w["code"] == "low_match"]
     assert low and low[0]["pct"] == 50.0
     rec = [json.loads(line) for line in (log_dir / "logs.jsonl").read_text().splitlines()
@@ -566,7 +642,8 @@ def test_two_custom_datasets_with_one_column_name_keep_both(tmp_path, no_data_ch
                 df.to_parquet(out, index=False)
             return run
 
-    res = _link(tmp_path, [ka, kb], custom={ka: da, kb: db}, executor=Marked())
+    res = _link(tmp_path, [ka, kb], custom={ka: da, kb: db}, executor=Marked(),
+                output_level="episode")
     dup = f"pm25_{kb}_dup"
     assert list(res.exposures.columns) == ["episode_id", "pm25", dup]
     assert list(res.exposures["pm25"]) == [0.0, 0.5, 1.0, 1.5]

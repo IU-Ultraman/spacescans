@@ -108,8 +108,13 @@ def build(*, ctx: Any, groups: Mapping[str, Sequence[str]], overlay: Mapping[str
           steps: Sequence[Any], cache: Any, executor: str, threads: int | None,
           memory_limit: str | None, on_error: str, data_summary: Mapping[str, Any],
           cohort_info: Any, started: datetime, ended: datetime, seconds: float,
-          failed: Sequence[str], skipped: Sequence[str], columns: Sequence[str]) -> dict[str, Any]:
-    """The provenance of one link (see the module docstring)."""
+          failed: Sequence[str], skipped: Sequence[str], columns: Sequence[str],
+          output_level: str = "episode") -> dict[str, Any]:
+    """The provenance of one link (see the module docstring).
+
+    ``run.output_level`` records what one result row is: ``"participant"`` or
+    ``"episode"``.
+    """
     data_dir = Path(ctx.data_dir)
     datasets = sorted({d for v in (data_summary.get("variables") or {}).values()
                        for d in v.get("datasets", [])} | set(data_summary.get("datasets") or {}))
@@ -129,6 +134,7 @@ def build(*, ctx: Any, groups: Mapping[str, Sequence[str]], overlay: Mapping[str
                  "receipts": data_receipts(datasets, data_dir)},
         "run": {"variables": [k for ks in groups.values() for k in ks],
                 "experiments": {exp: list(ks) for exp, ks in groups.items()},
+                "output_level": output_level,
                 "buffer_m": ctx.buffer_m, "raster_res_m": ctx.raster_res_m,
                 "threads": threads, "memory_limit": memory_limit, "executor": executor,
                 "on_error": on_error, "run_dir": str(ctx.run_dir),

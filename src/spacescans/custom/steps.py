@@ -87,6 +87,8 @@ class Context:
 
     ``run_dir/output/<step>.parquet`` is every step's output; the web passes
     ``task_dir``, ``task_dir/"input.parquet"`` and ``f"_task_{task_dir.name[-8:]}"``.
+    ``output_level`` (``"participant"`` or ``"episode"``) sets the C4 row, as in
+    :class:`spacescans.orchestrate.RunContext`.
     """
 
     run_dir: Path
@@ -94,6 +96,7 @@ class Context:
     buffer_m: int = 270
     raster_res_m: int = 25
     name_suffix: str = ""
+    output_level: str = "participant"
 
 
 # --------------------------------------------------------------------------
@@ -224,7 +227,8 @@ def render(step: Any, template: Mapping[str, Any], ctx: RenderContext, *,
         _planned(step, variables, definitions), template, run_dir=Path(ctx.run_dir),
         cohort_parquet=ctx.cohort_parquet, buffer_m=ctx.buffer_m,
         raster_res_m=ctx.raster_res_m, name_suffix=ctx.name_suffix,
-        engine=getattr(ctx, "engine", None))
+        engine=getattr(ctx, "engine", None),
+        output_level=getattr(ctx, "output_level", _recipes.DEFAULT_OUTPUT_LEVEL))
 
 
 def prepare_step(step: Any, ctx: RenderContext, *,

@@ -75,9 +75,12 @@ def test_run_context_has_the_contract_fields_and_defaults(tmp_path):
                      data_dir=str(tmp_path / "d"))
     assert [f.name for f in dataclasses.fields(RunContext)] == [
         "run_dir", "cohort_parquet", "data_dir", "buffer_m", "raster_res_m", "name_suffix",
-        "overlay", "engine"]
-    assert (ctx.buffer_m, ctx.raster_res_m, ctx.name_suffix, ctx.overlay, ctx.engine) == \
-        (270, 25, "", None, None)
+        "overlay", "engine", "output_level"]
+    assert (ctx.buffer_m, ctx.raster_res_m, ctx.name_suffix, ctx.overlay, ctx.engine,
+            ctx.output_level) == (270, 25, "", None, None, "participant")
+    with pytest.raises(ValueError, match="output_level"):
+        RunContext(run_dir=tmp_path, cohort_parquet=tmp_path, data_dir=tmp_path,
+                   output_level="patient")
     assert isinstance(ctx.run_dir, Path) and isinstance(ctx.data_dir, Path)
     with pytest.raises(dataclasses.FrozenInstanceError):
         ctx.buffer_m = 500
@@ -116,10 +119,30 @@ def test_render_is_pure_and_fills_the_run_fields(run):
 
 
 def test_render_binds_c4_inputs_to_this_runs_c3_outputs(run):
-    cfg = render(catalog.recipe("bg_ndi_wi").steps["c4_ndi"], run.ctx)
+    step = catalog.recipe("bg_ndi_wi").steps["c4_ndi"]
+    cfg = render(step, run.ctx)
     assert cfg["source"]["file"] == str(run.ctx.output_path("c3_bg"))
     assert cfg["source_2020"]["file"] == str(run.ctx.output_path("c3_bg_2020"))
-    assert cfg["time"]["output_grouping"] == "episode"
+    assert run.ctx.output_level == "participant" and cfg["time"]["output_grouping"] == "patient"
+    episode = render(step, dataclasses.replace(run.ctx, output_level="episode"))
+    assert episode["time"]["output_grouping"] == "episode"
+    assert {k: v for k, v in episode.items() if k != "time"} == \
+        {k: v for k, v in cfg.items() if k != "time"}
+
+
+def test_the_zbp_step_stays_per_episode_with_contributing_days_for_participants(run):
+    """cbp_fallback reads ZBP per episode at both levels; at the participant level it also
+    needs each value's contributing days (render rule 8, Step.episode_rows)."""
+    rec = catalog.recipe("zcta5_cbp")
+    zbp, fallback = rec.steps["c4_zcta5_cbp"], rec.steps["c4_county_cbp"]
+    assert zbp.episode_rows and not fallback.episode_rows
+    cfg = render(zbp, run.ctx)
+    assert cfg["time"]["output_grouping"] == "episode" and cfg["time"]["contributing_days"] is True
+    assert render(fallback, run.ctx)["time"]["output_grouping"] == "patient"
+    episode = dataclasses.replace(run.ctx, output_level="episode")
+    zbp_episode = render(zbp, episode)["time"]
+    assert zbp_episode["output_grouping"] == "episode" and "contributing_days" not in zbp_episode
+    assert render(fallback, episode)["time"]["output_grouping"] == "episode"
 
 
 def test_engine_none_keeps_the_yaml_and_engine_options_are_written(run):
@@ -649,7 +672,10 @@ def test_custom_and_catalog_c3_bg_share_one_v2_key(run, tmp_path):
     custom_step = next(s for s in catalog.plan("custom", [key], overlay={key: d}) if s.name == "c3_bg")
     assert catalog_step.name == custom_step.name == "c3_bg"
     cfg_catalog, cfg_custom = render(catalog_step, ctx), render(custom_step, ctx)
-    assert "time" not in cfg_catalog and cfg_custom["time"] == {"output_grouping": "episode"}
+    assert "time" not in cfg_catalog and cfg_custom["time"] == {"output_grouping": "patient"}
+    episode = dataclasses.replace(ctx, output_level="episode")
+    assert render(custom_step, episode)["time"] == {"output_grouping": "episode"}
+    assert v2_same_key(custom_step, ctx, episode)
     assert orch_cache.normalised_config(cfg_catalog) == orch_cache.normalised_config(cfg_custom)
     assert "time" not in orch_cache.normalised_config(cfg_custom)
     v2 = WeightCache(run.tmp / "cache", key_format="v2")
@@ -671,13 +697,20 @@ def test_custom_and_catalog_c3_bg_share_one_v2_key(run, tmp_path):
                                                        "time": {"years": [2015]}}
 
 
+def v2_same_key(step, ctx_a, ctx_b) -> bool:
+    """A C3 step keys the same at both output levels (the level is a C4 setting)."""
+    v2 = WeightCache(Path(ctx_a.run_dir).parent / "cache-levels", key_format="v2")
+    return v2.key(step, ctx_a) == v2.key(step, ctx_b)
+
+
 def test_an_empty_time_block_is_kept_for_patterns_that_read_it(run):
     """tiger_proximity and proximity read ``config.time`` (years, temporal_mode): an empty
     block (``time: {}``, years None) and no block (years 2013-2019) compute different things,
     so only ``output_grouping`` goes from their key, never the block."""
     step = catalog.plan("tiger_proximity", ["tiger_proximity"])[0]
     cfg = render(step, run.ctx)
-    assert cfg["linkage_pattern"] == "tiger_proximity" and cfg["time"]["output_grouping"] == "episode"
+    assert cfg["linkage_pattern"] == "tiger_proximity" and cfg["time"]["output_grouping"] == "patient"
+    assert v2_same_key(step, run.ctx, dataclasses.replace(run.ctx, output_level="episode"))
     norm = orch_cache.normalised_config(cfg)
     assert "output_grouping" not in norm["time"] and norm["time"]["years"] == list(range(2013, 2020))
     for pattern in ("tiger_proximity", "proximity"):

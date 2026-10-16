@@ -30,6 +30,10 @@ time:
   years: [2013, 2014, 2015, 2016, 2017, 2018, 2019]
   temporal_resolution: yearly
   temporal_mode: yearly
+  # One row per location episode, with each value's contributing days: the input
+  # cbp_fallback.yaml reads per episode to form the participant means.
+  output_grouping: episode
+  contributing_days: true
 
 engine:
   backend: duckdb

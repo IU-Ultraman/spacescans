@@ -3,11 +3,14 @@
 ``link`` runs :func:`spacescans.orchestrate.link` (contract 5.3) on a worker
 thread and writes three files into ``run_dir``:
 
-* ``exposures.parquet`` - ``episode_id`` (0..n-1, input order) and the exposure columns;
+* ``exposures.parquet`` - at ``output_level = "participant"`` (the default)
+  ``pid`` and the exposure columns, one row per participant in order of first
+  appearance; at ``"episode"`` ``episode_id`` (0..n-1, input order) and the
+  exposure columns;
 * ``feature_dictionary.csv`` - the dictionary rows for the columns produced;
 * ``provenance.json`` - versions, fingerprints, cache keys; never cohort values.
 
-The value is ``{exposures, rows, episodes, patients, columns, features,
+The value is ``{exposures, level, rows, episodes, patients, columns, features,
 coverage, steps, failed, skipped, warnings, provenance, run_dir}``.
 
 Events (design 3.6): the orchestrator's events are relayed as ``plan``,
@@ -355,6 +358,8 @@ def cmd_link(args: dict, ctx) -> Outcome:
     threads = int_arg(args, "threads", minimum=1)
     memory_limit = str_arg(args, "memory_limit")
     on_error = choice_arg(args, "on_error", ("stop", "continue"), default="stop")
+    output_level = choice_arg(args, "output_level", ("participant", "episode"),
+                              default="participant")
     reserved = str_list_arg(args, "reserved_names") or []
     grace = number_arg(args, "cancel_grace_s", minimum=0, maximum=60, default=DEFAULT_CANCEL_GRACE_S)
 
@@ -374,7 +379,8 @@ def cmd_link(args: dict, ctx) -> Outcome:
     on_event = tee(log.event, relay)
     cancel = threading.Event()
     log.write("info", "runner", f"bridge link: {len(variables)} variable(s), {co.rows} episode(s), "
-                                f"{co.patients} patient(s); executor={executor}")
+                                f"{co.patients} patient(s); executor={executor}; "
+                                f"output_level={output_level}")
 
     def on_line(line: str) -> None:   # stdout of in-process work
         ctx.log(line)
@@ -386,7 +392,8 @@ def cmd_link(args: dict, ctx) -> Outcome:
             lambda: link(co.table, variables, data_dir=data_dir, run_dir=run_dir, buffer_m=buffer_m,
                          raster_res_m=raster_res_m, custom=custom, cache=cache, executor=executor,
                          threads=threads, memory_limit=memory_limit, on_error=on_error,
-                         reserved_names=tuple(reserved), on_event=on_event, cancel=cancel),
+                         reserved_names=tuple(reserved), on_event=on_event, cancel=cancel,
+                         output_level=output_level),
             on_line, cancel=cancel, grace_s=grace, log=ctx.log)
     except BaseException as e:
         log.write("error", "runner", f"bridge link stopped: {type(e).__name__}")
@@ -414,17 +421,19 @@ def cmd_link(args: dict, ctx) -> Outcome:
         warnings.append({"code": "failed", "experiment": exp,
                          "message": f"{exp}: failed; its columns are missing from the result"})
     value = {
-        "exposures": str(exp_path), "rows": len(exposures), "episodes": co.rows,
-        "patients": co.patients, "columns": columns, "features": str(feat_path),
+        "exposures": str(exp_path), "level": output_level, "rows": len(exposures),
+        "episodes": co.rows, "patients": co.patients, "columns": columns, "features": str(feat_path),
         "coverage": _records(getattr(result, "coverage", None)),
         "steps": to_jsonable(list(getattr(result, "steps", None) or [])),
         "failed": failed, "skipped": list(getattr(result, "skipped", None) or []),
         "warnings": warnings, "provenance": str(prov_path), "run_dir": str(run_dir),
         "seconds": seconds,
     }
-    if value["rows"] != co.rows:
+    expected, unit = ((co.patients, "participants") if output_level == "participant"
+                      else (co.rows, "episodes"))
+    if value["rows"] != expected:
         warnings.append({"code": "row_count", "message": f"the result has {value['rows']} rows for "
-                                                         f"{co.rows} cohort episodes"})
+                                                         f"{expected} cohort {unit}"})
     log.write("info", "runner", f"bridge link done in {seconds:.1f}s: {value['rows']} rows, "
                                 f"{len(columns)} columns, {len(failed)} failed")
     log.close()

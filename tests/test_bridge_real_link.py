@@ -62,7 +62,8 @@ def test_bridge_link_on_real_data_matches_the_golden_noise_run(tmp_path, golden_
     time.sleep(1.1)
     args = {"cohort": str(tmp_path / "cohort.parquet"), "variables": ["noise"],
             "data_dir": REAL_DATA_DIR, "run_dir": str(tmp_path / "run1"),
-            "cache_dir": str(tmp_path / "cache"), "threads": 2, "on_error": "stop"}
+            "cache_dir": str(tmp_path / "cache"), "threads": 2, "on_error": "stop",
+            "output_level": "episode"}           # the goldens are episode-level
     rc, res, events = _link(tmp_path, "link1", args)
     assert rc == 0, res["error"]
     v = res["value"]

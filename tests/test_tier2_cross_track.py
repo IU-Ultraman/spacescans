@@ -90,22 +90,25 @@ def _assert_custom_paths_agree(defs: dict[str, dict], tmp_path: Path) -> None:
     import yaml
 
     run_dir = tmp_path / "task-0123abcd"
-    ctx = custom.Context(run_dir=run_dir, cohort_parquet=run_dir / "input.parquet",
-                         buffer_m=270, raster_res_m=25, name_suffix="_task_0123abcd")
     cohort_file = tmp_path / "input.parquet"
     cohort_file.write_bytes(b"only hashed")
     sha = hashlib.sha256(cohort_file.read_bytes()).hexdigest()
-    run_ctx = RunContext(run_dir=run_dir, cohort_parquet=run_dir / "input.parquet",
-                         data_dir=tmp_path, name_suffix="_task_0123abcd", overlay=defs)
     key_ctx = RunContext(run_dir=run_dir, cohort_parquet=cohort_file, data_dir=tmp_path)
     legacy = WeightCache(tmp_path / "c3_cache", key_format="legacy-v1")
-    for step in catalog.plan("custom", keys, overlay=defs):
+    for step, level in ((s, lv) for lv in ("episode", "participant")
+                        for s in catalog.plan("custom", keys, overlay=defs)):
+        ctx = custom.Context(run_dir=run_dir, cohort_parquet=run_dir / "input.parquet",
+                             buffer_m=270, raster_res_m=25, name_suffix="_task_0123abcd",
+                             output_level=level)
+        run_ctx = RunContext(run_dir=run_dir, cohort_parquet=run_dir / "input.parquet",
+                             data_dir=tmp_path, name_suffix="_task_0123abcd", overlay=defs,
+                             output_level=level)
         expected = render_reference(step, run_dir=run_dir, buffer_m=270, raster_res_m=25,
-                                    name_suffix="_task_0123abcd")
+                                    name_suffix="_task_0123abcd", output_level=level)
         cfg = custom.render(step, catalog.template(step.template), ctx, variables=keys,
                             definitions=defs)
-        assert yaml.safe_dump(cfg, sort_keys=False) == expected, step.name
-        assert orch_render(step, run_ctx) == cfg, step.name
+        assert yaml.safe_dump(cfg, sort_keys=False) == expected, (step.name, level)
+        assert orch_render(step, run_ctx) == cfg, (step.name, level)
         if step.is_c3:
             assert (recipes.legacy_cache_key(step, sha, buffer_m=270, raster_res_m=25)
                     == custom.legacy_cache_key(cohort_file, custom.boundary_tag_for_step(step),

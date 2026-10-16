@@ -417,8 +417,10 @@ def partial(experiment: str, keys: Sequence[str], ctx: RunContext, *,
     """One source's partial table and match statistics (``_merge.write_partial``).
 
     Reads each variable's C4 output from ``ctx.run_dir/output`` (in ``keys``
-    order) and the episode keys (``pid``, ``episode_id``) from
-    ``ctx.cohort_parquet``. FAQSD's column renames are applied in memory;
+    order) and the cohort keys from ``ctx.cohort_parquet``: ``pid`` and
+    ``episode_id`` at the episode level, one ``pid`` per participant at the
+    participant level (``ctx.output_level``, default participant: the level
+    the steps were rendered at). FAQSD's column renames are applied in memory;
     ``rewrite_in_place`` also writes them back into the C4 parquet, as the
     web's runner does (``faqsd.py:213-216``). The table is what the web writes
     to ``result_<experiment>.csv`` (with ``to_csv(index=False)``).
@@ -443,9 +445,14 @@ def partial(experiment: str, keys: Sequence[str], ctx: RunContext, *,
             df.to_parquet(path, index=False)
     import pyarrow.parquet as pq
 
+    from spacescans.catalog.recipes import DEFAULT_OUTPUT_LEVEL
+
+    level = getattr(ctx, "output_level", DEFAULT_OUTPUT_LEVEL)
     names = pq.read_schema(ctx.cohort_parquet).names
     id_col = "pid" if "pid" in names else "PATID"    # a legacy web input.parquet may keep PATID
-    cohort_keys = merge.episode_keys(pd.read_parquet(ctx.cohort_parquet, columns=[id_col]))
+    cohort = pd.read_parquet(ctx.cohort_parquet, columns=[id_col])
+    cohort_keys = (merge.participant_keys(cohort) if level == "participant"
+                   else merge.episode_keys(cohort))
     outputs = [(k, pd.read_parquet(out_dir / rec.output_for(k))) for k in keys]
     value_cols = _value_cols(keys, ctx.overlay)
     renames = dict(rec.renames) or None
@@ -458,4 +465,4 @@ def partial(experiment: str, keys: Sequence[str], ctx: RunContext, *,
                       for k, cols in value_cols.items()}
         renames = None
     return merge.merge_partial(cohort_keys, outputs, value_cols,
-                               experiment=experiment, renames=renames)
+                               experiment=experiment, renames=renames, level=level)
