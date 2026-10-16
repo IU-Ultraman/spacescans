@@ -406,7 +406,7 @@ test_that("by default ss_link() returns one row per participant, in order of fir
   expect_equal(cov$participants, c(4L, 4L))
   expect_equal(cov$pct, c(100, 100))
   expect_equal(attr(res, "features")$feature_name, c("ndi", "NatWalkInd"))
-  expect_equal(attr(res, "provenance")$output_level, "participant")
+  expect_equal(attr(res, "provenance")$run$output_level, "participant")
   info <- attr(res, "spacescans")
   expect_equal(info$output_level, "participant")
   expect_equal(info$participants, 4L)
@@ -465,6 +465,8 @@ test_that("a participant table is recognised by its shape when the bridge does n
   res <- link()
   expect_equal(attr(res, "output_level"), "participant")
   expect_equal(res$pid, c("A", "B", "C", "D"))
+  dir <- local_fake_bridge(list(link = list(echo_name = "output_level")))   # the field's other name
+  expect_equal(attr(link(output_level = "episode"), "output_level"), "episode")
 })
 
 test_that("linkage rates a bridge reports as patients are shown per participant", {

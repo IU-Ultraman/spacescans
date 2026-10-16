@@ -23,12 +23,14 @@
   daily; GeoTIFF rasters, static, yearly, biweekly or daily; point, line or
   polygon features, linked as the distance to the nearest feature) and
   stores it with its metadata in a registry shared with the Python package.
-  `ss_datasets()`, `ss_dataset()` and `ss_remove_dataset()` list, show and
-  remove datasets; the option `spacescans.datasets_dir` (or the environment
-  variable `SPACESCANS_DATASETS_DIR`) chooses the registry.
+  `ss_datasets()`, `ss_dataset()`, `ss_update_dataset()` and
+  `ss_remove_dataset()` list, show, change and remove datasets; the option
+  `spacescans.datasets_dir` (or the environment variable
+  `SPACESCANS_DATASETS_DIR`) chooses the registry.
 * `ss_link(custom = )` and `ss_coverage(custom = )` take registered dataset
-  names, ids or records, alone or together with `ss_custom_polygon()` and
-  `ss_custom_raster()` definitions; `variables` may then be empty.
+  names, ids, variable keys or records, alone or together with
+  `ss_custom_polygon()` and `ss_custom_raster()` definitions, in the order
+  given; `variables` may then be empty.
 * Jobs (`ss_link(wait = FALSE)`, `ss_job_attach()`) work at both levels;
   `job.json` records the level and counts, never participant ids. A job
   directory written by 0.2 is read as episode level.

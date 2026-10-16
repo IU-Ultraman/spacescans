@@ -11,7 +11,7 @@
 #                             directory (walkability and noise), the minimal
 #                             example and links at both output levels
 #
-# Registry tests skip while the installed spacescans has no dataset registry.
+# Registry tests skip while the installed bridge has no datasets-* commands.
 
 skip_if_not_live <- function() {
   if (!identical(Sys.getenv("SPACESCANS_LIVE"), "1")) skip("live bridge tests need SPACESCANS_LIVE=1")
@@ -32,18 +32,10 @@ skip_if_not_live_link <- function() {
   if (!identical(Sys.getenv("SPACESCANS_LIVE_LINK"), "1")) skip("set SPACESCANS_LIVE_LINK=1 to run a real link")
 }
 
-# A registry in a temporary directory for the calling test; skips when the
-# installed spacescans has none yet.
+# A registry in a temporary directory for the calling test.
 local_live_registry <- function(env = parent.frame()) {
   root <- withr::local_tempdir(.local_envir = env)
   withr::local_options(spacescans.datasets_dir = root, .local_envir = env)
-  e <- tryCatch(ss_datasets(), error = identity)
-  if (inherits(e, "error")) {
-    if (grepl("has no dataset registry", conditionMessage(e), fixed = TRUE)) {
-      skip("the installed spacescans has no dataset registry yet")
-    }
-    stop(e)
-  }
   root
 }
 
@@ -94,11 +86,12 @@ test_that("live: hello reports protocol 1 and the commands", {
   caps <- live_caps()
   expect_equal(as.integer(caps$protocol), 1L)
   expect_true(all(c("capabilities", "hello", "run", "schema", "templates") %in% unlist(caps$commands)))
-  expect_true(all(c("dataset-register", "dataset-list", "dataset-get", "dataset-remove") %in%
-                    unlist(caps$commands)))
   v <- ss_version()
   expect_equal(v$protocol, 1L)
   expect_equal(v$python_package, spacescans:::.ss_expected()$version)
+  skip_if_no_command("datasets-register")
+  expect_true(all(c("datasets-register", "datasets-list", "datasets-get", "datasets-update",
+                    "datasets-remove") %in% unlist(caps$commands)))
 })
 
 test_that("live: ss_doctor() runs every check", {
@@ -344,7 +337,7 @@ test_that("live: participant level is the day-weighted mean of the episode level
   cov <- attr(res, "coverage")
   expect_equal(cov$participants, length(unique(co$pid)))
   expect_equal(cov$with_value, sum(!is.na(res$NatWalkInd)))
-  expect_equal(attr(res, "provenance")$output_level, "participant")
+  expect_equal(attr(res, "provenance")$run$output_level, "participant")
 })
 
 test_that("live: the minimal example (three participants, NPS noise) runs and checks itself", {
@@ -365,38 +358,72 @@ test_that("live: the minimal example (three participants, NPS noise) runs and ch
   expect_equal(attr(env$res, "coverage")$pct, 100)
 })
 
-test_that("live: registered datasets: register, list, get and remove (polygon table)", {
+test_that("live: registered datasets: register, list, get, update and remove (polygon table)", {
   skip_if_not_live()
-  skip_if_no_command("dataset-register")
+  skip_if_no_command("datasets-register")
   local_clean_state()
   root <- local_live_registry()
   csv <- file.path(withr::local_tempdir(), "county_scores.csv")
   writeLines(c("GEOID,score", "18097,0.25", "18057,0.75"), csv)
-  rec <- ss_register_dataset(csv, name = "county_scores", kind = "polygon_table", temporal = "static",
-                             key = "County", variables = data.frame(name = "score", unit = "points"),
+  rec <- ss_register_dataset(csv, name = "County scores", kind = "polygon_table", temporal = "static",
+                             key = list(boundary = "county", column = "GEOID"),
+                             variables = data.frame(name = "score", unit = "points"),
                              source = "live test", version = "1")
   expect_s3_class(rec, "ss_dataset")
-  expect_equal(rec$name, "county_scores")
+  expect_equal(rec$name, "County scores")
+  expect_match(rec$variable_key, "^custom_[0-9a-f]{8}$")
   expect_equal(rec$variables$name, "score")
+  expect_equal(rec$variables$unit, "points")
   expect_equal(rec$visibility, "private")
   expect_true(length(rec$files) >= 1L)
   expect_true(file.exists(csv))                                   # the original stays
   ls <- ss_datasets()
-  expect_equal(ls$name, "county_scores")
+  expect_equal(ls$name, "County scores")
   expect_equal(normalizePath(attr(ls, "root")), normalizePath(root))
-  expect_equal(ss_dataset(rec$id)$name, "county_scores")
-  expect_error(ss_register_dataset(csv, name = "county_scores", kind = "polygon_table",
-                                   temporal = "static", key = "County"),
+  expect_equal(ss_dataset(rec$id)$name, "County scores")
+  expect_equal(ss_dataset("county SCORES")$id, rec$id)
+  expect_equal(ss_dataset(rec$variable_key)$id, rec$id)
+  expect_error(ss_register_dataset(csv, name = "County scores", kind = "polygon_table",
+                                   temporal = "static", key = "county"),
                class = "spacescans_error_config")
-  expect_message(ss_remove_dataset("county_scores"), "Removed")
+  up <- ss_update_dataset(rec, visibility = "deployment", description = "Two counties.")
+  expect_equal(up$visibility, "deployment")
+  expect_equal(up$source, "live test")
+  expect_equal(up$id, rec$id)
+  expect_message(ss_remove_dataset("County scores"), "Removed")
   expect_equal(nrow(ss_datasets()), 0L)
-  expect_error(ss_dataset("county_scores"), class = "spacescans_error_config")
+  expect_error(ss_dataset("County scores"), class = "spacescans_error_config")
+})
+
+test_that("live: a registered county table links by name at participant level", {
+  skip_if_not_live()
+  skip_if_not_live_link()
+  skip_if_no_command("datasets-register")
+  local_clean_state()
+  d <- live_data_dir()
+  local_untouched(d)
+  withr::local_envvar(R_USER_CACHE_DIR = withr::local_tempdir())
+  local_live_registry()
+  csv <- file.path(withr::local_tempdir(), "county_scores.csv")
+  writeLines(c("GEOID,score", "18097,0.25", "18057,0.75"), csv)      # the cohort is in 18097
+  rec <- ss_register_dataset(csv, name = "county scores", kind = "polygon_table", temporal = "static",
+                             key = "county")
+  co <- live_cohort()
+  res <- ss_link(co, character(), custom = "county scores", data_dir = d, progress = FALSE, threads = 2)
+  expect_equal(names(res), c("pid", "score"))
+  expect_equal(res$pid, unique(co$pid))
+  expect_equal(res$score, rep(0.25, length(unique(co$pid))))
+  expect_equal(attr(res, "coverage")$pct, 100)
+  ep <- ss_link(co, character(), custom = rec, output_level = "episode", data_dir = d, progress = FALSE,
+                threads = 2)
+  expect_equal(ep$score, rep(0.25, nrow(co)))
+  expect_equal(ep$note, co$note)
 })
 
 test_that("live: the registered-dataset example links a features dataset by name", {
   skip_if_not_live()
   skip_if_not_live_link()
-  skip_if_no_command("dataset-register")
+  skip_if_no_command("datasets-register")
   skip_if_no_geo()
   local_clean_state()
   local_live_registry()
@@ -413,7 +440,7 @@ test_that("live: the registered-dataset example links a features dataset by name
 test_that("live: a features dataset at participant level is the day-weighted mean of its episodes", {
   skip_if_not_live()
   skip_if_not_live_link()
-  skip_if_no_command("dataset-register")
+  skip_if_no_command("datasets-register")
   skip_if_no_geo()
   local_clean_state()
   local_live_registry()

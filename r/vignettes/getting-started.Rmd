@@ -196,16 +196,25 @@ feature. This example needs no catalog data:
 ```
 
 `ss_datasets()` lists what is registered, `ss_dataset()` shows one record,
+`ss_update_dataset()` changes its name, metadata or variable units,
 `ss_remove_dataset()` deletes one, and `ss_link(custom = )` takes names,
-ids or records, alone or with catalog variables:
+ids or records, alone or with catalog variables. A table names its Census
+geography in `key`, with the key column when it is not called `GEOID10`,
+`GEOID` or the like:
 
 ```{r}
-svi <- ss_register_dataset("~/data/svi_2020_tract.csv", name = "svi_2020",
-                           kind = "polygon_table", temporal = "static", key = "Tract",
+svi <- ss_register_dataset("~/data/svi_2020_tract.csv", name = "SVI 2020",
+                           kind = "polygon_table", temporal = "static",
+                           key = list(boundary = "tract", column = "FIPS"),
                            variables = data.frame(name = "RPL_THEMES", unit = "percentile",
                                                   description = "Overall SVI percentile"),
                            source = "CDC/ATSDR SVI 2020", version = "2020")
-res <- ss_link(cohort, "ndi", custom = "svi_2020", cols = cols)
+res <- ss_link(cohort, "ndi", custom = "SVI 2020", cols = cols)
+
+# Rasters: one GeoTIFF per period; the period comes from the file name or `periods`.
+pm <- ss_register_dataset(c("pm_2016a.tif", "pm_2016b.tif"), name = "PM2.5 biweekly",
+                          kind = "raster", temporal = "biweekly",
+                          periods = as.Date(c("2016-01-01", "2016-01-15")))
 ```
 
 For a one-off dataset that you do not want to register,

@@ -39,10 +39,10 @@ location episode, your data frame with the exposure columns added.}
 
 \item{data_dir}{The data directory (default \code{\link[=ss_data_dir]{ss_data_dir()}}).}
 
-\item{buffer_m}{Buffer radius around each location in metres (whole
+\item{buffer_m}{Buffer radius around each location in meters (whole
 number).}
 
-\item{raster_res_m}{Raster resolution in metres used by areal C3 steps.}
+\item{raster_res_m}{Raster resolution in meters used by areal C3 steps.}
 
 \item{custom}{Your own datasets: a dataset registered with
 \code{\link[=ss_register_dataset]{ss_register_dataset()}} (its name or id, or the record), a definition

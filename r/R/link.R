@@ -68,9 +68,9 @@
 #'   weighted by contributing days (see Details). `"episode"`: one row per
 #'   location episode, your data frame with the exposure columns added.
 #' @param data_dir The data directory (default [ss_data_dir()]).
-#' @param buffer_m Buffer radius around each location in metres (whole
+#' @param buffer_m Buffer radius around each location in meters (whole
 #'   number).
-#' @param raster_res_m Raster resolution in metres used by areal C3 steps.
+#' @param raster_res_m Raster resolution in meters used by areal C3 steps.
 #' @param custom Your own datasets: a dataset registered with
 #'   [ss_register_dataset()] (its name or id, or the record), a definition
 #'   from [ss_custom_polygon()] or [ss_custom_raster()], or a list (or
@@ -127,15 +127,18 @@ ss_link <- function(cohort, variables, output_level = c("participant", "episode"
   raster_res_m <- .ss_whole(raster_res_m, "raster_res_m", min = 1)
   threads <- .ss_threads_arg(threads)
   memory_limit <- .ss_memory_arg(memory_limit)
-  spec <- .ss_custom_args(custom)
-  custom_map <- spec$definitions
-  variables <- .ss_link_variables(variables, custom_map, spec$datasets)
+  items <- .ss_custom_items(custom)
+  wanted <- .ss_link_variables(variables, list(), custom = length(items) > 0L)
   user <- .ss_cohort_input(cohort, cols)
   prepared <- .ss_prepare_cohort(user, cols)
 
   data_dir <- .ss_dir_value(data_dir, "data_dir")
   .ss_hello()
   cache_dir <- .ss_cache_arg(cache)
+  # Registered datasets become definitions here (datasets-get), so the link
+  # treats them like any other custom definition.
+  custom_map <- .ss_custom_resolve(items)
+  variables <- .ss_link_variables(wanted, custom_map)
   catalog_vars <- setdiff(variables, names(custom_map))
   .ss_preflight(catalog_vars, data_dir)
 
@@ -148,7 +151,6 @@ ss_link <- function(cohort, variables, output_level = c("participant", "episode"
   })
   args <- list(
     cohort = cohort_path, variables = I(variables), custom = .ss_named(custom_map),
-    datasets = if (length(spec$datasets)) I(spec$datasets),
     output_level = output_level,
     data_dir = data_dir, run_dir = rd, buffer_m = buffer_m, raster_res_m = raster_res_m,
     cache_dir = cache_dir, executor = "subprocess", threads = threads,
@@ -159,14 +161,14 @@ ss_link <- function(cohort, variables, output_level = c("participant", "episode"
   )
   args <- args[!vapply(args, is.null, logical(1))]
   # job.json holds counts and settings only, never cohort values.
-  meta <- list(variables = I(variables), datasets = if (length(spec$datasets)) I(spec$datasets),
+  meta <- list(variables = I(variables),
                output_level = output_level, n = prepared$n, participants = prepared$n_patients,
                buffer_m = buffer_m, raster_res_m = raster_res_m, cols = as.list(prepared$map),
                keep = isTRUE(keep))
   meta <- meta[!vapply(meta, is.null, logical(1))]
   job <- tryCatch(
     .ss_job_start("link", args, rd, persistent = !own_dir && !isTRUE(wait),
-                  env = c(list(SPACESCANS_DATA_DIR = data_dir), .ss_datasets_env()), meta = meta),
+                  env = list(SPACESCANS_DATA_DIR = data_dir), meta = meta),
     error = function(e) {
       if (own_dir) unlink(rd, recursive = TRUE)
       stop(e)
@@ -196,13 +198,16 @@ ss_link <- function(cohort, variables, output_level = c("participant", "episode"
   invisible(job)
 }
 
-.ss_link_variables <- function(variables, custom_map, datasets = character()) {
+# The variables to link: yours, then the custom datasets' keys (in the order
+# given). `custom`: custom datasets are coming that R cannot list yet
+# (registered ones, looked up later), so no variable is needed now.
+.ss_link_variables <- function(variables, custom_map, custom = FALSE) {
   if (missing(variables) || is.null(variables)) variables <- character()
   if (!is.character(variables) || anyNA(variables) || any(!nzchar(variables))) {
     .ss_abort("config", "`variables` must be a character vector of variable keys, for example c(\"ndi\").")
   }
   variables <- unique(c(variables, setdiff(names(custom_map), variables)))
-  if (!length(variables) && !length(datasets)) {
+  if (!length(variables) && !isTRUE(custom)) {
     .ss_abort("config", "Give at least one variable (see ss_catalog()) or a custom dataset.")
   }
   variables
@@ -370,7 +375,7 @@ ss_link <- function(cohort, variables, output_level = c("participant", "episode"
 # the bridge reports (or, from a bridge that reports none, the table's shape).
 .ss_link_level <- function(job, value, ex) {
   wanted <- job$meta$output_level %||% "episode"
-  got <- value$output_level
+  got <- value$level %||% value$output_level
   if (is.null(got)) {
     got <- if ("episode_id" %in% names(ex)) "episode" else if ("pid" %in% names(ex)) "participant" else NA_character_
   }
@@ -584,21 +589,17 @@ ss_link <- function(cohort, variables, output_level = c("participant", "episode"
 #' }
 #' @export
 ss_coverage <- function(cohort, variables, cols = NULL, custom = NULL) {
-  spec <- .ss_custom_args(custom)
-  custom_map <- spec$definitions
-  variables <- .ss_link_variables(variables, custom_map, spec$datasets)
+  items <- .ss_custom_items(custom)
+  wanted <- .ss_link_variables(variables, list(), custom = length(items) > 0L)
   prepared <- .ss_prepare_cohort(.ss_cohort_input(cohort, cols), cols)
+  custom_map <- .ss_custom_resolve(items)
+  variables <- .ss_link_variables(wanted, custom_map)
   rd <- .ss_new_run_dir()
   on.exit(unlink(rd, recursive = TRUE), add = TRUE)
   path <- .ss_write_cohort(prepared$df, rd)
-  args <- list(cohort = path, variables = I(variables), custom = .ss_named(custom_map),
-               datasets = if (length(spec$datasets)) I(spec$datasets))
-  value <- .ss_bridge("coverage", args[!vapply(args, is.null, logical(1))], env = .ss_datasets_env())
+  value <- .ss_bridge("coverage", list(cohort = path, variables = I(variables),
+                                       custom = .ss_named(custom_map)))
   df <- .ss_coverage_df(value)
-  if (length(spec$datasets) && !length(setdiff(df$variable, variables))) {
-    warning(sprintf("spacescans: the Python bridge reported no coverage for the registered dataset(s) %s.",
-                    paste(spec$datasets, collapse = ", ")), call. = FALSE)
-  }
   attr(df, "episodes") <- value$row_count %||% value$episodes %||% prepared$n
   df
 }

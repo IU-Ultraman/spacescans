@@ -97,11 +97,13 @@ gives the formula.
 Register a dataset once and link it by name later, like a catalog variable:
 
 ```r
-ss_register_dataset("~/data/svi_2020_tract.csv", name = "svi_2020", kind = "polygon_table",
-                    temporal = "static", key = "Tract", source = "CDC/ATSDR SVI 2020")
+ss_register_dataset("~/data/svi_2020_tract.csv", name = "SVI 2020", kind = "polygon_table",
+                    temporal = "static", key = list(boundary = "tract", column = "FIPS"),
+                    source = "CDC/ATSDR SVI 2020")
 ss_datasets()                                       # what is registered
-res <- ss_link(cohort, "ndi", custom = "svi_2020")
-ss_remove_dataset("svi_2020")
+res <- ss_link(cohort, "ndi", custom = "SVI 2020")
+ss_update_dataset("SVI 2020", visibility = "deployment")
+ss_remove_dataset("SVI 2020")
 ```
 
 Registration checks and prepares the files once and stores them, with a record of their metadata,
@@ -110,7 +112,7 @@ Support/spacescans/datasets` on macOS; the option `spacescans.datasets_dir` or t
 variable `SPACESCANS_DATASETS_DIR` moves it). Kinds: `"polygon_table"` (a CSV keyed by a 2010
 tract, block group, ZCTA or county; static, yearly or daily), `"raster"` (GeoTIFFs on one grid;
 static, yearly, biweekly or daily) and `"features"` (points, lines or polygons; the variable is the
-distance in metres to the nearest feature; static or yearly). A dataset registered from Python is
+distance in meters to the nearest feature; static or yearly). A dataset registered from Python is
 visible from R and the other way round. `ss_custom_polygon()` and `ss_custom_raster()` still build
 one-off definitions that point at your files where they are.
 
@@ -191,7 +193,7 @@ Tests of the real bridge run when `SPACESCANS_PYTHON` points at an environment
 with spacescans installed (for example the repository's `.venv/bin/python`);
 otherwise they skip. `tests/testthat/test-live.R` also needs
 `SPACESCANS_LIVE=1`; each of its tests skips while the installed bridge does
-not list the command it uses (or has no dataset registry).
+not list the command it uses (the registry tests need `datasets-register`).
 `SPACESCANS_LIVE_LINK=1` adds real links: the registered-dataset example
 (`inst/examples/registered-dataset.R`, no catalog data needed) and, with
 `SPACESCANS_LIVE_DATA_DIR` (read only, checked unchanged afterwards; it must

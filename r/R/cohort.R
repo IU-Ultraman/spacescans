@@ -272,7 +272,7 @@
 
 .ss_whole <- function(x, name, min = 0) {
   if (!is.numeric(x) || length(x) != 1L || is.na(x) || !is.finite(x) || x != round(x) || x < min) {
-    .ss_abort("config", sprintf("`%s` must be a single whole number of at least %s (metres).", name, format(min)))
+    .ss_abort("config", sprintf("`%s` must be a single whole number of at least %s (meters).", name, format(min)))
   }
   as.integer(x)
 }

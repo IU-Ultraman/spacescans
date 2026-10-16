@@ -1,6 +1,6 @@
 # Registering your own data once and linking it by name. The dataset here
 # is three points (city parks) written as GeoJSON; the variable is the
-# distance in metres from each location to the nearest point. It needs no
+# distance in meters from each location to the nearest point. It needs no
 # catalog data, only the Python side (ss_install()):
 #   source(system.file("examples", "registered-dataset.R", package = "spacescans"))
 library(spacescans)

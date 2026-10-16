@@ -4,6 +4,7 @@
 \alias{ss_datasets}
 \alias{ss_register_dataset}
 \alias{ss_dataset}
+\alias{ss_update_dataset}
 \alias{ss_remove_dataset}
 \title{Registered datasets: your own data, prepared once and reused}
 \usage{
@@ -14,6 +15,7 @@ ss_register_dataset(
   temporal,
   key = NULL,
   variables = NULL,
+  periods = NULL,
   description = NULL,
   source = NULL,
   version = NULL,
@@ -21,38 +23,58 @@ ss_register_dataset(
   visibility = c("private", "deployment"),
   owner = NULL,
   root = NULL,
-  overwrite = FALSE,
-  options = NULL
+  overwrite = FALSE
 )
 
 ss_datasets(root = NULL)
 
 ss_dataset(name_or_id, root = NULL)
 
+ss_update_dataset(
+  name_or_id,
+  name = NULL,
+  description = NULL,
+  source = NULL,
+  version = NULL,
+  license_note = NULL,
+  visibility = NULL,
+  owner = NULL,
+  variables = NULL,
+  root = NULL
+)
+
 ss_remove_dataset(name_or_id, root = NULL)
 }
 \arguments{
 \item{paths}{The data files: one CSV for a table; GeoTIFF files for a
-raster; one GeoPackage, GeoJSON or zipped Shapefile per year (or one
-file) for features. For a polygon table, a data frame is also accepted
+raster; a GeoPackage, GeoJSON or zipped Shapefile per year (or one file)
+for features. For a polygon table, a data frame is also accepted
 (written to a private temporary CSV file first).}
 
-\item{name}{A unique name for the dataset in the registry, for example
-\code{"svi_2020"}.}
+\item{name}{A name for the dataset, unique in the registry (1 to 80
+characters), for example \code{"SVI 2020"}. For \code{ss_update_dataset()}, the
+new name.}
 
 \item{kind}{\code{"polygon_table"}, \code{"raster"} or \code{"features"}.}
 
 \item{temporal}{\code{"static"}, \code{"yearly"}, \code{"biweekly"} (rasters) or
 \code{"daily"} (tables and rasters); features are \code{"static"} or \code{"yearly"}.}
 
-\item{key}{For a polygon table, the Census key of its rows, as the Python
-function \code{register()} takes it (a string, or a named list).}
+\item{key}{How places (and times) are read from a polygon table: a
+geography name or a named list (see Details); optional for features
+(\code{list(year_column = , layer = )}); unused for rasters.}
 
 \item{variables}{The variables: a character vector of names, or a data
-frame with columns \code{name} and optionally \code{unit} and \code{description} (one
-row per variable). \code{NULL} lets the registry choose (every value column
-of a table; the band or file names of a raster; \verb{<name>_dist_m} for
-features).}
+frame with a \code{name} column and optionally \code{unit}, \code{description}, and
+\code{column} (a table's column, when it differs from the name) or \code{band} (a
+raster band). \code{NULL} takes the defaults: every numeric column of a
+table; band 1 of a raster, named after the dataset; \verb{<name>_dist_m} for
+features. For \code{ss_update_dataset()}, a data frame with \code{name} and the
+new \code{unit} and/or \code{description} of existing variables.}
+
+\item{periods}{For rasters and yearly features: the year (a number) or the
+start date (a \code{Date} or \code{"2016-01-01"}) of each file, in the order of
+\code{paths}, when the file names do not carry them.}
 
 \item{description, source, version, license_note}{Optional metadata: a
 description of the dataset, where it comes from, its version, and the
@@ -64,59 +86,68 @@ terms under which it may be used.}
 
 \item{root}{The registry directory (see Details).}
 
-\item{overwrite}{Replace a dataset of the same name.}
+\item{overwrite}{Replace a dataset of the same name (it gets a new id).}
 
-\item{options}{Further arguments of the Python function \code{register()},
-as a named list, for settings the arguments above do not cover.}
-
-\item{name_or_id}{A dataset's name or id, or the record from
-\code{ss_register_dataset()} or \code{ss_dataset()}.}
+\item{name_or_id}{A dataset's name, id or variable key, or the record
+from \code{ss_register_dataset()} or \code{ss_dataset()}.}
 }
 \value{
-\code{ss_register_dataset()} and \code{ss_dataset()}: the dataset's record,
-a list of class \code{ss_dataset} (\code{id}, \code{name}, \code{kind}, \code{temporal}, \code{key},
-\code{variables} (a data frame: \code{name}, \code{unit}, \code{description}), \code{source},
-\code{version}, \code{description}, \code{license_note}, \code{visibility}, \code{owner},
-\code{created_utc}, \code{files}, \code{checksum}, \code{spacescans_version}), with the
-registry directory as attribute \code{root}. \code{ss_datasets()}: a data frame
-with one row per dataset (list fields joined with ", "), attribute
-\code{root}. \code{ss_remove_dataset()}: the removed record, invisibly.
+\code{ss_register_dataset()}, \code{ss_dataset()} and
+\code{ss_update_dataset()}: the dataset's record, a list of class
+\code{ss_dataset} (\code{id}, \code{name}, \code{kind}, \code{temporal}, \code{key}, \code{variables} (a
+data frame: \code{name}, \code{unit}, \code{description}), \code{source}, \code{version},
+\code{description}, \code{license_note}, \code{visibility}, \code{owner}, \code{created_utc},
+\code{files}, \code{checksum}, \code{spacescans_version}, \code{details}, \code{path} (its
+directory) and \code{variable_key}), with the registry directory as
+attribute \code{root}. \code{ss_datasets()}: a data frame with one row per dataset
+(variables as their names), attribute \code{root}. \code{ss_remove_dataset()}:
+the removed record, invisibly.
 }
 \description{
 Registers your own exposure data once, so that later \code{\link[=ss_link]{ss_link()}} calls
-use it by name like a catalog variable: \code{ss_link(cohort, "ndi", custom = "my_dataset")}.
+use it by name like a catalog variable: \code{ss_link(cohort, "ndi", custom = "my dataset")}.
 }
 \details{
 \itemize{
 \item \code{ss_register_dataset()} checks the files and prepares them once
-(normalized Parquet for tables; a checked grid and period index for
+(normalized Parquet for tables; checked copies and a period index for
 rasters; GeoParquet in EPSG:5070 for features). The prepared files and
-a \code{dataset.json} record are stored in the registry; your original
-files are not changed and are no longer needed by the link.
+a \code{dataset.json} record go to the registry; your original files are not
+changed and are no longer needed by the link.
 \item \code{ss_datasets()} lists the registered datasets.
 \item \code{ss_dataset()} returns one, with its variables and prepared files.
+\item \code{ss_update_dataset()} changes a dataset's name, metadata (including
+\code{visibility}) or the units and descriptions of its variables; the data
+stays.
 \item \code{ss_remove_dataset()} removes one: its record and prepared files (not
 your original files).
 }
 
-The work is done by the Python registry (\code{spacescans.custom.register()},
-\code{list_datasets()}, \code{get_dataset()}, \code{remove_dataset()}) through the
-bridge, so a dataset registered from Python is visible from R and the
-other way round.
+The work is done by the registry of the Python package
+(\code{spacescans.custom.register()} and its companions) through the bridge,
+so a dataset registered from Python is visible from R and the other way
+round. A dataset is found by its name (ignoring case), its id or its
+variable key (\code{custom_} and the first 8 characters of the id).
 
 \strong{Kinds.}
 \itemize{
 \item \code{"polygon_table"}: a CSV file (or a data frame) of values keyed by a
-2010 Census tract, block group, ZCTA or county. \code{temporal}: \code{"static"},
-\code{"yearly"} (a year column) or \code{"daily"} (a date column).
-\item \code{"raster"}: GeoTIFF files. \code{temporal}: \code{"static"} (one file),
-\code{"yearly"}, \code{"biweekly"} or \code{"daily"} (one file per period, all on one
-grid).
-\item \code{"features"}: point, line or polygon geometries (one geometry type per
+2010 Census tract, block group, ZCTA or county. \code{temporal}: \code{"static"}
+(one row per place), \code{"yearly"} (a year column) or \code{"daily"} (a date
+column). \code{key} names the geography: \code{"tract"}, \code{"block_group"},
+\code{"zcta"} or \code{"county"} when the key column has its usual name (such as
+\code{GEOID10} or \code{GEOID}), else a list such as \code{list(boundary = "tract", column = "FIPS", year_column = "yr")} (\code{year_column} and \code{date_column}
+default to \code{year} and \code{date}).
+\item \code{"raster"}: GeoTIFF files on one grid. \code{temporal}: \code{"static"} (one
+file), \code{"yearly"}, \code{"biweekly"} or \code{"daily"} (one file per period). The
+period of each file comes from its name (a year, or a date such as
+\code{20160101} or \code{2016-01-01}) or from \code{periods}.
+\item \code{"features"}: point, line or polygon geometries (one geometry family per
 dataset) in a GeoPackage, a GeoJSON file or a zipped Shapefile, with a
-coordinate reference system. The variable is the distance in metres
-from each location to the nearest feature; its name is yours (default
-\verb{<name>_dist_m}). \code{temporal}: \code{"static"} or \code{"yearly"}.
+coordinate reference system. The variable is the distance in meters from
+each location to the nearest feature, named \verb{<name>_dist_m} unless you
+name it. \code{temporal}: \code{"static"} or \code{"yearly"} (one file per year, or a
+year column).
 }
 
 \strong{Where.} The registry is the directory \code{root}, else the option
@@ -124,8 +155,9 @@ from each location to the nearest feature; its name is yours (default
 \code{SPACESCANS_DATASETS_DIR}, else the Python package's default,
 \code{platformdirs.user_data_dir("spacescans")/datasets} (on macOS
 \verb{~/Library/Application Support/spacescans/datasets}). Names are unique
-within a registry. \code{\link[=ss_link]{ss_link()}} uses the same rule without \code{root}, so set
-the option (or the variable) when you keep datasets elsewhere.
+within a registry. \code{\link[=ss_link]{ss_link()}} and \code{\link[=ss_coverage]{ss_coverage()}} look registered
+datasets up by the same rule, so set the option when you keep them
+elsewhere.
 
 \strong{Visibility.} \code{"private"} (default) or \code{"deployment"}. The packages only
 record it; a web app deployment enforces it (a \code{"deployment"} dataset is
@@ -133,12 +165,14 @@ offered to every user of that deployment).
 }
 \examples{
 \dontrun{
-svi <- ss_register_dataset("~/data/svi_2020_tract.csv", name = "svi_2020",
+svi <- ss_register_dataset("~/data/svi_2020_tract.csv", name = "SVI 2020",
                            kind = "polygon_table", temporal = "static",
-                           key = "Tract", variables = "RPL_THEMES",
+                           key = list(boundary = "tract", column = "FIPS"),
+                           variables = "RPL_THEMES",
                            source = "CDC/ATSDR SVI 2020", version = "2020")
 ss_datasets()
-res <- ss_link(cohort, "ndi", custom = "svi_2020")
-ss_remove_dataset("svi_2020")
+res <- ss_link(cohort, "ndi", custom = "SVI 2020")
+ss_update_dataset("SVI 2020", visibility = "deployment")
+ss_remove_dataset("SVI 2020")
 }
 }
