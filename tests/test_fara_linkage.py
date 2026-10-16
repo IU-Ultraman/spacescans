@@ -273,3 +273,55 @@ def test_fara_leaves_units_without_fara_data_missing(tmp_path):
     assert len(uncovered) >= 1
     assert uncovered[_LABEL_VARS].isna().all().all(), uncovered
     assert covered[_LABEL_VARS].notna().all().all()
+
+
+def test_fara_spatial_mean_skips_tracts_without_a_value(tmp_path):
+    """C-19: a tract without a value for a variable drops from that year's buffer mean,
+    numerator and denominator alike, as in every other source. One buffer, two tracts
+    (weights 1 and 3); the second has no LALOWI1_10share in 2017. Up to 0.2.x the
+    denominator kept its weight: (0.5 * 1) / (1 + 3) = 0.125 instead of 0.5."""
+    from spacescans.linkage import fara_linkage as mod
+
+    label_csv = tmp_path / "labels_c19.csv"
+    pd.DataFrame({"var": ["LALOWI1_10share", "LALOWI1_10", "LILATracts_1And10"],
+                  "label": ["a", "b", "c"]}).to_csv(label_csv, index=False)
+    cfg = _make_demo_config(tmp_path, output_grouping="episode")
+    cfg.exposure.label_file = str(label_csv)
+    fara = _fara_frame()
+    fara = fara[fara["Fips"].isin([10, 11])].copy()
+    fara.loc[fara["Fips"] == 11, "LALOWI1_10"] = 3000.0
+    fara.loc[(fara["Fips"] == 11) & (fara["year"] == 2017), "LALOWI1_10share"] = float("nan")
+    buffer = pd.DataFrame({"GEOID10": [10, 11], "geoid": [0, 0], "value": [1.0, 3.0]})
+    patients = pd.DataFrame({"PATID": ["P1"], "geoid": [0],
+                             "start": ["2017-01-01"], "end": ["2017-12-31"]})
+
+    def read(path, *, key=None):
+        return fara if key == "fara1019" else buffer
+
+    with patch.object(mod, "read_table", side_effect=read), \
+         patch.object(mod, "load_patients", return_value=patients):
+        mod.run_fara_tract(cfg, engine=None)
+    out = pd.read_parquet(cfg.output.path).iloc[0]
+    assert out["LALOWI1_10share"] == pytest.approx(0.5)            # tract 10 only
+    assert out["LALOWI1_10"] == pytest.approx((1000 * 1 + 3000 * 3) / 4)   # both tracts
+    assert out["LILATracts_1And10"] == 1
+
+
+def test_fara_buffer_with_no_valued_tract_stays_missing(tmp_path):
+    """Every tract of the buffer lacks the value: missing (not 0 and not a division error)."""
+    from spacescans.linkage import fara_linkage as mod
+
+    label_csv = tmp_path / "labels_c19.csv"
+    pd.DataFrame({"var": ["LALOWI1_10share"], "label": ["a"]}).to_csv(label_csv, index=False)
+    cfg = _make_demo_config(tmp_path, output_grouping="patient")
+    cfg.exposure.label_file = str(label_csv)
+    fara = _fara_frame()
+    fara = fara[fara["Fips"].isin([10, 11])].copy()
+    fara.loc[fara["year"] == 2017, "LALOWI1_10share"] = float("nan")
+    buffer = pd.DataFrame({"GEOID10": [10, 11], "geoid": [0, 0], "value": [1.0, 3.0]})
+    patients = pd.DataFrame({"PATID": ["P1"], "geoid": [0],
+                             "start": ["2017-01-01"], "end": ["2017-12-31"]})
+    with patch.object(mod, "read_table", side_effect=lambda p, *, key=None: fara if key else buffer), \
+         patch.object(mod, "load_patients", return_value=patients):
+        mod.run_fara_tract(cfg, engine=None)
+    assert pd.isna(pd.read_parquet(cfg.output.path).loc[0, "LALOWI1_10share"])

@@ -188,3 +188,50 @@ def test_cbp_fallback_episode_mode_splits_per_episode_not_per_patient(tmp_path):
     assert result.groupby(["PATID", "geoid"]).size().max() == 1
     assert sorted(result["geoid"].tolist()) == [10, 11]
     assert result.set_index("geoid").loc[11, "r_civic"] == 4.0
+
+
+def test_cbp_fallback_participant_mode_splits_per_episode(tmp_path):
+    """Participant grouping with an episode-level ZBP input that carries contributing days:
+    the split is per episode (as in episode mode) and the participant's value is the
+    day-weighted mean of its episodes. Real DuckDB engine, synthetic tables."""
+    from spacescans.engine.duckdb_engine import DuckDBEngine
+    from spacescans.linkage import cbp_fallback_linkage as mod
+
+    patients = pd.DataFrame({
+        "PATID": ["mix", "mix", "solo"], "geoid": [10, 11, 12],
+        "start": ["2017-01-01", "2017-07-01", "2017-01-01"],
+        "end": ["2017-06-30", "2017-12-31", "2017-12-31"],
+    })
+    # episode 10: no ZBP -> county; 11: ZBP 4.0 over 184 days; 12: no ZBP -> county
+    linked = pd.DataFrame({
+        "PATID": ["mix", "mix", "solo"], "geoid": [10, 11, 12],
+        "r_civic": [float("nan"), 4.0, float("nan")],
+        "r_bowling": [float("nan"), 2.0, float("nan")],
+        "r_civic__days": [0.0, 184.0, 0.0], "r_bowling__days": [0.0, 184.0, 0.0],
+    })
+    weights = pd.DataFrame({"geoid": [10, 11, 12], "GEOID10": ["01001"] * 3, "weight": [1.0] * 3})
+    county = pd.DataFrame({"fips": ["01001"], "year": [2017], "r_civic": [9.0], "r_bowling": [1.0]})
+
+    def fake_read_table(path, **kw):
+        return linked.copy() if str(path) == "zbp_linked.parquet" else county.copy()
+
+    with patch.object(mod, "load_patients", return_value=patients.copy()), \
+         patch.object(mod, "load_weights", return_value=weights), \
+         patch.object(mod, "read_table", side_effect=fake_read_table), \
+         patch.object(mod, "apply_transforms", side_effect=lambda df, *a, **kw: df):
+        cfg = _make_config(tmp_path, "patient")
+        mod.run_cbp_fallback(cfg, DuckDBEngine())
+    out = pd.read_parquet(cfg.output.path).set_index("PATID")
+    assert list(out.columns) == ["r_civic", "r_bowling"]
+    # mix: county 9.0 over 181 days (Jan-Jun) and ZBP 4.0 over 184 days (Jul-Dec)
+    assert out.loc["mix", "r_civic"] == pytest.approx((9.0 * 181 + 4.0 * 184) / 365, abs=1e-12)
+    assert out.loc["mix", "r_bowling"] == pytest.approx((1.0 * 181 + 2.0 * 184) / 365, abs=1e-12)
+    assert out.loc["solo", "r_civic"] == pytest.approx(9.0)
+
+
+def test_cbp_fallback_patient_level_zbp_input_keeps_the_v1_rule_with_a_warning(tmp_path):
+    from spacescans.linkage import cbp_fallback_linkage as mod
+
+    with pytest.warns(UserWarning, match="v1 rule"):
+        cap = _run(tmp_path, "patient")
+    assert cap["group_by"] == ["PATID"]

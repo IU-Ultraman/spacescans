@@ -1,4 +1,4 @@
-"""CBP fallback linkage — county-level CBP for patients missing ZBP, ZBP for the rest.
+"""CBP fallback linkage — county-level CBP for episodes missing ZBP, ZBP for the rest.
 
 Matches v1 C4_Linkage_COUNTY_CBP.py:
 1. Load linked ZBP output (zbp.pkl)
@@ -6,32 +6,60 @@ Matches v1 C4_Linkage_COUNTY_CBP.py:
 3. All other units → use ZBP values (strip zbp_ prefix)
 4. Concat both groups → one row per unit
 
-The unit is the patient under patient grouping (v1) and the (patient, episode)
-under episode grouping. Up to v0.2.6 the split was always made per patient, so
-in episode mode a patient with one ZBP-less episode sent every episode to the
-county branch while the ZBP-valid ones were also kept: those episodes came out
-twice with different values. The two branches are now exact complements.
+The unit of the split is the location episode. Up to v0.2.6 the split was made
+per patient, so in episode mode a patient with one ZBP-less episode sent every
+episode to the county branch while the ZBP-valid ones were also kept: those
+episodes came out twice with different values. The two branches are now exact
+complements.
+
+Participant grouping (``output_grouping: patient``) keeps the per-episode
+split and then averages a participant's episodes, each weighted by the days
+that contributed to its value (the participant formula every other pattern
+uses). That needs the ZBP input at episode grouping with its contributing days
+(``time: {output_grouping: episode, contributing_days: true}`` on the ZBP
+step, as the catalog renders it and the init-config templates set it). Given a
+ZBP input with one row per patient instead, the v1 rule applies (a patient
+falls back to county CBP only when none of their episodes has ZBP) and a
+warning says so.
 """
 from __future__ import annotations
 
+import warnings
 from pathlib import Path
 
 import pandas as pd
 
-from spacescans.engine.duckdb_engine import DuckDBEngine
 from spacescans.io.readers import read_table
 from spacescans.io.writers import write_table
 from spacescans.linkage.helpers import (
+    DAYS_SUFFIX,
     apply_transforms,
     build_episode_periods,
     load_patients,
     load_weights,
+    participant_means,
     resolve_output_grouping,
 )
 from spacescans.models.config import DatasetConfig
 from spacescans.models.protocols import AggregationEngine
 from spacescans.models.specs import JoinSpec, TemporalAggSpec, WeightedAggSpec
 from spacescans.pipeline.registry import register_pattern
+
+_ZBP_MISSING_COL = "zbp_r_civic"
+
+LEGACY_PATIENT_SPLIT_WARNING = (
+    "cbp_fallback: the ZBP input has one row per patient, so the v1 rule applies: a "
+    "participant falls back to county CBP only when none of their episodes has ZBP. For "
+    "the per-episode fallback, link ZBP with time.output_grouping: episode and "
+    "time.contributing_days: true"
+)
+
+
+def _zbp_geoid_col(linked_zbp: pd.DataFrame) -> str | None:
+    for col in ("zbp_geoid", "geoid"):
+        if col in linked_zbp.columns:
+            return col
+    return None
 
 
 @register_pattern("cbp_fallback")
@@ -49,25 +77,29 @@ def run_cbp_fallback(config: DatasetConfig, engine: AggregationEngine) -> Path:
 
     # Compatibility: v1 zbp.pkl has "zbp_" prefix; v2 yearly_areal output does not.
     # If prefix missing, add it so the downstream strip logic works uniformly.
-    if "zbp_r_civic" not in linked_zbp.columns and "r_civic" in linked_zbp.columns:
+    if _ZBP_MISSING_COL not in linked_zbp.columns and "r_civic" in linked_zbp.columns:
         linked_zbp = linked_zbp.rename(
             columns={c: f"zbp_{c}" for c in linked_zbp.columns if c != "PATID"}
         )
 
-    # Honor output_grouping like yearly_areal/fara (Sprint 11): "patient"
-    # keeps the v1 per-PATID collapse; "episode" preserves the synthetic
-    # per-row `geoid`, so BOTH the county-CBP and ZBP-valid halves emit one
-    # row per (patient, episode) and stay consistent with the rest of C4.
     grouping = resolve_output_grouping(config)
-    group_by_keys = ["PATID", "geoid"] if grouping == "episode" else ["PATID"]
+    value_cols = list(config.exposure.value_cols)
+    geo = _zbp_geoid_col(linked_zbp)
+    zbp_days = {c: f"zbp_{c}{DAYS_SUFFIX}" for c in value_cols}
+    # participant grouping from per-episode ZBP rows and their contributing days
+    exact = (grouping == "patient" and geo is not None
+             and all(d in linked_zbp.columns for d in zbp_days.values()))
+    per_episode = grouping == "episode" or exact
+    if grouping == "patient" and not exact:
+        warnings.warn(LEGACY_PATIENT_SPLIT_WARNING, stacklevel=2)
+    # The rows of each branch: (PATID, geoid) per episode, PATID per patient (v1).
+    branch_keys = ["PATID", "geoid"] if per_episode else ["PATID"]
 
     # Split units: those missing ZBP (zbp_r_civic is NaN) get county CBP; the
-    # rest keep ZBP. The unit follows the grouping, so the halves never overlap.
-    zbp_missing_col = "zbp_r_civic"
-    missing = linked_zbp[zbp_missing_col].isna()
+    # rest keep ZBP. The unit follows the split, so the halves never overlap.
+    missing = linked_zbp[_ZBP_MISSING_COL].isna()
     patients["PATID"] = patients["PATID"].astype(str)
-    if grouping == "episode":
-        geo = "zbp_geoid" if "zbp_geoid" in linked_zbp.columns else "geoid"
+    if per_episode:
         missing_keys = set(zip(linked_zbp.loc[missing, "PATID"],
                                linked_zbp.loc[missing, geo].astype("int64")))
         in_missing = [
@@ -80,7 +112,6 @@ def run_cbp_fallback(config: DatasetConfig, engine: AggregationEngine) -> Path:
         patients_cbp = patients[patients["PATID"].isin(missing_pats)].copy()
 
     # --- County CBP for units without ZBP ---
-    value_cols = config.exposure.value_cols
     year_col = config.exposure.year_col or "year"
     episodes = build_episode_periods(patients_cbp, years=config.time.years)
 
@@ -100,7 +131,9 @@ def run_cbp_fallback(config: DatasetConfig, engine: AggregationEngine) -> Path:
     )
     cbp_result = engine.temporal_aggregate(
         episode_exp,
-        TemporalAggSpec(group_by=group_by_keys, period_col="period_id", value_cols=value_cols, weight_col="overlap_days"),
+        TemporalAggSpec(group_by=branch_keys, period_col="period_id", value_cols=value_cols,
+                        weight_col="overlap_days",
+                        days_suffix=DAYS_SUFFIX if exact else None),
     )
 
     # --- ZBP-valid units (the complement of the missing ones): strip zbp_ prefix ---
@@ -110,12 +143,16 @@ def run_cbp_fallback(config: DatasetConfig, engine: AggregationEngine) -> Path:
         for c in zbp_valid.columns
     ]
     zbp_valid["PATID"] = zbp_valid["PATID"].astype(str)
-    # Keep the grouping keys (PATID [+ geoid] in episode mode) + value cols.
-    # In episode mode geoid survives the zbp_ prefix round-trip above.
-    keep_cols = group_by_keys + [c for c in value_cols if c in zbp_valid.columns]
-    zbp_valid = zbp_valid[keep_cols]
+    # Keep the unit keys (PATID [+ geoid] per episode) + value cols (+ their days).
+    # geoid survives the zbp_ prefix round-trip above.
+    kept = [c for c in value_cols if c in zbp_valid.columns]
+    if exact:
+        kept += [f"{c}{DAYS_SUFFIX}" for c in value_cols]
+    zbp_valid = zbp_valid[branch_keys + kept]
 
     # Concat
     result = pd.concat([cbp_result, zbp_valid], ignore_index=True)
+    if exact:
+        result = participant_means(result, value_cols)
 
     return write_table(result, config.output.path)

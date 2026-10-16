@@ -107,6 +107,10 @@ class DuckDBEngine:
         selects = list(group_cols)
         for col in spec.value_cols:
             selects.append(_weighted_avg_expr(col, spec.weight_col, spec.missing_policy, f"{col}{suffix}"))
+        if spec.days_suffix:
+            for col in spec.value_cols:
+                selects.append(_contributing_weight_expr(col, spec.weight_col, spec.missing_policy,
+                                                         f"{col}{suffix}{spec.days_suffix}"))
 
         sql = f"SELECT {', '.join(selects)} FROM _data GROUP BY {group_sql}"
         result = self._conn.execute(sql).fetchdf()
@@ -196,6 +200,15 @@ class DuckDBEngine:
 
 def _ensure_list(val: str | list[str]) -> list[str]:
     return val if isinstance(val, list) else [val]
+
+
+def _contributing_weight_expr(col: str, weight_col: str, policy: MissingPolicy, alias: str) -> str:
+    """The weight behind :func:`_weighted_avg_expr`'s mean: its denominator, 0 when none."""
+    if policy == MissingPolicy.SKIP:
+        return f"COALESCE(SUM(CASE WHEN {col} IS NOT NULL THEN {weight_col} ELSE 0 END), 0) AS {alias}"
+    if policy in (MissingPolicy.ZERO, MissingPolicy.RAISE):
+        return f"COALESCE(SUM({weight_col}), 0) AS {alias}"
+    raise ValueError(f"Unknown MissingPolicy: {policy}")
 
 
 def _weighted_avg_expr(col: str, weight_col: str, policy: MissingPolicy, alias: str) -> str:
