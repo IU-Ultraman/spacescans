@@ -237,6 +237,18 @@ None.
    On synth_1k, FARA's `LILATracts_1And10`, `LATracts1` and `HUNVFlag` take only the values
    0 and 1, so in practice they are compared exactly. `LowIncomeTracts` and CBP's `r_*`
    columns are continuous.
+
+   **Deliberate difference since 0.3 (manuscript comment C-19).** FARA now leaves a tract
+   without a value out of the buffer mean's denominator as well as its numerator, as every
+   other source does; these goldens were made with the old rule (a missing value counted as
+   zero). Gate A4 (`tests/orchestrate/test_link_a4.py`) therefore holds `fara_tract`'s C4
+   table to a recomputation under the new rule and to the golden only where the two rules
+   agree, with keys and missing masks exact. On synth_1k no FARA value changes: the FARA
+   table's missing rates are almost all in 2019 (71,029 of 71,154 tract-years from 2013 on
+   with a missing rate) and the synthetic cohorts end on 2018-12-31. The goldens themselves
+   are not regenerated.
+   Every comparison here is at the episode level (`output_level="episode"`); the
+   participant level, the default since 0.3, is tested by `tests/test_participant_level.py`.
 4. **C3/C4 parquet.** Compare with `compare_tables()`: canonical row order, then the same
    per-column rules; pass `c3=True` for a `c3_*.parquet` table, so that at `CROSS_ENV` its
    weights get the 1e-8 absolute bound. Byte equality is not expected: between two cold
