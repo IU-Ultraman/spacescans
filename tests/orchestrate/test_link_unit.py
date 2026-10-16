@@ -726,3 +726,63 @@ def test_tile_caches_stay_out_of_the_data_root_unless_prebuilt(tmp_path, monkeyp
     # the web's render (a plain RunContext) is unchanged
     ctx = _ctx(tmp_path / "web")
     assert render(catalog.plan(variable, [variable])[0], ctx)["source"]["road_cache_dir"] == folder
+
+
+# ---------------------------------------------------------------------------
+# blank participant ids (PHASE_D 7.1 item 1; the merge side is test_blank_pid.py)
+# ---------------------------------------------------------------------------
+
+def _cohort_with_blank_ids() -> pd.DataFrame:
+    return pd.DataFrame({
+        "pid": ["A1", None, "B2", "", "A1", "   ", "C3"],
+        "startDate": ["2014-01-01"] * 7,
+        "endDate": ["2015-12-31"] * 7,
+        "longitude": [-86.15, -86.10, -87.62, -84.39, -86.11, -85.0, -84.0],
+        "latitude": [39.77, 39.80, 41.88, 33.75, 39.70, 40.0, 41.0],
+    })
+
+
+def test_link_records_zero_rows_without_pid_in_its_provenance(tmp_path, no_data_check):
+    res = _link(tmp_path, ["noise"])
+    assert res.provenance["cohort"]["rows_without_pid"] == 0
+    assert not [w for w in res.warnings if w["code"] == "rows_without_pid"]
+
+
+def test_link_refuses_a_blank_pid_before_any_step(tmp_path, no_data_check):
+    from spacescans.cohort import CohortError
+
+    exe = FakeExecutor()
+    with pytest.raises(CohortError) as info:
+        link(_cohort_with_blank_ids(), ["noise"], data_dir=tmp_path / "data",
+             run_dir=tmp_path / "run", executor=exe)
+    assert "pid_missing" in {i.code for i in info.value.issues}
+    assert exe.calls == []
+
+
+def test_blank_id_rows_that_get_through_are_left_out_and_counted(tmp_path, no_data_check,
+                                                                   monkeypatch):
+    """The second line of defence: with the cohort check bypassed, rows with a blank pid
+    are left out of the participant table (no pooled empty-id row) and counted in a
+    warning, a log line and the provenance."""
+    from spacescans import cohort as cohort_mod
+
+    real = cohort_mod.validate
+
+    class _Passing:
+        def __init__(self, report):
+            self._report = report
+
+        def raise_for_errors(self):
+            return self._report
+
+    monkeypatch.setattr(cohort_mod, "validate", lambda df: _Passing(real(df)))
+    log = LogWriter(tmp_path / "logs.jsonl")
+    res = link(_cohort_with_blank_ids(), ["noise"], data_dir=tmp_path / "data",
+               run_dir=tmp_path / "run", executor=FakeExecutor(), on_event=log)
+    assert list(res.exposures["pid"]) == ["A1", "B2", "C3"]
+    assert res.provenance["cohort"]["rows_without_pid"] == 3
+    (warning,) = [w for w in res.warnings if w["code"] == "rows_without_pid"]
+    assert warning["rows"] == 3
+    records = [json.loads(line) for line in (tmp_path / "logs.jsonl").read_text().splitlines()]
+    assert any("3 input row(s) have no participant id" in r.get("msg", "") for r in records)
+    assert (res.coverage["participants"] == 3).all()

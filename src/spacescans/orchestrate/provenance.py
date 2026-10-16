@@ -109,11 +109,12 @@ def build(*, ctx: Any, groups: Mapping[str, Sequence[str]], overlay: Mapping[str
           memory_limit: str | None, on_error: str, data_summary: Mapping[str, Any],
           cohort_info: Any, started: datetime, ended: datetime, seconds: float,
           failed: Sequence[str], skipped: Sequence[str], columns: Sequence[str],
-          output_level: str = "episode") -> dict[str, Any]:
+          output_level: str = "episode", rows_without_pid: int = 0) -> dict[str, Any]:
     """The provenance of one link (see the module docstring).
 
     ``run.output_level`` records what one result row is: ``"participant"`` or
-    ``"episode"``.
+    ``"episode"``. ``cohort.rows_without_pid`` counts the input rows with a
+    blank ``pid``, which a participant-level table leaves out.
     """
     data_dir = Path(ctx.data_dir)
     datasets = sorted({d for v in (data_summary.get("variables") or {}).values()
@@ -145,6 +146,7 @@ def build(*, ctx: Any, groups: Mapping[str, Sequence[str]], overlay: Mapping[str
                   {"key_format": cache.key_format, "root": str(cache.root),
                    "keys": {s["name"]: s["cache_key"] for s in step_dicts if s.get("cache_key")}}),
         "cohort": {"episodes": cohort_info.rows, "patients": cohort_info.patients,
+                   "rows_without_pid": int(rows_without_pid),
                    "input_sha256": cohort_info.sha256},
         "custom": {k: _custom_entry(d) for k, d in (overlay or {}).items()},
         "steps": step_dicts,

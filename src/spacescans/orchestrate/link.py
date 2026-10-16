@@ -38,7 +38,13 @@ days that contribute a value (equivalently, the episode means weighted by
 their contributing days), missing when no day contributes. ``exposures`` then
 has one row per participant id of the cohort, in order of first appearance
 (participants without any value included), columns ``pid`` and the variables'
-columns in the requested order; no dates, coordinates or episode ids.
+columns in the requested order; no dates, coordinates or episode ids. A row
+with a blank ``pid`` belongs to no participant: it is left out and counted (a
+``rows_without_pid`` warning and ``provenance["cohort"]["rows_without_pid"]``);
+``cohort.validate`` refuses such rows before a link starts, so the count is 0
+unless that check is bypassed. Where location episodes of one participant
+overlap in time, each episode contributes its own days: a calendar day two
+episodes share counts once for each of them.
 ``output_level="episode"`` is the web 0.2.7 result: one row per input row,
 ``episode_id`` and the columns in source order. Linkage rates (``coverage``)
 count the rows of the output table: participants or episodes.
@@ -794,6 +800,17 @@ def link(cohort: pd.DataFrame | str | os.PathLike, variables: Sequence[str], *,
     from spacescans.orchestrate import merge as _merge
 
     cohort_keys = pd.read_parquet(rdir / COHORT_FILE, columns=["pid", "episode_id"])
+    # Rows with a blank pid belong to no participant: the participant table leaves them out
+    # and says how many (cohort.validate refuses a blank pid, so this is 0 after its check).
+    rows_without_pid = _merge.blank_pid_rows(cohort_keys)
+    if participant and rows_without_pid:
+        message = (f"{rows_without_pid} input row(s) have no participant id (pid); the "
+                   "participant-level result leaves them out")
+        emit(Event("warning", "link", text=message,
+                   data={"level": "warning", "source": "merge",
+                         "event": "participant_rows_without_id", "rows": rows_without_pid}))
+        warnings.append({"code": "rows_without_pid", "rows": rows_without_pid,
+                         "message": message})
     exposures, names = _fan_in(cohort_keys, partials, taken, level=output_level)
     origins = _column_origins(names, groups, within, overlay)
     if participant:     # pid, then the variables in the requested order
@@ -809,7 +826,8 @@ def link(cohort: pd.DataFrame | str | os.PathLike, variables: Sequence[str], *,
         executor=_executor_name(executor), threads=threads, memory_limit=memory_limit,
         on_error=on_error, data_summary=data_summary, cohort_info=info,
         started=started, ended=ended, seconds=time.monotonic() - t0,
-        failed=failed, skipped=skipped, columns=columns, output_level=output_level)
+        failed=failed, skipped=skipped, columns=columns, output_level=output_level,
+        rows_without_pid=rows_without_pid)
     return LinkResult(exposures=exposures, features=_features(columns, origins, overlay),
                       coverage=coverage,
                       steps=steps, failed=failed, skipped=skipped, warnings=warnings,

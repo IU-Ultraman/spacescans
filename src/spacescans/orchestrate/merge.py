@@ -11,7 +11,10 @@ Every function takes ``level``: ``"episode"`` (the default here, the web
 level write one row per participant, and the result has one row per
 participant id of the cohort, in order of first appearance, participants
 without any value included with missing values; no dates, coordinates or
-episode ids).
+episode ids). A row whose ``pid`` is blank (missing, empty or only spaces)
+belongs to no participant: the participant table leaves it out instead of
+pooling all such rows into one empty-id row (the web app's rule);
+:func:`blank_pid_rows` counts them for the caller's log line and provenance.
 
 Two stages, with different semantics on purpose:
 
@@ -53,6 +56,7 @@ __all__ = [
     "LOW_MATCH_PCT",
     "PARTICIPANT_KEYS",
     "MatchStats",
+    "blank_pid_rows",
     "episode_keys",
     "fan_in",
     "fan_in_from_dir",
@@ -160,13 +164,41 @@ def episode_keys(cohort: pd.DataFrame) -> pd.DataFrame:
     return _with_episode_id(cohort)[list(KEYS)]
 
 
+def _cohort_ids(cohort: pd.DataFrame) -> pd.Series:
+    return cohort["pid"] if "pid" in cohort.columns else cohort["PATID"]
+
+
+def _has_pid(ids: pd.Series) -> pd.Series:
+    """True where a participant id is present: not missing and not blank text.
+
+    The web app's rule (``output_level._has_id``): NA, ``""`` and ids made
+    only of spaces are blank.
+    """
+    text = ids.astype("string").str.strip()
+    return (ids.notna() & (text != "")).fillna(False).astype(bool)
+
+
+def blank_pid_rows(cohort: pd.DataFrame) -> int:
+    """How many rows of ``cohort`` have a blank ``pid`` (missing, empty or only spaces).
+
+    Those rows belong to no participant: :func:`participant_keys` and the
+    participant-level merge leave them out. Only an exact ``PATID`` column is
+    read as ``pid``.
+    """
+    return int((~_has_pid(_cohort_ids(cohort))).sum())
+
+
 def participant_keys(cohort: pd.DataFrame) -> pd.DataFrame:
     """The cohort's participants: one row per ``pid``, in order of first appearance.
 
     Only an exact ``PATID`` column is read as ``pid`` (as :func:`episode_keys`).
-    The ids are compared as text, so ``pid`` is a string column.
+    The ids are compared as text, so ``pid`` is a string column. Rows with a
+    blank ``pid`` are left out (see :func:`blank_pid_rows`): they are no
+    participant's, and pooling them would give an empty id the values of
+    unrelated rows.
     """
-    ids = cohort["pid"] if "pid" in cohort.columns else cohort["PATID"]
+    ids = _cohort_ids(cohort)
+    ids = ids[_has_pid(ids)]
     return pd.DataFrame({"pid": pd.unique(_pid_text(ids))})
 
 
@@ -188,7 +220,9 @@ def select_output(df: pd.DataFrame, value_cols: Sequence[str], *,
     ``PATID -> pid`` and, at the episode level, ``geoid -> episode_id`` (cast
     to int), then only the `value_cols` present are kept, in `value_cols`
     order. At the participant level the output must have one row per
-    participant (no ``geoid``, no repeated ``pid``), else ``ValueError``.
+    participant (no ``geoid``, no repeated ``pid``), else ``ValueError``; a
+    row with a blank ``pid`` (the C4 group of the cohort rows without an id)
+    is dropped, as :func:`participant_keys` leaves those rows out.
     """
     if renames:
         df = df.rename(columns=dict(renames))
@@ -197,6 +231,7 @@ def select_output(df: pd.DataFrame, value_cols: Sequence[str], *,
         if "geoid" in df.columns or "episode_id" in df.columns:
             raise ValueError("a C4 output with one row per episode reached a participant-level "
                              "merge (render the steps with output_level='participant')")
+        df = df[_has_pid(df["pid"])]
         df = df.assign(pid=_pid_text(df["pid"]))
         if df["pid"].duplicated().any():
             raise ValueError("a participant-level C4 output repeats a participant id")
@@ -278,8 +313,8 @@ def fan_in(
     needs ``pid`` and ``episode_id``, and row count and order are the
     cohort's. Participant level: the table starts from
     :func:`participant_keys` of `base` (``pid`` only: one row per
-    participant, in order of first appearance) and each partial needs
-    ``pid``. A partial column whose name is already in the table gets
+    participant, in order of first appearance; rows with a blank ``pid`` are
+    left out) and each partial needs ``pid``. A partial column whose name is already in the table gets
     ``_<source>_dup``; names in `reserved` (columns the caller holds but did
     not pass, such as an R user's other columns) are treated as taken too.
     """
