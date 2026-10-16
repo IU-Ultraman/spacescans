@@ -91,10 +91,13 @@ def write_config(step: Step, ctx: RunContext, *, config: Mapping[str, Any] | Non
 def prepare(step: Step, ctx: RunContext) -> list[dict[str, str]]:
     """Run-time work a step needs before it renders; returns ``{level, source, msg}`` records.
 
-    Only a custom raster C4 step (``materialise_values``) has any: its value
-    table ``output/values_<key>.parquet`` is built from the C3 weights' grid
-    ids, which must exist by then (``custom.prepare_step``). The records are
-    the web's ``logs.jsonl`` lines for it.
+    Only a custom C4 step with ``materialise_values`` has any
+    (``custom.prepare_step``): a raster's value table
+    ``output/values_<key>.parquet`` from the C3 weights' grid ids (which must
+    exist by then), a daily table's rows for the cohort's geographies and
+    dates, or a features dataset's per-location distances
+    (``custom.features``). The records are the web's ``logs.jsonl`` lines for
+    it.
     """
     if not getattr(step, "materialise_values", False):
         return []

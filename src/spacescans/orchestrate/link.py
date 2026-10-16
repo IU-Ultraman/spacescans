@@ -624,7 +624,7 @@ def link(cohort: pd.DataFrame | str | os.PathLike, variables: Sequence[str], *,
          data_dir: str | os.PathLike | None = None,
          run_dir: str | os.PathLike | None = None,
          buffer_m: int = 270, raster_res_m: int = 25,
-         custom: Mapping[str, dict] | None = None,
+         custom: Any = None,
          cache: WeightCache | str | os.PathLike | None = None,
          executor: Executor | Literal["subprocess", "inprocess"] = "subprocess",
          threads: int | None = None, memory_limit: str | None = None,
@@ -646,8 +646,13 @@ def link(cohort: pd.DataFrame | str | os.PathLike, variables: Sequence[str], *,
     0700 when missing; default: a new private directory under the per-user
     root ``tools::R_user_dir("spacescans", "cache")/runs`` with an owner
     record for this process, removed by a later sweep once the process is
-    gone, see :mod:`~spacescans.orchestrate.runs`). ``custom``: definitions
-    of the selected custom variables, keyed by variable key. ``cache``: None
+    gone, see :mod:`~spacescans.orchestrate.runs`). ``custom``: your own
+    datasets, as a list of registered datasets (names, ids or
+    :class:`~spacescans.custom.DatasetRecord` records from the default
+    datasets root; see :func:`spacescans.custom.register`) and definitions,
+    which join the selection after ``variables`` (which may then be empty), or
+    the earlier mapping of variable key to definition (each key also in
+    ``variables``). ``cache``: None
     (no cross-run cache), a :class:`~spacescans.orchestrate.cache.WeightCache`
     (either key format), or a directory (a ``v2`` cache). ``threads`` and
     ``memory_limit`` cap DuckDB in every step (subprocess: through the
