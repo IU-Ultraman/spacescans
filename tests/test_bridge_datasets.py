@@ -368,3 +368,53 @@ def test_real_registry_round_trip(tmp_path):
     rc, res = _call(tmp_path, "dataset-list", {"root": root}, BRIDGE)
     assert res["value"]["datasets"] == []
 
+
+# --- link: registered names reach orchestrate.link(custom=[...]) ---------------------
+
+def _link_args(tmp: Path, **over) -> dict:
+    import pandas as pd
+    cohort = tmp / "cohort.parquet"
+    pd.DataFrame({"pid": ["P1", "P1", "P2"],
+                  "startDate": pd.to_datetime(["2017-01-01", "2018-01-01", "2017-06-01"]),
+                  "endDate": pd.to_datetime(["2017-12-31", "2018-12-31", "2018-05-31"]),
+                  "longitude": [-86.1, -86.2, -86.3], "latitude": [39.7, 39.8, 39.9]}).to_parquet(cohort)
+    data = tmp / "data"
+    data.mkdir(exist_ok=True)
+    return {"cohort": str(cohort), "variables": ["ndi"], "data_dir": str(data),
+            "run_dir": str(tmp / "run"), **over}
+
+
+@pytest.fixture
+def recorded_link(monkeypatch):
+    """orchestrate.link replaced by a recorder that returns a one-column result."""
+    import pandas as pd
+
+    from spacescans.bridge import cmd_link
+    seen = {}
+
+    def fake_link(table, variables, **kw):
+        seen.update(variables=list(variables), **kw)
+        return SimpleNamespace(exposures=pd.DataFrame({"episode_id": range(len(table)), "ndi": 1.0}),
+                               features=None, coverage=None, steps=[], failed=[], skipped=[],
+                               warnings=[], provenance={})
+
+    monkeypatch.setattr(cmd_link, "link_function", lambda: fake_link)
+    return seen
+
+
+def test_link_passes_registered_names_to_orchestrate_link(tmp_path, recorded_link):
+    from spacescans.bridge import cmd_link
+    from spacescans.bridge.commands import Context
+    from spacescans.bridge.events import EventStream
+
+    ctx = Context(events=EventStream(None))
+    cmd_link.cmd_link(_link_args(tmp_path), ctx)
+    assert recorded_link["custom"] is None                         # unchanged without datasets
+    assert recorded_link["variables"] == ["ndi"]
+    cmd_link.cmd_link(_link_args(tmp_path, datasets=["svi", "noise"], run_dir=str(tmp_path / "run2")), ctx)
+    assert recorded_link["custom"] == ["svi", "noise"]
+    # registered datasets alone: no catalog variable needed
+    cmd_link.cmd_link(_link_args(tmp_path, variables=[], datasets="svi", run_dir=str(tmp_path / "run3")), ctx)
+    assert recorded_link["variables"] == [] and recorded_link["custom"] == ["svi"]
+    with pytest.raises(BridgeError, match="must not be empty"):
+        cmd_link.cmd_link(_link_args(tmp_path, variables=[], run_dir=str(tmp_path / "run4")), ctx)

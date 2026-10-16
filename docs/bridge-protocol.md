@@ -195,6 +195,15 @@ be computed). The registry's own errors keep their kind (validation is
 `config`); `register()` arguments it does not take are `config`; a spacescans
 without the registry answers `internal` with `details.missing`.
 
+`link` also takes `datasets`: registered dataset names or ids, next to the
+in-memory `custom` definitions. It passes them to `orchestrate.link(custom=[...])`
+(names first, then the definitions, which carry their `variable_key`); with
+`datasets`, `variables` may be empty. The R client sends `datasets` to
+`coverage` as well; `coverage` does not use it yet (it needs the registry's
+definitions for the estimate), and R warns when no row comes back for them. Clients that
+keep datasets outside the default registry set `SPACESCANS_DATASETS_DIR` for the
+bridge process (the R package does this from its option `spacescans.datasets_dir`).
+
 ## Versioning
 
 Additive changes (new optional fields, events, commands, error kinds) keep

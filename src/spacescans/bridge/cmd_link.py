@@ -338,10 +338,13 @@ def _write_features(features: Any, columns: list[str], path: Path) -> None:
 def cmd_link(args: dict, ctx) -> Outcome:
     """Link a cohort to catalog and custom variables (contract 5.3/5.4)."""
     from spacescans.bridge.cmd_catalog import custom_definitions
+    from spacescans.bridge.cmd_datasets import link_custom, registered_names
     from spacescans.bridge.cohorts import read_cohort
 
     cohort_path = path_arg(args, "cohort", required=True)
-    variables = list(dict.fromkeys(str_list_arg(args, "variables", required=True, allow_empty=False)))
+    datasets = registered_names(args)          # registered datasets bring their own variables
+    variables = list(dict.fromkeys(str_list_arg(args, "variables", required=True,
+                                                allow_empty=bool(datasets))))
     custom = custom_definitions(args, files=True)
     data_dir = path_arg(args, "data_dir") or os.environ.get("SPACESCANS_DATA_DIR") or None
     if data_dir is None:
@@ -384,7 +387,8 @@ def cmd_link(args: dict, ctx) -> Outcome:
     try:
         result, caught = run_cancellable(
             lambda: link(co.table, variables, data_dir=data_dir, run_dir=run_dir, buffer_m=buffer_m,
-                         raster_res_m=raster_res_m, custom=custom, cache=cache, executor=executor,
+                         raster_res_m=raster_res_m, custom=link_custom(custom, datasets), cache=cache,
+                         executor=executor,
                          threads=threads, memory_limit=memory_limit, on_error=on_error,
                          reserved_names=tuple(reserved), on_event=on_event, cancel=cancel),
             on_line, cancel=cancel, grace_s=grace, log=ctx.log)
