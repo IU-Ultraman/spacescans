@@ -567,6 +567,8 @@ def check_definition(definition: Mapping[str, Any], *, key: str | None = None,
             d[f] = None
     if "band_nodata" in d and d["band_nodata"] is None:   # [null], unboxed
         d["band_nodata"] = [None]
+    if isinstance(d.get("band_nodata"), list):           # NULL list elements come back as {}
+        d["band_nodata"] = [None if v in ({}, []) else v for v in d["band_nodata"]]
     for files_field in ("rasters", "feature_files"):
         if isinstance(d.get(files_field), Mapping):      # one file, unboxed
             d[files_field] = [d[files_field]]

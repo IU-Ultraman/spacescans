@@ -224,3 +224,21 @@ def test_materialised_distances_follow_the_cohort_rows(tmp_path, root):
     weights = pd.read_parquet(tmp_path / "w.parquet")
     assert weights.values.tolist() == [[0, 1.0], [1, 1.0], [2, 1.0]]
     assert "6 (geoid, year) distance rows for 3 locations from 2 feature file(s)" in res.message
+
+
+def test_a_features_definition_survives_rs_json_round_trip(tmp_path, root):
+    def jsonlite(value):
+        if isinstance(value, dict):
+            return {k: jsonlite(v) for k, v in value.items()}
+        if isinstance(value, list):
+            items = [jsonlite(v) for v in value]
+            return items[0] if len(items) == 1 else items
+        return {} if value is None else value
+
+    src = tmp_path / "sites.geojson"
+    _points([-86.1], [39.8]).to_file(src)
+    rec = custom.register(src, name="sites", kind="features", temporal="static", root=root)
+    d = rec.definition()
+    back = custom.check_definition(jsonlite(d), key=rec.variable_key, deep=True)
+    assert back["feature_files"] == d["feature_files"]
+    assert back["value_cols"] == d["value_cols"] and back["year_col"] is None

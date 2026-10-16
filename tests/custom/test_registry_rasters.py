@@ -166,3 +166,29 @@ def test_a_raster_copy_edited_after_registration_is_caught(tmp_path, root, write
     write_tif(rec.path(rec.files[0]), np.zeros((6, 6)), west=-86.5, north=40.0)
     with pytest.raises(custom.CustomExposomeError, match="changed since"):
         custom.check_definition(d, key=rec.variable_key, deep=True)
+
+
+def _jsonlite(value):
+    """What R's jsonlite (auto_unbox) gives back: one-element lists unboxed, NULL as {}."""
+    if isinstance(value, dict):
+        return {k: _jsonlite(v) for k, v in value.items()}
+    if isinstance(value, list):
+        items = [_jsonlite(v) for v in value]
+        return items[0] if len(items) == 1 else items
+    return {} if value is None else value
+
+
+def test_registered_definitions_survive_rs_json_round_trip(tmp_path, root, write_tif):
+    files = _tifs(write_tif, tmp_path / "in", ["pm_20160101.tif"], bands=2)
+    rec = custom.register(files, name="pm", kind="raster", temporal="biweekly", root=root,
+                          variables=[{"name": "a", "band": 1}, {"name": "b", "band": 2}])
+    d = rec.definition()
+    back = custom.check_definition(_jsonlite(d), key=rec.variable_key, deep=True)
+    assert back["band_nodata"] == [None, None]
+    assert back["rasters"] == d["rasters"] and back["value_cols"] == ["a", "b"]
+    assert custom.raster_bands(back) == (["a", "b"], [1, 2], [None, None])
+    one = custom.register(_tifs(write_tif, tmp_path / "in2", ["x_2016.tif"]), name="one",
+                          kind="raster", temporal="yearly", root=root).definition()
+    back = custom.check_definition(_jsonlite(one), key=one["variable_key"], deep=True)
+    assert back["band_nodata"] == [None] and back["value_cols"] == one["value_cols"]
+    assert back["date_col"] is None and back["values_path"] is None
