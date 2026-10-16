@@ -78,7 +78,7 @@ def _metadata(args: dict) -> dict[str, Any] | None:
 def cmd_datasets_register(args: dict, ctx) -> Outcome:
     """Register a dataset: ``files`` (absolute paths), ``name``, ``kind``, ``temporal``;
     optional ``periods`` (parallel to ``files``: a year or a date per file, or null),
-    ``key``, ``variables``, ``metadata``, ``root``, ``overwrite``."""
+    ``key``, ``variables``, ``metadata``, ``root``, ``overwrite``, ``dataset_id``."""
     from spacescans import custom
 
     files = path_list_arg(args, "files", required=True)
@@ -99,7 +99,8 @@ def cmd_datasets_register(args: dict, ctx) -> Outcome:
         kind=str_arg(args, "kind", required=True),
         temporal=str_arg(args, "temporal", required=True),
         key=_key(args), variables=_variables(args), metadata=_metadata(args),
-        root=path_arg(args, "root"), overwrite=bool_arg(args, "overwrite"))
+        root=path_arg(args, "root"), overwrite=bool_arg(args, "overwrite"),
+        dataset_id=str_arg(args, "dataset_id"))
     return {"dataset": _record(rec), "key": rec.variable_key}, []
 
 

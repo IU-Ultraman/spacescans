@@ -49,7 +49,7 @@ and the denominator of the buffer-weighted mean.
 
 ```python
 custom.register(paths, *, name, kind, temporal, key=None, variables=None, metadata=None,
-                root=None, overwrite=False) -> DatasetRecord
+                root=None, overwrite=False, dataset_id=None) -> DatasetRecord
 ```
 
 * `paths`: the file(s). For rasters and yearly features also a `{path: period}` mapping: a year
@@ -72,6 +72,9 @@ custom.register(paths, *, name, kind, temporal, key=None, variables=None, metada
   the default, or `"deployment"`) and `owner`. `visibility` and `owner` are recorded for the
   web app, which enforces them; the package does not.
 * `overwrite=True` replaces a dataset of the same name; the new one gets a new id.
+* `dataset_id` (8 lowercase hex characters) keeps the variable key `custom_<dataset_id>` of a
+  dataset defined earlier with `define_polygon` / `define_raster` (the web app's uploads): the
+  record's id starts with it. For moving such datasets into the registry.
 
 The other functions:
 
@@ -192,7 +195,7 @@ The R package reaches the registry through these bridge commands (all take an op
 
 | command | arguments | value |
 |---|---|---|
-| `datasets-register` | `files` (absolute paths), `name`, `kind`, `temporal`, `periods`? (parallel to `files`), `key`?, `variables`?, `metadata`?, `overwrite`? | `{dataset, key}` |
+| `datasets-register` | `files` (absolute paths), `name`, `kind`, `temporal`, `periods`? (parallel to `files`), `key`?, `variables`?, `metadata`?, `overwrite`?, `dataset_id`? | `{dataset, key}` |
 | `datasets-list` | | `{root, datasets}` |
 | `datasets-get` | `name` (name, id or variable key) | `{dataset, key, definition}` |
 | `datasets-update` | `name`, `new_name`?, `metadata`?, `variables`? | `{dataset, key}` |

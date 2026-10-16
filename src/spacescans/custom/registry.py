@@ -471,11 +471,21 @@ def _sweep(root: Path) -> None:
             continue
 
 
-def _new_id(root: Path) -> str:
-    """A uuid4 hex whose first 8 characters no dataset in the root uses yet."""
-    taken = {d.name[:8] for d in _dataset_dirs(root)}
+def _new_id(root: Path, *, keep: str | None = None, replacing: str | None = None) -> str:
+    """A uuid4 hex whose first 8 characters no dataset in the root uses yet.
+
+    ``keep``: those 8 characters are given (an upload's dataset id, so its
+    variable key ``custom_<keep>`` survives); ``replacing``: the id of the
+    dataset an overwrite retires, whose prefix is free again.
+    """
+    taken = {d.name[:8] for d in _dataset_dirs(root) if d.name != replacing}
     taken |= {e.name[len(_TMP_PREFIX):][:8] for e in root.iterdir()
               if e.name.startswith(_TMP_PREFIX)}
+    if keep is not None:
+        if keep in taken:
+            raise DatasetExistsError(f"the variable key custom_{keep} is already used by a "
+                                     f"dataset in {root}")
+        return keep + uuid.uuid4().hex[8:]
     while True:
         candidate = uuid.uuid4().hex
         if candidate[:8] not in taken:
@@ -556,7 +566,8 @@ def combined_checksum(originals: Sequence[Mapping[str, Any]]) -> str:
 def register(paths: Any, *, name: str, kind: str, temporal: str,
              key: Any = None, variables: Any = None,
              metadata: Mapping[str, Any] | None = None,
-             root: str | os.PathLike | None = None, overwrite: bool = False) -> DatasetRecord:
+             root: str | os.PathLike | None = None, overwrite: bool = False,
+             dataset_id: str | None = None) -> DatasetRecord:
     """Validate, prepare and store a dataset; return its record.
 
     ``paths``: the file(s) (see the module docstring for each kind), or a
@@ -584,6 +595,11 @@ def register(paths: Any, *, name: str, kind: str, temporal: str,
     ``owner``. ``overwrite=True`` replaces a dataset of the same name (the
     new one gets a new id).
 
+    ``dataset_id`` (8 lowercase hex characters) keeps an existing variable
+    key ``custom_<dataset_id>``: the record's id then starts with it. Meant
+    for moving an upload-path dataset into the registry without changing the
+    key that selections refer to.
+
     Raises :class:`DatasetError` (a ``CustomExposomeError``): nothing is
     stored then. ``MissingExtraError`` when a raster or features dataset is
     registered without the ``[geo]`` extra.
@@ -594,6 +610,11 @@ def register(paths: Any, *, name: str, kind: str, temporal: str,
     kind = _choice("kind", kind, KINDS)
     temporal = _choice("temporal", temporal, TEMPORAL[kind], context=f" for a {kind}")
     meta = _metadata(metadata)
+    if dataset_id is not None:
+        from spacescans.custom.keys import is_dataset_id
+        if not is_dataset_id(dataset_id):
+            raise DatasetError("dataset_id must be 8 lowercase hex characters (the id in an "
+                               "upload's variable key custom_<id>)")
     inputs = _inputs(paths)
     root_dir = datasets_root(root)
     _ensure_root(root_dir, explicit=root is not None or bool(os.environ.get(DATASETS_DIR_ENV)))
@@ -604,15 +625,16 @@ def register(paths: Any, *, name: str, kind: str, temporal: str,
         if existing is not None and not overwrite:
             raise DatasetExistsError(f"a dataset named {existing.name!r} already exists in "
                                      f"{root_dir}; choose another name or pass overwrite=True")
-        dataset_id = _new_id(root_dir)
-        work = root_dir / f"{_TMP_PREFIX}{dataset_id}"
+        record_id = _new_id(root_dir, keep=dataset_id,
+                            replacing=existing.id if existing is not None else None)
+        work = root_dir / f"{_TMP_PREFIX}{record_id}"
         work.mkdir()
 
     try:
         prepared = prepare.prepare(kind, inputs, work, name=name, temporal=temporal, key=key,
                                    variables=variables)
         record = DatasetRecord(
-            id=dataset_id, name=name, kind=kind, temporal=temporal, key=prepared.key,
+            id=record_id, name=name, kind=kind, temporal=temporal, key=prepared.key,
             variables=prepared.variables, source=meta.get("source"),
             version=meta.get("version"),
             description=meta.get("description") or prepared.description,
@@ -638,7 +660,7 @@ def register(paths: Any, *, name: str, kind: str, temporal: str,
                 retired = root_dir / f"{_TRASH_PREFIX}{existing.id}"
                 os.rename(existing.directory, retired)
             try:
-                os.rename(work, root_dir / dataset_id)
+                os.rename(work, root_dir / record_id)
             except OSError:
                 if retired is not None:
                     os.rename(retired, existing.directory)

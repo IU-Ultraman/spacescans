@@ -138,6 +138,19 @@ def test_names_are_unique_ignoring_case_and_overwrite_replaces(static_csv, root)
     assert sorted(p.name for p in root.iterdir()) == sorted([".registry.lock", second.id])
 
 
+def test_an_upload_keeps_its_variable_key_when_registered(static_csv, root):
+    rec = _register_static(static_csv, root, name="migrated", dataset_id="ab12cd34")
+    assert rec.variable_key == "custom_ab12cd34" and rec.id.startswith("ab12cd34")
+    assert re.fullmatch(r"[0-9a-f]{32}", rec.id)
+    with pytest.raises(custom.DatasetExistsError, match="custom_ab12cd34 is already used"):
+        _register_static(static_csv, root, name="other", dataset_id="ab12cd34")
+    again = _register_static(static_csv, root, name="migrated", dataset_id="ab12cd34",
+                             overwrite=True)
+    assert again.variable_key == "custom_ab12cd34" and again.id != rec.id
+    with pytest.raises(custom.DatasetError, match="8 lowercase hex"):
+        _register_static(static_csv, root, name="x", dataset_id="AB12CD34")
+
+
 def test_concurrent_registrations_of_one_name_admit_one(static_csv, root):
     outcomes: list[str] = []
 
