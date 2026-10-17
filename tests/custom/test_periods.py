@@ -106,9 +106,30 @@ def test_biweekly_14_day_periods_and_gaps():
     assert _ends(["x_20160101.tif", "x_20160115.tif", "x_20160129.tif"]) == [
         ("2016-01-01", "2016-01-14"), ("2016-01-15", "2016-01-28"),
         ("2016-01-29", "2016-02-11")]
-    # a missing file leaves its days uncovered instead of stretching the previous period
+    # with only two files the cadence is unknown, so the 16-day cap stands (R1-F5)
     assert _ends(["x_20160101.tif", "x_20160301.tif"]) == [
         ("2016-01-01", "2016-01-16"), ("2016-03-01", "2016-03-15")]
+
+
+def test_biweekly_gap_does_not_stretch_the_previous_period(recwarn):
+    """R1-F5: a missing file in a 14-day series leaves a gap, not a 16-day period, and warns."""
+    # 2016-01-29 missing from a regular 14-day series.
+    names = ["x_20160101.tif", "x_20160115.tif", "x_20160212.tif", "x_20160226.tif"]
+    ends = _ends(names)
+    # The file before the gap keeps its 14-day period (to 01-28), not 16 days (to 01-30).
+    assert ends[1] == ("2016-01-15", "2016-01-28")
+    assert ends == [("2016-01-01", "2016-01-14"), ("2016-01-15", "2016-01-28"),
+                    ("2016-02-12", "2016-02-25"), ("2016-02-26", "2016-03-10")]
+    msgs = [str(w.message) for w in recwarn]
+    assert any("a file appears to be missing" in m and "x_20160115.tif" in m for m in msgs)
+
+
+def test_biweekly_semi_monthly_series_is_not_treated_as_gapped(recwarn):
+    """R1-F5: genuine 15/16-day semi-monthly periods keep their length and raise no warning."""
+    ends = _ends(["x_20160101.tif", "x_20160116.tif", "x_20160201.tif", "x_20160216.tif"])
+    assert ends == [("2016-01-01", "2016-01-15"), ("2016-01-16", "2016-01-31"),
+                    ("2016-02-01", "2016-02-15"), ("2016-02-16", "2016-02-29")]
+    assert [w for w in recwarn if "missing" in str(w.message)] == []
 
 
 def test_biweekly_start_and_end_in_the_name_and_from_a_manifest():

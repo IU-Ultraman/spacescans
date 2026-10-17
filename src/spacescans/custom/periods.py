@@ -25,6 +25,7 @@ from __future__ import annotations
 import csv
 import io
 import re
+import warnings
 from calendar import monthrange
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
@@ -266,6 +267,16 @@ def assign_periods(files: Sequence[tuple[str, Any]], temporal: str,
     if temporal == "daily":
         return [Period(start=s, end=s) for s in starts]
     order = sorted(range(len(raw)), key=lambda i: starts[i])
+    # The series' regular cadence (median spacing of the sorted starts), to limit an inferred end
+    # across a gap (R1-F5). A gap is when the next file is more than MAX_BIWEEKLY_DAYS away, so it
+    # cannot be the next period — unlike a semi-monthly series, whose 15/16-day periods end the day
+    # before the next file. Then the inferred end is capped at the cadence, leaving the missing
+    # days uncovered rather than stretching the previous file to up to 16 days; a warning says so.
+    # At least three files are needed to tell the cadence from a gap.
+    cadence: int | None = None
+    if len(order) >= 3:
+        diffs = sorted((starts[order[k + 1]] - starts[order[k]]).days for k in range(len(order) - 1))
+        cadence = max(1, min(MAX_BIWEEKLY_DAYS, diffs[len(diffs) // 2]))
     ends: dict[int, date] = {}
     for pos, i in enumerate(order):
         end = raw[i].get("end")
@@ -273,7 +284,17 @@ def assign_periods(files: Sequence[tuple[str, Any]], temporal: str,
         if end is None:
             if pos + 1 < len(order):
                 nxt = starts[order[pos + 1]]
-                end = min(nxt - timedelta(days=1), starts[i] + timedelta(days=MAX_BIWEEKLY_DAYS - 1))
+                gap = (nxt - starts[i]).days > MAX_BIWEEKLY_DAYS
+                cap_days = cadence if (gap and cadence is not None) else MAX_BIWEEKLY_DAYS
+                end = min(nxt - timedelta(days=1), starts[i] + timedelta(days=cap_days - 1))
+                if gap:
+                    warnings.warn(
+                        f"{files[i][0]}: the next biweekly file starts {(nxt - starts[i]).days} "
+                        f"days later, so a file appears to be missing; days after "
+                        f"{end.isoformat()} get no value until the next file. Give explicit end "
+                        f"dates in a manifest if the period really is that long.",
+                        stacklevel=2,
+                    )
             else:
                 end = _last_biweekly_end(starts[i])
         days = (end - starts[i]).days + 1

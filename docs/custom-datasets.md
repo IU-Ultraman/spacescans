@@ -156,6 +156,10 @@ Nodata is each file's own. Periods:
   (`pm_20160101_20160115.tif`). Without an end, a period runs to the day before the next
   period's start, at most 16 days; the last one ends on the 15th or at the month's end when it
   starts on the 1st or 16th (semi-monthly products), else after 14 days. Periods may not overlap.
+  When a file is missing from a regular series (the next file is more than 16 days away), the
+  period is not stretched across the gap: it is capped at the series' cadence, the missing days
+  get no value, and a warning names the file. Give explicit `start`/`end` dates in a manifest if
+  a period really is that long.
 
 A manifest is one `.csv` passed with the rasters: a `file` column (the file's name) and
 `year` (yearly), `date` (daily) or `start` and optionally `end` (biweekly). At most 10,000
