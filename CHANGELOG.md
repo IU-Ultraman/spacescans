@@ -65,6 +65,26 @@ application, the Python API, the command line and the R package run the same cod
   `spacescans-pipeline` at the same version (uploaded by hand after the main package; see
   `docs/release.md`).
 
+### Fixed
+
+- **Custom rasters** are weighted on the raster's grid, not on the valid cells of its first
+  file. Before, a cell that was nodata in the first file of the first dataset on a grid was
+  left out of every period, band and dataset on that grid, and the result could depend on the
+  order of the datasets; now a period's nodata cells drop out of that period only. Weights
+  cached by earlier versions are not reused.
+- Uploaded rasters and feature files are refused when their content is a GDAL virtual format
+  (VRT), whatever the file name, and GeoTIFFs open with the GTiff driver only, so an upload
+  cannot make the server read other files or open network addresses.
+- Feature datasets whose coordinates are not finite after reprojection are refused, and a link
+  stops with an error when PROJ cannot transform a location (for example because a
+  transformation grid could not be downloaded), instead of linking nothing.
+- The linkage rate logged for a custom dataset divides by the cohort's participants or location
+  episodes, not by the rows that reached the output.
+- A biweekly series given by start dates only no longer stretches a period over a missing file:
+  an inferred end is capped at the series' cadence, with a warning.
+- The feature dictionary describes the NPS noise layers as existing conditions, natural
+  conditions and their difference (the anthropogenic impact), and uses location wording.
+
 ### R package
 
 - First release: `ss_install()` builds a private Python environment with uv; `ss_link()`,

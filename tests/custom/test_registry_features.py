@@ -242,3 +242,71 @@ def test_a_features_definition_survives_rs_json_round_trip(tmp_path, root):
     back = custom.check_definition(jsonlite(d), key=rec.variable_key, deep=True)
     assert back["feature_files"] == d["feature_files"]
     assert back["value_cols"] == d["value_cols"] and back["year_col"] is None
+
+
+def _crs_arg(args, kwargs):
+    return args[0] if args else kwargs.get("crs")
+
+
+def test_features_that_proj_cannot_transform_are_refused(tmp_path, root, monkeypatch):
+    """PROJ returns infinity when a transformation fails (e.g. a grid download); refuse it."""
+    src = tmp_path / "sites.gpkg"
+    _points([-86.1, -86.3], [39.8, 39.7]).to_file(src)
+    real = gpd.GeoSeries.to_crs
+
+    def broken(self, *args, **kwargs):
+        out = real(self, *args, **kwargs)
+        if str(_crs_arg(args, kwargs)) == "EPSG:5070":
+            out = out.copy()
+            out.iloc[0] = shapely.Point(float("inf"), float("inf"))
+        return out
+
+    monkeypatch.setattr(gpd.GeoSeries, "to_crs", broken)
+    with pytest.raises(custom.DatasetError,
+                       match=r"sites\.gpkg: 1 feature\(s\) have non-finite coordinates in "
+                             r"EPSG:5070.*PROJ_NETWORK=OFF"):
+        custom.register(src, name="sites", kind="features", temporal="static", root=root)
+    monkeypatch.undo()
+    assert [r.name for r in custom.list_datasets(root)] == []
+    rec = custom.register(src, name="sites", kind="features", temporal="static", root=root)
+    assert rec.details["feature_count"] == 2
+
+
+def test_features_with_infinite_coordinates_in_the_file_are_refused(tmp_path, root):
+    src = tmp_path / "bad.gpkg"
+    gpd.GeoDataFrame(geometry=[shapely.Point(-86.1, 39.8), shapely.Point(float("inf"), 39.7)],
+                     crs="EPSG:4326").to_file(src)
+    with pytest.raises(custom.DatasetError,
+                       match=r"bad\.gpkg: 1 feature\(s\) have non-finite coordinates in EPSG:4326"):
+        custom.register(src, name="bad", kind="features", temporal="static", root=root)
+
+
+def test_locations_that_proj_cannot_transform_stop_the_link(tmp_path, monkeypatch):
+    import pyproj
+
+    from spacescans import cohort as _cohort
+    from spacescans.custom.features import cohort_points
+
+    people = pd.DataFrame({"pid": ["a", "b"], "startDate": ["2015-01-01"] * 2,
+                           "endDate": ["2015-12-31"] * 2,
+                           "longitude": [-86.15, -86.25], "latitude": [39.85, 39.75]})
+    cohort_parquet = tmp_path / "input.parquet"
+    _cohort.to_pipeline_parquet(people, cohort_parquet, pid_as_str=True, columns="required")
+    assert np.isfinite(cohort_points(cohort_parquet)[["x", "y"]].to_numpy()).all()
+    real = pyproj.Transformer.from_crs
+
+    class Broken:
+        def __init__(self, inner):
+            self.inner = inner
+
+        def transform(self, xx, yy):
+            x, y = self.inner.transform(xx, yy)
+            x = np.array(x, dtype="float64")
+            x[1] = np.inf
+            return x, y
+
+    monkeypatch.setattr(pyproj.Transformer, "from_crs", lambda *a, **k: Broken(real(*a, **k)))
+    with pytest.raises(custom.DatasetError,
+                       match=r"^1 location\(s\) could not be transformed to EPSG:5070") as e:
+        cohort_points(cohort_parquet)
+    assert "-86" not in str(e.value) and "39." not in str(e.value)   # no coordinates in the text

@@ -10,8 +10,8 @@ a year column (``key={"year_column": ...}``, default a column called
 
 :func:`prepare_features` requires a coordinate reference system (GeoJSON is
 WGS84 by definition), drops empty geometries, repairs invalid polygons,
-refuses data that does not touch the continental US, and writes the
-geometries alone (no attribute columns) as GeoParquet in EPSG:5070 (NAD83 /
+refuses data that does not touch the continental US or whose coordinates are
+not finite after reprojection, and writes the geometries alone (no attribute columns) as GeoParquet in EPSG:5070 (NAD83 /
 Conus Albers, meters): ``features.parquet``, or ``features_<year>.parquet``
 per year.
 
@@ -170,6 +170,25 @@ def _clean(gdf: Any, filename: str) -> tuple[Any, str, dict[str, int]]:
     return gdf, family, {"dropped_empty": dropped, "repaired_invalid": repaired}
 
 
+def _require_finite(gdf: Any, filename: str, crs: str) -> None:
+    """Refuse features with a non-finite coordinate in ``crs``.
+
+    PROJ returns infinity for a point it cannot transform, for example when a
+    transformation grid it tried to download is not available
+    (``PROJ_NETWORK=ON`` without the grid on disk). Stored as they are, such
+    features would be "ready" and link no location.
+    """
+    import numpy as np
+
+    bounds = gdf.geometry.bounds.to_numpy(dtype="float64")
+    bad = int((~np.isfinite(bounds).all(axis=1)).sum())
+    if bad:
+        raise DatasetError(
+            f"{filename}: {bad:,} feature(s) have non-finite coordinates in {crs}; either the "
+            "file holds them or PROJ could not transform them (often a transformation grid "
+            "that could not be downloaded: set PROJ_NETWORK=OFF or install the grid)")
+
+
 def _check_conus(gdf: Any, filename: str) -> list[float]:
     """WGS84 bounds of the features; refuses data that does not touch the continental US."""
     import shapely
@@ -177,6 +196,7 @@ def _check_conus(gdf: Any, filename: str) -> list[float]:
     from spacescans.custom.raster import CONUS_BBOX
 
     wgs = gdf.to_crs("EPSG:4326")
+    _require_finite(wgs, filename, "EPSG:4326")
     inside = int(wgs.intersects(shapely.box(*CONUS_BBOX)).sum())
     if not inside:
         raise DatasetError(f"{filename}: no feature lies over the continental US; check the "
@@ -287,10 +307,11 @@ def prepare_features(inputs: Sequence[Input], work: Path, *, name: str, temporal
     bounds = _check_conus(everything, ", ".join(sorted({p.name for _, p, _ in cleaned})))
 
     files, prepared_sha, by_year = [], {}, {}
-    for year, _path, gdf in cleaned:
+    for year, path, gdf in cleaned:
         rel = FEATURES_FILE if year is None else year_file(year)
         out = gpd.GeoDataFrame(geometry=gdf.geometry.to_crs(CRS_METRIC).reset_index(drop=True),
                                crs=CRS_METRIC)
+        _require_finite(out, path.name, CRS_METRIC)
         out.to_parquet(work / rel, index=False)
         files.append(rel)
         prepared_sha[rel] = sha256_of(work / rel)[0]
@@ -389,8 +410,12 @@ def cohort_points(cohort_parquet: str | os.PathLike) -> Any:
     """``geoid``, ``x``, ``y`` (EPSG:5070 meters) of each cohort row, as the steps see them.
 
     ``geoid`` is the row's episode id, exactly as the pipeline's
-    ``demo_conus`` adapter derives it from ``input.parquet``.
+    ``demo_conus`` adapter derives it from ``input.parquet``. A location with
+    coordinates that PROJ cannot transform (it returns infinity, for example
+    when a transformation grid could not be downloaded) stops the link with
+    an error instead of silently getting no distance.
     """
+    import numpy as np
     import pandas as pd
     from pyproj import Transformer
 
@@ -401,6 +426,14 @@ def cohort_points(cohort_parquet: str | os.PathLike) -> Any:
     lon = pd.to_numeric(patients["long"], errors="coerce").to_numpy(dtype="float64")
     lat = pd.to_numeric(patients["lat"], errors="coerce").to_numpy(dtype="float64")
     x, y = Transformer.from_crs("EPSG:4326", CRS_METRIC, always_xy=True).transform(lon, lat)
+    x = np.asarray(x, dtype="float64")
+    y = np.asarray(y, dtype="float64")
+    lost = np.isfinite(lon) & np.isfinite(lat) & ~(np.isfinite(x) & np.isfinite(y))
+    if lost.any():
+        raise DatasetError(
+            f"{int(lost.sum()):,} location(s) could not be transformed to {CRS_METRIC}: PROJ "
+            "returned non-finite coordinates (often a transformation grid that could not be "
+            "downloaded: set PROJ_NETWORK=OFF or install the grid)")
     return pd.DataFrame({"geoid": patients["geoid"].astype("int64").to_numpy(),
                          "x": x, "y": y})
 
