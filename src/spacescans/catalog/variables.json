@@ -71,7 +71,7 @@
     "tiger_proximity": {
       "spatial_method": "proximity",
       "label": "TIGER Road Distance",
-      "description": "Per-residence annual distance (meters) to the nearest TIGER/Line primary road (S1100), secondary road (S1200), and primary+secondary combined, from US Census TIGER/Line shapefiles. Computed at each address, not aggregated to a Census area.",
+      "description": "Per-location annual distance (meters) to the nearest TIGER/Line primary road (S1100), secondary road (S1200), and primary+secondary combined, from US Census TIGER/Line shapefiles. Computed at each address, not aggregated to a Census area.",
       "boundary": "Point",
       "coverage_years": [
         2013,
@@ -92,7 +92,7 @@
     "nhd_bluespace": {
       "spatial_method": "proximity",
       "label": "NHD Bluespace",
-      "description": "Per-residence static distance (meters) to the nearest NHD flowline (dist_flow_m), waterbody (dist_water_m), area-feature (dist_area_m), coastline (dist_coast_m; empty for inland addresses with no coastline nearby), and combined blue-feature (dist_blue_m), from NHDPlus_H National Release 2 GDB (static product, 2024 vintage). Computed at each address, not aggregated to a Census area.",
+      "description": "Per-location static distance (meters) to the nearest NHD flowline (dist_flow_m), waterbody (dist_water_m), area-feature (dist_area_m), coastline (dist_coast_m; empty for inland addresses with no coastline nearby), and combined blue-feature (dist_blue_m), from NHDPlus_H National Release 2 GDB (static product, 2024 vintage). Computed at each address, not aggregated to a Census area.",
       "boundary": "Point",
       "coverage_years": [
         2024,
@@ -116,7 +116,7 @@
     "noise": {
       "spatial_method": "grid",
       "label": "NPS Soundscape Noise (L50 dBA)",
-      "description": "Per-residence static daytime environmental noise exposure in L50 dBA (existing/imp/nat scenarios) sampled from the US National Park Service geospatial sound model (Mennitt et al.) CONUS raster (270 m grid, static product). l50dba_exi is the existing-conditions surface; l50dba_imp and l50dba_nat are alternative-scenario surfaces.",
+      "description": "Per-location static summer-daytime environmental noise exposure in L50 dBA sampled from the US National Park Service geospatial sound model (Mennitt et al.) CONUS raster (270 m grid, static product). l50dba_exi is the existing-conditions surface; l50dba_nat is the natural-conditions surface (anthropogenic sources removed); l50dba_imp is existing minus natural, the anthropogenic impact in dB.",
       "boundary": "Point",
       "coverage_years": [
         2020,
@@ -138,7 +138,7 @@
     "vnl": {
       "spatial_method": "grid",
       "label": "VIIRS Nighttime Lights (VNL)",
-      "description": "Per-residence annual mean radiance sampled from the NOAA VIIRS Day/Night Band Nighttime Lights global v21 product (270 m grid, gridded raster linkage). Single value column 'value' carries the annual masked composite radiance in nanowatts/cm^2/sr.",
+      "description": "Per-location annual mean radiance sampled from the NOAA VIIRS Day/Night Band Nighttime Lights global v21 product (270 m grid, gridded raster linkage). Single value column 'value' carries the annual masked composite radiance in nanowatts/cm^2/sr.",
       "boundary": "Point",
       "coverage_years": [
         2013,
@@ -157,7 +157,7 @@
     "temis": {
       "spatial_method": "grid",
       "label": "TEMIS UV Exposure",
-      "description": "Per-residence annual mean daily UV exposure sampled from KNMI TEMIS UV products (270 m grid, daily raster, gridded linkage). Four value columns: uvddc (daily DNA-damage UV dose), uvdec (daily erythemal UV dose), uvdvc (daily vitamin-D UV dose), uvief (UV index at noon).",
+      "description": "Per-location annual mean daily UV exposure sampled from KNMI TEMIS UV products (270 m grid, daily raster, gridded linkage). Four value columns: uvddc (daily DNA-damage UV dose), uvdec (daily erythemal UV dose), uvdvc (daily vitamin-D UV dose), uvief (UV index at noon).",
       "boundary": "Point",
       "coverage_years": [
         2013,
@@ -201,7 +201,7 @@
     "acag": {
       "spatial_method": "grid",
       "label": "ACAG PM2.5 Composition",
-      "description": "Per-residence mean PM2.5 mass and seven components (black carbon, dust, ammonium, nitrate, organic mass, sulfate, sea salt) from ACAG V5.NA.05 biweekly 0.01-degree surfaces (gridded linkage, 2013-2019). Each species also carries its biomass-burning share (_bm) and the derived non-biomass remainder (_nbm).",
+      "description": "Per-location mean PM2.5 mass and seven components (black carbon, dust, ammonium, nitrate, organic mass, sulfate, sea salt) from ACAG V5.NA.05 biweekly 0.01-degree surfaces (gridded linkage, 2013-2019). Each species also carries its biomass-burning share (_bm) and the derived non-biomass remainder (_nbm).",
       "boundary": "Point",
       "coverage_years": [
         2013,
@@ -243,7 +243,7 @@
     "faqsd": {
       "spatial_method": "areal",
       "label": "EPA FAQSD Air Quality",
-      "description": "Per-tract daily ozone (8-hour maximum, ppb) and PM2.5 (24-hour average, ug/m3) from EPA's Fused Air Quality Surface Using Downscaling, area-weighted over the residential buffer and averaged across each episode's days (2013-2019).",
+      "description": "Per-tract daily ozone (8-hour maximum, ppb) and PM2.5 (24-hour average, ug/m3) from EPA's Fused Air Quality Surface Using Downscaling, area-weighted over the buffer around the location and averaged across each episode's days (2013-2019).",
       "boundary": "Tract",
       "coverage_years": [
         2013,

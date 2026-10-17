@@ -3,19 +3,19 @@
   "features": {
     "HUNVFlag": {
       "label": "Low-vehicle-access tract",
-      "definition": "Share of the residential buffer in tracts where >=100 households have no vehicle and are beyond half a mile from a supermarket."
+      "definition": "Share of the buffer around the location in tracts where >=100 households have no vehicle and are beyond half a mile from a supermarket."
     },
     "LATracts1": {
       "label": "Low-access tract (1 mi)",
-      "definition": "Share of the residential buffer in tracts flagged low-access to a supermarket at 1 mile."
+      "definition": "Share of the buffer around the location in tracts flagged low-access to a supermarket at 1 mile."
     },
     "LILATracts_1And10": {
       "label": "Low-income & low-access tract (1/10 mi)",
-      "definition": "Share of the residential buffer in tracts flagged low-income and low-access at 1 mile (urban) / 10 miles (rural)."
+      "definition": "Share of the buffer around the location in tracts flagged low-income and low-access at 1 mile (urban) / 10 miles (rural)."
     },
     "LowIncomeTracts": {
       "label": "Low-income tract",
-      "definition": "Share of the residential buffer in tracts meeting the USDA low-income criterion (poverty rate >=20% or median family income below the area threshold)."
+      "definition": "Share of the buffer around the location in tracts meeting the USDA low-income criterion (poverty rate >=20% or median family income below the area threshold)."
     },
     "NatWalkInd": {
       "label": "National Walkability Index",
@@ -23,7 +23,7 @@
     },
     "bc": {
       "label": "Black carbon",
-      "definition": "Biweekly mean concentration of black carbon in PM2.5 over the residential buffer (ACAG V5.NA.05, ug/m3)."
+      "definition": "Biweekly mean concentration of black carbon in PM2.5 over the buffer around the location (ACAG V5.NA.05, ug/m3)."
     },
     "bc_bm": {
       "label": "Black carbon \u2014 biomass burning",
@@ -67,7 +67,7 @@
     },
     "dust": {
       "label": "Mineral dust",
-      "definition": "Biweekly mean concentration of mineral dust in PM2.5 over the residential buffer (ACAG V5.NA.05, ug/m3)."
+      "definition": "Biweekly mean concentration of mineral dust in PM2.5 over the buffer around the location (ACAG V5.NA.05, ug/m3)."
     },
     "dust_bm": {
       "label": "Mineral dust \u2014 biomass burning",
@@ -79,23 +79,23 @@
     },
     "faqsd_o3": {
       "label": "Ozone, daily 8-hour maximum",
-      "definition": "Daily 8-hour maximum ozone (ppb) from EPA FAQSD, area-weighted over the residential buffer and averaged over the episode's days."
+      "definition": "Daily 8-hour maximum ozone (ppb) from EPA FAQSD, area-weighted over the buffer around the location and averaged over the episode's days."
     },
     "faqsd_pm25": {
       "label": "PM2.5, daily average (FAQSD)",
-      "definition": "Daily 24-hour average PM2.5 (ug/m3) from EPA FAQSD, area-weighted over the residential buffer and averaged over the episode's days."
+      "definition": "Daily 24-hour average PM2.5 (ug/m3) from EPA FAQSD, area-weighted over the buffer around the location and averaged over the episode's days."
     },
     "l50dba_exi": {
       "label": "Noise \u2014 existing conditions",
-      "definition": "Existing-conditions daytime road+aviation transportation-noise surface, L50 dBA."
+      "definition": "NPS geospatial sound model, summer daytime existing-conditions median sound level (L50, dBA)."
     },
     "l50dba_imp": {
-      "label": "Noise \u2014 alternative scenario (imp)",
-      "definition": "Alternative-scenario daytime L50 transportation-noise surface (dBA); exact scenario pending verification against the BTS source."
+      "label": "Noise \u2014 anthropogenic impact",
+      "definition": "Anthropogenic impact on the summer daytime median sound level (L50, dB): existing minus natural conditions, from the NPS geospatial sound model (Mennitt et al.)."
     },
     "l50dba_nat": {
-      "label": "Noise \u2014 alternative scenario (nat)",
-      "definition": "Alternative-scenario daytime L50 transportation-noise surface (dBA); exact scenario pending verification against the BTS source."
+      "label": "Noise \u2014 natural conditions",
+      "definition": "NPS geospatial sound model, summer daytime natural-conditions median sound level (L50, dBA): the modeled sound level with anthropogenic sources removed."
     },
     "ndi": {
       "label": "Neighborhood Deprivation Index score",
@@ -103,7 +103,7 @@
     },
     "nh4": {
       "label": "Ammonium",
-      "definition": "Biweekly mean concentration of ammonium in PM2.5 over the residential buffer (ACAG V5.NA.05, ug/m3)."
+      "definition": "Biweekly mean concentration of ammonium in PM2.5 over the buffer around the location (ACAG V5.NA.05, ug/m3)."
     },
     "nh4_bm": {
       "label": "Ammonium \u2014 biomass burning",
@@ -115,7 +115,7 @@
     },
     "no3": {
       "label": "Nitrate",
-      "definition": "Biweekly mean concentration of nitrate in PM2.5 over the residential buffer (ACAG V5.NA.05, ug/m3)."
+      "definition": "Biweekly mean concentration of nitrate in PM2.5 over the buffer around the location (ACAG V5.NA.05, ug/m3)."
     },
     "no3_bm": {
       "label": "Nitrate \u2014 biomass burning",
@@ -127,7 +127,7 @@
     },
     "om": {
       "label": "Organic mass",
-      "definition": "Biweekly mean concentration of organic mass in PM2.5 over the residential buffer (ACAG V5.NA.05, ug/m3)."
+      "definition": "Biweekly mean concentration of organic mass in PM2.5 over the buffer around the location (ACAG V5.NA.05, ug/m3)."
     },
     "om_bm": {
       "label": "Organic mass \u2014 biomass burning",
@@ -139,7 +139,7 @@
     },
     "pm25": {
       "label": "PM2.5 mass",
-      "definition": "Biweekly mean concentration of total fine particulate matter (PM2.5) mass in PM2.5 over the residential buffer (ACAG V5.NA.05, ug/m3)."
+      "definition": "Biweekly mean concentration of total fine particulate matter (PM2.5) mass in PM2.5 over the buffer around the location (ACAG V5.NA.05, ug/m3)."
     },
     "pm25_bm": {
       "label": "PM2.5 mass \u2014 biomass burning",
@@ -191,7 +191,7 @@
     },
     "so4": {
       "label": "Sulfate",
-      "definition": "Biweekly mean concentration of sulfate in PM2.5 over the residential buffer (ACAG V5.NA.05, ug/m3)."
+      "definition": "Biweekly mean concentration of sulfate in PM2.5 over the buffer around the location (ACAG V5.NA.05, ug/m3)."
     },
     "so4_bm": {
       "label": "Sulfate \u2014 biomass burning",
@@ -203,7 +203,7 @@
     },
     "ss": {
       "label": "Sea salt",
-      "definition": "Biweekly mean concentration of sea salt in PM2.5 over the residential buffer (ACAG V5.NA.05, ug/m3)."
+      "definition": "Biweekly mean concentration of sea salt in PM2.5 over the buffer around the location (ACAG V5.NA.05, ug/m3)."
     },
     "ss_bm": {
       "label": "Sea salt \u2014 biomass burning",

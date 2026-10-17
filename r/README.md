@@ -135,7 +135,7 @@ Functions: `ss_install()`, `ss_use_python()`, `ss_python()`, `ss_doctor()`, `ss_
 `ss_fetch()`, `ss_data_verify()`, `ss_data_import()`, `ss_data_terms()`;
 `ss_coverage()`, `ss_link()` and the job functions `ss_job_status()`,
 `ss_job_wait()`, `ss_job_cancel()`, `ss_job_result()`, `ss_job_attach()`;
-`ss_register_dataset()`, `ss_datasets()`, `ss_dataset()`, `ss_remove_dataset()`;
+`ss_register_dataset()`, `ss_datasets()`, `ss_dataset()`, `ss_update_dataset()`, `ss_remove_dataset()`;
 `ss_custom_polygon()`, `ss_custom_raster()`; `ss_cache_info()`,
 `ss_cache_clear()`; and the tier-1 interface `ss_run()`, `ss_quickstart()`,
 `ss_templates()`, `ss_config_schema()`, `ss_validate()`, `ss_read_config()`,
