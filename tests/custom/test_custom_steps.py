@@ -553,6 +553,32 @@ def test_diagnostics_at_full_linkage_are_info_only(tmp_path):
     assert {r["level"] for r in records} == {"info"}
 
 
+def test_linkage_rate_denominator_is_the_cohort_not_the_output(tmp_path):
+    """R1-F2: episodes/participants absent from the C4 output still count in the denominator."""
+    import pandas as pd
+    run_dir = tmp_path / "run"
+    (run_dir / "output").mkdir(parents=True)
+    # Cohort: 4 episodes, 3 participants (P3 has no overlapping period for a dated dataset).
+    pd.DataFrame({"pid": ["P1", "P1", "P2", "P3"], "episode_id": [0, 1, 2, 3]}).to_parquet(
+        run_dir / "input.parquet", index=False)
+
+    # Episode-level output: only two episodes present (the others dropped out), one linked.
+    pd.DataFrame({"geoid": [0, 1], "greenness": [0.3, np.nan]}).to_parquet(
+        run_dir / "output" / f"c4_{A}.parquet", index=False)
+    ep = custom.diagnostics(run_dir, [A], {A: {**TRACT_DEF, "value_cols": ["greenness"]}})
+    # cohort denominator 4, not the output's 2 rows.
+    assert ep[0]["msg"] == f"{A}.greenness: 25.0% of episodes linked (1/4)"
+    assert ep[0]["level"] == "warning"
+
+    # Participant-level output (no geoid): only P1 linked; denominator is 3 participants.
+    (run_dir / "output" / f"c4_{A}.parquet").unlink()
+    pd.DataFrame({"pid": ["P1"], "greenness": [0.3]}).to_parquet(
+        run_dir / "output" / f"c4_{A}.parquet", index=False)
+    pt = custom.diagnostics(run_dir, [A], {A: {**TRACT_DEF, "value_cols": ["greenness"]}})
+    assert pt[0]["msg"] == f"{A}.greenness: 33.3% of participants linked (1/3)"
+    assert pt[0]["level"] == "warning"
+
+
 # --------------------------------------------------------------------------
 # provisioned boundaries
 # --------------------------------------------------------------------------

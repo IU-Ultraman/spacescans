@@ -135,6 +135,21 @@ def diagnostics(run_dir: str | Path, variables: Sequence[str],
     the web's ``_report_linkage_rate`` appends exactly these.
     """
     import pandas as pd
+
+    from spacescans.orchestrate import merge
+
+    # The denominator is the cohort, not the C4 output's rows: episodes or participants with no
+    # stay or no overlapping period are absent from that output, so dividing by its rows makes a
+    # dated dataset read close to 100 % and can hide the low-linkage warning (review finding
+    # R1-F2). Read the cohort once; fall back to the output's rows only if it is unreadable.
+    cohort = None
+    cohort_path = Path(run_dir) / "input.parquet"
+    if cohort_path.exists():
+        try:
+            cohort = pd.read_parquet(cohort_path)
+        except Exception:  # noqa: BLE001 - diagnostics never fail a run
+            cohort = None
+
     out: list[dict[str, str]] = []
     for var_key in variables:
         parquet = Path(run_dir) / "output" / parquet_map([var_key])[var_key]
@@ -147,21 +162,25 @@ def diagnostics(run_dir: str | Path, variables: Sequence[str],
             continue
         definition = definition_for(definitions, var_key)
         # An episode-level output keeps the per-row geoid; a participant-level one has none.
-        unit = "episodes" if "geoid" in df.columns else "participants"
+        episode_level = "geoid" in df.columns
+        unit = "episodes" if episode_level else "participants"
+        if cohort is not None:
+            total = len(cohort) if episode_level else len(merge.participant_keys(cohort))
+        else:
+            total = len(df)
         low = False
-        # a C4 output rendered at the participant level has one row per participant (no geoid)
-        unit = "episodes" if "geoid" in df.columns else "participants"
         for col in definition["value_cols"]:
             if col not in df.columns:
                 out.append(_record("warning", f"{var_key}: value column {col!r} missing from output"))
                 continue
-            matched = float(df[col].notna().mean()) if len(df) else 0.0
+            linked = int(df[col].notna().sum())
+            matched = (linked / total) if total else 0.0
             level = "info" if matched >= LOW_LINKAGE else "warning"
             low = low or matched < LOW_LINKAGE
             out.append(_record(
                 level,
                 f"{var_key}.{col}: {matched:.1%} of {unit} linked "
-                f"({int(df[col].notna().sum()):,}/{len(df):,})",
+                f"({linked:,}/{total:,})",
             ))
         if low:
             out.append(_record("warning", coverage_diagnosis(run_dir, var_key, definition)))
