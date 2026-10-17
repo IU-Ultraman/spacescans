@@ -33,7 +33,15 @@ def test_exactly_the_25_used_templates_are_packaged():
 def test_template_hashes_equal_the_web_configs(web_parity):
     web = web_parity["templates"]
     assert set(web) == USED | UNUSED          # the web snapshot had all 28
-    assert catalog.template_hashes() == {rel: web[rel] for rel in USED}
+    # R1-F1 deliberate difference: custom_grid.yaml gained buffer.grid_weights_nodata_free (the
+    # custom-grid C3 now weights a nodata-free surrogate of the grid), so its hash no longer
+    # matches web 0.2.7's config. The integrated web ships the same updated config. Every other
+    # template still matches the web snapshot byte for byte.
+    f1 = recipes.CUSTOM_GRID_TEMPLATE
+    pkg = catalog.template_hashes()
+    assert pkg[f1] != web[f1], "custom_grid.yaml should differ from web 0.2.7 (R1-F1)"
+    assert {r: h for r, h in pkg.items() if r != f1} == \
+        {rel: web[rel] for rel in USED if rel != f1}
 
 
 def test_every_template_is_used_by_a_recipe():

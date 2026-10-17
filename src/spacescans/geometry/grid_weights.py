@@ -13,6 +13,35 @@ import pandas as pd
 from spacescans.models.raster_meta import RasterMeta
 
 
+def _grid_surrogate(raster_path: str | Path):
+    """An in-memory, single-band, nodata-free twin of ``raster_path``'s GRID.
+
+    The buffer→cell coverage is a geometric fact of where the cells are, not of
+    their values: it must not change with the template file's own nodata. So the
+    weights are measured against a surrogate on the same CRS, transform and
+    shape, one band of ones and no nodata — then *every* cell a buffer touches
+    gets a weight, and C4's per-period ``MissingPolicy.SKIP`` drops the cells
+    that are nodata in a given period or band and renormalises there (the
+    docs' "left out of both the numerator and the denominator within each
+    period"). Without this, exact_extract omits the template file's nodata
+    cells and a location over them is never linked, in any period.
+    """
+    import numpy as np
+    import rasterio
+    from rasterio.io import MemoryFile
+
+    with rasterio.open(str(raster_path)) as src:
+        profile = {
+            "driver": "GTiff", "width": src.width, "height": src.height,
+            "count": 1, "dtype": "uint8", "crs": src.crs, "transform": src.transform,
+            "nodata": None,
+        }
+    memfile = MemoryFile()
+    with memfile.open(**profile) as dst:
+        dst.write(np.ones((profile["height"], profile["width"]), dtype="uint8"), 1)
+    return memfile
+
+
 def extract_grid_weights(
     buffers: gpd.GeoDataFrame,
     raster_path: str | Path,
@@ -21,6 +50,7 @@ def extract_grid_weights(
     id_col: str = "geoid",
     coverage_stat: str = "coverage",
     grid_id_offset: int = 0,
+    nodata_free: bool = False,
 ) -> pd.DataFrame:
     import rasterio
     from exactextract import exact_extract
@@ -30,19 +60,24 @@ def extract_grid_weights(
     log_every = max(1, n_chunks // 20)
     print(
         f"[grid_weights] processing {n_buffers} buffers × raster={Path(raster_path).name} "
-        f"in {n_chunks} chunks of {chunk_size}",
+        f"in {n_chunks} chunks of {chunk_size}"
+        f"{' (nodata-free grid)' if nodata_free else ''}",
         flush=True,
     )
 
     timings = {"raster_open": 0.0, "exact_extract": 0.0, "postprocess": 0.0}
     t_loop = time.perf_counter()
 
+    # When nodata_free, weight against a ones surrogate of the grid so a cell
+    # that is nodata in the template file still gets a weight (see _grid_surrogate).
+    surrogate = _grid_surrogate(raster_path) if nodata_free else None
+
     all_chunks = []
     for chunk_idx, start in enumerate(range(0, n_buffers, chunk_size)):
         chunk = buffers.iloc[start : start + chunk_size]
 
         t = time.perf_counter()
-        src_ctx = rasterio.open(str(raster_path))
+        src_ctx = surrogate.open() if surrogate is not None else rasterio.open(str(raster_path))
         timings["raster_open"] += time.perf_counter() - t
 
         with src_ctx as src:
@@ -92,6 +127,9 @@ def extract_grid_weights(
             )
 
     total_loop = time.perf_counter() - t_loop
+
+    if surrogate is not None:
+        surrogate.close()
 
     if not all_chunks:
         return pd.DataFrame(columns=[id_col, "grid_id", "weight"])

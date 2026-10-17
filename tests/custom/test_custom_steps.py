@@ -303,7 +303,7 @@ def test_plan_gives_a_raster_its_own_c3_named_by_grid(tmp_path, write_tif):
     steps = custom.plan([R], {R: _raster_def(tmp_path, write_tif)})
     assert _names(steps) == ["c3_customgrid_abcd1234", f"c4_{R}"]
     assert steps[0].template == "c3/custom_grid.yaml"
-    assert steps[0].cache_tag == "CUSTOMGRID_abcd1234" and not steps[0].uses_raster_res
+    assert steps[0].cache_tag == "CUSTOMGRIDND_abcd1234" and not steps[0].uses_raster_res
 
 
 @pytest.mark.geo
@@ -325,11 +325,11 @@ def test_raster_and_polygon_get_separate_c3s(tmp_path, write_tif):
 def test_grid_cache_tag_and_key_have_no_rasterisation_suffix(tmp_path, write_tif):
     """grid_weights does not rasterise the buffer; like temis/vnl, no __r part."""
     step = custom.c3_step_for(_raster_def(tmp_path, write_tif))
-    assert custom.boundary_tag_for_step(step) == "CUSTOMGRID_abcd1234"
+    assert custom.boundary_tag_for_step(step) == "CUSTOMGRIDND_abcd1234"
     p = _parquet(tmp_path)
-    key = custom.legacy_cache_key(p, "CUSTOMGRID_abcd1234", buffer_m=270, raster_res_m=25)
-    assert key.split("__")[1:] == ["CUSTOMGRID_abcd1234", "b270m"]
-    assert key != custom.legacy_cache_key(p, "CUSTOMGRID_ffff0000", buffer_m=270)
+    key = custom.legacy_cache_key(p, "CUSTOMGRIDND_abcd1234", buffer_m=270, raster_res_m=25)
+    assert key.split("__")[1:] == ["CUSTOMGRIDND_abcd1234", "b270m"]
+    assert key != custom.legacy_cache_key(p, "CUSTOMGRIDND_ffff0000", buffer_m=270)
 
 
 @pytest.mark.geo

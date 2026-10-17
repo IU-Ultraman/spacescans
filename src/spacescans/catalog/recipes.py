@@ -265,7 +265,10 @@ CUSTOM_BOUNDARY_C3: Mapping[str, str] = _FrozenMap({
 })
 CUSTOM_C4_TEMPLATE = "c4/custom_areal.yaml"
 CUSTOM_GRID_TEMPLATE = "c3/custom_grid.yaml"
-CUSTOM_GRID_TAG_PREFIX = "CUSTOMGRID_"
+# v2: nodata-free grid weights (phase D2 fix). The suffix bumps the C3 cache tag so any
+# truncated weights cached under the 0.3.0 "CUSTOMGRID_" key (package cross-run cache and the
+# web's legacy-v1 key alike) are recomputed, not served.
+CUSTOM_GRID_TAG_PREFIX = "CUSTOMGRIDND_"
 CUSTOM_GRID_STEP_PREFIX = "c3_customgrid_"
 #: Years a custom dataset without ``coverage_years`` is linked over.
 CUSTOM_DEFAULT_YEARS = (2013, 2019)

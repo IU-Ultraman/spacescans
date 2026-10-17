@@ -20,6 +20,32 @@ from spacescans.catalog.recipes import (
 )
 
 
+# Deliberate difference since 0.3 (review finding R1-F1), scoped to custom-grid C3 steps:
+# the custom-grid C3 weights a nodata-free surrogate of the grid, so a cell that is nodata in
+# the template file is still linked. The rendered config gains one line
+# (``buffer.grid_weights_nodata_free: true``) and the C3 cache tag became CUSTOMGRIDND_<hash>
+# (was CUSTOMGRID_<hash>). The web_parity fixture records web 0.2.7, which predates it; these
+# helpers apply the rename to the recorded expectation for custom-grid steps only. Catalog grids
+# are unchanged and still match the fixture byte for byte.
+_F1_OLD, _F1_NEW = "CUSTOMGRID_", "CUSTOMGRIDND_"
+
+
+def _is_f1_custom_grid_name(name: str) -> bool:
+    return name.startswith("c3_customgrid_")
+
+
+def _f1_strip_flag(text: str) -> str:
+    """The 0.3 custom_grid render with the nodata-free line removed (the pre-R1-F1 text)."""
+    import re
+    out, n = re.subn(r"(?m)^  grid_weights_nodata_free: true\n", "", text, count=1)
+    assert n == 1, "expected the custom_grid render to carry grid_weights_nodata_free (R1-F1)"
+    return out
+
+
+def _f1_key(key: str) -> str:
+    return key.replace(f"__{_F1_OLD}", f"__{_F1_NEW}")
+
+
 def _err(exc: BaseException) -> str:
     return f"{type(exc).__name__}: {exc}"
 
@@ -51,6 +77,8 @@ def test_rendered_yaml_matches_the_web(planned_record, web_parity, helpers):
         for step in steps:
             text = helpers.normalised_render(step, task_name=web_parity["task_name"],
                                              combo=combo, root=helpers.render_root)
+            if _is_f1_custom_grid_name(step.name):  # R1-F1: hash the pre-flag text (see note)
+                text = _f1_strip_flag(text)
             got[step.name] = helpers.sha256_text(text)
         assert got == hashes, f"{combo}: rendered config differs from the web's"
 
@@ -62,7 +90,10 @@ def test_cache_keys_match_the_web(planned_record, web_parity, helpers):
         got = {s.name: legacy_cache_key(s, web_parity["input_sha256"], buffer_m=buf,
                                         raster_res_m=res)
                for s in steps if s.is_c3}
-        assert got == keys, combo
+        # R1-F1: the custom-grid cache tag changed in 0.3 (see note).
+        expected = {name: (_f1_key(k) if _is_f1_custom_grid_name(name) else k)
+                    for name, k in keys.items()}
+        assert got == expected, combo
 
 
 def test_runner_tables_match_the_web(runner_name, web_parity, helpers):
@@ -81,7 +112,10 @@ def test_runner_tables_match_the_web(runner_name, web_parity, helpers):
                     c3_steps.setdefault(step.name, step)
     assert set(c3_steps) == set(web["cache_meta"])
     for name, meta in web["cache_meta"].items():
-        assert c3_steps[name].meta_boundary == meta["boundary"], name
+        expected_boundary = meta["boundary"]
+        if _is_f1_custom_grid_name(name):            # R1-F1: tag rename (see note)
+            expected_boundary = expected_boundary.replace(_F1_OLD, _F1_NEW)
+        assert c3_steps[name].meta_boundary == expected_boundary, name
         assert c3_steps[name].meta_raster_res == meta["raster_res_m"], name
 
 
@@ -170,7 +204,7 @@ def test_custom_raster_steps():
     }
     c3, c4 = plan("custom", ["custom_r"], overlay=defs)
     assert (c3.name, c3.cache_tag, c3.uses_raster_res) == (
-        "c3_customgrid_abcd1234", "CUSTOMGRID_abcd1234", False)
+        "c3_customgrid_abcd1234", "CUSTOMGRIDND_abcd1234", False)
     assert c3.fill == {"source.file": "/x/static.tif", "buffer.grid_id_offset": 0}
     assert c4.materialise_values and c4.dataset == "custom_r"
     assert c4.bind == {"source.file": "c3_customgrid_abcd1234",

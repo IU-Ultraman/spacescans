@@ -71,6 +71,11 @@ class BufferConfig(BaseModel):
     lat_col: str = "lat"
     test_index_limit: int | None = None
     grid_id_offset: int = 0
+    # Measure grid weights against a nodata-free surrogate of the template grid, so a cell
+    # that is nodata in the template file still gets a weight and per-period nodata is dropped
+    # downstream (grid_weights.extract_grid_weights). The custom-grid template sets it; catalog
+    # grids leave it False to keep their 0.2.x weights (golden parity).
+    grid_weights_nodata_free: bool = False
     patient_adapter: str | None = None  # e.g. "demo_conus" — see helpers.load_patients
     raster_cache_dir: str | None = None  # disk cache for per-target rasterized boundary masks
 

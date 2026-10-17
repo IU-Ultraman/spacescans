@@ -20,6 +20,8 @@ buffer:
   patient_adapter: demo_conus
   buffer_m: 270
   grid_id_offset: 0              # 0-based, row-major: grid_id = row * width + col
+  grid_weights_nodata_free: true # weight every covered cell, not only the template file's
+                                 # non-nodata ones; per-period nodata is dropped in C4
 
 engine:
   backend: duckdb

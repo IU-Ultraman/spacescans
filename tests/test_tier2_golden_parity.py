@@ -98,6 +98,40 @@ def _render_reference():
 
 
 # ---------------------------------------------------------------------------------------------
+# Deliberate difference since 0.3 (review finding R1-F1), scoped to custom-grid C3 steps.
+#
+# The custom-grid C3 now measures buffer->cell weights against a nodata-free surrogate of the
+# grid (``grid_weights.extract_grid_weights(nodata_free=True)``, set by the custom_grid
+# template), so a cell that is nodata in the template file is still linked and per-period
+# nodata is dropped in C4. Two things the frozen web-0.2.7 goldens predate:
+#   * the rendered custom_grid config gains one line, ``buffer.grid_weights_nodata_free: true``;
+#   * the C3 cache tag became CUSTOMGRIDND_<hash> (was CUSTOMGRID_<hash>) so truncated weights
+#     cached by web 0.2.7 are recomputed, never reused.
+# Catalog grids (TEMIS/VNL/ACAG/noise) are unchanged and still match 0.2.7 byte for byte.
+# These helpers apply the deliberate difference to the recorded expectation for custom-grid
+# steps only, mirroring C19_RUNS in tests/orchestrate/test_link_a4.py.
+_F1_TAG_OLD, _F1_TAG_NEW = "CUSTOMGRID_", "CUSTOMGRIDND_"
+
+
+def _is_f1_custom_grid(step) -> bool:
+    return getattr(step, "template", None) == "c3/custom_grid.yaml"
+
+
+def _f1_render_0_3(golden_text: str) -> str:
+    """The web-0.2.7 custom_grid render with 0.3's nodata-free flag inserted (R1-F1)."""
+    import re
+    out, n = re.subn(r"(?m)^(  grid_id_offset: .*)$",
+                     r"\1\n  grid_weights_nodata_free: true", golden_text, count=1)
+    assert n == 1, "custom_grid golden has no grid_id_offset line to anchor R1-F1 on"
+    return out
+
+
+def _f1_key_0_3(golden_key: str) -> str:
+    """A web-0.2.7 cache key with 0.3's custom-grid tag (R1-F1); other keys unchanged."""
+    return golden_key.replace(f"__{_F1_TAG_OLD}", f"__{_F1_TAG_NEW}")
+
+
+# ---------------------------------------------------------------------------------------------
 # A0: render
 # ---------------------------------------------------------------------------------------------
 
@@ -117,9 +151,11 @@ def test_render_reproduces_the_runner_yamls(name, tmp_path):
         if step.name not in written:      # a cache hit renders nothing
             continue
         text = render_text(step, ctx)
-        assert text == written[step.name], step.name
+        golden = _f1_render_0_3(written[step.name]) if _is_f1_custom_grid(step) \
+            else written[step.name]       # R1-F1 deliberate difference (see module note)
+        assert text == golden, step.name
         assert gc.normalise_yaml(render_text(step, elsewhere), str(elsewhere.run_dir)) == \
-            gc.normalise_yaml(written[step.name], str(task_dir)), step.name
+            gc.normalise_yaml(golden, str(task_dir)), step.name
         assert reference(step, run_dir=task_dir, buffer_m=ctx.buffer_m,
                          raster_res_m=ctx.raster_res_m, name_suffix=ctx.name_suffix) == text
         if ctx.overlay is not None:
@@ -184,6 +220,8 @@ def test_render_reproduces_the_render_matrix(combo, tmp_path):
         if not rec.get("rendered"):       # the raster upload's C4 (rendering it reads pixels)
             continue
         golden = (MATRIX / combo["combo"] / f"{step.name}.yaml").read_text()
+        if _is_f1_custom_grid(step):       # R1-F1 deliberate difference (see module note)
+            golden = _f1_render_0_3(golden)
         assert render_text(step, ctx) == golden, step.name
         assert gc.normalise_yaml(render_text(step, elsewhere), str(elsewhere.run_dir)) == \
             gc.normalise_yaml(golden, str(task_dir)), step.name
@@ -205,7 +243,9 @@ def test_legacy_keys_match_the_render_matrix(combo):
                      raster_res_m=combo["raster_res_m"], overlay=overlay, output_level="episode")
     legacy = WeightCache(Path("/nonexistent-cache"), key_format="legacy-v1")
     steps = catalog.plan(combo["experiment"], combo["variables"], overlay=overlay)
-    expected = [rec["cache_key"] for rec in combo["steps"] if "cache_key" in rec]
+    # R1-F1 deliberate difference: a custom-grid step's cache key carries the 0.3 tag.
+    expected = [_f1_key_0_3(rec["cache_key"]) if _is_f1_custom_grid(s) else rec["cache_key"]
+                for s, rec in zip(steps, combo["steps"]) if "cache_key" in rec]
     assert [legacy.key(s, ctx) for s, rec in zip(steps, combo["steps"]) if "cache_key" in rec] \
         == expected
 
@@ -233,12 +273,20 @@ def test_legacy_keys_name_the_runner_cache_entries(name, tmp_path):
     shutil.copyfile(ROOT / name / "input.parquet", task / "input.parquet")
     ctx = _ctx(run, config, task)
     legacy = WeightCache(tmp_path / "c3_cache", key_format="legacy-v1")
-    assert sorted(legacy.key(step, ctx) for step in _cold_c3(name)) == \
-        sorted(k for n, k in GOLDEN_KEYS if n == name)
-    for step in _cold_c3(name):
-        meta = json.loads((ROOT / name / "c3_cache" / f"{legacy.key(step, ctx)}.meta.json")
-                          .read_text())
-        assert meta["boundary"] == (step.meta_boundary or step.cache_tag)
+    cold = _cold_c3(name)
+    # R1-F1 deliberate difference: the custom-grid cache tag changed in 0.3; the frozen 0.2.7
+    # c3_cache files keep the old tag, so the golden keys are compared with the same rename and
+    # each golden file is read by its recorded (old) name.
+    assert sorted(legacy.key(step, ctx) for step in cold) == \
+        sorted(_f1_key_0_3(k) for n, k in GOLDEN_KEYS if n == name)
+    for step in cold:
+        golden_key = legacy.key(step, ctx)
+        expected_boundary = step.meta_boundary or step.cache_tag
+        if _is_f1_custom_grid(step):
+            golden_key = golden_key.replace(_F1_TAG_NEW, _F1_TAG_OLD)
+            expected_boundary = expected_boundary.replace(_F1_TAG_NEW, _F1_TAG_OLD)
+        meta = json.loads((ROOT / name / "c3_cache" / f"{golden_key}.meta.json").read_text())
+        assert meta["boundary"] == expected_boundary
         assert ("raster_res_m" in meta) == bool(step.meta_raster_res)
 
 

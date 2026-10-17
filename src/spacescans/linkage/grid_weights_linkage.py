@@ -51,6 +51,7 @@ def run_grid_weights(config: DatasetConfig, engine: AggregationEngine) -> Path:
     buffers_rcrs = reproject(buffers, target_crs=meta.crs)
     weights = extract_grid_weights(
         buffers_rcrs, raster_path, grid_id_offset=config.buffer.grid_id_offset,
+        nodata_free=config.buffer.grid_weights_nodata_free,
     )
     validate_weight_sums(weights)
     return write_table(weights, config.output.path)
