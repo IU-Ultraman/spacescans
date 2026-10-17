@@ -57,9 +57,16 @@ def _require_geo() -> None:
 def _open(source: bytes | str | Path):
     import rasterio
     from rasterio.io import MemoryFile
+
+    from spacescans.custom.safety import reject_format_confusion
+
+    # An uploaded raster is validated by extension then opened by content: refuse a VRT (format
+    # confusion -> local file read / SSRF) and pin the GTiff driver so GDAL cannot auto-detect VRT
+    # or another driver from the bytes. Review finding R2-1.
+    reject_format_confusion(source, RasterError)
     if isinstance(source, (str, Path)):
-        return rasterio.open(str(source))
-    return MemoryFile(source).open()
+        return rasterio.open(str(source), driver="GTiff")
+    return MemoryFile(source).open(driver="GTiff")
 
 
 def inspect_raster(source: bytes | str | Path) -> dict[str, Any]:

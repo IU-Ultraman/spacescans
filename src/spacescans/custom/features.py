@@ -90,6 +90,10 @@ def _read(path: Path, layer: str | None) -> Any:
             return gpd.read_parquet(path)
         except Exception:  # noqa: BLE001 - any reader failure is a user error here
             raise DatasetError(f"{path.name} could not be read as GeoParquet") from None
+    # OGR opens the file by content with every driver: refuse an OGR VRT disguised as a
+    # GeoPackage/GeoJSON/zip (format confusion -> local file read / SSRF). Review finding R2-1.
+    from spacescans.custom.safety import reject_format_confusion
+    reject_format_confusion(path, DatasetError)
     if not low.endswith(_SUFFIXES):
         raise DatasetError(f"{path.name}: features come as a GeoPackage (.gpkg), GeoJSON "
                            "(.geojson), zipped Shapefile (.zip) or GeoParquet file")
