@@ -91,9 +91,14 @@ decided to reserve `spacescans` as well, as an alias of `spacescans-pipeline` (s
   - Environment name: `pypi`
 
   The first successful run creates the project, owned by the account that added the publisher.
-- [ ] On GitHub, `IU-Ultraman/spacescans`, Settings, Environments, New environment `pypi`:
-  required reviewers (the authors), and deployment branches and tags limited to the tag pattern
-  `v*`. Without the environment, GitHub creates it unprotected on the first run.
+- [ ] The same form again for the alias (section 4a): PyPI project name `spacescans`, Owner
+  `IU-Ultraman`, Repository name `spacescans`, Workflow name `publish.yml`, Environment name
+  `pypi-alias`.
+- [ ] Optional, needs admin rights on `IU-Ultraman/spacescans` (an organization owner): Settings,
+  Environments, New environment `pypi`, and the same for `pypi-alias`: required reviewers (the
+  authors), and deployment branches and tags limited to the tag pattern `v*`. Without them,
+  GitHub creates both environments unprotected on the first run; the workflow still refuses to
+  publish unless it was started from a `v*` tag that matches every declared version.
 
 `publish.yml` needs no token: the publishing job asks for `id-token: write` and PyPI trusts the
 workflow run.
@@ -124,25 +129,28 @@ workflow run.
 `packaging/spacescans-alias/` is a distribution named `spacescans` with no code: its only
 content is the dependency `spacescans-pipeline==<version>`, so `pip install spacescans` installs
 the real package (without extras) and keeps the name from being taken by someone else. Its
-version and pin move with the main package (`tests/test_pypi_alias.py` fails when they drift),
-and `publish.yml` does not publish it.
+version and pin move with the main package (`tests/test_pypi_alias.py` fails when they drift).
+`publish.yml` publishes it in the job `publish-alias`, after `build-and-publish` has uploaded the
+main package, through the alias's own trusted publisher (section 3, environment `pypi-alias`):
+the job builds it at the tag with `SOURCE_DATE_EPOCH` = the tag commit's time, runs
+`twine check --strict` and uploads it. No API token is involved.
 
-- [ ] After `spacescans-pipeline` 0.3.0 is on PyPI (section 4), build and check the alias at the
-  release tag:
+- [ ] Only if the alias's trusted publisher is missing (the job then fails after the main package
+  is up): build and check the alias at the release tag,
 
   ```sh
   SOURCE_DATE_EPOCH=$(git log -1 --format=%ct v0.3.0) python -m build packaging/spacescans-alias --outdir dist-alias
   twine check --strict dist-alias/*
   ```
 
-- [ ] Upload it once, from an account that will own the project `spacescans` (two-factor
+  and upload it once, from an account that will own the project `spacescans` (two-factor
   authentication on): `twine upload dist-alias/*` with an API token (PyPI, Account settings,
   API tokens; scope "Entire account" for the first upload, since the project does not exist
   yet; replace it with a token scoped to `spacescans` afterwards, or add a trusted publisher for
   the project `spacescans` if later versions should be published by a workflow). Add the
   co-maintainers on PyPI as for `spacescans-pipeline`.
 - [ ] For later releases, bump `version` and the pin in `packaging/spacescans-alias/pyproject.toml`
-  with the three declarations of the main package, and upload the alias after the main package.
+  with the three declarations of the main package; `publish-alias` uploads it after the main package.
 
 ## 5. The R package
 

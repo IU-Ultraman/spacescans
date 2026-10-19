@@ -78,3 +78,29 @@ jobs:
         with:
           files: dist/*
           generate_release_notes: true
+
+  # The PyPI name `spacescans` is an alias with no code (packaging/spacescans-alias): it
+  # depends on spacescans-pipeline==<version>, so it goes up only after the main package.
+  # It has its own trusted publisher on PyPI: project spacescans, this workflow
+  # (publish.yml) and the environment pypi-alias.
+  publish-alias:
+    needs: build-and-publish
+    runs-on: ubuntu-24.04
+    environment:
+      name: pypi-alias
+      url: https://pypi.org/project/spacescans/
+    permissions:
+      id-token: write   # for PyPI Trusted Publishing (OIDC)
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with: {python-version: "3.12"}
+      - run: pip install build twine
+      - name: Build the alias
+        run: SOURCE_DATE_EPOCH="$(git log -1 --format=%ct)" python -m build packaging/spacescans-alias --outdir dist-alias
+      - name: twine check
+        run: twine check --strict dist-alias/*
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist-alias/
