@@ -39,7 +39,9 @@ decided to reserve `spacescans` as well, as an alias of `spacescans-pipeline` (s
 ## 2. Before tagging (on `main`)
 
 - [ ] Phase D merged, and the integration gates of PHASE_D.md section 6 pass.
-- [ ] **Data mirror upload.** The data manifest still marks 7 mirror files `pending`: the
+- [x] **Data mirror upload** (done 2026-10-23: the author uploaded the 7 files at 10:30 EDT; all 7
+  downloaded from the share matched the manifest's sha256, and `mirror-check --write-manifest`
+  flipped them to `available`). Before, the data manifest marked 7 mirror files `pending`: the
   Neighborhood Deprivation Index panel (`.rds`), the EPA Walkability Index panel (`.Rda`), the
   ZBP and CBP panels (`.Rda`), the FARA table (`varnameCountRemoved.csv`) and the ACAG and TEMIS
   grid templates. Until they are on the mirror, `spacescans data fetch` cannot get `ndi`,

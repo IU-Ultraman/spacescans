@@ -113,69 +113,62 @@
     },
     "varnameCountRemoved.csv": {
       "kind": "bare",
-      "status": "pending_upload",
+      "status": "available",
       "mirror": "iu-onedrive",
       "sha256": "873f8942b7d65d5a05a546aaa4b09171ba83a7ff2356a165abc124a130883203",
       "bytes": 3762,
-      "dest": "FARA/C4",
-      "interim": "Not on the mirror yet. Until it is, copy pipeline-data/FARA/C4/varnameCountRemoved.csv from a spacescans-web checkout into <data_dir>/FARA/C4/, or pass --mirror <folder holding it>."
+      "dest": "FARA/C4"
     },
     "ndi_bg_acs5_2008_2012_to_2020_2024_nationwide_summaryfile_xgboost.rds": {
       "kind": "bare",
-      "status": "pending_upload",
+      "status": "available",
       "mirror": "iu-onedrive",
       "sha256": "005f177c7980f7dd1bd64696107ded01120f7ede1afc455fdd1b8e0df7634461",
       "bytes": 39439111,
-      "dest": "NDI/C4",
-      "interim": "Not on the mirror yet. Until it is, copy pipeline-data/NDI/C4/<this file> from a spacescans-web checkout into <data_dir>/NDI/C4/, or pass --mirror <folder holding it>."
+      "dest": "NDI/C4"
     },
     "epawalkind_nationwide_2016_2021.Rda": {
       "kind": "bare",
-      "status": "pending_upload",
+      "status": "available",
       "mirror": "iu-onedrive",
       "sha256": "e37b9adf4300d0804a1c1c06f534fcd1a37944725f4f218c6c0fc8b2078aea34",
       "bytes": 26483837,
-      "dest": "Walkability/C4",
-      "interim": "Not on the mirror yet. Until it is, copy pipeline-data/Walkability/C4/<this file> from a spacescans-web checkout into <data_dir>/Walkability/C4/, or pass --mirror <folder holding it>."
+      "dest": "Walkability/C4"
     },
     "cbp_nationwide_0519.Rda": {
       "kind": "bare",
-      "status": "pending_upload",
+      "status": "available",
       "mirror": "iu-onedrive",
       "sha256": "e45a8d6bb9f0aef93edd98672e334e65bd0ffcecc125aacd9d2d3b25fb7448f6",
       "bytes": 8192301,
-      "dest": "Community_Organization_Density/C4",
-      "interim": "Not on the mirror yet. Until it is, copy pipeline-data/Community_Organization_Density/C4/<this file> from a spacescans-web checkout into <data_dir>/Community_Organization_Density/C4/, or pass --mirror <folder holding it>."
+      "dest": "Community_Organization_Density/C4"
     },
     "zbp_nationwide_0521.Rda": {
       "kind": "bare",
-      "status": "pending_upload",
+      "status": "available",
       "mirror": "iu-onedrive",
       "sha256": "124141e9d463039d8a1ef82bf53c735584815e89740871a92ca2f3d27fff2936",
       "bytes": 76213836,
-      "dest": "Community_Organization_Density/C4",
-      "interim": "Not on the mirror yet. Until it is, copy pipeline-data/Community_Organization_Density/C4/<this file> from a spacescans-web checkout into <data_dir>/Community_Organization_Density/C4/, or pass --mirror <folder holding it>."
+      "dest": "Community_Organization_Density/C4"
     },
     "acag_template.tif": {
       "kind": "bare",
-      "status": "pending_upload",
+      "status": "available",
       "mirror": "iu-onedrive",
       "sha256": "5530456d10d2888745c158bce81b8eade3315338ead847d8112950fc0d15cc6e",
       "bytes": 233766,
       "dest": "ACAG/C3",
       "note": "Grid definition only (all zeros): 0.01 degree, 11,800 x 5,400 cells, north-up, EPSG:4326. Contains no ACAG values. spacescans data prepare templates regenerates it byte for byte (a port of spacescans-web backend/scripts/make_acag_template.py).",
-      "interim": "Not on the mirror yet. Until it is, run spacescans data prepare templates (needs the geo extra), copy pipeline-data/ACAG/C3/acag_template.tif from a spacescans-web checkout into <data_dir>/ACAG/C3/, or pass --mirror <folder holding it>.",
       "generate": "templates"
     },
     "temis_template.tif": {
       "kind": "bare",
-      "status": "pending_upload",
+      "status": "available",
       "mirror": "iu-onedrive",
       "sha256": "49fcbfe28ffb95f4b476f1481cdccce1fd678ed53fd365ad1a62875f125d2847",
       "bytes": 2076126,
       "dest": "TEMIS/C3",
       "note": "Grid definition only (all zeros): 0.25 degree, 1,440 x 720 cells, int16, north-up, EPSG:4326; contains no TEMIS UV values. spacescans data prepare templates regenerates it byte for byte. An earlier version with real UV values is in spacescans-web history (c186b94); never mirror that one.",
-      "interim": "Not on the mirror yet. Until it is, run spacescans data prepare templates (needs the geo extra), copy pipeline-data/TEMIS/C3/temis_template.tif from a spacescans-web checkout into <data_dir>/TEMIS/C3/, or pass --mirror <folder holding it>.",
       "generate": "templates"
     }
   },

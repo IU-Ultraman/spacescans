@@ -20,8 +20,8 @@ PUBLISHED = {
     "noise_v1.tar.gz": ("e93e63aa81ca069d00b28ff8b9894f5c3b4563e9de7417e4c2d9f6c73afc31f9", 1191982269),
     "fara_nationwide_2010_2019_interpolated.Rda": ("4d03fc173de6a67bc7885c42173f033f0f6b6d13d487a263874abdba43f4517e", 447630044),
 }
-# Value tables committed in spacescans-web, to be uploaded to the mirror.
-PENDING = {
+# Value tables committed in spacescans-web, on the mirror since 2026-10-23.
+VALUE_TABLES = {
     "ndi_bg_acs5_2008_2012_to_2020_2024_nationwide_summaryfile_xgboost.rds": "NDI/C4",
     "epawalkind_nationwide_2016_2021.Rda": "Walkability/C4",
     "cbp_nationwide_0519.Rda": "Community_Organization_Density/C4",
@@ -43,7 +43,7 @@ def test_manifest_matches_schema():
 def test_mirror_archives_carry_the_published_checksums():
     m = load_manifest()
     available = {n: a for n, a in m.artifacts.items() if a.status == "available"}
-    assert set(available) == set(PUBLISHED)
+    assert set(available) == set(PUBLISHED) | set(VALUE_TABLES) | {"acag_template.tif", "temis_template.tif"}
     for name, (sha, size) in PUBLISHED.items():
         assert (available[name].sha256, available[name].bytes) == (sha, size), name
     # extracted_bytes is the web manifest's value; payload_bytes leaves out
@@ -54,12 +54,12 @@ def test_mirror_archives_carry_the_published_checksums():
     assert m.artifacts["noise_v1.tar.gz"].extracted_bytes - m.artifacts["noise_v1.tar.gz"].payload_bytes == 636
 
 
-def test_web_committed_value_tables_are_pending_mirror_entries():
+def test_web_committed_value_tables_are_bare_mirror_entries():
     m = load_manifest()
-    for name, dest in PENDING.items():
+    for name, dest in VALUE_TABLES.items():
         a = m.artifacts[name]
         assert a.kind == "bare" and a.dest == dest
-        assert a.status == "pending_upload" and a.interim
+        assert a.status == "available" and not a.interim
         assert len(a.sha256) == 64 and a.bytes > 0
 
 

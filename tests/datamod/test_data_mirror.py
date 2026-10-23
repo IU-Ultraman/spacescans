@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 import pytest
 
@@ -40,6 +41,8 @@ def test_uploaded_file_passes_and_is_flipped(share_manifest, server, tmp_path):
     assert rep.updated == ["labels.csv"] and rep.ok
     m = load_manifest(path)
     assert m.artifacts["labels.csv"].status == "available"
+    assert m.artifacts["labels.csv"].interim == ""             # the interim note no longer applies
+    assert '"interim"' not in Path(path).read_text()
     assert m.artifacts["panel.Rda"].status == "available"
     gets = [r for r in server.downloads() if r["method"] == "GET"]
     assert gets and all(r["headers"]["range"] == "bytes=0-7" for r in gets)
@@ -98,13 +101,15 @@ def test_unreachable_mirror_is_a_report_not_an_exception(mini_manifest):
     assert not rep.checks[0].passed and "network error" in rep.checks[0].detail
 
 
-def test_packaged_manifest_lists_the_seven_pending_artifacts():
+def test_packaged_manifest_has_every_artifact_on_the_mirror():
+    # The last 7 were uploaded on 2026-10-23 and flipped by mirror-check --write-manifest.
     m = load_manifest()
-    pending = sorted(n for n, a in m.artifacts.items() if a.status == "pending_upload")
-    assert pending == sorted([
-        "acag_template.tif", "cbp_nationwide_0519.Rda", "epawalkind_nationwide_2016_2021.Rda",
-        "ndi_bg_acs5_2008_2012_to_2020_2024_nationwide_summaryfile_xgboost.rds",
-        "temis_template.tif", "varnameCountRemoved.csv", "zbp_nationwide_0521.Rda"])
+    assert [n for n, a in m.artifacts.items() if a.status == "pending_upload"] == []
+    for n in ("acag_template.tif", "cbp_nationwide_0519.Rda", "epawalkind_nationwide_2016_2021.Rda",
+              "ndi_bg_acs5_2008_2012_to_2020_2024_nationwide_summaryfile_xgboost.rds",
+              "temis_template.tif", "varnameCountRemoved.csv", "zbp_nationwide_0521.Rda"):
+        a = m.artifacts[n]
+        assert a.available and a.mirror == "iu-onedrive" and a.interim == "", n
 
 
 def test_cli_mirror_check(share_manifest, server, tmp_path, monkeypatch, capsys):

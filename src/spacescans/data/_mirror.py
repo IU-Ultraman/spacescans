@@ -23,6 +23,7 @@ from __future__ import annotations
 import hashlib
 import http.client
 import json
+import re
 import os
 import socket
 import ssl
@@ -265,7 +266,11 @@ def mirror_check(artifacts: Sequence[str] | str | None = None, *,
 
 
 def flip_status(path: str | os.PathLike[str], names: Sequence[str]) -> None:
-    """Set ``status`` to ``available`` for ``names`` in a manifest file, keeping its layout."""
+    """Set ``status`` to ``available`` for ``names`` in a manifest file, keeping its layout.
+
+    The entry's ``interim`` instructions (how to get the file while it is not on
+    the mirror) are removed with it: they no longer apply.
+    """
     path = Path(path)
     text = path.read_text(encoding="utf-8")
     artifacts_at = text.index('"artifacts"')
@@ -273,11 +278,13 @@ def flip_status(path: str | os.PathLike[str], names: Sequence[str]) -> None:
         key = json.dumps(name) + ":"
         i = text.index(key, artifacts_at)
         end = text.index("}", i)            # artifact entries hold no nested objects
+        entry = text[i:end]
         old = '"status": "pending_upload"'
-        j = text.find(old, i, end)
-        if j < 0:
+        if old not in entry:
             raise UsageError(f"{name} is not pending_upload in {path}")
-        text = text[:j] + '"status": "available"' + text[j + len(old):]
+        entry = entry.replace(old, '"status": "available"', 1)
+        entry = re.sub(r',\s*"interim":\s*"(?:[^"\\]|\\.)*"', "", entry, count=1)
+        text = text[:i] + entry + text[end:]
     parse_manifest(json.loads(text))         # still a valid manifest
     tmp = path.with_name(path.name + ".tmp")
     tmp.write_text(text, encoding="utf-8")

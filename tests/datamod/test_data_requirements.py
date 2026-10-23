@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 import pytest
 
@@ -16,6 +17,7 @@ from spacescans.data import (
 )
 from spacescans.data.receipts import read_receipt
 
+MANIFEST_JSON = Path(__file__).resolve().parents[2] / "src/spacescans/data/manifest.json"
 ACAG_SHA = "5530456d10d2888745c158bce81b8eade3315338ead847d8112950fc0d15cc6e"
 TEMIS_SHA = "49fcbfe28ffb95f4b476f1481cdccce1fd678ed53fd365ad1a62875f125d2847"
 
@@ -27,7 +29,7 @@ def test_requirements_follow_the_manifest():
     assert ndi.requires == [["bg_boundaries"], ["ndi_panel"]] and ndi.default == ["bg_boundaries", "ndi_panel"]
     assert ndi.artifacts == ["bg_boundaries_v1.tar.gz",
                              "ndi_bg_acs5_2008_2012_to_2020_2024_nationwide_summaryfile_xgboost.rds"]
-    assert ndi.pending == ["ndi_bg_acs5_2008_2012_to_2020_2024_nationwide_summaryfile_xgboost.rds"]
+    assert ndi.pending == []                               # on the mirror since 2026-10-23
     assert ndi.download_bytes == 1336811339 + 39439111 and ndi.provider == [] and ndi.terms == []
     tiger = req["tiger_proximity"]
     assert tiger.requires == [["tiger_roads_cache", "tiger_roads_raw"], ["county_boundaries"]]
@@ -64,7 +66,7 @@ def test_cli_requirements(capsys):
     assert main(["data", "requirements", "acag", "--json"]) == 0
     out = json.loads(capsys.readouterr().out)
     assert out["variables"]["acag"]["terms"] == ["acag-v5na05"]
-    assert out["variables"]["acag"]["pending"] == ["acag_template.tif"]
+    assert out["variables"]["acag"]["pending"] == []
     assert main(["data", "requirements", "noise"]) == 0
     assert "noise_rasters" in capsys.readouterr().out
 
@@ -107,8 +109,20 @@ def test_prepare_refuses_bytes_that_differ(data_dir, monkeypatch):
         prepare_templates(data_dir, names=["noise_v1.tar.gz"])
 
 
-def test_status_suggests_prepare_for_templates(data_dir):
+def test_templates_on_the_mirror_are_fetched(data_dir):
     st = status(["acag"], data_dir=data_dir)
+    d = st.dataset("acag_template")
+    assert d.status == "missing" and d.fetchable and d.generate == []
+    assert d.next == "spacescans data fetch --dataset acag_template"
+    assert st.variable("acag").status == "action_required"        # the ACAG rasters: provider terms
+
+
+def test_status_suggests_prepare_for_templates(data_dir):
+    # A template that is not on the mirror (as before 2026-10-23) is generated locally.
+    raw = json.loads(MANIFEST_JSON.read_text())
+    raw["artifacts"]["acag_template.tif"]["status"] = "pending_upload"
+    raw["artifacts"]["acag_template.tif"]["interim"] = "run spacescans data prepare templates"
+    st = status(["acag"], data_dir=data_dir, manifest=raw)
     d = st.dataset("acag_template")
     assert d.status == "action_required" and d.generate == ["acag_template.tif"]
     assert d.next.startswith("spacescans data prepare templates")

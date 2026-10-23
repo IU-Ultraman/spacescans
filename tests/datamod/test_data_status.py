@@ -232,9 +232,11 @@ def test_unknown_variable(mini_manifest, data_dir):
 def test_real_manifest_statuses_for_an_empty_dir(data_dir):
     rep = status(data_dir=data_dir)
     st = {v.variable: v.status for v in rep.variables}
-    assert st["noise"] == st["tiger_proximity"] == st["nhd_bluespace"] == "missing"
-    # Each needs a file that is not on the mirror yet, or a provider download.
-    for key in ("ndi", "walkability", "cbp_zcta5", "fara_tract", "vnl", "temis", "acag", "faqsd"):
+    # One fetch from the mirror away (the value tables went up on 2026-10-23).
+    for key in ("noise", "tiger_proximity", "nhd_bluespace", "ndi", "walkability", "cbp_zcta5", "fara_tract"):
+        assert st[key] == "missing", key
+    # Each needs a provider download (terms to accept, or a manual step).
+    for key in ("vnl", "temis", "acag", "faqsd"):
         assert st[key] == "action_required", key
     man = load_manifest()
     total = sum(a.bytes for a in man.artifacts.values() if a.available)
