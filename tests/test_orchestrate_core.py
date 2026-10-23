@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import dataclasses
 import json
+import re
 import os
 import stat
 import threading
@@ -447,7 +448,10 @@ def test_v2_meta_records_every_component_and_no_cohort_value(run):
     assert "patient_file" not in comps["config"]["buffer"]
     assert comps["source_fp"]["files"][0][0] == "Noise/C3/CONUS_L50dBA_sumDay_exi.tif"
     assert meta["file"]["rows"] == 3 and meta["seconds"] == 2.5
-    text = v2.meta_path(key).read_text()
+    # Timestamps (created_at, file mtimes) are ISO strings with microseconds: one written
+    # at hh:mm:39.7xx would contain "39.7" and read as a leaked latitude.
+    text = re.sub(r"\d{4}-\d\d-\d\dT[\d:.]+(?:[+-]\d\d:\d\d|Z)?", "<time>",
+                  v2.meta_path(key).read_text())
     for secret in ("P0", "-86.1", "39.7", str(run.ctx.cohort_parquet), "2015-01-01"):
         assert secret not in text
 
