@@ -36,10 +36,12 @@ class DuckDBEngine:
 
     def settings(self) -> dict[str, str]:
         """Current DuckDB threads / memory_limit / temp_directory, as DuckDB reports them."""
+        # fetchall, not fetchone: DuckDB 2 keeps a result open until a fetch comes back
+        # empty and then refuses other work on the connection (the run that follows).
         row = self._conn.execute(
             "SELECT current_setting('threads'), current_setting('memory_limit'), "
             "current_setting('temp_directory')"
-        ).fetchone()
+        ).fetchall()[0]
         return {"threads": str(row[0]), "memory_limit": str(row[1]), "temp_directory": str(row[2])}
 
     # --- join ---

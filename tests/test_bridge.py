@@ -276,6 +276,16 @@ def test_run_missing_input_is_data_error(tmp_path):
     assert any(e["ev"] == "step_end" and e["ok"] is False for e in events)
 
 
+def test_missing_path_from_either_filenotfounderror_form():
+    from spacescans.bridge.errors import _missing_path
+    import errno
+    # pandas < 3.1: FileNotFoundError(errno, strerror, path); pandas 3.1: FileNotFoundError(path)
+    assert _missing_path(FileNotFoundError(errno.ENOENT, "No such file", "/d/patients.parquet")) == "/d/patients.parquet"
+    assert _missing_path(FileNotFoundError("/d/patients.parquet")) == "/d/patients.parquet"
+    assert _missing_path(FileNotFoundError("cohort file not found: /d/x.csv")) is None   # a message, not a path
+    assert _missing_path(FileNotFoundError()) is None
+
+
 def test_run_bad_threads_is_config(tmp_path):
     cfg = make_c4_fixture(tmp_path)
     rc, res, _, _ = call(tmp_path, "run", {"config": cfg, "data_dir": str(tmp_path), "threads": 0})

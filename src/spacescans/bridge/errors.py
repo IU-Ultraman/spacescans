@@ -20,6 +20,7 @@ safe message leaves out reaches the result, the log or the client. (A
 """
 from __future__ import annotations
 
+import os
 import re
 import traceback
 from collections.abc import Mapping
@@ -61,6 +62,20 @@ class BridgeError(Exception):
             "traceback": format_tb(cause, message=self.safe_message if cause is not self else None),
         }
 
+
+
+def _missing_path(exc: OSError) -> str | None:
+    """The file an OSError is about: ``filename``, or the lone absolute path it carries.
+
+    pandas 3.1 raises ``FileNotFoundError(path)`` for a missing parquet file (no
+    errno, ``filename`` None), where 3.0 raised ``FileNotFoundError(errno, strerror,
+    path)``. A one-argument message that is not an absolute path is not taken.
+    """
+    if exc.filename:
+        return str(exc.filename)
+    if len(exc.args) == 1 and isinstance(exc.args[0], str) and os.path.isabs(exc.args[0]):
+        return exc.args[0]
+    return None
 
 def type_name(exc: BaseException) -> str:
     cls = type(exc)
@@ -230,7 +245,7 @@ def classify(exc: BaseException) -> BridgeError:
             s in msg for s in ("Unknown linkage pattern", "Unknown reader plugin", "Unknown prep plugin")):
         err = BridgeError("config", msg.strip("'\""))
     elif isinstance(exc, (FileNotFoundError, NotADirectoryError, IsADirectoryError, PermissionError)):
-        path = getattr(exc, "filename", None)
+        path = _missing_path(exc)
         err = BridgeError("data_missing", msg,
                           hint=f"check that {path} exists and is readable" if path else None,
                           details={"path": path, "reason": type(exc).__name__})
