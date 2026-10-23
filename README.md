@@ -22,16 +22,14 @@ and the SPACESCANS web application.
 
 ## Install
 
-spacescans is not on PyPI yet. Until the first release, install it from GitHub:
+```bash
+pip install "spacescans[geo]"
+```
+
+The development version installs from GitHub:
 
 ```bash
 pip install "spacescans[geo] @ git+https://github.com/IU-Ultraman/spacescans.git"
-```
-
-Once version 0.3.0 is published on PyPI:
-
-```bash
-pip install "spacescans[geo]"
 ```
 
 You install and import `spacescans`. (Before 0.3.0 the distribution was called
