@@ -303,7 +303,7 @@ def test_run_missing_extra_on_base_install(tmp_path):
     assert err["kind"] == "missing_extra", err
     assert err["details"]["extra"] == "geo"
     assert err["type"] == "spacescans.pipeline.registry.UnavailablePatternError"
-    assert "spacescans-pipeline[geo]" in err["hint"]
+    assert "spacescans[geo]" in err["hint"]
 
 
 def test_capabilities_on_base_install(tmp_path):

@@ -4,7 +4,7 @@ Prepared 2026-10-16 on branch `tier2/d-release` (phase D, track F). Nothing here
 published: no tag, no PyPI upload, no r-universe registry, no CRAN submission. Every step below
 that changes something outside this repository is the authors' to perform.
 
-The Python package (`spacescans-pipeline` on PyPI, imported as `spacescans`) and the R package
+The Python package (`spacescans` on PyPI, imported as `spacescans`) and the R package
 in `r/` share one version and one tag, `v<version>`. The version is declared in three places,
 which must agree: `pyproject.toml` (`version`), `r/DESCRIPTION` (`Version` and
 `Config/spacescans/version`). `tests/test_r_package_version.py` checks them in CI, and
@@ -31,10 +31,9 @@ which must agree: `pyproject.toml` (`version`), `r/DESCRIPTION` (`Version` and
 - [ ] **r-universe**: the r-universe GitHub app installed on the `IU-Ultraman` account, and the
   registry repository `IU-Ultraman/IU-Ultraman.r-universe.dev` (section 5).
 
-Names on 2026-10-16: `spacescans-pipeline` and `spacescans` are both unregistered on PyPI and
-on TestPyPI (`https://pypi.org/pypi/<name>/json` returns 404); there is no CRAN package
-`spacescans`; there is no `iu-ultraman` universe and no registry repository yet. The authors
-decided to reserve `spacescans` as well, as an alias of `spacescans-pipeline` (section 4a).
+Names: on 2026-10-16 `spacescans` and `spacescans-pipeline` were both unregistered on PyPI and on
+TestPyPI. On 2026-10-23 the authors chose to publish the package under its own name, `spacescans`
+(the distribution had been `spacescans-pipeline`, installed only from GitHub), so no alias is needed.
 
 ## 2. Before tagging (on `main`)
 
@@ -48,7 +47,7 @@ decided to reserve `spacescans` as well, as an alias of `spacescans-pipeline` (s
   `walkability`, `cbp_zcta5` or `fara_tract`, and reports the templates as not on the mirror
   (`spacescans data prepare` can build the two templates locally). The 7 files are staged and
   checked in `tier2-artifacts/mirror-upload/`. Upload them, unchanged, to the root of the
-  OneDrive share `Documents/spacescans-pipeline-data`, then run
+  OneDrive share `Documents/spacescans-data`, then run
   `spacescans data mirror-check --write-manifest` and commit the manifest change.
 - [ ] CI is green on `main`: `test.yml`, `test-extras.yml` and `r-check.yml` (start `r-check.yml`
   with Run workflow if no push has triggered it on the release commit).
@@ -60,21 +59,17 @@ decided to reserve `spacescans` as well, as an alias of `spacescans-pipeline` (s
 
     ````markdown
     ```bash
-    pip install "spacescans-pipeline[geo]"
+    pip install "spacescans[geo]"
     ```
 
     The development version installs from GitHub:
 
     ```bash
-    pip install "spacescans-pipeline[geo] @ git+https://github.com/IU-Ultraman/spacescans.git"
+    pip install "spacescans[geo] @ git+https://github.com/IU-Ultraman/spacescans.git"
     ```
     ````
 
-  - README "Install", next sentence: once the alias is uploaded (section 4a), "(Once released,
-    `pip install spacescans` installs the same package: ...)" becomes "`pip install spacescans`
-    installs the same package (an alias of `spacescans-pipeline`, without extras)";
-  - if the version changes, change all three declarations, and the alias's `version` and its
-    pin in `packaging/spacescans-alias/pyproject.toml` (`tests/test_pypi_alias.py` checks them).
+  - if the version changes, change all three declarations.
 - [ ] The README examples run: in a fresh environment with the release candidate installed and
   a data directory holding NPS Soundscape Noise (`spacescans data fetch noise`), the README's
   "Link" example returns one row per participant (`pid`, `l50dba_exi`, `l50dba_imp`,
@@ -86,20 +81,17 @@ decided to reserve `spacescans` as well, as an alias of `spacescans-pipeline` (s
 ## 3. PyPI Trusted Publishing (once)
 
 - [ ] On pypi.org: Account settings, Publishing, "Add a new pending publisher", GitHub:
-  - PyPI project name: `spacescans-pipeline`
+  - PyPI project name: `spacescans`
   - Owner: `IU-Ultraman`
   - Repository name: `spacescans`
   - Workflow name: `publish.yml`
   - Environment name: `pypi`
 
   The first successful run creates the project, owned by the account that added the publisher.
-- [ ] The same form again for the alias (section 4a): PyPI project name `spacescans`, Owner
-  `IU-Ultraman`, Repository name `spacescans`, Workflow name `publish.yml`, Environment name
-  `pypi-alias`.
 - [ ] Optional, needs admin rights on `IU-Ultraman/spacescans` (an organization owner): Settings,
-  Environments, New environment `pypi`, and the same for `pypi-alias`: required reviewers (the
-  authors), and deployment branches and tags limited to the tag pattern `v*`. Without them,
-  GitHub creates both environments unprotected on the first run; the workflow still refuses to
+  Environments, New environment `pypi`: required reviewers (the authors), and deployment
+  branches and tags limited to the tag pattern `v*`. Without it, GitHub creates the environment
+  unprotected on the first run; the workflow still refuses to
   publish unless it was started from a `v*` tag that matches every declared version.
 
 `publish.yml` needs no token: the publishing job asks for `id-token: write` and PyPI trusts the
@@ -120,39 +112,11 @@ workflow run.
      upload to PyPI, and a GitHub release `v0.3.0` with the wheel and sdist attached and
      generated notes.
 - [ ] Check the result in a fresh environment:
-  `pip install "spacescans-pipeline[geo]==0.3.0"`, `spacescans --help`,
+  `pip install "spacescans[geo]==0.3.0"`, `spacescans --help`,
   `python -c "import spacescans; print(spacescans.__version__)"` (0.3.0),
   `spacescans quickstart --output-dir /tmp/ss-qs`. The wheel is reproducible: rebuilding at the
   tag with `SOURCE_DATE_EPOCH=$(git log -1 --format=%ct v0.3.0) python -m build` gives the
   same sha256 as the wheel on PyPI.
-
-## 4a. The PyPI alias `spacescans`
-
-`packaging/spacescans-alias/` is a distribution named `spacescans` with no code: its only
-content is the dependency `spacescans-pipeline==<version>`, so `pip install spacescans` installs
-the real package (without extras) and keeps the name from being taken by someone else. Its
-version and pin move with the main package (`tests/test_pypi_alias.py` fails when they drift).
-`publish.yml` publishes it in the job `publish-alias`, after `build-and-publish` has uploaded the
-main package, through the alias's own trusted publisher (section 3, environment `pypi-alias`):
-the job builds it at the tag with `SOURCE_DATE_EPOCH` = the tag commit's time, runs
-`twine check --strict` and uploads it. No API token is involved.
-
-- [ ] Only if the alias's trusted publisher is missing (the job then fails after the main package
-  is up): build and check the alias at the release tag,
-
-  ```sh
-  SOURCE_DATE_EPOCH=$(git log -1 --format=%ct v0.3.0) python -m build packaging/spacescans-alias --outdir dist-alias
-  twine check --strict dist-alias/*
-  ```
-
-  and upload it once, from an account that will own the project `spacescans` (two-factor
-  authentication on): `twine upload dist-alias/*` with an API token (PyPI, Account settings,
-  API tokens; scope "Entire account" for the first upload, since the project does not exist
-  yet; replace it with a token scoped to `spacescans` afterwards, or add a trusted publisher for
-  the project `spacescans` if later versions should be published by a workflow). Add the
-  co-maintainers on PyPI as for `spacescans-pipeline`.
-- [ ] For later releases, bump `version` and the pin in `packaging/spacescans-alias/pyproject.toml`
-  with the three declarations of the main package; `publish-alias` uploads it after the main package.
 
 ## 5. The R package
 
@@ -164,7 +128,7 @@ spacescans::ss_install()
 ```
 
 `remotes` and `pak` record the commit (`RemoteSha`) in the installed package, and
-`ss_install()` installs `spacescans-pipeline` from that commit's source archive on GitHub. An
+`ss_install()` installs `spacescans` from that commit's source archive on GitHub. An
 install from r-universe (below) works the same way once the universe exists.
 
 ### r-universe
@@ -174,10 +138,10 @@ install from r-universe (below) works the same way once the universe exists.
   (checked on 2026-10-16 in the DESCRIPTION of an r-universe source package: no `RemoteType`,
   `RemoteUsername` or `RemoteRepo`), and the wheel and `pin.json` are not in git.
   `.ss_github_source()` now reads the owner and repository from a github.com `RemoteUrl` and
-  installs `spacescans-pipeline` from the source archive of `RemoteSha` (without a recorded
+  installs `spacescans` from the source archive of `RemoteSha` (without a recorded
   commit, from the tag `v<Config/spacescans/version>`); `r/tests/testthat/test-install.R`
   checks it on synthetic r-universe DESCRIPTION files. Still open for a CRAN version: a fallback
-  to PyPI (`spacescans-pipeline==<Config/spacescans/version>`) for installs without any git
+  to PyPI (`spacescans==<Config/spacescans/version>`) for installs without any git
   metadata.
 - [ ] Create the public repository `IU-Ultraman/IU-Ultraman.r-universe.dev` with this
   `packages.json`:
@@ -204,7 +168,7 @@ Because the wheel is reproducible, the R package can carry the very file that is
 the GitHub release. At the tag, with a clean tree:
 
 ```sh
-r/tools/build-wheel.sh --url https://github.com/IU-Ultraman/spacescans/releases/download/v0.3.0/spacescans_pipeline-0.3.0-py3-none-any.whl
+r/tools/build-wheel.sh --url https://github.com/IU-Ultraman/spacescans/releases/download/v0.3.0/spacescans-0.3.0-py3-none-any.whl
 r/tools/lock.sh          # optional: hash-pinned dependencies for macOS arm64
 R CMD build r            # spacescans_0.3.0.tar.gz with inst/python/{wheel,pin.json}
 ```
@@ -251,11 +215,14 @@ NOTE any more (MIT is a FOSS license). What still stands between the package and
 
 - [ ] The web application (`spacescans-web`) pins the package by commit in
   `backend/Dockerfile` (`SPACESCANS_REF`); move it to the release commit or to
-  `spacescans-pipeline==0.3.0` from PyPI through that repository's own cutover procedure.
+  `spacescans==0.3.0` from PyPI through that repository's own cutover procedure.
 - [ ] The manuscript's software citation (`spacescans2026python`) gets the PyPI URL.
 - [ ] Start the next changelog entry.
 
 ## 7. Dry run of 0.3.0 (2026-10-16)
+
+Recorded before the rename of 2026-10-23: the file names below are those of the distribution
+`spacescans-pipeline` (now `spacescans`), and the alias it mentions no longer exists.
 
 ### Python
 

@@ -69,7 +69,7 @@ def no_rasterio(monkeypatch):
 
 
 def test_raster_functions_need_the_geo_extra(no_rasterio):
-    with pytest.raises(MissingExtraError, match=r"spacescans-pipeline\[geo\]"):
+    with pytest.raises(MissingExtraError, match=r"pip install 'spacescans\[geo\]'"):
         custom.inspect_raster(b"not read")
     with pytest.raises(MissingExtraError):
         custom.preview_raster(b"not read")

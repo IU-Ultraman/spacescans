@@ -1,6 +1,6 @@
 # Changelog
 
-The Python package (`spacescans-pipeline`) and the R package in `r/` share version numbers and
+The Python package (`spacescans` on PyPI) and the R package in `r/` share version numbers and
 release tags. R-specific changes are listed in more detail in `r/NEWS.md`. Versions before 0.3.0
 have no changelog; see the git tags `v0.2.0` to `v0.2.7`.
 
@@ -12,6 +12,10 @@ application, the Python API, the command line and the R package run the same cod
 
 ### Changed
 
+- **The distribution is called `spacescans`**, like the module, the command and the
+  repository. Until 0.3.0 it was `spacescans-pipeline`, which was only ever installed from
+  GitHub; a `pip install "spacescans-pipeline @ git+..."` of a newer commit now fails pip's
+  name check, so write `spacescans` there.
 - **Participant-level output is the default.** `orchestrate.link()` returns one row per
   participant: `pid`, then each requested variable averaged over all of the participant's
   location episodes, weighted by the days that contribute a value. `output_level="episode"`
@@ -61,9 +65,6 @@ application, the Python API, the command line and the R package run the same cod
 - The engine block of a config sets DuckDB threads, memory limit and spill directory.
 - A source that runs out of memory reports how much memory it needed in measured runs
   (`docs/memory.md`).
-- `packaging/spacescans-alias/`: the PyPI name `spacescans`, an alias with no code that installs
-  `spacescans-pipeline` at the same version (uploaded by hand after the main package; see
-  `docs/release.md`).
 
 ### Fixed
 

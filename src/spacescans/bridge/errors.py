@@ -238,7 +238,7 @@ def classify(exc: BaseException) -> BridgeError:
     elif isinstance(exc, MissingExtraError):
         extra = getattr(exc, "extra", None)
         missing = list(getattr(exc, "missing", ()) or ())
-        hint = (f"install the '{extra}' extra: pip install 'spacescans-pipeline[{extra}]'"
+        hint = (f"install the '{extra}' extra: pip install 'spacescans[{extra}]'"
                 if extra else None)
         err = BridgeError("missing_extra", msg, hint=hint, details={"extra": extra, "missing": missing})
     elif isinstance(exc, KeyError) and any(

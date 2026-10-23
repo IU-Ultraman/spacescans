@@ -164,7 +164,7 @@ sha256, code fingerprint, commit). It refuses a dirty tree and mismatched
 versions. The wheel and pin.json are not committed; the release job runs the
 script at the release commit (with `--url` of the wheel attached to the
 GitHub release) before `R CMD build r`. Until a release bundles it,
-`ss_install()` installs `spacescans-pipeline` from the source archive of the
+`ss_install()` installs the `spacescans` Python package from the source archive of the
 GitHub commit that `remotes::install_github()` recorded (`RemoteSha`).
 
 ## The dependency lock

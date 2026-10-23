@@ -25,18 +25,17 @@ and the SPACESCANS web application.
 spacescans is not on PyPI yet. Until the first release, install it from GitHub:
 
 ```bash
-pip install "spacescans-pipeline[geo] @ git+https://github.com/IU-Ultraman/spacescans.git"
+pip install "spacescans[geo] @ git+https://github.com/IU-Ultraman/spacescans.git"
 ```
 
 Once version 0.3.0 is published on PyPI:
 
 ```bash
-pip install "spacescans-pipeline[geo]"
+pip install "spacescans[geo]"
 ```
 
-The distribution is called `spacescans-pipeline`; you import `spacescans`. (Once released,
-`pip install spacescans` installs the same package: `spacescans` on PyPI is an alias of
-`spacescans-pipeline`, without extras.) It needs Python 3.10 to 3.13 on Linux or macOS. The base install is light; the extras add what each kind of
+You install and import `spacescans`. (Before 0.3.0 the distribution was called
+`spacescans-pipeline`; it was never on PyPI.) It needs Python 3.10 to 3.13 on Linux or macOS. The base install is light; the extras add what each kind of
 source needs:
 
 | Extra | Needed for | Adds |
@@ -48,7 +47,7 @@ source needs:
 | `hdf4` | TEMIS UV Exposure | pyhdf (wheels for common platforms; otherwise it builds against the system HDF4 library) |
 | `all` | everything above | |
 
-`pip install "spacescans-pipeline[geo,rda,nc]"` covers every catalog source except TEMIS UV
+`pip install "spacescans[geo,rda,nc]"` covers every catalog source except TEMIS UV
 Exposure. An optional reader or pattern whose extra is missing raises `MissingExtraError`, which
 names the `pip install` to run.
 

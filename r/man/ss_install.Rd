@@ -26,7 +26,7 @@ ss_install(
 then the environment variable \code{SPACESCANS_ENVDIR}, then
 \code{tools::R_user_dir("spacescans", "data")/r-spacescans}.}
 
-\item{wheel}{Path to a \verb{spacescans_pipeline-*.whl} to install.}
+\item{wheel}{Path to a \verb{spacescans-*.whl} (the Python package) to install.}
 
 \item{wheelhouse}{Directory of wheels to install from (offline sites).}
 
@@ -44,7 +44,7 @@ Invisibly, the bridge's capabilities for the new environment.
 }
 \description{
 Builds (or updates) a private virtual environment with \code{uv} and installs
-the \code{spacescans-pipeline} wheel that matches this R package, then checks
+the \code{spacescans} Python wheel that matches this R package, then checks
 it with the bridge. Nothing is downloaded or installed outside \code{envdir}
 and uv's cache, and the Python on \code{PATH} is never touched.
 }
@@ -70,7 +70,7 @@ the package's \verb{python/} directory (checked against \code{pin.json}), the
 \code{wheelhouse} directory, and the URL recorded in \code{pin.json} (downloaded and
 checked against its SHA-256). When there is none, as in an R package
 installed from GitHub with \code{remotes::install_github()} or pak, or from
-r-universe, \code{spacescans-pipeline} is installed from the source archive of
+r-universe, the \code{spacescans} Python package is installed from the source archive of
 the same GitHub commit, which those tools record in the installed package's
 \code{RemoteSha} field (r-universe records the repository as \code{RemoteUrl}; without
 a recorded commit, the tag of this package's version, \verb{v<version>}, is

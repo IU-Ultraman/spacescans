@@ -183,7 +183,7 @@ def test_missing_extra_reraised_for_known_pattern_on_base_install():
             assert isinstance(e, KeyError) and isinstance(e, MissingExtraError)
             assert str(e).startswith("Unknown linkage pattern: boundary_overlap_fast")
             assert e.extra == "geo", e.extra
-            assert "spacescans-pipeline[geo]" in str(e)
+            assert "spacescans[geo]" in str(e)
             print("RAISED")
         try:
             registry.get_reader("noise")
@@ -320,7 +320,7 @@ def test_code_fingerprint_matches_wheel_algorithm(tmp_path):
         zf.writestr("spacescans/sub/m.py", "y = 2\n")
         zf.writestr("spacescans/__init__.py", "x = 1\n")
         zf.writestr("spacescans/sub/data.yaml", "ignored: true\n")
-        zf.writestr("spacescans_pipeline-0.0.0.dist-info/METADATA", "Name: x\n")
+        zf.writestr("spacescans-0.0.0.dist-info/METADATA", "Name: x\n")
     assert code_fingerprint(pkg) == fingerprint_wheel(whl)
     (pkg / "sub" / "m.py").write_text("y = 3\n")
     code_fingerprint.cache_clear()

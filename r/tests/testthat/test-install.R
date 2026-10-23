@@ -64,8 +64,8 @@ test_that("a GitHub install points ss_install() at the same commit's source arch
   url <- sprintf("https://github.com/IU-Ultraman/spacescans/archive/%s.tar.gz", sha)
   expect_equal(src$url, url)
   expect_equal(src$commit, sha)
-  expect_equal(spacescans:::.ss_requirement(src, c("geo", "nc")), paste0("spacescans-pipeline[geo,nc] @ ", url))
-  expect_equal(spacescans:::.ss_requirement(src), paste0("spacescans-pipeline @ ", url))
+  expect_equal(spacescans:::.ss_requirement(src, c("geo", "nc")), paste0("spacescans[geo,nc] @ ", url))
+  expect_equal(spacescans:::.ss_requirement(src), paste0("spacescans @ ", url))
   # older versions of remotes wrote only the Github* fields
   old <- spacescans:::.ss_github_source(list(GithubUsername = "IU-Ultraman", GithubRepo = "spacescans",
                                              GithubSHA1 = sha))
@@ -101,7 +101,7 @@ test_that("an r-universe install points ss_install() at the recorded commit", {
   expect_equal(src$url, url)
   expect_equal(src$commit, sha)
   expect_equal(src$repo, "IU-Ultraman/spacescans")
-  expect_equal(spacescans:::.ss_requirement(src, "geo"), paste0("spacescans-pipeline[geo] @ ", url))
+  expect_equal(spacescans:::.ss_requirement(src, "geo"), paste0("spacescans[geo] @ ", url))
   local_mocked_bindings(.ss_pin = function() list())               # r-universe ships no wheel or pin
   expect_identical(spacescans:::.ss_find_wheel(github = src), src)
   # the same with a ".git" URL, a trailing slash, or remotes::install_git()'s RemoteType
@@ -156,7 +156,7 @@ test_that("without a wheel, ss_install() uses the GitHub source unless offline",
   expect_error(spacescans:::.ss_find_wheel(offline = TRUE, github = gh), class = "spacescans_error_install")
   expect_error(spacescans:::.ss_find_wheel(github = NULL), "install_github", class = "spacescans_error_install")
   d <- withr::local_tempdir()
-  whl <- file.path(d, "spacescans_pipeline-0.0.0-py3-none-any.whl")
+  whl <- file.path(d, "spacescans-0.0.0-py3-none-any.whl")
   file.create(whl)
   expect_equal(spacescans:::.ss_find_wheel(wheel = whl, github = gh)$kind, "wheel")   # a wheel always wins
 })

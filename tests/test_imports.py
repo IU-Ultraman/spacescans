@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-DIST = "spacescans-pipeline"
+DIST = "spacescans"
 
 
 def test_can_import_top_level():

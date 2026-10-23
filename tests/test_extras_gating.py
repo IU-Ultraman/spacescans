@@ -12,7 +12,7 @@ def test_require_raises_for_missing_module():
     with pytest.raises(MissingExtraError) as exc_info:
         require("nope_extra", "this_module_does_not_exist")
     msg = str(exc_info.value)
-    assert "pip install 'spacescans-pipeline[nope_extra]'" in msg
+    assert "pip install 'spacescans[nope_extra]'" in msg
     assert "this_module_does_not_exist" in msg
 
 

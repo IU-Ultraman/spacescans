@@ -67,7 +67,7 @@ fi
 
 out="$r_dir/inst/python"
 mkdir -p "$out"
-rm -f "$out"/spacescans_pipeline-*.whl "$out/pin.json"
+rm -f "$out"/spacescans-*.whl "$out/pin.json"
 src="$(mktemp -d)"
 trap 'rm -rf "$src"' EXIT
 if [ "$dirty" = "0" ]; then
@@ -81,8 +81,8 @@ fi
 # Build into a scratch directory: uv also writes a .gitignore into --out-dir.
 # SOURCE_DATE_EPOCH = commit time makes the wheel byte-identical for a commit.
 SOURCE_DATE_EPOCH="$("$GIT" log -1 --format=%ct HEAD)" "$UV" build --wheel --out-dir "$src/dist" "$src" >&2
-cp "$src"/dist/spacescans_pipeline-"$py_version"-*.whl "$out/"
-wheel="$(ls "$out"/spacescans_pipeline-"$py_version"-*.whl)"
+cp "$src"/dist/spacescans-"$py_version"-*.whl "$out/"
+wheel="$(ls "$out"/spacescans-"$py_version"-*.whl)"
 sha="$(shasum -a 256 "$wheel" | cut -d ' ' -f 1)"
 # Same algorithm as spacescans._capabilities.code_fingerprint (stdlib only).
 code_fp="$("$UV" run --no-project --python 3.12 python -I -c '

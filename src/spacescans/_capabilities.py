@@ -43,7 +43,7 @@ FLAGS: dict[str, bool] = {
 }
 
 _DISTRIBUTIONS = (
-    "spacescans-pipeline", "pydantic", "pyyaml", "pandas", "numpy", "duckdb", "pyarrow",
+    "spacescans", "pydantic", "pyyaml", "pandas", "numpy", "duckdb", "pyarrow",
     "mercantile", "geopandas", "rasterio", "shapely", "exactextract", "pyogrio", "pyproj",
     "pyreadr", "pyhdf", "xarray", "netCDF4",
 )

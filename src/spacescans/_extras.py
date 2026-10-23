@@ -57,7 +57,7 @@ def require(extra: str, *modules: str) -> None:
     missing = [m for m in modules if importlib.util.find_spec(m) is None]
     if missing:
         raise MissingExtraError(
-            f"This feature needs `pip install 'spacescans-pipeline[{extra}]'`.\n"
+            f"This feature needs `pip install 'spacescans[{extra}]'`.\n"
             f"  Missing module(s): {', '.join(missing)}\n"
             f"  See: {INSTALL_DOCS_URL}",
             extra=extra,

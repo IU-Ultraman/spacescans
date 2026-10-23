@@ -171,7 +171,7 @@ def _raise_unknown(kind: str, message: str, name: str) -> None:
         if k == kind and provided == name and mod in _UNAVAILABLE:
             err = _UNAVAILABLE[mod]
             info = _failure_info(err)
-            how = (f"install it with `pip install 'spacescans-pipeline[{info['extra']}]'`"
+            how = (f"install it with `pip install 'spacescans[{info['extra']}]'`"
                    if info["extra"] else "see " + INSTALL_DOCS_URL)
             raise UnavailablePatternError(
                 f"{message}. '{name}' is provided by {mod}, which could not be imported "

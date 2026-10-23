@@ -3,7 +3,7 @@ requires = ["setuptools>=77", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "spacescans-pipeline"
+name = "spacescans"
 version = "0.3.0"
 description = "Link time-referenced geolocation data (location episodes) to the spatial and contextual exposome: spatial weights (C3) and day-weighted linkage (C4), per participant or per episode"
 readme = "README.md"

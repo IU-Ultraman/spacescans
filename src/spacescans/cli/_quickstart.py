@@ -59,7 +59,7 @@ def cmd_quickstart(args) -> int:
                 print(f"  Platform: {platform.system()} {platform.release()} {platform.machine()}", file=sys.stderr)
                 try:
                     from spacescans import __version__
-                    print(f"  spacescans-pipeline: {__version__}", file=sys.stderr)
+                    print(f"  spacescans: {__version__}", file=sys.stderr)
                 except Exception:
                     pass
                 extras_detected = []

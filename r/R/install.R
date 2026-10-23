@@ -1,7 +1,7 @@
 #' Install the Python side of spacescans
 #'
 #' Builds (or updates) a private virtual environment with `uv` and installs
-#' the `spacescans-pipeline` wheel that matches this R package, then checks
+#' the `spacescans` Python wheel that matches this R package, then checks
 #' it with the bridge. Nothing is downloaded or installed outside `envdir`
 #' and uv's cache, and the Python on `PATH` is never touched.
 #'
@@ -24,7 +24,7 @@
 #' `wheelhouse` directory, and the URL recorded in `pin.json` (downloaded and
 #' checked against its SHA-256). When there is none, as in an R package
 #' installed from GitHub with `remotes::install_github()` or pak, or from
-#' r-universe, `spacescans-pipeline` is installed from the source archive of
+#' r-universe, the `spacescans` Python package is installed from the source archive of
 #' the same GitHub commit, which those tools record in the installed package's
 #' `RemoteSha` field (r-universe records the repository as `RemoteUrl`; without
 #' a recorded commit, the tag of this package's version, `v<version>`, is
@@ -36,7 +36,7 @@
 #' @param envdir Environment directory. Default: option `spacescans.envdir`,
 #'   then the environment variable `SPACESCANS_ENVDIR`, then
 #'   `tools::R_user_dir("spacescans", "data")/r-spacescans`.
-#' @param wheel Path to a `spacescans_pipeline-*.whl` to install.
+#' @param wheel Path to a `spacescans-*.whl` (the Python package) to install.
 #' @param wheelhouse Directory of wheels to install from (offline sites).
 #' @param offline If `TRUE`, never use the network (needs `wheelhouse` or
 #'   uv's cache).
@@ -91,7 +91,7 @@ ss_install <- function(extras = c("geo", "rda", "nc"), python = "3.12", envdir =
            if (!is.null(wheelhouse)) c("--find-links", normalizePath(wheelhouse)))
   # A GitHub source archive is the one distribution uv may build (pure Python).
   common <- c("pip", "install", "--python", py, "--only-binary", ":all:", "--compile-bytecode", net,
-              if (identical(src$kind, "github")) c("--no-binary", "spacescans-pipeline"))
+              if (identical(src$kind, "github")) c("--no-binary", "spacescans"))
   lock <- .ss_lock_file()
   if (!is.null(lock)) {
     reqs <- .ss_lock_requirements(lock, extras, file.path(tempdir(), "spacescans-requirements.txt"))
@@ -182,7 +182,7 @@ ss_install <- function(extras = c("geo", "rda", "nc"), python = "3.12", envdir =
   dest
 }
 
-# Where ss_install() gets spacescans-pipeline: a wheel (`kind = "wheel"`,
+# Where ss_install() gets the Python package: a wheel (`kind = "wheel"`,
 # `path`) or, failing that, the GitHub source archive of the commit this R
 # package was installed from (`kind = "github"`, see .ss_github_source()).
 .ss_find_wheel <- function(wheel = NULL, wheelhouse = NULL, offline = FALSE,
@@ -204,7 +204,7 @@ ss_install <- function(extras = c("geo", "rda", "nc"), python = "3.12", envdir =
     }
   }
   if (!is.null(wheelhouse)) {
-    found <- list.files(wheelhouse, pattern = sprintf("^spacescans_pipeline-%s-.*\\.whl$", gsub(".", "\\.", want, fixed = TRUE)),
+    found <- list.files(wheelhouse, pattern = sprintf("^spacescans-%s-.*\\.whl$", gsub(".", "\\.", want, fixed = TRUE)),
                         full.names = TRUE)
     if (length(found)) return(.ss_wheel_source(normalizePath(found[1])))
   }
@@ -223,7 +223,7 @@ ss_install <- function(extras = c("geo", "rda", "nc"), python = "3.12", envdir =
     hint = paste0("Install the R package with remotes::install_github(\"IU-Ultraman/spacescans\", ",
                   "subdir = \"r\") or from r-universe so ss_install() can fetch the matching ",
                   "Python package, or pass ",
-                  "ss_install(wheel = \"spacescans_pipeline-", want, "-py3-none-any.whl\") ",
+                  "ss_install(wheel = \"spacescans-", want, "-py3-none-any.whl\") ",
                   "built with r/tools/build-wheel.sh."))
 }
 
@@ -289,5 +289,5 @@ ss_install <- function(extras = c("geo", "rda", "nc"), python = "3.12", envdir =
 # What uv installs for a source, with the requested extras.
 .ss_requirement <- function(src, extras = character()) {
   ext <- if (length(extras)) sprintf("[%s]", paste(extras, collapse = ",")) else ""
-  if (identical(src$kind, "github")) sprintf("spacescans-pipeline%s @ %s", ext, src$url) else paste0(src$path, ext)
+  if (identical(src$kind, "github")) sprintf("spacescans%s @ %s", ext, src$url) else paste0(src$path, ext)
 }
