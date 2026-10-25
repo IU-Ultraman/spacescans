@@ -289,6 +289,29 @@ test_that("live: ss_link() links a small cohort and leaves the data directory un
   expect_true("cache_hit" %in% attr(res2, "spacescans")$steps$status)
 })
 
+test_that("live: workers = 2 gives the result of one process (walkability, three cities)", {
+  skip_if_not_live()
+  skip_if_not_live_link()
+  skip_if_no_command("link")
+  if (!isTRUE(live_caps()$flags$workers)) skip("the installed spacescans has no workers option")
+  local_clean_state()
+  d <- live_data_dir()
+  local_untouched(d)
+  withr::local_envvar(R_USER_CACHE_DIR = withr::local_tempdir())
+  # Indianapolis, Chicago and Columbus: several 30 km tiles, so the two workers share them
+  centres <- data.frame(lon = c(-86.16, -87.63, -82.99), lat = c(39.77, 41.88, 39.96))
+  co <- do.call(rbind, lapply(seq_len(nrow(centres)), function(i) data.frame(
+    pid = sprintf("W%d%02d", i, 1:8), startDate = as.Date("2016-01-01"),
+    endDate = as.Date("2016-12-31"), longitude = centres$lon[i] + (1:8) / 200,
+    latitude = centres$lat[i] + (1:8) / 300)))
+  one <- ss_link(co, "walkability", data_dir = d, progress = FALSE, cache = FALSE)
+  two <- ss_link(co, "walkability", data_dir = d, progress = FALSE, cache = FALSE, workers = 2)
+  # Step 1 is identical; Step 2 runs in DuckDB, whose threads may add floats in another order
+  expect_equal(two$NatWalkInd, one$NatWalkInd, tolerance = 1e-12)
+  expect_equal(attr(two, "provenance")$run$workers, 2L)
+  expect_null(attr(one, "provenance")$run$workers)
+})
+
 test_that("live: a real link describes a custom dataset's column by its definition (decision 3)", {
   skip_if_not_live()
   if (!identical(Sys.getenv("SPACESCANS_LIVE_LINK"), "1")) skip("set SPACESCANS_LIVE_LINK=1 to run a real link")
