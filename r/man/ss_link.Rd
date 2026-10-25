@@ -20,7 +20,8 @@ ss_link(
   progress = interactive(),
   keep = FALSE,
   run_dir = NULL,
-  wait = TRUE
+  wait = TRUE,
+  workers = NULL
 )
 }
 \arguments{
@@ -75,6 +76,11 @@ empty). Default: a fresh directory under
 \item{wait}{\code{TRUE} (default) waits for the result; \code{FALSE} returns a job
 at once (see \code{\link[=ss_job_status]{ss_job_status()}}). Only a job with an explicit \code{run_dir}
 survives the R session.}
+
+\item{workers}{Worker processes per pipeline step for the work DuckDB does
+not do: the polygon-overlap weights (block groups, tracts, ZCTAs) and the
+ACAG NetCDF files. Default \code{NULL}, one process. The result is the same with
+any number; each worker adds memory.}
 }
 \value{
 Participant level: a data frame with \code{pid} and one column per
@@ -85,7 +91,7 @@ dictionary of the exposure columns), \code{coverage} (the linkage rates: per
 variable, the rows of the result, the rows with a value and their
 percentage; participants or episodes, by level), \code{provenance}
 (versions, code fingerprint, data receipts, cache keys, threads,
-platform; no cohort values) and \code{spacescans} (steps, failed and skipped
+workers, platform; no cohort values) and \code{spacescans} (steps, failed and skipped
 sources, warnings). With \code{wait = FALSE}, a job.
 }
 \description{

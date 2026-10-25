@@ -94,6 +94,10 @@
 #'   `FALSE` disables it; a path uses that directory as the cache root.
 #' @param threads,memory_limit DuckDB worker threads and memory cap (for
 #'   example `"8GB"`) for the pipeline steps.
+#' @param workers Worker processes per pipeline step for the work DuckDB does
+#'   not do: the polygon-overlap weights (block groups, tracts, ZCTAs) and the
+#'   ACAG NetCDF files. Default `NULL`, one process. The result is the same with
+#'   any number; each worker adds memory.
 #' @param on_error `"stop"` stops at the first failing data source;
 #'   `"continue"` runs the others and returns what succeeded (with a
 #'   warning naming the failures).
@@ -113,7 +117,7 @@
 #'   variable, the rows of the result, the rows with a value and their
 #'   percentage; participants or episodes, by level), `provenance`
 #'   (versions, code fingerprint, data receipts, cache keys, threads,
-#'   platform; no cohort values) and `spacescans` (steps, failed and skipped
+#'   workers, platform; no cohort values) and `spacescans` (steps, failed and skipped
 #'   sources, warnings). With `wait = FALSE`, a job.
 #' @seealso [ss_coverage()] estimates, per location episode, how much of the
 #'   cohort a variable covers before you link.
@@ -130,13 +134,15 @@ ss_link <- function(cohort, variables, output_level = c("participant", "episode"
                     data_dir = ss_data_dir(), buffer_m = 270L,
                     raster_res_m = 25L, custom = NULL, cols = NULL, cache = TRUE,
                     threads = NULL, memory_limit = NULL, on_error = c("stop", "continue"),
-                    progress = interactive(), keep = FALSE, run_dir = NULL, wait = TRUE) {
+                    progress = interactive(), keep = FALSE, run_dir = NULL, wait = TRUE,
+                    workers = NULL) {
   output_level <- .ss_choice(output_level, .ss_output_levels, "output_level")
   on_error <- .ss_choice(on_error, c("stop", "continue"), "on_error")
   buffer_m <- .ss_whole(buffer_m, "buffer_m", min = 1)   # the bridge and link need >= 1
   raster_res_m <- .ss_whole(raster_res_m, "raster_res_m", min = 1)
   threads <- .ss_threads_arg(threads)
   memory_limit <- .ss_memory_arg(memory_limit)
+  workers <- .ss_workers_arg(workers)
   items <- .ss_custom_items(custom)
   wanted <- .ss_link_variables(variables, list(), custom = length(items) > 0L)
   user <- .ss_cohort_input(cohort, cols)
@@ -164,7 +170,7 @@ ss_link <- function(cohort, variables, output_level = c("participant", "episode"
     output_level = output_level,
     data_dir = data_dir, run_dir = rd, buffer_m = buffer_m, raster_res_m = raster_res_m,
     cache_dir = cache_dir, executor = "subprocess", threads = threads,
-    memory_limit = memory_limit, on_error = on_error,
+    memory_limit = memory_limit, workers = workers, on_error = on_error,
     # Episode level adds columns to the user's data frame, so its names are taken;
     # a participant table holds only pid and the variables.
     reserved_names = I(if (identical(output_level, "episode")) names(user) else character())

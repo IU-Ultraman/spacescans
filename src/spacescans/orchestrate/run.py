@@ -128,7 +128,7 @@ class StepFailed(Exception):
                     "raise the timeout or link a smaller cohort")
         if self.oom:
             hint = ("the step was killed, most often by the out-of-memory killer; lower "
-                    "threads or memory_limit, or use a machine with more memory")
+                    "threads, workers or memory_limit, or use a machine with more memory")
             note = self.memory_note
             return f"{hint}; {note}" if note else hint
         return f"see the log tail and {self.step}'s lines in logs.jsonl"

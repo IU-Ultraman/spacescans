@@ -586,8 +586,9 @@ def legacy_cache_key(step: Step, input_sha256: str, *, buffer_m: Any, raster_res
 # render (the contract in the module docstring, as code)
 # ---------------------------------------------------------------------------
 
-#: ``engine`` keys a renderer may set (EngineConfig's DuckDB resource caps).
-ENGINE_KEYS: tuple[str, ...] = ("threads", "memory_limit", "temp_directory")
+#: ``engine`` keys a renderer may set (EngineConfig's DuckDB resource caps and the
+#: number of worker processes).
+ENGINE_KEYS: tuple[str, ...] = ("threads", "memory_limit", "temp_directory", "workers")
 
 #: The output levels a link can return: one row per participant (the default)
 #: or one row per location episode (an input row).
@@ -628,8 +629,8 @@ def render_config(step: Step, template: Mapping[str, Any], *, run_dir: Any, coho
     Pure: ``template`` is not modified and nothing is read or written.
     ``yaml.safe_dump(result, sort_keys=False)`` is the web 0.2.7 YAML byte for
     byte when ``engine`` is None and ``output_level`` is ``"episode"``.
-    ``engine`` (R only) sets ``engine.threads`` / ``memory_limit`` /
-    ``temp_directory`` for every value that is not None. ``output_level``
+    ``engine`` sets ``engine.threads`` / ``memory_limit`` / ``temp_directory`` /
+    ``workers`` for every value that is not None. ``output_level``
     (``"participant"``, the default, or ``"episode"``) sets the C4 row
     (rule 8). Raises ``ValueError`` for an unknown ``output_level`` and when
     the template lacks a mapping a ``bind`` path needs (the web raised for a

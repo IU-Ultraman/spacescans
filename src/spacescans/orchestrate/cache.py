@@ -85,7 +85,7 @@ _STEP_CODE_MODULES = ("__main__.py", "_extras.py", "config_resolution.py")
 # tile-cache folder is a location, not an input: what is in it counts (source_fp).
 _RUN_FIELDS = (("name",), ("buffer", "patient_file"), ("output", "path"),
                ("engine", "threads"), ("engine", "memory_limit"), ("engine", "temp_directory"),
-               ("source", "road_cache_dir"))
+               ("engine", "workers"), ("source", "road_cache_dir"))
 # ``time.output_grouping`` is a C4 setting (one row per patient or per episode): only the
 # C4 linkages and the FAQSD reader read it (``linkage.helpers.resolve_output_grouping``),
 # never a C3 pattern, so a C3 key leaves it out. These C3 patterns read nothing of the
@@ -304,7 +304,8 @@ def normalised_config(cfg: Mapping[str, Any]) -> dict[str, Any]:
 
     Drops ``name`` (task suffix), ``buffer.patient_file``, ``output.path``,
     the engine resource caps (``threads``, ``memory_limit``,
-    ``temp_directory``), the tile-cache folder ``source.road_cache_dir``
+    ``temp_directory``) and ``workers`` (the output is the same with any
+    number), the tile-cache folder ``source.road_cache_dir``
     (the tiles a data-root cache holds are fingerprinted in
     :func:`source_fingerprint`) and the C4-only ``time.output_grouping``.
     For a C3 pattern that reads nothing of the ``time`` block

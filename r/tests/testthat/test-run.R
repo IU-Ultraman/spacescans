@@ -3,7 +3,7 @@ test_that("ss_run() runs a C4 config and reads the episode-level output", {
   local_clean_state()
   d <- withr::local_tempdir()
   cfg <- c4_fixture(d)
-  df <- ss_run(cfg, data_dir = d, threads = 1, progress = FALSE)
+  df <- ss_run(cfg, data_dir = d, threads = 1, workers = 2, progress = FALSE)
   expect_s3_class(df, "data.frame")
   expect_equal(names(df), c("PATID", "episode_id", "v"))
   expect_type(df$episode_id, "integer")
@@ -13,6 +13,7 @@ test_that("ss_run() runs a C4 config and reads the episode-level output", {
   run <- attr(df, "spacescans_run")
   expect_s3_class(run, "ss_run_result")
   expect_equal(run$engine$threads, "1")
+  expect_equal(run$config$engine$workers, 2L)
   expect_equal(run$rows, 3L)
   expect_gt(run$maxrss_bytes, 1e7)
   expect_output(print(run), "c4_fixture")
@@ -46,9 +47,11 @@ test_that("a missing input is a data error and the run directory is kept", {
   unlink(e$run_dir, recursive = TRUE)
 })
 
-test_that("bad threads are rejected before Python starts", {
+test_that("bad threads and workers are rejected before Python starts", {
   expect_error(ss_run(list(name = "x"), threads = 0), class = "spacescans_error_config")
   expect_error(ss_run(list(name = "x"), threads = 1.5), class = "spacescans_error_config")
+  expect_error(ss_run(list(name = "x"), workers = 0), class = "spacescans_error_config")
+  expect_error(ss_run(list(name = "x"), workers = TRUE), class = "spacescans_error_config")
   expect_error(ss_run(list(name = "x"), memory_limit = 4), class = "spacescans_error_config")
 })
 

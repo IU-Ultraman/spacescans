@@ -134,6 +134,10 @@ class EngineConfig(BaseModel):
     threads: int | None = Field(default=None, ge=1)
     memory_limit: str | None = None      # DuckDB syntax, e.g. "4GB"
     temp_directory: str | None = None    # where DuckDB spills; default is ./.tmp
+    # Worker processes for the Python-side work DuckDB does not run: the tiles of
+    # boundary_overlap_fast and ACAG's NetCDF files. None (the default) or 1 keeps it in
+    # the step process; the output is the same whatever the number.
+    workers: int | None = Field(default=None, ge=1)
 
 
 class OutputConfig(BaseModel):

@@ -59,6 +59,7 @@ def run_acag_multi(config: DatasetConfig, engine: AggregationEngine) -> Path:
             pass
         tc = _TempConfig()
         tc.source = config.source
+        tc.engine = config.engine            # engine.workers: processes decoding the files
         tc.exposure = type(config.exposure).model_construct(
             file=str(poll_dir),
             join_col="grid_id",

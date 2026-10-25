@@ -73,8 +73,8 @@ def _output_summary(out: Path) -> dict[str, Any]:
 def _execute(raw: dict, args: dict, ctx: Context, source: dict) -> Outcome:
     """Shared body of ``run`` and ``quickstart``: validate, then run one config in-process."""
     raw = coerce_scalars(raw)
-    for key in ("threads", "memory_limit", "temp_directory"):
-        if key == "threads":
+    for key in ("threads", "memory_limit", "temp_directory", "workers"):
+        if key in ("threads", "workers"):
             val = _int_arg(args, key, minimum=1)
         elif key == "temp_directory":
             val = absolute_path_arg(args, key)
@@ -199,7 +199,8 @@ def cmd_quickstart(args: dict, ctx: Context) -> Outcome:
             "SPACESCANS_QUICKSTART_DATA_DIR": str(sample),
             "SPACESCANS_OUTPUT_DIR": output_dir,
         })
-        run_args = {k: v for k, v in args.items() if k in ("threads", "memory_limit", "temp_directory")}
+        run_args = {k: v for k, v in args.items()
+                    if k in ("threads", "memory_limit", "temp_directory", "workers")}
         value, warns = _execute(raw, {**run_args, "output_dir": output_dir}, ctx,
                                 {"source": "quickstart", "path": "quickstart/end_to_end.yaml"})
     value["demo"] = True

@@ -151,10 +151,10 @@ def test_engine_none_keeps_the_yaml_and_engine_options_are_written(run):
     same = dataclasses.replace(run.ctx, engine={"threads": None})
     assert render_text(NOISE_C3, same) == plain
     capped = dataclasses.replace(run.ctx, engine={"threads": 2, "memory_limit": "4GB",
-                                                  "temp_directory": "/tmp/x"})
+                                                  "temp_directory": "/tmp/x", "workers": 3})
     cfg = render(NOISE_C3, capped)
     assert cfg["engine"] == {"backend": "duckdb", "threads": 2, "memory_limit": "4GB",
-                             "temp_directory": "/tmp/x"}
+                             "temp_directory": "/tmp/x", "workers": 3}
     from spacescans.models.config import EngineConfig
     EngineConfig(**cfg["engine"])       # the pipeline accepts it
 
@@ -705,6 +705,16 @@ def v2_same_key(step, ctx_a, ctx_b) -> bool:
     """A C3 step keys the same at both output levels (the level is a C4 setting)."""
     v2 = WeightCache(Path(ctx_a.run_dir).parent / "cache-levels", key_format="v2")
     return v2.key(step, ctx_a) == v2.key(step, ctx_b)
+
+
+def test_workers_change_neither_the_c3_key_nor_the_normalised_config(run):
+    """engine.workers decides how many processes compute a step, not what it computes: the
+    rendered config carries it, the v2 key and the normalised config do not."""
+    with_workers = dataclasses.replace(run.ctx, engine={"workers": 4})
+    assert render(BG_C3, with_workers)["engine"]["workers"] == 4
+    assert v2_same_key(BG_C3, run.ctx, with_workers)
+    assert (orch_cache.normalised_config(render(BG_C3, with_workers))
+            == orch_cache.normalised_config(render(BG_C3, run.ctx)))
 
 
 def test_an_empty_time_block_is_kept_for_patterns_that_read_it(run):

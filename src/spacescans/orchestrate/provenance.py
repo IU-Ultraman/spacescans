@@ -109,7 +109,8 @@ def build(*, ctx: Any, groups: Mapping[str, Sequence[str]], overlay: Mapping[str
           memory_limit: str | None, on_error: str, data_summary: Mapping[str, Any],
           cohort_info: Any, started: datetime, ended: datetime, seconds: float,
           failed: Sequence[str], skipped: Sequence[str], columns: Sequence[str],
-          output_level: str = "episode", rows_without_pid: int = 0) -> dict[str, Any]:
+          output_level: str = "episode", rows_without_pid: int = 0,
+          workers: int | None = None) -> dict[str, Any]:
     """The provenance of one link (see the module docstring).
 
     ``run.output_level`` records what one result row is: ``"participant"`` or
@@ -137,7 +138,8 @@ def build(*, ctx: Any, groups: Mapping[str, Sequence[str]], overlay: Mapping[str
                 "experiments": {exp: list(ks) for exp, ks in groups.items()},
                 "output_level": output_level,
                 "buffer_m": ctx.buffer_m, "raster_res_m": ctx.raster_res_m,
-                "threads": threads, "memory_limit": memory_limit, "executor": executor,
+                "threads": threads, "memory_limit": memory_limit, "workers": workers,
+                "executor": executor,
                 "on_error": on_error, "run_dir": str(ctx.run_dir),
                 "started_utc": started.isoformat(), "ended_utc": ended.isoformat(),
                 "seconds": round(float(seconds), 3),

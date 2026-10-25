@@ -57,14 +57,18 @@ def test_prepare_fills_data_dir_and_engine_overrides(tmp_path):
     plain = InProcessExecutor().prepare(cfg, tmp_path / "data")
     assert plain["source"]["file"] == f"{tmp_path / 'data'}/BG/a.shp"
     assert plain["engine"] == {"backend": "duckdb"}         # None leaves the YAML as rendered
-    raw = InProcessExecutor(threads=2, memory_limit="1GB", temp_directory=tmp_path / "spill"
-                            ).prepare(cfg, tmp_path / "data")
+    raw = InProcessExecutor(threads=2, memory_limit="1GB", temp_directory=tmp_path / "spill",
+                            workers=3).prepare(cfg, tmp_path / "data")
     assert raw["engine"] == {"backend": "duckdb", "threads": 2, "memory_limit": "1GB",
-                             "temp_directory": str(tmp_path / "spill")}
+                             "temp_directory": str(tmp_path / "spill"), "workers": 3}
     assert isinstance(InProcessExecutor(), Executor)
     assert isinstance(make_executor("inprocess", threads=1), InProcessExecutor)
+    assert make_executor("inprocess", workers=2).workers == 2
     with pytest.raises(ValueError):
         InProcessExecutor(threads=0)
+    for bad in (0, 1.5, True):
+        with pytest.raises(ValueError, match="workers"):
+            InProcessExecutor(workers=bad)
 
 
 class _FakePipe:

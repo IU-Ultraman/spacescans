@@ -551,7 +551,8 @@ def test_data_missing_is_raised_before_any_step(tmp_path):
 
 def test_bad_arguments_are_config_errors(tmp_path, no_data_check):
     for kw in ({"buffer_m": 270.5}, {"raster_res_m": 0}, {"on_error": "ignore"},
-               {"buffer_m": True}, {"threads": 0}, {"memory_limit": 8}):
+               {"buffer_m": True}, {"threads": 0}, {"memory_limit": 8}, {"workers": 0},
+               {"workers": 1.5}, {"workers": True}):
         with pytest.raises(LinkConfigError):
             _link(tmp_path, ["noise"], **kw)
     with pytest.raises(LinkConfigError):
@@ -566,17 +567,18 @@ def test_bad_arguments_are_config_errors(tmp_path, no_data_check):
 
 def test_run_dir_is_private_and_provenance_has_no_cohort_values(tmp_path, no_data_check):
     res = link(COHORT, ["noise"], data_dir=tmp_path / "data", run_dir=None,
-               executor=FakeExecutor(), threads=2, memory_limit="1GB")
+               executor=FakeExecutor(), threads=2, memory_limit="1GB", workers=3)
     try:
         assert stat.S_IMODE(res.run_dir.stat().st_mode) == 0o700
         text = json.dumps(res.provenance, default=str)
         for value in list(COHORT["pid"]) + ["86.15", "39.77", "2014-01-01"]:
             assert value not in text
         assert res.provenance["cohort"]["episodes"] == len(COHORT)
-        assert res.provenance["run"]["threads"] == 2
+        assert res.provenance["run"]["threads"] == 2 and res.provenance["run"]["workers"] == 3
         assert res.provenance["spacescans"]["code_fp"].startswith("sha256:")
         cfg = yaml.safe_load((res.run_dir / "pipeline_configs" / "c3_noise.yaml").read_text())
         assert cfg["engine"]["threads"] == 2 and cfg["engine"]["memory_limit"] == "1GB"
+        assert cfg["engine"]["workers"] == 3
         for w in res.warnings:
             assert not any(v in json.dumps(w) for v in COHORT["pid"])
     finally:

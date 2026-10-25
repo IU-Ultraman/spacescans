@@ -1,3 +1,13 @@
+# spacescans (development version)
+
+## New features
+
+* `ss_link(workers =)` and `ss_run(workers =)`: worker processes per
+  pipeline step for the polygon-overlap weights (block groups, tracts,
+  ZCTAs) and ACAG's NetCDF files. The default `NULL` is one process, as in
+  0.3.0. The result does not depend on the number of workers; each worker
+  adds memory.
+
 # spacescans 0.3.0
 
 ## Breaking change

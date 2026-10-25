@@ -321,7 +321,7 @@
     sig <- -status
     msg <- sprintf("The spacescans Python process was killed by %s.", .ss_signal_name(sig))
     hint <- if (sig == 9) {
-      "SIGKILL usually means the system ran out of memory; try a smaller cohort or fewer threads."
+      "SIGKILL usually means the system ran out of memory; try a smaller cohort, fewer threads or fewer workers."
     }
   } else {
     msg <- sprintf("The spacescans Python process exited with status %s without writing a result.",

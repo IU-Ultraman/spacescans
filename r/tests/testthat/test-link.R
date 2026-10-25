@@ -198,6 +198,8 @@ test_that("arguments are checked before Python starts", {
   expect_error(ss_link(fake_cohort(), "ndi", buffer_m = 0), "`buffer_m` must be .* at least 1", class = "spacescans_error_config")
   expect_error(ss_link(fake_cohort(), character()), class = "spacescans_error_config")
   expect_error(ss_link(fake_cohort(), "ndi", threads = 0), class = "spacescans_error_config")
+  expect_error(ss_link(fake_cohort(), "ndi", workers = 0), "`workers` must be .* at least 1",
+               class = "spacescans_error_config")
   expect_error(ss_link(fake_cohort(), "ndi", output_level = "patient"), '"participant", "episode"',
                class = "spacescans_error_config")
   bad <- fake_cohort()

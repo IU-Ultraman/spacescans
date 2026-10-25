@@ -176,7 +176,7 @@ NULL
         if (isTRUE(details$timed_out)) {
           "It ran longer than the time limit and was stopped."
         } else if (oom) {
-          paste0("Code -9/137 usually means the system ran out of memory: try fewer threads, a memory_limit, or a smaller cohort.",
+          paste0("Code -9/137 usually means the system ran out of memory: try fewer threads or workers, a memory_limit, or a smaller cohort.",
                  .ss_memory_note(details$memory_note))
         } else {
           "The run directory holds the step's config and log."

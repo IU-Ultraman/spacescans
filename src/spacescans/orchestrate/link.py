@@ -628,6 +628,7 @@ def link(cohort: pd.DataFrame | str | os.PathLike, variables: Sequence[str], *,
          cache: WeightCache | str | os.PathLike | None = None,
          executor: Executor | Literal["subprocess", "inprocess"] = "subprocess",
          threads: int | None = None, memory_limit: str | None = None,
+         workers: int | None = None,
          on_error: Literal["stop", "continue"] = "stop",
          reserved_names: Sequence[str] = (),
          on_event: Callable[[Event], Any] | None = None,
@@ -656,7 +657,11 @@ def link(cohort: pd.DataFrame | str | os.PathLike, variables: Sequence[str], *,
     (no cross-run cache), a :class:`~spacescans.orchestrate.cache.WeightCache`
     (either key format), or a directory (a ``v2`` cache). ``threads`` and
     ``memory_limit`` cap DuckDB in every step (subprocess: through the
-    rendered configs; in-process: through the executor too).
+    rendered configs; in-process: through the executor too). ``workers``
+    (default None, one process) spreads the Python-side work of a step over
+    that many worker processes where a step supports it (the tiles of the
+    polygon-overlap weights, ACAG's NetCDF files); the result is the same
+    with any number, and so are the cache keys.
 
     Raises ``LinkConfigError``, ``cohort.CohortError``,
     ``custom.CustomExposomeError``, ``data.DataError`` subclasses
@@ -684,6 +689,8 @@ def link(cohort: pd.DataFrame | str | os.PathLike, variables: Sequence[str], *,
         raise LinkConfigError(f"on_error must be 'stop' or 'continue', got {on_error!r}")
     if threads is not None:
         _positive_int("threads", threads)
+    if workers is not None:
+        _positive_int("workers", workers)
     if memory_limit is not None and (not isinstance(memory_limit, str) or not memory_limit.strip()):
         raise LinkConfigError(f"memory_limit must be a DuckDB size such as '8GB', "
                               f"got {memory_limit!r}")
@@ -707,7 +714,7 @@ def link(cohort: pd.DataFrame | str | os.PathLike, variables: Sequence[str], *,
     root = _data.resolve_data_dir(data_dir)
     data_summary, data_warnings = _check_data(groups, overlay, root)
     warnings.extend(data_warnings)
-    exe = make_executor(executor, threads=threads, memory_limit=memory_limit)
+    exe = make_executor(executor, threads=threads, memory_limit=memory_limit, workers=workers)
     weight_cache = _weight_cache(cache)
 
     rdir, rdir_warning = _run_dir(run_dir)
@@ -726,8 +733,8 @@ def link(cohort: pd.DataFrame | str | os.PathLike, variables: Sequence[str], *,
                                     "by the input row number"})
     emit(Event("cohort", "link", data={"rows": info.rows, "patients": info.patients}))
 
-    engine = {k: v for k, v in (("threads", threads), ("memory_limit", memory_limit))
-              if v is not None} or None
+    engine = {k: v for k, v in (("threads", threads), ("memory_limit", memory_limit),
+                                ("workers", workers)) if v is not None} or None
     planned = {exp: catalog.plan(exp, ks, overlay=overlay or None) for exp, ks in groups.items()}
     ctx = _LinkContext(run_dir=rdir, cohort_parquet=rdir / COHORT_FILE, data_dir=root,
                        buffer_m=buffer_m, raster_res_m=raster_res_m,
@@ -829,7 +836,7 @@ def link(cohort: pd.DataFrame | str | os.PathLike, variables: Sequence[str], *,
     prov = _provenance.build(
         ctx=ctx, groups=groups, overlay=overlay, steps=steps, cache=weight_cache,
         executor=_executor_name(executor), threads=threads, memory_limit=memory_limit,
-        on_error=on_error, data_summary=data_summary, cohort_info=info,
+        workers=workers, on_error=on_error, data_summary=data_summary, cohort_info=info,
         started=started, ended=ended, seconds=time.monotonic() - t0,
         failed=failed, skipped=skipped, columns=columns, output_level=output_level,
         rows_without_pid=rows_without_pid)

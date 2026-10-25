@@ -123,7 +123,7 @@ class StepStandIn:
         cohort = pd.read_parquet(cfg["buffer"]["patient_file"])
         _note(step=name, data_dir=os.fspath(data_dir), cwd=os.fspath(cwd),
               columns=list(cohort.columns), rows=len(cohort),
-              env_data_dir=os.environ.get("SPACESCANS_DATA_DIR"))
+              env_data_dir=os.environ.get("SPACESCANS_DATA_DIR"), engine=cfg.get("engine"))
         if MODE == "internal":
             raise ZeroDivisionError("division by zero")
         if MODE in ("hang", "hang_ignore"):
@@ -164,9 +164,9 @@ class StepStandIn:
         return StepRun(rc=0, seconds=0.05, maxrss_bytes=123456, tail=[])
 
 
-def _make_executor(executor="subprocess", *, threads=None, memory_limit=None):
+def _make_executor(executor="subprocess", *, threads=None, memory_limit=None, workers=None):
     _note(make_executor=executor if isinstance(executor, str) else type(executor).__name__,
-          threads=threads, memory_limit=memory_limit)
+          threads=threads, memory_limit=memory_limit, workers=workers)
     return StepStandIn()
 
 
@@ -200,7 +200,7 @@ def link_args(tmp: Path, **over) -> dict:
     args = {"cohort": str(write_cohort(tmp / "cohort.parquet")), "variables": ["ndi", "walkability"],
             "data_dir": str(data_dir), "run_dir": str(tmp / "run"), "buffer_m": 270, "raster_res_m": 25,
             "cache_dir": str(tmp / "cache"), "executor": "subprocess", "threads": 2,
-            "memory_limit": "4GB", "on_error": "stop", "reserved_names": "age"}
+            "memory_limit": "4GB", "workers": 3, "on_error": "stop", "reserved_names": "age"}
     args.update(over)
     return args
 
@@ -500,10 +500,13 @@ def test_link_runs_orchestrate_link_and_streams_events(tmp_path, monkeypatch):
     # what link handed the executor and the steps
     seen = _notes(notes)
     assert [n for n in seen if "make_executor" in n] == [
-        {"make_executor": "subprocess", "threads": 2, "memory_limit": "4GB"}]
+        {"make_executor": "subprocess", "threads": 2, "memory_limit": "4GB", "workers": 3}]
     steps_seen = [n for n in seen if "step" in n]
     assert [n["step"] for n in steps_seen] == ["c3_bg", "c3_bg_2020", "c4_ndi", "c4_wi"]
     for n in steps_seen:
+        # every rendered config carries the engine settings, workers included
+        assert {k: n["engine"].get(k) for k in ("threads", "memory_limit", "workers")} == {
+            "threads": 2, "memory_limit": "4GB", "workers": 3}
         assert n["env_data_dir"] == n["data_dir"] == args["data_dir"]          # mismatch #11
         assert n["rows"] == 4 and n["cwd"] == str(run)
         assert {"pid", "episode_id", "longitude", "latitude"} <= set(n["columns"])

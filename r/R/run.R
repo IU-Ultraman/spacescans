@@ -13,6 +13,9 @@
 #' @param threads,memory_limit DuckDB worker threads and memory cap (for
 #'   example `"8GB"`). They cap DuckDB only: C3 patterns and the pandas-based
 #'   FAQSD and TEMIS readers do not run inside DuckDB.
+#' @param workers Worker processes for the work DuckDB does not do, where the
+#'   config's pattern supports it (`boundary_overlap_fast`, `acag_multi`);
+#'   written to the config's `engine.workers`. Default `NULL`, one process.
 #' @param read If `TRUE` (default), return the output table; otherwise return
 #'   the run summary.
 #' @param progress Show a progress line (default: in interactive sessions).
@@ -29,14 +32,10 @@
 #' }
 #' @export
 ss_run <- function(config, data_dir = NULL, output_dir = NULL, threads = NULL, memory_limit = NULL,
-                   read = TRUE, progress = interactive(), verbose = FALSE, strict = FALSE) {
-  if (!is.null(threads)) {
-    if (!is.numeric(threads) || length(threads) != 1L || is.na(threads) || threads < 1 ||
-        threads != round(threads)) {
-      .ss_abort("config", "`threads` must be a single whole number of at least 1.")
-    }
-    threads <- as.integer(threads)
-  }
+                   read = TRUE, progress = interactive(), verbose = FALSE, strict = FALSE,
+                   workers = NULL) {
+  threads <- .ss_threads_arg(threads)
+  workers <- .ss_workers_arg(workers)
   if (!is.null(memory_limit) && (!is.character(memory_limit) || length(memory_limit) != 1L)) {
     .ss_abort("config", "`memory_limit` must be a single string such as \"8GB\".")
   }
@@ -44,7 +43,8 @@ ss_run <- function(config, data_dir = NULL, output_dir = NULL, threads = NULL, m
   args <- list(config = .ss_config_arg(config),
                data_dir = .ss_dir_arg(data_dir, "data_dir"),
                output_dir = .ss_dir_arg(output_dir, "output_dir", create = TRUE),
-               threads = threads, memory_limit = memory_limit, strict = isTRUE(strict))
+               threads = threads, memory_limit = memory_limit, workers = workers,
+               strict = isTRUE(strict))
   value <- .ss_bridge("run", Filter(Negate(is.null), args), progress = progress, verbose = verbose,
                       keep_on_error = TRUE)
   .ss_run_value(value, read)

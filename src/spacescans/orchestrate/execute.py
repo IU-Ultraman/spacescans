@@ -9,8 +9,8 @@ whole process group (SIGTERM, then SIGKILL after 5 s), the step's peak RSS from
 in a config means the same directory as ``--data-dir`` (phase-A mismatch #11).
 
 :class:`InProcessExecutor` runs the same config through ``Pipeline.from_dict`` (U1)
-with optional DuckDB threads / memory_limit / temp_directory (U4), for tests and
-small jobs.
+with optional DuckDB threads / memory_limit / temp_directory and worker processes
+(U4), for tests and small jobs.
 
 :func:`execute_step` runs a step through any executor and reports it as events with
 the web's log text (``spawning ...``, the output lines, ``step ... exit code ...``);
@@ -421,8 +421,8 @@ def _substitute(obj: Any, old: str, new: str) -> Any:
 class InProcessExecutor:
     """Runs a step in this process with ``Pipeline.from_dict`` (U1).
 
-    ``threads``, ``memory_limit`` and ``temp_directory`` override the config's
-    ``engine`` block (U4); None leaves it as rendered. The step behaves like
+    ``threads``, ``memory_limit``, ``temp_directory`` and ``workers`` override the
+    config's ``engine`` block (U4); None leaves it as rendered. The step behaves like
     ``spacescans run``: ``${SPACESCANS_DATA_DIR}`` means ``data_dir`` (#11), a
     relative output path lands under ``cwd/output``, the output path is printed as
     ``Output: <path>`` and an exception becomes rc 1 with an ``Error: <message>``
@@ -438,14 +438,17 @@ class InProcessExecutor:
     """
 
     def __init__(self, threads: int | None = None, memory_limit: str | None = None,
-                 temp_directory: PathLike | None = None, *, timeout_s: float | None = None,
+                 temp_directory: PathLike | None = None, *, workers: int | None = None,
+                 timeout_s: float | None = None,
                  cancel_grace_s: float = KILL_GRACE_S, tail_lines: int = TAIL_LINES):
-        if threads is not None and (not isinstance(threads, int) or isinstance(threads, bool)
-                                    or threads < 1):
-            raise ValueError(f"threads must be a positive integer or None, got {threads!r}")
+        for name, value in (("threads", threads), ("workers", workers)):
+            if value is not None and (not isinstance(value, int) or isinstance(value, bool)
+                                      or value < 1):
+                raise ValueError(f"{name} must be a positive integer or None, got {value!r}")
         if timeout_s is not None and not timeout_s > 0:
             raise ValueError(f"timeout_s must be positive or None, got {timeout_s!r}")
         self.threads = threads
+        self.workers = workers
         self.memory_limit = memory_limit
         self.temp_directory = None if temp_directory is None else os.fspath(temp_directory)
         self.timeout_s = timeout_s
@@ -454,7 +457,8 @@ class InProcessExecutor:
 
     def __repr__(self) -> str:
         return (f"InProcessExecutor(threads={self.threads!r}, "
-                f"memory_limit={self.memory_limit!r}, temp_directory={self.temp_directory!r})")
+                f"memory_limit={self.memory_limit!r}, temp_directory={self.temp_directory!r}, "
+                f"workers={self.workers!r})")
 
     def command(self, config: PathLike, data_dir: PathLike) -> list[str]:
         """What the ``spawning`` log line shows for an in-process step."""
@@ -462,7 +466,8 @@ class InProcessExecutor:
 
     def engine_overrides(self) -> dict[str, Any]:
         return {k: v for k, v in (("threads", self.threads), ("memory_limit", self.memory_limit),
-                                  ("temp_directory", self.temp_directory)) if v is not None}
+                                  ("temp_directory", self.temp_directory),
+                                  ("workers", self.workers)) if v is not None}
 
     def prepare(self, config: PathLike, data_dir: PathLike) -> dict[str, Any]:
         """The mapping handed to ``Pipeline.from_dict``: the YAML with
@@ -562,16 +567,17 @@ def _self_maxrss() -> int | None:
 
 
 def make_executor(executor: Executor | Literal["subprocess", "inprocess"] = "subprocess", *,
-                  threads: int | None = None, memory_limit: str | None = None) -> Executor:
+                  threads: int | None = None, memory_limit: str | None = None,
+                  workers: int | None = None) -> Executor:
     """``link(executor=...)``: an executor instance as given, or one of the two by name.
 
-    For "subprocess", threads and memory_limit reach the step through the rendered
-    YAML's engine block (``RunContext.engine``), not through the executor.
+    For "subprocess", threads, memory_limit and workers reach the step through the
+    rendered YAML's engine block (``RunContext.engine``), not through the executor.
     """
     if executor == "subprocess":
         return SubprocessExecutor()
     if executor == "inprocess":
-        return InProcessExecutor(threads=threads, memory_limit=memory_limit)
+        return InProcessExecutor(threads=threads, memory_limit=memory_limit, workers=workers)
     if isinstance(executor, str):
         raise ValueError(f"executor must be 'subprocess', 'inprocess' or an Executor, "
                          f"got {executor!r}")

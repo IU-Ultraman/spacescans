@@ -162,7 +162,7 @@ def _step_failed(exc: BaseException, message: str, hint: str | None,
         message = f"pipeline step {step} failed with exit code {rc}"
     if oom:
         hint = (f"step {step} was killed (exit code {rc}), which usually means the machine ran out "
-                "of memory: use fewer threads or a lower memory_limit, or a smaller cohort")
+                "of memory: use fewer threads or workers, a lower memory_limit, or a smaller cohort")
         episodes = getattr(exc, "episodes", None) or details.get("episodes")
         details["episodes"] = episodes
         note = _memory_note(experiment, episodes if isinstance(episodes, int) else None, step)

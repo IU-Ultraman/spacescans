@@ -277,14 +277,17 @@
   as.integer(x)
 }
 
-.ss_threads_arg <- function(threads) {
-  if (is.null(threads)) return(NULL)
-  if (!is.numeric(threads) || length(threads) != 1L || is.na(threads) || threads < 1 ||
-      threads != round(threads)) {
-    .ss_abort("config", "`threads` must be a single whole number of at least 1.")
+.ss_count_arg <- function(x, name) {
+  if (is.null(x)) return(NULL)
+  if (!is.numeric(x) || length(x) != 1L || is.na(x) || x < 1 || x != round(x)) {
+    .ss_abort("config", sprintf("`%s` must be a single whole number of at least 1.", name))
   }
-  as.integer(threads)
+  as.integer(x)
 }
+
+.ss_threads_arg <- function(threads) .ss_count_arg(threads, "threads")
+
+.ss_workers_arg <- function(workers) .ss_count_arg(workers, "workers")
 
 .ss_memory_arg <- function(memory_limit) {
   if (is.null(memory_limit)) return(NULL)

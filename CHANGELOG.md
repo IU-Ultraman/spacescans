@@ -4,6 +4,31 @@ The Python package (`spacescans` on PyPI) and the R package in `r/` share versio
 release tags. R-specific changes are listed in more detail in `r/NEWS.md`. Versions before 0.3.0
 have no changelog; see the git tags `v0.2.0` to `v0.2.7`.
 
+## Unreleased
+
+### Added
+
+- **`workers`: worker processes for the parts of a step that DuckDB does not run.** Set it as
+  `engine.workers` in a config, `link(workers=)`, `ss_link(workers =)`, `ss_run(workers =)` or
+  the bridge's `workers`. It applies to the polygon-overlap weights (`boundary_overlap_fast`:
+  block groups, tracts, ZCTAs) and to the NetCDF files of ACAG (`acag_multi`). The default is
+  one process, which is the behaviour of 0.3.0. The output does not depend on the number of
+  workers (each worker computes whole tiles or files, and the results are combined in input
+  order), so cache keys do not include it. Workers are spawned, not forked, and belong to
+  the step's process group, so cancelling a run stops them too. Each worker adds memory.
+  `spacescans.capabilities()["flags"]["workers"]` tells clients the option exists.
+
+### Changed
+
+- `compute_overlap_weights_fast` computes each boundary's burn-order key once per call, not
+  once per tile. The order is the same, and the step is a few percent faster.
+- Out-of-memory hints mention `workers` alongside `threads` and `memory_limit`.
+
+### Removed
+
+- `compute_overlap_weights` (the slow polygon-overlap path) loses its `n_workers`,
+  `chunk_size` and `resume_dir` parameters, which it never read.
+
 ## 0.3.0 (2026-10-23)
 
 The first version meant for PyPI and the first release of the R package. It moves the

@@ -17,6 +17,7 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 
+from spacescans.engine.parallel import map_ordered, resolve_workers
 from spacescans.pipeline.registry import register_reader
 from spacescans.transforms.date_parse import parse_date_range_from_filename
 
@@ -90,6 +91,17 @@ def _process_nc_file(filepath: str, keep_ids: list[int]) -> pd.DataFrame:
     return df.reset_index(drop=True)
 
 
+# Files per task when engine.workers > 1: the keep_ids list travels to a worker once per
+# task, not once per file.
+_FILES_PER_TASK = 4
+
+
+def _process_nc_files(task: tuple[list[str], list[int]]) -> list[pd.DataFrame]:
+    """:func:`_process_nc_file` for several files: one unit of work for a worker process."""
+    paths, keep_ids = task
+    return [_process_nc_file(path, keep_ids) for path in paths]
+
+
 @register_reader("acag")
 class ACAGExposureSource:
     """Read ACAG biweekly NetCDF files for one pollutant directory."""
@@ -98,7 +110,12 @@ class ACAGExposureSource:
         self.config = config
 
     def load_exposure(self, *, years: list[int] | None = None) -> pd.DataFrame:
-        """Load biweekly grid exposure as [grid_id, value, start_date, end_date]."""
+        """Load biweekly grid exposure as [grid_id, value, start_date, end_date].
+
+        When the config handed to the reader has an ``engine`` block whose ``workers`` is
+        above 1 (acag_multi passes the step's), that many processes decode the files;
+        the frames are concatenated in file order either way.
+        """
         from spacescans.io.readers import read_table
 
         weights = read_table(self.config.source.file)
@@ -118,7 +135,7 @@ class ACAGExposureSource:
         start_year = min(years) if years else 2013
         end_year = max(years) if years else 2019
 
-        all_dfs = []
+        selected = []
         for nc_path in nc_files:
             try:
                 sd, ed = _parse_biweek(nc_path.name)
@@ -128,9 +145,16 @@ class ACAGExposureSource:
             ed_year = int(ed[:4])
             if not (start_year <= sd_year <= end_year or start_year <= ed_year <= end_year):
                 continue
-            df = _process_nc_file(str(nc_path), keep_ids)
-            if not df.empty:
-                all_dfs.append(df)
+            selected.append(str(nc_path))
+
+        workers = resolve_workers(getattr(getattr(self.config, "engine", None), "workers", None))
+        if workers == 1:
+            frames = [_process_nc_file(path, keep_ids) for path in selected]
+        else:
+            tasks = [(selected[i:i + _FILES_PER_TASK], keep_ids)
+                     for i in range(0, len(selected), _FILES_PER_TASK)]
+            frames = [df for part in map_ordered(_process_nc_files, tasks, workers) for df in part]
+        all_dfs = [df for df in frames if not df.empty]
 
         if not all_dfs:
             return pd.DataFrame(columns=["grid_id", "value", "start_date", "end_date"])

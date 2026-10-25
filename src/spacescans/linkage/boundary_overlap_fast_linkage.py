@@ -55,5 +55,6 @@ def run_boundary_overlap_fast(config: DatasetConfig, engine: AggregationEngine) 
         boundary_key_col=config.source.join_col,
         raster_res_m=config.buffer.raster_res_m,
         test_index_limit=config.buffer.test_index_limit,
+        workers=config.engine.workers,
     )
     return write_table(weights, config.output.path)

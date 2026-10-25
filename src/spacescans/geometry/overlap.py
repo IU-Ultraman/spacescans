@@ -26,6 +26,8 @@ import rasterio.features
 import rasterio.transform
 from exactextract import exact_extract
 
+from spacescans.engine.parallel import map_ordered, resolve_workers
+
 # Pad around each target boundary to capture neighbors (meters in projected CRS).
 # Must be >= max patient buffer radius so all relevant boundaries are included.
 _NEIGHBOR_PAD_M = 500.0
@@ -51,9 +53,6 @@ def compute_overlap_weights(
     *,
     boundary_key_col: str,
     raster_res_m: float = 25.0,
-    n_workers: int = 4,
-    chunk_size: int | None = None,
-    resume_dir: Path | None = None,
     test_index_limit: int | None = None,
     raster_cache_dir: Path | None = None,
 ) -> pd.DataFrame:
@@ -345,6 +344,99 @@ def _extract_overlap_for_boundary(
 # ═══════════════════════════════════════════════════════════════════════════════
 
 _TILE_SIZE_M = 30000.0  # 30 km per tile in projected CRS (~1200x1200 px @ 25m)
+# With engine.workers > 1 the tiles with work go to the workers in about this many
+# contiguous chunks per worker: a chunk's transfer and start are small next to its work,
+# and a column of dense urban tiles cannot keep the other workers waiting for long.
+_CHUNKS_PER_WORKER = 8
+_FAST_STEP_KEYS = ("tile_index", "rasterize", "memfile", "exact_extract", "postprocess")
+
+
+def _tile_coverage(task: tuple) -> tuple[pd.DataFrame | None, dict[str, float]]:
+    """One tile of :func:`compute_overlap_weights_fast`, in this process or in a worker.
+
+    ``task`` is ``(bounds, crs, raster_res_m, geoms, poly_idxs, buffers)``: the tile's
+    (xmin, ymin, xmax, ymax), the boundaries' CRS and the cell size; the geometries of the
+    boundaries near the tile in burn order, with their row numbers in the boundary table;
+    and the buffers whose bounding box meets the tile (``geoid`` and geometry, in index
+    order). Returns the rows ``(geoid, poly_idx, coverage)``, or None when no cell of a
+    boundary is covered, and the seconds spent in each substep.
+    """
+    (txmin, tymin, txmax, tymax), crs, raster_res_m, geoms, poly_idxs, local_buffers = task
+    timings = dict.fromkeys(_FAST_STEP_KEYS[1:], 0.0)
+
+    # Step 2: rasterize all polygons in tile, encoding (burn position + 1) as cell value.
+    # A cell on a shared edge goes to the last polygon burned; the caller orders the
+    # polygons by the boundary key, so the order does not depend on the index layout.
+    t = time.perf_counter()
+    width = max(1, round((txmax - txmin) / raster_res_m))
+    height = max(1, round((tymax - tymin) / raster_res_m))
+    transform = rasterio.transform.from_origin(txmin, tymax, raster_res_m, raster_res_m)
+    shapes = [(g, pos + 1) for pos, g in enumerate(geoms)  # +1 because 0 = "no polygon"
+              if g is not None and not g.is_empty]
+    if not shapes:
+        timings["rasterize"] = time.perf_counter() - t
+        return None, timings
+    tile_raster = rasterio.features.rasterize(
+        shapes,
+        out_shape=(height, width),
+        transform=transform,
+        fill=0,
+        dtype=np.int32,
+    )
+    timings["rasterize"] = time.perf_counter() - t
+
+    # Step 3: write to in-memory GeoTIFF
+    t = time.perf_counter()
+    with rasterio.MemoryFile() as memfile:
+        with memfile.open(
+            driver="GTiff",
+            height=height,
+            width=width,
+            count=1,
+            dtype=np.int32,
+            crs=crs,
+            transform=transform,
+            nodata=0,
+        ) as ds:
+            ds.write(tile_raster, 1)
+        timings["memfile"] = time.perf_counter() - t
+
+        # Step 4: exact_extract with cell_id + coverage fraction
+        t = time.perf_counter()
+        with memfile.open() as ds:
+            stats = exact_extract(
+                ds, local_buffers,
+                ["cell_id", "coverage"],
+                include_cols=["geoid"],
+                output="pandas",
+            )
+        timings["exact_extract"] = time.perf_counter() - t
+
+    # Step 5: explode (cell_id, coverage) → look up the polygon of each cell.
+    # NOTE: coverage = fraction (per-cell). Since all cells in this tile
+    # have identical area (uniform resolution), per-buffer normalization
+    # gives the same weights as if we used coverage_area.
+    t = time.perf_counter()
+    df = pd.DataFrame(stats)
+    if df.empty or "cell_id" not in df.columns:
+        timings["postprocess"] = time.perf_counter() - t
+        return None, timings
+    df = df.explode(["cell_id", "coverage"])
+    df = df.dropna(subset=["cell_id", "coverage"])
+    df["cell_id"] = df["cell_id"].astype(np.int64)
+    df["coverage"] = df["coverage"].astype(np.float64)
+    # Burn position via raster value at cell_id (flat index), then the boundary's row number
+    pos_1based = tile_raster.ravel(order="C")[df["cell_id"].values]
+    inside = pos_1based > 0  # filter out cells outside any polygon
+    df = df[inside]
+    df["poly_idx"] = np.asarray(poly_idxs, dtype=np.int64)[pos_1based[inside] - 1]
+    timings["postprocess"] = time.perf_counter() - t
+    return df[["geoid", "poly_idx", "coverage"]], timings
+
+
+def _tile_coverage_chunk(tasks: list[tuple]) -> list[tuple[pd.DataFrame | None, dict[str, float]]]:
+    """:func:`_tile_coverage` for consecutive tiles: one unit of work for a worker process."""
+    return [_tile_coverage(task) for task in tasks]
 
 
 def compute_overlap_weights_fast(
@@ -355,6 +447,7 @@ def compute_overlap_weights_fast(
     raster_res_m: float = 25.0,
     tile_size_m: float = _TILE_SIZE_M,
     test_index_limit: int | None = None,
+    workers: int | None = 1,
 ) -> pd.DataFrame:
     """Fast boundary_overlap: per-tile bulk rasterize + chunked exact_extract.
 
@@ -362,17 +455,22 @@ def compute_overlap_weights_fast(
       1. Build a spatial tile grid over the patient bbox.
       2. For each tile:
          a. Find boundaries intersecting tile (padded by buffer radius).
-         b. Find patient buffers whose centroid falls in tile.
+         b. Find patient buffers whose bounding box meets the tile.
          c. Rasterize all boundaries to a tile-sized int32 raster, encoding
-            (polygon_idx + 1) as cell value (0 = outside any polygon).
-         d. exact_extract(tile_raster, buffers, [cell_id, coverage_area]).
-         e. Look up polygon_idx via raster value at each cell_id.
-         f. Accumulate (geoid, polygon_idx, coverage_area).
+            (burn position + 1) as cell value (0 = outside any polygon).
+         d. exact_extract(tile_raster, buffers, [cell_id, coverage]).
+         e. Look up the polygon via raster value at each cell_id.
+         f. Accumulate (geoid, polygon, coverage).
       3. Cross-tile sum (polygons spanning multiple tiles contribute pieces).
-      4. Normalize: weight = coverage_area / sum_per_buffer.
+      4. Normalize: weight = coverage / sum_per_buffer.
+
+    ``workers`` (``engine.workers``; None or 1 = this process) runs step 2 for the tiles
+    with work in that many worker processes. The rows are gathered in tile order before
+    step 3, so the weights are the same, bit for bit, whatever the number of workers.
 
     Output schema matches compute_overlap_weights (slow): [geoid, boundary_key_col, value].
     """
+    workers = resolve_workers(workers)
     boundaries = boundaries.reset_index(drop=True)
     buffers = buffers.reset_index(drop=True)
 
@@ -409,113 +507,91 @@ def compute_overlap_weights_fast(
         flush=True,
     )
 
-    step_keys = ("tile_index", "rasterize", "memfile", "exact_extract", "postprocess")
+    step_keys = _FAST_STEP_KEYS
     step_totals = {k: 0.0 for k in step_keys}
     t0 = time.time()
     log_every = max(1, n_tiles // 20)
 
-    all_rows: list[pd.DataFrame] = []
-    tiles_with_work = 0
+    # Burn in a fixed order (by the boundary key as text): a cell on a shared edge goes to
+    # the last polygon burned, so the order must not depend on the index layout.
+    burn_key = [str(v) for v in boundaries[boundary_key_col].to_numpy(dtype=object)]
+    geometries = boundaries.geometry.values
+    keyed_buffers = buffers[["geoid", buffers.geometry.name]]
 
-    for t_idx, (txmin, tymin, txmax, tymax) in enumerate(tiles):
-        # Step 1: find polygons + buffers in tile
+    def tile_task(tile: tuple) -> tuple | None:
+        """Step 1, find the polygons + buffers of ``tile``: its task, or None without work."""
         t = time.perf_counter()
+        txmin, tymin, txmax, tymax = tile
         tile_query = (txmin - pad, tymin - pad, txmax + pad, tymax + pad)
         poly_idxs = list(sindex_p.intersection(tile_query))
         buf_idxs = list(sindex_b.intersection((txmin, tymin, txmax, tymax)))
+        task = None
+        if poly_idxs and buf_idxs:
+            poly_idxs.sort(key=burn_key.__getitem__)
+            task = (tile, boundaries.crs, raster_res_m, [geometries[i] for i in poly_idxs],
+                    np.asarray(poly_idxs, dtype=np.int64), keyed_buffers.iloc[buf_idxs])
         step_totals["tile_index"] += time.perf_counter() - t
+        return task
 
-        if not poly_idxs or not buf_idxs:
-            continue
-        tiles_with_work += 1
-
-        # Step 2: rasterize all polygons in tile, encoding polygon_idx+1 as cell value
-        t = time.perf_counter()
-        width = max(1, round((txmax - txmin) / raster_res_m))
-        height = max(1, round((tymax - tymin) / raster_res_m))
-        transform = rasterio.transform.from_origin(txmin, tymax, raster_res_m, raster_res_m)
-        shapes = []
-        # Burn in a fixed order (by the boundary key): a cell on a shared edge goes to
-        # the last polygon burned, so the order must not depend on the index layout.
-        poly_idxs = sorted(poly_idxs, key=lambda i: str(boundaries[boundary_key_col].iloc[i]))
-        for pi in poly_idxs:
-            g = boundaries.geometry.iloc[pi]
-            if g is None or g.is_empty:
-                continue
-            shapes.append((g, int(pi) + 1))  # +1 because 0 = "no polygon"
-        if not shapes:
-            continue
-        tile_raster = rasterio.features.rasterize(
-            shapes,
-            out_shape=(height, width),
-            transform=transform,
-            fill=0,
-            dtype=np.int32,
-        )
-        step_totals["rasterize"] += time.perf_counter() - t
-
-        # Step 3: write to in-memory GeoTIFF
-        t = time.perf_counter()
-        with rasterio.MemoryFile() as memfile:
-            with memfile.open(
-                driver="GTiff",
-                height=height,
-                width=width,
-                count=1,
-                dtype=np.int32,
-                crs=boundaries.crs,
-                transform=transform,
-                nodata=0,
-            ) as ds:
-                ds.write(tile_raster, 1)
-            step_totals["memfile"] += time.perf_counter() - t
-
-            # Step 4: exact_extract with cell_id + coverage fraction
-            t = time.perf_counter()
-            local_buffers = buffers.iloc[buf_idxs]
-            with memfile.open() as ds:
-                stats = exact_extract(
-                    ds, local_buffers,
-                    ["cell_id", "coverage"],
-                    include_cols=["geoid"],
-                    output="pandas",
-                )
-            step_totals["exact_extract"] += time.perf_counter() - t
-
-        # Step 5: explode (cell_id, coverage) → lookup polygon_idx → accumulate.
-        # NOTE: coverage = fraction (per-cell). Since all cells in this tile
-        # have identical area (uniform resolution), per-buffer normalization
-        # gives the same weights as if we used coverage_area.
-        t = time.perf_counter()
-        df = pd.DataFrame(stats)
-        if df.empty or "cell_id" not in df.columns:
-            step_totals["postprocess"] += time.perf_counter() - t
-            continue
-        df = df.explode(["cell_id", "coverage"])
-        df = df.dropna(subset=["cell_id", "coverage"])
-        df["cell_id"] = df["cell_id"].astype(np.int64)
-        df["coverage"] = df["coverage"].astype(np.float64)
-        # Look up polygon_idx via raster value at cell_id (flat index)
-        flat = tile_raster.ravel(order="C")
-        poly_id_at_cell = flat[df["cell_id"].values]
-        df["poly_id_1based"] = poly_id_at_cell
-        df = df[df["poly_id_1based"] > 0]  # filter out cells outside any polygon
-        df["poly_idx"] = df["poly_id_1based"].astype(np.int64) - 1
+    def keyed(rows: pd.DataFrame) -> pd.DataFrame:
         # Map poly_idx to boundary_key
-        df[boundary_key_col] = boundaries[boundary_key_col].iloc[df["poly_idx"].values].values
-        all_rows.append(df[["geoid", boundary_key_col, "coverage"]])
-        step_totals["postprocess"] += time.perf_counter() - t
+        rows[boundary_key_col] = boundaries[boundary_key_col].iloc[rows["poly_idx"].values].values
+        return rows[["geoid", boundary_key_col, "coverage"]]
 
-        if (t_idx + 1) % log_every == 0 or (t_idx + 1) == n_tiles:
+    all_rows: list[pd.DataFrame] = []
+    tiles_with_work = 0
+
+    if workers == 1:
+        for t_idx, tile in enumerate(tiles):
+            task = tile_task(tile)
+            if task is None:
+                continue
+            tiles_with_work += 1
+            rows, timings = _tile_coverage(task)
+            for k, v in timings.items():
+                step_totals[k] += v
+            if rows is None:
+                continue
+            all_rows.append(keyed(rows))
+
+            if (t_idx + 1) % log_every == 0 or (t_idx + 1) == n_tiles:
+                elapsed = time.time() - t0
+                rate = (t_idx + 1) / elapsed
+                eta = (n_tiles - (t_idx + 1)) / rate / 60 if rate > 0 else 0
+                print(
+                    f"[overlap_fast] tile {t_idx+1:>5}/{n_tiles} ({100*(t_idx+1)/n_tiles:5.1f}%) "
+                    f"elapsed={elapsed/60:6.2f}m  rate={rate:5.1f}/s  ETA={eta:5.2f}m  "
+                    f"tiles_with_work={tiles_with_work}",
+                    flush=True,
+                )
+    else:
+        tasks = [task for task in map(tile_task, tiles) if task is not None]
+        tiles_with_work = len(tasks)
+        n_chunks = max(1, min(len(tasks), workers * _CHUNKS_PER_WORKER))
+        size = -(-len(tasks) // n_chunks)
+        chunks = [tasks[i:i + size] for i in range(0, len(tasks), size)]
+        print(f"[overlap_fast] {tiles_with_work} tiles with work in {len(chunks)} chunks "
+              f"on {workers} worker processes", flush=True)
+        done = [0]
+
+        def on_done(i: int) -> None:
+            done[0] += len(chunks[i])
             elapsed = time.time() - t0
-            rate = (t_idx + 1) / elapsed
-            eta = (n_tiles - (t_idx + 1)) / rate / 60 if rate > 0 else 0
+            rate = done[0] / elapsed if elapsed > 0 else 0.0
+            eta = (tiles_with_work - done[0]) / rate / 60 if rate > 0 else 0
             print(
-                f"[overlap_fast] tile {t_idx+1:>5}/{n_tiles} ({100*(t_idx+1)/n_tiles:5.1f}%) "
-                f"elapsed={elapsed/60:6.2f}m  rate={rate:5.1f}/s  ETA={eta:5.2f}m  "
-                f"tiles_with_work={tiles_with_work}",
+                f"[overlap_fast] tile {done[0]:>5}/{tiles_with_work} "
+                f"({100*done[0]/tiles_with_work:5.1f}%) elapsed={elapsed/60:6.2f}m  "
+                f"rate={rate:5.1f}/s  ETA={eta:5.2f}m  workers={workers}",
                 flush=True,
             )
+
+        for part in map_ordered(_tile_coverage_chunk, chunks, workers, on_done=on_done):
+            for rows, timings in part:
+                for k, v in timings.items():
+                    step_totals[k] += v
+                if rows is not None:
+                    all_rows.append(keyed(rows))
 
     total_loop = time.time() - t0
 
@@ -533,6 +609,9 @@ def compute_overlap_weights_fast(
 
     grand_total = total_loop + concat_s
     print("[overlap_fast] === SUMMARY ===", flush=True)
+    if workers > 1:
+        print(f"[overlap_fast]   substep times below are summed over {workers} worker "
+              f"processes; total is wall time", flush=True)
     for k in sorted(step_keys, key=lambda x: -step_totals[x]):
         pct = 100 * step_totals[k] / grand_total if grand_total > 0 else 0
         print(f"[overlap_fast]   {k:14s} {step_totals[k]/60:6.2f}m ({pct:5.1f}%)", flush=True)

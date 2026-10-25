@@ -13,7 +13,8 @@ ss_run(
   read = TRUE,
   progress = interactive(),
   verbose = FALSE,
-  strict = FALSE
+  strict = FALSE,
+  workers = NULL
 )
 }
 \arguments{
@@ -38,6 +39,10 @@ the run summary.}
 \item{verbose}{Print the pipeline's own log lines.}
 
 \item{strict}{If \code{TRUE}, unknown config keys are an error.}
+
+\item{workers}{Worker processes for the work DuckDB does not do, where the
+config's pattern supports it (\code{boundary_overlap_fast}, \code{acag_multi});
+written to the config's \code{engine.workers}. Default \code{NULL}, one process.}
 }
 \value{
 With \code{read = TRUE}, a data frame (see \code{\link[=ss_read_result]{ss_read_result()}}) with

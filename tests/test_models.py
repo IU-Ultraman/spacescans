@@ -30,3 +30,15 @@ def test_unknown_pattern_rejected():
             "engine": {"backend": "duckdb"},
             "output": {"path": "x", "format": "parquet"},
         })
+
+
+def test_engine_workers_is_an_optional_positive_count():
+    from pydantic import ValidationError
+
+    from spacescans.models.config import EngineConfig
+
+    assert EngineConfig().workers is None
+    assert EngineConfig(workers=4).workers == 4
+    for bad in (0, -1):
+        with pytest.raises(ValidationError):
+            EngineConfig(workers=bad)

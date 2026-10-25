@@ -19,8 +19,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-#: The ``engine`` keys a context may set (EngineConfig's DuckDB resource caps).
-ENGINE_KEYS: tuple[str, ...] = ("threads", "memory_limit", "temp_directory")
+#: The ``engine`` keys a context may set (EngineConfig's DuckDB resource caps and the
+#: number of worker processes).
+ENGINE_KEYS: tuple[str, ...] = ("threads", "memory_limit", "temp_directory", "workers")
 
 
 @dataclass(frozen=True)
@@ -33,8 +34,9 @@ class RunContext:
     ``data_dir``: the data root the templates' relative paths resolve against.
     ``overlay``: custom-exposome definitions keyed by variable key (the web's
     ``config["custom_variables"]``). ``engine``: DuckDB resource caps
-    (``threads``, ``memory_limit``, ``temp_directory``) written into every
-    rendered config; ``None`` (the web) leaves the YAML unchanged.
+    (``threads``, ``memory_limit``, ``temp_directory``) and worker processes
+    (``workers``) written into every rendered config; ``None`` leaves the YAML
+    unchanged.
 
     ``buffer_m`` and ``raster_res_m`` are used as given: the web passes its
     config's JSON values, and ``270`` and ``270.0`` render (and key) differently.

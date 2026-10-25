@@ -248,13 +248,15 @@ def test_run_c4_on_base_install(tmp_path):
     cfg = make_c4_fixture(tmp_path)
     cfg["exposure"]["value_cols"] = "v"
     rc, res, events, _ = call(tmp_path, "run", {"config": cfg, "data_dir": str(tmp_path),
-                                               "output_dir": str(tmp_path / "out"), "threads": 1},
+                                               "output_dir": str(tmp_path / "out"), "threads": 1,
+                                               "workers": 2},
                               prefix=base_only_prefix(tmp_path))
     assert rc == 0, res["error"]
     v = res["value"]
     assert v["rows"] == 3 and v["columns"] == ["PATID", "geoid", "v"]
     assert v["output_grouping"] == "episode" and v["linkage_pattern"] == "yearly_areal"
     assert v["engine"]["threads"] == "1"
+    assert v["config"]["engine"]["workers"] == 2
     assert v["maxrss_bytes"] > 10_000_000          # bytes, not KiB
     df = pd.read_parquet(v["output"])
     assert sorted(df["geoid"]) == [0, 1, 2]
@@ -290,6 +292,12 @@ def test_run_bad_threads_is_config(tmp_path):
     cfg = make_c4_fixture(tmp_path)
     rc, res, _, _ = call(tmp_path, "run", {"config": cfg, "data_dir": str(tmp_path), "threads": 0})
     assert rc == 1 and res["error"]["kind"] == "config" and "threads" in res["error"]["message"]
+
+
+def test_run_bad_workers_is_config(tmp_path):
+    cfg = make_c4_fixture(tmp_path)
+    rc, res, _, _ = call(tmp_path, "run", {"config": cfg, "data_dir": str(tmp_path), "workers": 0})
+    assert rc == 1 and res["error"]["kind"] == "config" and "workers" in res["error"]["message"]
 
 
 def test_run_missing_extra_on_base_install(tmp_path):

@@ -40,6 +40,9 @@ FLAGS: dict[str, bool] = {
     # the merge functions and the bridge's link; participant means in every C4 pattern (0.3)
     "output_level": True,
     "fara_missing_skip": True,       # FARA leaves tracts without a value out of the buffer mean (0.3)
+    # engine.workers, RunContext.engine["workers"], link(workers=) and the bridge's workers:
+    # worker processes for polygon-overlap tiles and ACAG files (0.3.1)
+    "workers": True,
 }
 
 _DISTRIBUTIONS = (

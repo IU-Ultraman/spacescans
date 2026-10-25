@@ -358,6 +358,7 @@ def cmd_link(args: dict, ctx) -> Outcome:
     executor = choice_arg(args, "executor", ("subprocess", "inprocess"), default="subprocess")
     threads = int_arg(args, "threads", minimum=1)
     memory_limit = str_arg(args, "memory_limit")
+    workers = int_arg(args, "workers", minimum=1)
     on_error = choice_arg(args, "on_error", ("stop", "continue"), default="stop")
     output_level = choice_arg(args, "output_level", ("participant", "episode"),
                               default="participant")
@@ -392,7 +393,8 @@ def cmd_link(args: dict, ctx) -> Outcome:
         result, caught = run_cancellable(
             lambda: link(co.table, variables, data_dir=data_dir, run_dir=run_dir, buffer_m=buffer_m,
                          raster_res_m=raster_res_m, custom=custom, cache=cache, executor=executor,
-                         threads=threads, memory_limit=memory_limit, on_error=on_error,
+                         threads=threads, memory_limit=memory_limit, workers=workers,
+                         on_error=on_error,
                          reserved_names=tuple(reserved), on_event=on_event, cancel=cancel,
                          output_level=output_level),
             on_line, cancel=cancel, grace_s=grace, log=ctx.log)
