@@ -1,0 +1,11 @@
+date,source,workers,wall_s,step1_s,step2_s,steps,peak_tree_rss_gb,peak_process_rss_gb,swap_used_mb_before,swap_used_mb_after,c3_identical_to_1_worker,exposures_max_abs_diff_vs_1_worker
+2026-10-25,walkability,1,270.77,268.1,2.0,c3_bg=268.1;c4_wi=2.0,8.849,8.823,4998.0,4998.0,True,
+2026-10-25,walkability,4,86.97,81.8,4.8,c3_bg=81.8;c4_wi=4.8,9.356,8.869,4998.0,4998.0,True,1.07e-14
+2026-10-25,ndi,1,538.81,529.5,9.1,c3_bg=265.1;c3_bg_2020=264.4;c4_ndi=9.1,9.793,9.69,4998.0,4998.0,True,
+2026-10-25,ndi,4,172.13,162.5,9.3,c3_bg=79.2;c3_bg_2020=83.3;c4_ndi=9.3,10.448,9.334,4998.0,4998.0,True,2.66e-15
+2026-10-25,cbp_zcta5,1,519.04,511.9,6.8,c3_zcta5=283.7;c3_county=228.2;c4_zcta5_cbp=5.0;c4_county_cbp=1.8,9.005,8.797,4998.0,4998.0,True,
+2026-10-25,cbp_zcta5,4,161.29,154.6,6.5,c3_zcta5=85.6;c3_county=69.0;c4_zcta5_cbp=4.7;c4_county_cbp=1.8,8.892,8.413,4998.0,4998.0,True,1.82e-12
+2026-10-25,fara_tract,1,542.02,242.2,299.6,c3_tract_us=242.2;c4_tract_fara=299.6,8.046,7.719,4998.0,4998.0,True,
+2026-10-25,fara_tract,4,376.08,74.0,301.8,c3_tract_us=74.0;c4_tract_fara=301.8,8.713,8.149,4998.0,4998.0,True,0
+2026-10-25,acag,1,1507.73,51.4,1455.9,c3_acag=51.4;c4_acag=1455.9,13.726,13.676,4998.0,5472.56,True,
+2026-10-25,acag,4,780.08,55.3,724.4,c3_acag=55.3;c4_acag=724.4,14.715,14.658,5472.56,6625.81,True,1.42e-14

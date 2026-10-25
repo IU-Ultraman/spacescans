@@ -16,7 +16,10 @@ have no changelog; see the git tags `v0.2.0` to `v0.2.7`.
   workers (each worker computes whole tiles or files, and the results are combined in input
   order), so cache keys do not include it. Workers are spawned, not forked, and belong to
   the step's process group, so cancelling a run stops them too. Each worker adds memory.
-  `spacescans.capabilities()["flags"]["workers"]` tells clients the option exists.
+  `spacescans.capabilities()["flags"]["workers"]` tells clients the option exists. On a
+  100,000-episode cohort, four workers cut an initial run of the Walkability Index from 271 s
+  to 87 s and of ACAG from 1,508 s to 780 s, with about 1 GB more memory
+  ([docs/workers.md](docs/workers.md)).
 
 ### Changed
 
