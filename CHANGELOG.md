@@ -4,7 +4,10 @@ The Python package (`spacescans` on PyPI) and the R package in `r/` share versio
 release tags. R-specific changes are listed in more detail in `r/NEWS.md`. Versions before 0.3.0
 have no changelog; see the git tags `v0.2.0` to `v0.2.7`.
 
-## Unreleased
+## 0.3.1 (2026-10-25)
+
+Worker processes for the parts of a pipeline step that DuckDB does not run. Results and cache
+keys are unchanged; the default is one process, as in 0.3.0.
 
 ### Added
 
