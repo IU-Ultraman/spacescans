@@ -1,8 +1,14 @@
 """Running a command's work on a worker thread, and stopping it cleanly.
 
-The main thread only waits, in short joins, so SIGINT/SIGTERM reach the
-bridge within about 0.1 s even while the worker sits in a long C call (GDAL,
-exactextract, DuckDB) or a socket read.
+The main thread only polls, every 0.05 s, so SIGINT/SIGTERM reach the bridge
+within about 0.05 s even while the worker sits in a long C call (GDAL,
+exactextract, DuckDB) or a socket read. While it waits, what the SIGINT/SIGTERM
+handlers raise (KeyboardInterrupt, the bridge's ``_Terminated``) is kept and
+raised by ``run_captured``/``run_cancellable`` themselves, never wherever the
+main thread happens to be: from CPython 3.13 on, one that lands inside
+``threading.Event.wait`` can leave the event's lock held, so that the worker's
+``done.set()`` blocks for ever, and on 3.13 one can skip the ``except`` meant
+to catch it.
 
 ``run_cancellable`` adds what ``link`` needs on an interrupt: set the
 ``cancel`` event (the orchestrator then stops its step process group:
@@ -12,6 +18,7 @@ any child process that is still alive, so nothing outlives the bridge.
 from __future__ import annotations
 
 import contextlib
+import functools
 import os
 import signal
 import subprocess
@@ -19,13 +26,14 @@ import sys
 import threading
 import time
 import warnings as _warnings
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
 from typing import Any
 
 from spacescans.bridge.events import LineSink
 
 _QUIET_WARNINGS = (DeprecationWarning, PendingDeprecationWarning, FutureWarning)
 DEFAULT_CANCEL_GRACE_S = 7.0   # the executor's SIGTERM -> SIGKILL takes 5 s
+_POLL_S = 0.05
 
 
 def warning_records(caught: list) -> list[dict]:
@@ -44,12 +52,57 @@ def warning_records(caught: list) -> list[dict]:
     return out
 
 
+def _keep(handler: Callable, kept: list[BaseException], signum: int, frame: Any) -> None:
+    try:
+        handler(signum, frame)
+    except BaseException as e:
+        kept.append(e)
+
+
+@contextlib.contextmanager
+def _interrupts_kept() -> Iterator[list[BaseException]]:
+    """Wrap the SIGINT/SIGTERM handlers so that what they raise goes to the yielded list.
+
+    Only Python handlers are wrapped (SIG_IGN and SIG_DFL raise nothing), and
+    only in the main thread (no handler runs in another one); a handler that
+    does not raise still runs and does not stop the work. On the way out the
+    handlers are put back, or, once something was kept, both signals are
+    ignored, so that a second Ctrl-C cannot stop the bridge from writing its
+    result.
+    """
+    kept: list[BaseException] = []
+    previous: dict[int, Callable] = {}
+    with contextlib.suppress(ValueError):  # only the main thread may set handlers
+        for sig in (signal.SIGINT, signal.SIGTERM):
+            handler = signal.getsignal(sig)
+            if callable(handler):
+                previous[sig] = handler
+                signal.signal(sig, functools.partial(_keep, handler, kept))
+    try:
+        yield kept
+    finally:
+        with contextlib.suppress(ValueError, OSError):
+            if kept:
+                signal.signal(signal.SIGINT, signal.SIG_IGN)
+                signal.signal(signal.SIGTERM, signal.SIG_IGN)
+            else:
+                for sig, handler in previous.items():
+                    signal.signal(sig, handler)
+
+
+def _wait(done: threading.Event, kept: list[BaseException]) -> None:
+    while not done.is_set() and not kept:
+        time.sleep(_POLL_S)
+
+
 def _start(fn: Callable[[], Any], on_line: Callable[[str], None]) -> tuple[threading.Event, dict, LineSink]:
     """Start ``fn`` on a daemon thread. Returns (done, box, sink).
 
-    Callers wait on ``done``, not on ``Thread.join``/``is_alive``: in CPython
-    3.12 a KeyboardInterrupt that lands inside ``join()`` marks the thread as
-    stopped while it is still running, so ``is_alive()`` is False afterwards.
+    Callers poll ``done.is_set()`` and never block in ``Event.wait`` or
+    ``Thread.join``: in CPython 3.12 a KeyboardInterrupt that lands inside
+    ``join()`` marks the thread as stopped while it is still running, and from
+    3.13 on one that lands inside ``Event.wait()`` can leave the event's lock
+    held, after which the worker's ``done.set()`` blocks for ever.
     """
     sink = LineSink(on_line)
     box: dict[str, Any] = {"warnings": []}
@@ -89,13 +142,16 @@ def _finish(box: dict, sink: LineSink) -> tuple[Any, list]:
 def run_captured(fn: Callable[[], Any], on_line: Callable[[str], None]) -> tuple[Any, list]:
     """Run ``fn`` in a worker thread with stdout captured line by line.
 
-    Returns (value, recorded warnings); re-raises the worker's exception. An
-    interrupt in the main thread propagates at once (the worker is a daemon
-    thread; the bridge exits with ``os._exit``).
+    Returns (value, recorded warnings); re-raises the worker's exception. On
+    SIGINT/SIGTERM it raises, within ``_POLL_S``, what their handler raised and
+    leaves both signals ignored; the worker, a daemon thread, keeps running
+    (the bridge exits with ``os._exit``).
     """
-    done, box, sink = _start(fn, on_line)
-    while not done.wait(0.1):
-        pass
+    with _interrupts_kept() as kept:
+        done, box, sink = _start(fn, on_line)
+        _wait(done, kept)
+    if kept:
+        raise kept[0]
     return _finish(box, sink)
 
 
@@ -104,30 +160,30 @@ def run_cancellable(fn: Callable[[], Any], on_line: Callable[[str], None], *,
                     log: Callable[[str], None] | None = None) -> tuple[Any, list]:
     """``run_captured`` for work that owns child processes.
 
-    On SIGINT/SIGTERM (KeyboardInterrupt or another BaseException in the main
-    thread): ignore further signals, set ``cancel``, wait up to ``grace_s``
-    for the worker, kill whatever child process is left, then re-raise.
+    On SIGINT/SIGTERM (what their handler raised, or another BaseException in
+    the main thread): ignore further signals, set ``cancel``, wait up to
+    ``grace_s`` for the worker, kill whatever child process is left, then
+    raise it.
     """
-    done, box, sink = _start(fn, on_line)
-    try:
-        while not done.wait(0.1):
-            pass
-    except BaseException:
-        with contextlib.suppress(ValueError, OSError):  # only the main thread may set handlers
-            signal.signal(signal.SIGINT, signal.SIG_IGN)
-            signal.signal(signal.SIGTERM, signal.SIG_IGN)
-        cancel.set()
-        t0 = time.monotonic()
-        deadline = t0 + max(0.0, grace_s)
-        while not done.is_set() and time.monotonic() < deadline:
-            done.wait(0.1)
-        killed = kill_descendants()
-        if log is not None:
-            state = "stopped" if done.is_set() else "still running"
-            log(f"cancelled: worker {state} after {time.monotonic() - t0:.1f}s; "
-                f"killed {len(killed)} leftover process(es)")
-        raise
-    return _finish(box, sink)
+    with _interrupts_kept() as kept:
+        done, box, sink = _start(fn, on_line)
+        try:
+            _wait(done, kept)
+        except BaseException as e:  # not raised by a SIGINT/SIGTERM handler
+            kept.append(e)
+    if not kept:
+        return _finish(box, sink)
+    cancel.set()
+    t0 = time.monotonic()
+    deadline = t0 + max(0.0, grace_s)
+    while not done.is_set() and time.monotonic() < deadline:
+        time.sleep(_POLL_S)
+    killed = kill_descendants()
+    if log is not None:
+        state = "stopped" if done.is_set() else "still running"
+        log(f"cancelled: worker {state} after {time.monotonic() - t0:.1f}s; "
+            f"killed {len(killed)} leftover process(es)")
+    raise kept[0]
 
 
 def _process_table() -> list[tuple[int, int, int]]:

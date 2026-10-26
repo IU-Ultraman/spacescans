@@ -409,9 +409,14 @@ def test_run_captured_stays_interruptible():
 
     timer = threading.Timer(0.3, lambda: signal.raise_signal(signal.SIGINT))
     timer.start()
+    previous = signal.getsignal(signal.SIGTERM)
     t0 = time.monotonic()
-    with pytest.raises(KeyboardInterrupt):
-        run_captured(stuck, lines.append)
+    try:
+        with pytest.raises(KeyboardInterrupt):
+            run_captured(stuck, lines.append)
+    finally:  # an interrupt leaves both signals ignored
+        signal.signal(signal.SIGINT, signal.default_int_handler)
+        signal.signal(signal.SIGTERM, previous)
     assert time.monotonic() - t0 < 2
     release.set()
     assert lines == ["worker started"]

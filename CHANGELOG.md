@@ -4,6 +4,19 @@ The Python package (`spacescans` on PyPI) and the R package in `r/` share versio
 release tags. R-specific changes are listed in more detail in `r/NEWS.md`. Versions before 0.3.0
 have no changelog; see the git tags `v0.2.0` to `v0.2.7`.
 
+## Unreleased
+
+### Fixed
+
+- **Interrupting the bridge on Python 3.13 and later.** A SIGINT or SIGTERM that reached the
+  bridge while it waited for its worker thread could, rarely, leave the lock of a
+  `threading.Event` held, which CPython 3.13 and later allow. `link` then never exited: R
+  stopped it only after `spacescans.interrupt_grace` (10 s), and a bridge whose R session had
+  died stayed behind. Any command could also report the interrupt as a `RuntimeError` instead
+  of `interrupted`. The bridge now keeps what the signal handler raises and raises it itself
+  once it has stopped waiting; after an interrupt it ignores further SIGINT and SIGTERM until
+  it has written the result.
+
 ## 0.3.2 (2026-10-26)
 
 `workers` now covers Step 1 of every catalog source. Results and cache keys are unchanged; the

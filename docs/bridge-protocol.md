@@ -212,9 +212,11 @@ writes the result (kind `interrupted`) and exits 130/143. Clients should
 allow 10 s before killing the bridge.
 
 `run` executes in-process (`Pipeline.from_dict`) on a worker thread; the main
-thread only waits, so SIGINT/SIGTERM are honoured within about 0.1 s even
-during a long C call. `run` and `resolve` wrap scalars where the schema allows
-only lists (R serialises length-1 vectors as scalars).
+thread only polls, every 0.05 s, so SIGINT/SIGTERM are honoured within about
+0.05 s even during a long C call. After an interrupt the bridge ignores further
+SIGINT/SIGTERM until it has written the result. `run` and `resolve` wrap
+scalars where the schema allows only lists (R serialises length-1 vectors as
+scalars).
 
 ## Versioning
 

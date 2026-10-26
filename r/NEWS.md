@@ -1,3 +1,13 @@
+# spacescans (development version)
+
+## Bug fixes
+
+* With Python 3.13 or later, interrupting `ss_link()` could, rarely, leave
+  the Python bridge hung: R stopped it only after `spacescans.interrupt_grace`
+  (10 s), and a bridge whose R session had died stayed behind. A cancelled job
+  could also be reported as failed instead of interrupted. Fixed in the Python
+  package.
+
 # spacescans 0.3.2
 
 ## New features
