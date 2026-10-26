@@ -1,0 +1,13 @@
+date,source,run,workers,wall_s,step1_s,step2_s,steps,peak_tree_rss_gb,peak_process_rss_gb,swap_used_mb_before,swap_used_mb_after,c3_identical_to_first_run,exposures_max_abs_diff_vs_again
+2026-10-25,noise,"one process, first",1,71.92,64.7,5.6,c3_noise=64.7;c4_noise=5.6,5.002,4.94,9614.19,9614.19,,4.26e-14
+2026-10-25,noise,4 workers,4,26.74,21.1,5.4,c3_noise=21.1;c4_noise=5.4,5.314,5.077,9614.19,9614.19,True,3.55e-14
+2026-10-25,noise,"one process, again",1,66.28,60.6,5.5,c3_noise=60.6;c4_noise=5.5,5.393,5.133,9614.19,9614.19,True,
+2026-10-25,vnl,"one process, first",1,64.43,57.6,6.1,c3_vnl=57.6;c4_vnl=6.1,5.982,5.86,9626.25,9626.25,,1.71e-13
+2026-10-25,vnl,4 workers,4,26.36,20.6,5.5,c3_vnl=20.6;c4_vnl=5.5,9.116,5.001,9626.25,9626.25,True,1.71e-13
+2026-10-25,vnl,"one process, again",1,63.91,58.0,5.7,c3_vnl=58.0;c4_vnl=5.7,5.341,5.166,9626.25,9626.25,True,
+2026-10-25,nhd_bluespace,"one process, first",1,265.45,257.7,7.4,c3_nhd_bluespace=257.7;c4_nhd_bluespace=7.4,1.859,1.665,9666.25,9666.25,,0
+2026-10-25,nhd_bluespace,4 workers,4,58.35,50.4,7.6,c3_nhd_bluespace=50.4;c4_nhd_bluespace=7.6,4.904,1.325,9666.25,9658.25,True,0
+2026-10-25,nhd_bluespace,"one process, again",1,181.89,174.0,7.5,c3_nhd_bluespace=174.0;c4_nhd_bluespace=7.5,2.012,1.812,9658.25,9642.25,True,
+2026-10-25,tiger_proximity,"one process, first",1,349.28,345.8,3.1,c3_tiger_roads=345.8;c4_tiger_roads=3.1,2.485,2.25,9642.25,9642.25,,0
+2026-10-25,tiger_proximity,4 workers,4,83.09,79.7,3.0,c3_tiger_roads=79.7;c4_tiger_roads=3.0,7.642,1.769,9642.25,9642.25,True,0
+2026-10-25,tiger_proximity,"one process, again",1,256.15,252.5,3.3,c3_tiger_roads=252.5;c4_tiger_roads=3.3,2.519,2.265,9642.25,9642.25,True,

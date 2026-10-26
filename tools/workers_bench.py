@@ -2,12 +2,15 @@
 
 Each source runs with workers=None and then workers=N, back to back, cold (no weight
 cache), at the episode level (as Table 2 was measured), with the real SubprocessExecutor.
+With --again it then runs once more in one process (label "again"), and the N-worker run is
+compared with that run: a source's first run also brings its files into the operating
+system's file cache, which favours whichever run comes next.
 The RSS of this process tree is sampled every 0.5 s (sum over processes and the largest
 one). One JSON line per run goes to results.jsonl as soon as the run ends. Step 1 outputs
 are compared exactly, the exposures by their largest difference (Step 2 runs in DuckDB,
 whose threads may add floats in another order). Prints no cohort values.
 
-  python tools/workers_bench.py <data_dir> <cohort.csv> <out_dir> <N> key [key ...]
+  python tools/workers_bench.py [--again] <data_dir> <cohort.csv> <out_dir> <N> key [key ...]
 """
 import json, os, platform, subprocess, sys, threading, time
 from pathlib import Path
@@ -51,7 +54,7 @@ def swap_used_mb() -> float:
     return float(used.rstrip("M"))
 
 
-def run_one(key, workers, cohort, data_dir, out_dir):
+def run_one(key, workers, cohort, data_dir, out_dir, label):
     import spacescans
     from spacescans.orchestrate import link
     sampler = Sampler()
@@ -59,17 +62,17 @@ def run_one(key, workers, cohort, data_dir, out_dir):
     sampler.start()
     started = time.strftime("%Y-%m-%dT%H:%M:%S%z")
     t0 = time.perf_counter()
-    res = link(cohort, [key], data_dir=data_dir, run_dir=out_dir / f"run_{key}_{workers}", cache=None,
+    res = link(cohort, [key], data_dir=data_dir, run_dir=out_dir / f"run_{key}_{label}", cache=None,
                executor="subprocess", workers=workers, output_level="episode", on_error="stop")
     wall = time.perf_counter() - t0
     sampler.halt.set(); sampler.join()
-    res.exposures.to_parquet(out_dir / f"exp_{key}_{workers}.parquet", index=False)
+    res.exposures.to_parquet(out_dir / f"exp_{key}_{label}.parquet", index=False)
     steps = []
     for s in res.steps:
         d = s.to_dict() if hasattr(s, "to_dict") else dict(s)
         steps.append({k: d.get(k) for k in ("name", "seconds", "maxrss_bytes", "rc", "cache_hit", "status")
                       if k in d})
-    rec = {"key": key, "workers": workers, "started_local": started, "wall_s": round(wall, 2),
+    rec = {"key": key, "label": label, "workers": workers, "started_local": started, "wall_s": round(wall, 2),
            "steps": steps, "peak_tree_rss_gb": round(sampler.peak_total / 1e9, 3),
            "peak_process_rss_gb": round(sampler.peak_max / 1e9, 3), "peak_processes": sampler.peak_n,
            "swap_used_mb_before": swap0, "swap_used_mb_after": swap_used_mb(),
@@ -77,33 +80,41 @@ def run_one(key, workers, cohort, data_dir, out_dir):
            "spacescans": spacescans.__file__, "python": platform.python_version()}
     with open(out_dir / "results.jsonl", "a") as fh:
         fh.write(json.dumps(rec) + "\n")
-    print(json.dumps({k: rec[k] for k in ("key", "workers", "wall_s", "peak_tree_rss_gb",
+    print(json.dumps({k: rec[k] for k in ("key", "label", "wall_s", "peak_tree_rss_gb",
                                           "peak_process_rss_gb", "failed")}), flush=True)
     return rec
 
 
 def main():
     import pandas as pd
-    data_dir, cohort, out_dir, n = sys.argv[1], sys.argv[2], Path(sys.argv[3]), int(sys.argv[4])
-    keys = sys.argv[5:]
+    args = sys.argv[1:]
+    again = "--again" in args
+    args = [a for a in args if a != "--again"]
+    data_dir, cohort, out_dir, n = args[0], args[1], Path(args[2]), int(args[3])
+    keys = args[4:]
     out_dir.mkdir(parents=True, exist_ok=True)
+    # (workers, label); the labels name the run and exposures files
+    runs = [(None, "None"), (n, str(n))] + ([(None, "again")] if again else [])
+    base = "again" if again else "None"
     for key in keys:
-        for workers in (None, n):
-            run_one(key, workers, cohort, data_dir, out_dir)
+        for workers, label in runs:
+            run_one(key, workers, cohort, data_dir, out_dir, label)
         # Step 1 outputs must be bit-identical. Step 2 runs in DuckDB, whose multi-threaded
         # aggregation orders rows and float sums differently from run to run (also between
         # two one-process runs), so the exposures are compared with a tolerance.
         import numpy as np
         c3 = {}
         for f in sorted((out_dir / f"run_{key}_None" / "output").glob("c3_*.parquet")):
-            c3[f.name] = pd.read_parquet(f).equals(pd.read_parquet(out_dir / f"run_{key}_{n}" / "output" / f.name))
-        a = pd.read_parquet(out_dir / f"exp_{key}_None.parquet")
+            ref = pd.read_parquet(f)
+            c3[f.name] = all(ref.equals(pd.read_parquet(out_dir / f"run_{key}_{label}" / "output" / f.name))
+                             for _, label in runs[1:])
+        a = pd.read_parquet(out_dir / f"exp_{key}_{base}.parquet")
         b = pd.read_parquet(out_dir / f"exp_{key}_{n}.parquet")
         num = [c for c in a.columns if pd.api.types.is_numeric_dtype(a[c]) and c != "episode_id"]
         maxdiff = max((float(np.nanmax(np.abs(a[c].to_numpy(float) - b[c].to_numpy(float))))
                        for c in num), default=0.0)
         nan_mismatch = int(sum((a[c].isna() != b[c].isna()).sum() for c in num))
-        rec = {"key": key, "compare": f"None vs {n}", "c3_identical": c3, "exposures_identical": a.equals(b),
+        rec = {"key": key, "compare": f"{base} vs {n}", "c3_identical": c3, "exposures_identical": a.equals(b),
                "exposures_max_abs_diff": maxdiff, "nan_mismatch": nan_mismatch,
                "same_episode_order": bool((a["episode_id"].values == b["episode_id"].values).all()),
                "rows": [len(a), len(b)]}

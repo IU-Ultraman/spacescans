@@ -1,4 +1,10 @@
-# Worker processes (`engine.workers`): wall time and memory (measured 2026-10-25)
+# Worker processes (`engine.workers`): wall time and memory
+
+Two measurements on the same laptop and cohort: 0.3.1 added workers for the polygon overlap
+and ACAG's NetCDF files, and 0.3.2 for the grid weights, the NHD and TIGER searches and TEMIS's
+HDF4 files.
+
+## 0.3.1: polygon overlap and ACAG's NetCDF files (2026-10-25)
 
 One cold run per source and setting on the 100,000-episode synthetic cohort `synth_100k`:
 `orchestrate.link()` with the SubprocessExecutor, buffer 270 m, raster resolution 25 m, no
@@ -39,12 +45,62 @@ rows in a different order. This also happens between two one-process runs.
 - In the container, ACAG's one-process peak is 20.2 GiB. Four workers add about 1 GB on the
   host, which would still fit in 23.4 GiB, but this has not been measured in the container.
 
+## 0.3.2: grid weights, NHD and TIGER (2026-10-25)
+
+Same cohort, settings and laptop as above, branch `parallel-workers` at c0bdcf5. Each source
+ran three times in a row: in one process, with four workers, and in one process again. A
+source's first run also brings its files into the operating system's file cache, which speeds
+up the runs after it: NHD's Step 1 took 257.7 s the first time and 174.0 s the third, TIGER's
+345.8 s and 252.5 s, while noise and VIIRS changed little. So the four-worker run is compared
+with the third run, which found the files at least as warm. The 0.3.1 table compares the first
+run with the second, and its speedups may include some of this effect. Raw numbers:
+[workers-0.3.2-2026-10-25.csv](workers-0.3.2-2026-10-25.csv).
+
+| Source (variables) | One process, first (s) | 4 workers (s) | One process, again (s) | Speedup | Step 1, again → 4 (s) | Peak memory, again → 4 (GB) |
+|---|---|---|---|---|---|---|
+| NPS Soundscape Noise (`noise`) | 71.9 | 26.7 | 66.3 | 2.5× | 60.6 → 21.1 | 5.39 → 5.31 |
+| VIIRS Nighttime Lights (`vnl`) | 64.4 | 26.4 | 63.9 | 2.4× | 58.0 → 20.6 | 5.34 → 9.12 |
+| NHD Bluespace (`nhd_bluespace`) | 265.5 | 58.4 | 181.9 | 3.1× | 174.0 → 50.4 | 2.01 → 4.90 |
+| TIGER Road Distance (`tiger_proximity`) | 349.3 | 83.1 | 256.2 | 3.1× | 252.5 → 79.7 | 2.52 → 7.64 |
+
+Step 1 ran 2.81 (VIIRS), 2.88 (noise), 3.17 (TIGER) and 3.45 (NHD) times faster with four
+workers. Step 2 of these sources takes 3 to 8 s and does not use the workers. Peak memory rose
+by up to 5 GB; each TIGER worker, for example, reads the county polygons and the roads of its
+year.
+
+**ACAG and TEMIS.** ACAG's Step 1 is grid weights too. Run on its own with the same cohort
+(`spacescans run` of its rendered config), it took 52.5 s in one process, 18.1 s with four
+workers and 52.7 s in one process again (2.91 times faster). TEMIS's Step 1 is grid weights as
+well, 6.2 s in one process and 4.6 s with four workers at 10,000 episodes. TEMIS decodes its
+daily files in workers only on its HDF4 path, which runs when no converted (parquet) copy
+covers the request, for example when the data directory is read-only. One feature's 2,555
+daily files (uvddc, 2013-2019, for the 3,212 cells of a 10,000-episode cohort) took 33.5 s in
+one process, 8.2 s with four workers and 17.1 s in one process again.
+
+**VIIRS files stay in one process.** A version that also read VIIRS's seven annual files in
+workers saved nothing at 100,000 episodes (Step 2 took 6.0 s either way), so it was left out.
+The VIIRS row above was measured without it; the other sources do not use that code.
+
+**Same results.** Every Step 1 output was identical in the three runs, and so were ACAG's
+Step 1 weights (234,181 rows) and TEMIS's HDF4 rows. NHD's and TIGER's exposures were
+identical too. Noise's and VIIRS's exposures differed by at most 1.7e-13 absolute (8e-16
+relative), no more than their two one-process runs differed from each other: the difference
+comes from Step 2 in DuckDB.
+
+**Caveats.** These are host numbers, as for 0.3.1, not the Linux container of Table 2. Swap
+held 9.6 GB before the runs and did not grow during them.
+
 ## Reproducing
 
 ```sh
+# 0.3.1 table
 python tools/workers_bench.py <data_dir> synth_100k.csv <out_dir> 4 walkability ndi cbp_zcta5 fara_tract acag
+# 0.3.2 table
+python tools/workers_bench.py --again <data_dir> synth_100k.csv <out_dir> 4 noise vnl nhd_bluespace tiger_proximity
 ```
 
 `<out_dir>/results.jsonl` gets one record per run (wall time, steps, peak memory, swap) and one
 comparison per source. The run directories keep the step outputs; the exposures are written to
-`exp_<key>_<workers>.parquet`. All of these hold cohort-derived values: delete them afterwards.
+`exp_<key>_<label>.parquet`, where the label is `None` (one process), the number of workers, or
+`again`. All of these hold cohort-derived values: delete them afterwards. Noise, NHD and TIGER
+were measured with a copy of the script that differed only in its run labels.
