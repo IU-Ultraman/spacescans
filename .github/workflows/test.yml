@@ -7,6 +7,8 @@ on:
 
 jobs:
   test-base:
+    # A job takes 2-4 minutes; a hung test fails it after 30 instead of GitHub's 6 hours.
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
