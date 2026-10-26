@@ -35,6 +35,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+from spacescans.engine.parallel import map_ordered, resolve_workers
 from spacescans.pipeline.registry import register_reader
 
 # HDF4 processing constants (identical to v1)
@@ -178,6 +179,17 @@ def _process_one_file(hdf_path: str, keep_ids: np.ndarray) -> pd.DataFrame:
     return df.dropna(subset=["value"])
 
 
+# Daily files per task when engine.workers > 1: a task's transfer and start are small next
+# to reading 50 files, and a feature's ~2,500 days still make many tasks per worker.
+_HDF_FILES_PER_TASK = 50
+
+
+def _process_hdf_files(task: tuple) -> list[pd.DataFrame]:
+    """:func:`_process_one_file` for consecutive days: one unit of work for a worker."""
+    paths, keep_ids = task
+    return [_process_one_file(path, keep_ids) for path in paths]
+
+
 # ---------------------------------------------------------------------------
 # Plugin class
 # ---------------------------------------------------------------------------
@@ -244,12 +256,23 @@ class TemisExposureSource:
                 if not files:
                     continue
 
-                frames = []
+                # engine.workers above 1 (the step's config): the daily files are read by
+                # that many processes and concatenated in date order, as in one process
+                workers = resolve_workers(
+                    getattr(getattr(self.config, "engine", None), "workers", None))
                 total = len(files)
-                for idx, fp in enumerate(files, start=1):
-                    if idx % 100 == 0 or idx == total:
-                        print(f"[temis/{feat}] {idx}/{total} {os.path.basename(fp)}")
-                    frames.append(_process_one_file(fp, keep_ids))
+                if workers == 1:
+                    frames = []
+                    for idx, fp in enumerate(files, start=1):
+                        if idx % 100 == 0 or idx == total:
+                            print(f"[temis/{feat}] {idx}/{total} {os.path.basename(fp)}")
+                        frames.append(_process_one_file(fp, keep_ids))
+                else:
+                    tasks = [(files[i:i + _HDF_FILES_PER_TASK], keep_ids)
+                             for i in range(0, total, _HDF_FILES_PER_TASK)]
+                    print(f"[temis/{feat}] {total} files on {workers} worker processes", flush=True)
+                    frames = [df for part in map_ordered(_process_hdf_files, tasks, workers)
+                              for df in part]
 
                 if not frames:
                     continue

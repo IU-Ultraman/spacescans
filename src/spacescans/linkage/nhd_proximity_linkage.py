@@ -24,6 +24,7 @@ import pandas as pd
 from shapely import force_2d, make_valid
 from shapely.geometry import box
 
+from spacescans.engine.parallel import map_ordered, resolve_workers
 from spacescans.io.writers import write_table
 from spacescans.linkage.helpers import load_patients
 from spacescans.models.config import DatasetConfig
@@ -274,10 +275,48 @@ def _nearest_dist(pts_m: gpd.GeoDataFrame, features_m: gpd.GeoDataFrame | None) 
     return joined["_d"].values.astype(float)
 
 
+def _nhd_tile(task: tuple) -> tuple[dict[str, np.ndarray], dict[str, float], int, int]:
+    """One tile of :func:`run_nhd_proximity`, in this process or in a worker.
+
+    ``task`` is ``(gdb_path, bbox, cat_layers, cache_paths, points)``: the tile's padded
+    WGS84 bbox, the layers of each category, each category's cache file (or None), and
+    the tile's points (EPSG:5070). Returns the distance per category for those points,
+    the seconds spent loading layers and in ``sjoin_nearest``, and the cache hits and
+    misses.
+    """
+    gdb_path, bbox, cat_layers, cache_paths, points = task
+    pts_chunk = gpd.GeoDataFrame(geometry=points, crs=_CRS_M)
+    out: dict[str, np.ndarray] = {}
+    timings = {"layer_load": 0.0, "sjoin_nearest": 0.0}
+    hits = misses = 0
+    for cat in _CATEGORIES:
+        cache_path = cache_paths[cat]
+        was_hit = bool(cache_path and cache_path.exists())
+
+        t = time.perf_counter()
+        features = _load_or_compute_tile_category(gdb_path, bbox, cat_layers[cat], cat, cache_path)
+        timings["layer_load"] += time.perf_counter() - t
+
+        if was_hit:
+            hits += 1
+        else:
+            misses += 1
+
+        t = time.perf_counter()
+        out[cat] = _nearest_dist(pts_chunk, features)
+        timings["sjoin_nearest"] += time.perf_counter() - t
+    return out, timings, hits, misses
+
+
 @register_pattern("nhd_proximity")
 def run_nhd_proximity(config: DatasetConfig, engine: AggregationEngine) -> Path:
-    """Compute per-geoid distance to nearest NHD flow/water/area/coast feature."""
+    """Compute per-geoid distance to nearest NHD flow/water/area/coast feature.
+
+    ``engine.workers`` above 1 computes the tiles in that many worker processes. Each
+    tile writes only its own points' distances, so the output does not change.
+    """
     t_total = time.perf_counter()
+    workers = resolve_workers(config.engine.workers)
 
     patients = load_patients(config)
     pts_ll = gpd.GeoDataFrame(
@@ -377,43 +416,55 @@ def run_nhd_proximity(config: DatasetConfig, engine: AggregationEngine) -> Path:
     cache_hits = 0
     cache_misses = 0
 
-    for i, tid in enumerate(tile_ids):
+    def tile_task(tid) -> tuple[np.ndarray, tuple]:
         tile_geom = grid_gdf.loc[grid_gdf["tile_id"] == tid, "geometry"].iloc[0]
         sel = np.where(pts_ll["tile_id"].values == tid)[0]
         bbox = _tile_bbox_ll(tile_geom)
-        pts_chunk = pts_m.iloc[sel]
         # Geographic cache key from the tile's SW corner (global lattice) —
         # NOT the cohort-relative tid, which collided across cohorts.
         gx, gy = _global_tile_index(tile_geom.bounds[0], tile_geom.bounds[1])
+        cache_paths = {cat: (_cache_path(cache_dir, gx, gy, cat) if cache_dir else None)
+                       for cat in _CATEGORIES}
+        return sel, (gdb_path, bbox, cat_layers, cache_paths, pts_m.geometry.iloc[sel])
 
+    def tile_done(sel, result) -> None:
+        nonlocal cache_hits, cache_misses
+        d, part, hits, misses = result
         for cat in _CATEGORIES:
-            cache_path = _cache_path(cache_dir, gx, gy, cat) if cache_dir else None
-            was_hit = bool(cache_path and cache_path.exists())
+            dists[cat][sel] = d[cat]
+        for k, v in part.items():
+            timings[k] += v
+        cache_hits += hits
+        cache_misses += misses
 
-            t = time.perf_counter()
-            features = _load_or_compute_tile_category(
-                gdb_path, bbox, cat_layers[cat], cat, cache_path,
-            )
-            timings["layer_load"] += time.perf_counter() - t
+    def progress(done: int) -> None:
+        elapsed = time.perf_counter() - t_total
+        print(
+            f"[nhd_proximity] tile {done}/{len(tile_ids)} "
+            f"({100*done/len(tile_ids):5.1f}%) elapsed={elapsed/60:.2f}m",
+            flush=True,
+        )
 
-            if was_hit:
-                cache_hits += 1
-            else:
-                cache_misses += 1
+    every = max(1, len(tile_ids) // 20)
+    if workers == 1 or len(tile_ids) < 2:
+        for i, tid in enumerate(tile_ids):
+            sel, task = tile_task(tid)
+            tile_done(sel, _nhd_tile(task))
+            if (i + 1) % every == 0 or (i + 1) == len(tile_ids):
+                progress(i + 1)
+    else:
+        built = [tile_task(tid) for tid in tile_ids]
+        print(f"[nhd_proximity] {len(built)} tiles on {workers} worker processes", flush=True)
+        done = [0]
 
-            t = time.perf_counter()
-            d = _nearest_dist(pts_chunk, features)
-            timings["sjoin_nearest"] += time.perf_counter() - t
+        def on_done(_i: int) -> None:
+            done[0] += 1
+            if done[0] % every == 0 or done[0] == len(built):
+                progress(done[0])
 
-            dists[cat][sel] = d
-
-        if (i + 1) % max(1, len(tile_ids) // 20) == 0 or (i + 1) == len(tile_ids):
-            elapsed = time.perf_counter() - t_total
-            print(
-                f"[nhd_proximity] tile {i+1}/{len(tile_ids)} "
-                f"({100*(i+1)/len(tile_ids):5.1f}%) elapsed={elapsed/60:.2f}m",
-                flush=True,
-            )
+        results = map_ordered(_nhd_tile, [task for _sel, task in built], workers, on_done=on_done)
+        for (sel, _task), result in zip(built, results):
+            tile_done(sel, result)
 
     # 4) Combine: dist_blue = min across categories
     t = time.perf_counter()
@@ -440,6 +491,9 @@ def run_nhd_proximity(config: DatasetConfig, engine: AggregationEngine) -> Path:
     misc = max(0.0, grand_total - measured)
 
     print("[nhd_proximity] === SUMMARY ===", flush=True)
+    if workers > 1 and len(tile_ids) > 1:
+        print(f"[nhd_proximity]   layer_load and sjoin_nearest below are summed over {workers} "
+              f"worker processes; total is wall time", flush=True)
     for k in sorted(timings.keys(), key=lambda x: -timings[x]):
         pct = 100 * timings[k] / grand_total if grand_total > 0 else 0
         print(f"[nhd_proximity]   {k:14s} {timings[k]/60:6.2f}m ({pct:5.1f}%)", flush=True)

@@ -4,6 +4,26 @@ The Python package (`spacescans` on PyPI) and the R package in `r/` share versio
 release tags. R-specific changes are listed in more detail in `r/NEWS.md`. Versions before 0.3.0
 have no changelog; see the git tags `v0.2.0` to `v0.2.7`.
 
+## Unreleased
+
+`workers` now covers Step 1 of every catalog source. Results and cache keys are unchanged; the
+default is still one process.
+
+### Added
+
+- **`workers` for the raster, line and point sources.** Each item below gets worker processes;
+  its own output is identical whatever the number of workers.
+  - The raster weights (`grid_weights`), the Step 1 of NPS Soundscape Noise, VIIRS Nighttime
+    Lights, TEMIS UV Exposure, ACAG and custom grids, by chunk of 5,000 buffers. The chunks are
+    those of one process.
+  - The nearest-feature distances of NHD Bluespace (`nhd_proximity`), by 0.5° tile.
+  - The road distances of TIGER Road Distance (`tiger_proximity`), by year.
+  - TEMIS's HDF4 reader, by batch of 50 days. It runs only when no converted (parquet) copy
+    covers the request; the parquet path is unchanged.
+- With the polygon overlap of 0.3.1, Step 1 of all 11 catalog sources now uses the workers. At
+  100,000 episodes on an Apple M4 Pro, four workers ran Step 1 of noise, VIIRS, NHD and TIGER
+  2.8 to 3.4 times faster than one process (`docs/workers.md`).
+
 ## 0.3.1 (2026-10-25)
 
 Worker processes for the parts of a pipeline step that DuckDB does not run. Results and cache

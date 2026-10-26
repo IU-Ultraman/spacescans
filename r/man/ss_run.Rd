@@ -41,8 +41,10 @@ the run summary.}
 \item{strict}{If \code{TRUE}, unknown config keys are an error.}
 
 \item{workers}{Worker processes for the work DuckDB does not do, where the
-config's pattern supports it (\code{boundary_overlap_fast}, \code{acag_multi});
-written to the config's \code{engine.workers}. Default \code{NULL}, one process.}
+config's pattern supports it (\code{boundary_overlap_fast}, \code{grid_weights},
+\code{nhd_proximity}, \code{tiger_proximity}, \code{acag_multi}, and the HDF4 path of the
+TEMIS reader); written to the config's \code{engine.workers}. Default \code{NULL},
+one process.}
 }
 \value{
 With \code{read = TRUE}, a data frame (see \code{\link[=ss_read_result]{ss_read_result()}}) with

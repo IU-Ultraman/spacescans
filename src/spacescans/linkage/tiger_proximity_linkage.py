@@ -31,6 +31,7 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 
+from spacescans.engine.parallel import map_ordered, resolve_workers
 from spacescans.io.spatial_readers import read_vector
 from spacescans.io.writers import write_table
 from spacescans.linkage.helpers import load_patients
@@ -163,10 +164,67 @@ def _nearest_dist_exact(
     return dist
 
 
+# The county polygons of a worker process, read once per county file (a worker lives for
+# one step, so the copy cannot outlive the file it was read from).
+_PROCESS_COUNTIES: dict[str, gpd.GeoDataFrame] = {}
+
+
+def _tiger_year(task: tuple) -> dict:
+    """One year of :func:`run_tiger_proximity`, in this process or in a worker.
+
+    ``task`` is ``(year, points, counties_m, county_file, raw_dir, cache_dir)``. The points
+    are the cohort's, in the metric CRS. ``counties_m`` is the county polygons in that CRS,
+    or None in a worker, which reads ``county_file`` once. Returns the year's primary and
+    secondary distances, the counties searched and those with roads, the cache hits and
+    misses, and the seconds spent.
+    """
+    year, points, counties_m, county_file, raw_dir, cache_dir = task
+    t_year = time.perf_counter()
+    if counties_m is None:
+        key = str(county_file)
+        if key not in _PROCESS_COUNTIES:
+            _PROCESS_COUNTIES[key] = read_vector(county_file).to_crs(_CRS_METRIC)
+        counties_m = _PROCESS_COUNTIES[key]
+    pts_m = gpd.GeoDataFrame(geometry=points)
+    year_roads: dict[tuple[str, str], gpd.GeoDataFrame | None] = {}
+    stats = {"hits": 0, "misses": 0, "load_filter": 0.0}
+
+    def load_county(statefp: str, countyfp: str):
+        if (statefp, countyfp) in year_roads:
+            return year_roads[(statefp, countyfp)]
+        t0 = time.perf_counter()
+        st, co = _road_county(statefp, countyfp, year)
+        cache_path = _filtered_roads_path(cache_dir, st, co, year) if cache_dir else None
+        if cache_path is not None and cache_path.exists():
+            stats["hits"] += 1
+        else:
+            stats["misses"] += 1
+        roads = _get_county_roads(st, co, year, raw_dir, cache_dir)
+        roads = roads.to_crs(_CRS_METRIC) if roads is not None and len(roads) else None
+        year_roads[(statefp, countyfp)] = roads
+        stats["load_filter"] += time.perf_counter() - t0
+        return roads
+
+    t = time.perf_counter()
+    d_pri = _nearest_dist_exact(pts_m, counties_m, "S1100", load_county)
+    d_sec = _nearest_dist_exact(pts_m, counties_m, "S1200", load_county)
+    return {"year": year, "d_pri": d_pri, "d_sec": d_sec,
+            "n_searched": len(year_roads),
+            "n_loaded": sum(1 for r in year_roads.values() if r is not None),
+            "hits": stats["hits"], "misses": stats["misses"],
+            "load_filter": stats["load_filter"], "sjoin_nearest": time.perf_counter() - t,
+            "seconds": time.perf_counter() - t_year}
+
+
 @register_pattern("tiger_proximity")
 def run_tiger_proximity(config: DatasetConfig, engine: AggregationEngine) -> Path:
-    """Compute (geoid, year) × distance to nearest primary/secondary road."""
+    """Compute (geoid, year) × distance to nearest primary/secondary road.
+
+    ``engine.workers`` above 1 computes the years in that many worker processes. Each
+    year is the same search as in one process, so the output does not change.
+    """
     t_total = time.perf_counter()
+    workers = resolve_workers(config.engine.workers)
 
     patients = load_patients(config)
     pts = gpd.GeoDataFrame(
@@ -205,49 +263,38 @@ def run_tiger_proximity(config: DatasetConfig, engine: AggregationEngine) -> Pat
     cache_hits = 0
     cache_misses = 0
 
-    records = []
-    for y in years:
-        t_year = time.perf_counter()
-        year_roads: dict[tuple[str, str], gpd.GeoDataFrame | None] = {}
-
-        def load_county(statefp: str, countyfp: str, _y=y, _store=year_roads):
-            nonlocal cache_hits, cache_misses
-            if (statefp, countyfp) in _store:
-                return _store[(statefp, countyfp)]
-            t0 = time.perf_counter()
-            st, co = _road_county(statefp, countyfp, _y)
-            cache_path = _filtered_roads_path(cache_dir, st, co, _y) if cache_dir else None
-            if cache_path is not None and cache_path.exists():
-                cache_hits += 1
-            else:
-                cache_misses += 1
-            roads = _get_county_roads(st, co, _y, raw_dir, cache_dir)
-            roads = roads.to_crs(_CRS_METRIC) if roads is not None and len(roads) else None
-            _store[(statefp, countyfp)] = roads
-            timings["load_filter"] += time.perf_counter() - t0
-            return roads
-
-        t = time.perf_counter()
-        d_pri = _nearest_dist_exact(pts_m, counties_m, "S1100", load_county)
-        d_sec = _nearest_dist_exact(pts_m, counties_m, "S1200", load_county)
-        timings["sjoin_nearest"] += time.perf_counter() - t
-
-        n_loaded = sum(1 for r in year_roads.values() if r is not None)
-        if n_loaded == 0:
+    def year_done(res: dict) -> None:
+        nonlocal cache_hits, cache_misses
+        cache_hits += res["hits"]
+        cache_misses += res["misses"]
+        timings["load_filter"] += res["load_filter"]
+        timings["sjoin_nearest"] += res["sjoin_nearest"]
+        y = res["year"]
+        if res["n_loaded"] == 0:
             print(f"[tiger_proximity] year {y}: no roads found, skipping", flush=True)
-            continue
-
+            return
         records.append(pd.DataFrame({
             "geoid": patients[config.buffer.geoid_col].values,
             "year": y,
-            "dist_primary_m": d_pri,
-            "dist_secondary_m": d_sec,
+            "dist_primary_m": res["d_pri"],
+            "dist_secondary_m": res["d_sec"],
         }))
         print(
-            f"[tiger_proximity] year {y} done in {(time.perf_counter() - t_year)/60:.2f}m  "
-            f"({len(year_roads)} counties searched, {n_loaded} with roads)",
+            f"[tiger_proximity] year {y} done in {res['seconds']/60:.2f}m  "
+            f"({res['n_searched']} counties searched, {res['n_loaded']} with roads)",
             flush=True,
         )
+
+    records = []
+    if workers == 1 or len(years) < 2:
+        for y in years:
+            year_done(_tiger_year((y, pts_m.geometry, counties_m, None, raw_dir, cache_dir)))
+    else:
+        tasks = [(y, pts_m.geometry, None, config.source.county_file, raw_dir, cache_dir)
+                 for y in years]
+        print(f"[tiger_proximity] {len(tasks)} years on {workers} worker processes", flush=True)
+        for res in map_ordered(_tiger_year, tasks, workers):
+            year_done(res)
 
     # 3) Combine + derive prisec column
     t = time.perf_counter()
@@ -268,6 +315,9 @@ def run_tiger_proximity(config: DatasetConfig, engine: AggregationEngine) -> Pat
     other_s = max(0.0, grand_total - measured)
 
     print("[tiger_proximity] === SUMMARY ===", flush=True)
+    if workers > 1 and len(years) > 1:
+        print(f"[tiger_proximity]   load_filter and sjoin_nearest below are summed over "
+              f"{workers} worker processes; total is wall time", flush=True)
     for k in sorted(timings.keys(), key=lambda x: -timings[x]):
         pct = 100 * timings[k] / grand_total if grand_total > 0 else 0
         print(f"[tiger_proximity]   {k:16s} {timings[k]/60:6.2f}m ({pct:5.1f}%)", flush=True)

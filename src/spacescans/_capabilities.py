@@ -41,7 +41,8 @@ FLAGS: dict[str, bool] = {
     "output_level": True,
     "fara_missing_skip": True,       # FARA leaves tracts without a value out of the buffer mean (0.3)
     # engine.workers, RunContext.engine["workers"], link(workers=) and the bridge's workers:
-    # worker processes for polygon-overlap tiles and ACAG files (0.3.1)
+    # worker processes for polygon-overlap tiles and ACAG files (0.3.1); for grid weights,
+    # the NHD and TIGER searches and the VIIRS and TEMIS (HDF4) files as well (0.3.2)
     "workers": True,
 }
 

@@ -78,9 +78,10 @@ at once (see \code{\link[=ss_job_status]{ss_job_status()}}). Only a job with an 
 survives the R session.}
 
 \item{workers}{Worker processes per pipeline step for the work DuckDB does
-not do: the polygon-overlap weights (block groups, tracts, ZCTAs) and the
-ACAG NetCDF files. Default \code{NULL}, one process. The result is the same with
-any number; each worker adds memory.}
+not do: the spatial computation of every catalog source (polygon overlap,
+raster weights, nearest-feature distances) and the decoding of the ACAG
+NetCDF and TEMIS HDF4 files. Default \code{NULL}, one process. The result is
+the same with any number; each worker adds memory.}
 }
 \value{
 Participant level: a data frame with \code{pid} and one column per

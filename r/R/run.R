@@ -14,8 +14,10 @@
 #'   example `"8GB"`). They cap DuckDB only: C3 patterns and the pandas-based
 #'   FAQSD and TEMIS readers do not run inside DuckDB.
 #' @param workers Worker processes for the work DuckDB does not do, where the
-#'   config's pattern supports it (`boundary_overlap_fast`, `acag_multi`);
-#'   written to the config's `engine.workers`. Default `NULL`, one process.
+#'   config's pattern supports it (`boundary_overlap_fast`, `grid_weights`,
+#'   `nhd_proximity`, `tiger_proximity`, `acag_multi`, and the HDF4 path of the
+#'   TEMIS reader); written to the config's `engine.workers`. Default `NULL`,
+#'   one process.
 #' @param read If `TRUE` (default), return the output table; otherwise return
 #'   the run summary.
 #' @param progress Show a progress line (default: in interactive sessions).

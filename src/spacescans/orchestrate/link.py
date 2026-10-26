@@ -659,9 +659,9 @@ def link(cohort: pd.DataFrame | str | os.PathLike, variables: Sequence[str], *,
     ``memory_limit`` cap DuckDB in every step (subprocess: through the
     rendered configs; in-process: through the executor too). ``workers``
     (default None, one process) spreads the Python-side work of a step over
-    that many worker processes where a step supports it (the tiles of the
-    polygon-overlap weights, ACAG's NetCDF files); the result is the same
-    with any number, and so are the cache keys.
+    that many worker processes where a step supports it (Step 1 of every
+    catalog source; the ACAG, VIIRS and TEMIS HDF4 files); the result is the
+    same with any number, and so are the cache keys.
 
     Raises ``LinkConfigError``, ``cohort.CohortError``,
     ``custom.CustomExposomeError``, ``data.DataError`` subclasses

@@ -95,9 +95,10 @@
 #' @param threads,memory_limit DuckDB worker threads and memory cap (for
 #'   example `"8GB"`) for the pipeline steps.
 #' @param workers Worker processes per pipeline step for the work DuckDB does
-#'   not do: the polygon-overlap weights (block groups, tracts, ZCTAs) and the
-#'   ACAG NetCDF files. Default `NULL`, one process. The result is the same with
-#'   any number; each worker adds memory.
+#'   not do: the spatial computation of every catalog source (polygon overlap,
+#'   raster weights, nearest-feature distances) and the decoding of the ACAG
+#'   NetCDF and TEMIS HDF4 files. Default `NULL`, one process. The result is
+#'   the same with any number; each worker adds memory.
 #' @param on_error `"stop"` stops at the first failing data source;
 #'   `"continue"` runs the others and returns what succeeded (with a
 #'   warning naming the failures).

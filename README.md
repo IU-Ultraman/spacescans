@@ -112,8 +112,8 @@ meters, default 270), `raster_res_m` (default 25), `cache` (a directory that kee
 weights between calls, so further sources on the same geography reuse them), `custom`
 (registered datasets, below), `on_error` (`"stop"` or `"continue"` when a source fails),
 `threads` and `memory_limit` (DuckDB limits per step) and `workers` (processes per step for the
-polygon-overlap weights and ACAG's NetCDF files; default one, and the result is the same with
-any number). `spacescans.catalog.variables()` lists
+spatial computation of every catalog source and for decoding ACAG's NetCDF and TEMIS's HDF4
+files; default one, and the result is the same with any number). `spacescans.catalog.variables()` lists
 the catalog keys; `spacescans.catalog.coverage(cohort, keys)` checks before a run which episodes
 fall inside each source's spatial and temporal coverage.
 

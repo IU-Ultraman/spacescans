@@ -1,3 +1,13 @@
+# spacescans (development version)
+
+## New features
+
+* `workers` now also covers the raster weights (NPS Soundscape Noise, VIIRS
+  Nighttime Lights, TEMIS UV Exposure, ACAG), the distances of NHD Bluespace
+  and TIGER Road Distance, and the HDF4 path of the TEMIS reader: Step 1 of
+  every catalog source uses the workers. The result still does not depend on
+  their number.
+
 # spacescans 0.3.1
 
 ## New features
