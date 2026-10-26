@@ -79,8 +79,8 @@ The three `SPACESCANS_WEB_*` suites compare this package with the old web code, 
   same backend.
 - **After the cutover:** the web's runners are shims over this package, and the suites fail
   on the missing internals (ImportError `_adapter`, no `render_yaml`). Point the three
-  variables at a worktree of the paper tag instead, for example
-  `git -C $A/spacescans-web worktree add $A/spacescans-web-3991c3b paper-jamia-2026`.
+  variables at a worktree of the tag `web-pipeline-0.2.7` (web 3991c3b) instead, for example
+  `git -C $A/spacescans-web worktree add $A/spacescans-web-3991c3b web-pipeline-0.2.7`.
 
 To run everything on this Mac:
 

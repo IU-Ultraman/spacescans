@@ -1,6 +1,6 @@
 """Gate A3 on real web task outputs (local only; skipped unless configured).
 
-R1 is the set of complete web task directories the JAMIA paper validated
+R1 is the set of complete web task directories the paper validated
 (spacescans-paper results/data/validation/pipeline_outputs). Their C4
 values derive from licensed sources, so they are never copied into this
 repository; point the test at them instead:
