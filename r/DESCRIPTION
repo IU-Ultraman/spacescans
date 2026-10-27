@@ -1,7 +1,7 @@
 Package: spacescans
 Type: Package
 Title: Link Time-Referenced Geolocation Data to the Spatial and Contextual Exposome
-Version: 0.3.3
+Version: 0.3.4
 Authors@R: c(
     person("Xuguang", "Ai", email = "xuguang.ai@outlook.com", role = c("aut", "cre")),
     person("Regenstrief Institute", role = "aut"))
@@ -38,7 +38,7 @@ VignetteBuilder: knitr
 SystemRequirements: Python 3.12 with the 'spacescans' Python package,
     installed by ss_install() with 'uv' (<https://docs.astral.sh/uv/>);
     macOS 14 or later on Apple silicon is the supported platform.
-Config/spacescans/version: 0.3.3
+Config/spacescans/version: 0.3.4
 Config/spacescans/protocol: 1
 Config/testthat/edition: 3
 Encoding: UTF-8

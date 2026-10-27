@@ -1,4 +1,4 @@
-# spacescans (development version)
+# spacescans 0.3.4
 
 * Tests only; nothing in the package changed. One test expected `/bin/sh` back
   unchanged from the interpreter lookup, which canonicalises the directory: on
