@@ -1,4 +1,4 @@
-# spacescans (development version)
+# spacescans 0.3.3
 
 ## Bug fixes
 
