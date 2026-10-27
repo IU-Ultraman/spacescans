@@ -11,6 +11,15 @@ have no changelog; see the git tags `v0.2.0` to `v0.2.7`.
 - Python 3.14 is in the CI matrix and in the classifiers. Nothing in the package changed for
   it: the base suite passed on 3.14 before it was added.
 
+### Fixed
+
+- R package tests (the package itself is unchanged). One test expected `/bin/sh` back
+  unchanged from the interpreter lookup, which canonicalises the directory: on a Linux with a
+  merged `/usr` (current Ubuntu) that is `/usr/bin/sh`, and the test failed. It now uses a file
+  of its own. The tests that need a POSIX shell, 0700 permissions or POSIX paths are skipped on
+  Windows, which is not a supported platform. Seen in the R-universe checks of 0.3.3: macOS
+  passed, Linux failed that one test, Windows failed 103.
+
 ## 0.3.3 (2026-10-27)
 
 ### Fixed

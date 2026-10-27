@@ -17,12 +17,16 @@ test_that("ss_use_python() wins over SPACESCANS_PYTHON and is per session", {
   d <- withr::local_tempdir()
   fake <- file.path(d, "python")
   file.create(fake)
-  withr::local_envvar(SPACESCANS_PYTHON = "/bin/sh")
+  # The variable names a second file here, not /bin/sh: the interpreter's directory is
+  # canonicalised, and on a Linux with a merged /usr, /bin/sh comes back as /usr/bin/sh.
+  other <- file.path(d, "other-python")
+  file.create(other)
+  withr::local_envvar(SPACESCANS_PYTHON = other)
   ss_use_python(fake, check = FALSE)
   expect_equal(ss_python()$source, "ss_use_python()")
   expect_equal(ss_python()$path, file.path(normalizePath(d), "python"))
   reset_spacescans_state()
-  expect_equal(ss_python(), list(path = "/bin/sh", source = "SPACESCANS_PYTHON"))
+  expect_equal(ss_python(), list(path = file.path(normalizePath(d), "other-python"), source = "SPACESCANS_PYTHON"))
 })
 
 test_that("a virtual environment directory resolves to its bin/python", {
@@ -35,13 +39,17 @@ test_that("a virtual environment directory resolves to its bin/python", {
 })
 
 test_that("the interpreter symlink is not resolved (that would lose the venv)", {
+  skip_if_windows()
   d <- withr::local_tempdir()
+  target <- file.path(d, "real-python")
+  file.create(target)
   link <- file.path(d, "python")
-  file.symlink("/bin/sh", link)
+  file.symlink(target, link)
   expect_equal(spacescans:::.ss_python_exe(link), file.path(normalizePath(d), "python"))
 })
 
 test_that("ss_install() environment is found through the envdir option", {
+  skip_if_windows()     # .ss_absolute() knows POSIX paths only
   local_clean_state()
   d <- withr::local_tempdir()
   dir.create(file.path(d, "bin"))

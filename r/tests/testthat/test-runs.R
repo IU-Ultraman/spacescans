@@ -5,6 +5,7 @@ runs_root <- function() spacescans:::.ss_runs_root()
 
 # The pid (and start time while it lived) of a process that has exited.
 dead_process <- function() {
+  skip_if_windows()     # needs a POSIX shell
   p <- processx::process$new("/bin/sh", c("-c", "sleep 0.3"))
   pid <- p$get_pid()
   start <- spacescans:::.ss_process_start(pid)
@@ -30,6 +31,7 @@ own_owner <- function(...) {
 }
 
 test_that("the run root is R_user_dir('spacescans', 'cache')/runs and a new run dir is owned", {
+  skip_if_windows()     # 0700/0600 modes and POSIX paths
   root <- withr::local_tempdir()
   withr::local_envvar(R_USER_CACHE_DIR = root)
   expect_equal(runs_root(), file.path(root, "R", "spacescans", "runs"))
@@ -55,6 +57,7 @@ test_that("the run root is R_user_dir('spacescans', 'cache')/runs and a new run 
 })
 
 test_that("without a usable run root the session falls back to tempdir() with one warning", {
+  skip_if_windows()     # 0700 mode and POSIX paths
   base <- withr::local_tempdir()
   blocker <- file.path(base, "not-a-dir")
   writeLines("x", blocker)

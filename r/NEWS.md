@@ -1,3 +1,12 @@
+# spacescans (development version)
+
+* Tests only; nothing in the package changed. One test expected `/bin/sh` back
+  unchanged from the interpreter lookup, which canonicalises the directory: on
+  a Linux with a merged `/usr` (current Ubuntu) that is `/usr/bin/sh`. It now
+  uses a file of its own. The tests that need a POSIX shell, 0700 permissions
+  or POSIX paths are skipped on Windows, which is not a supported platform.
+  (Seen in the R-universe checks of 0.3.3.)
+
 # spacescans 0.3.3
 
 ## Bug fixes

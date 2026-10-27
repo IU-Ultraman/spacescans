@@ -10,6 +10,7 @@ fake_bridge_script <- function() {
 # keyed by command (see fake_bridge.R). Returns the fake's directory; its
 # "log" subdirectory receives each request and what the fake saw.
 local_fake_bridge <- function(scenario = list(), env = parent.frame()) {
+  skip_if_windows()     # the wrapper below is a POSIX shell script
   dir <- withr::local_tempdir(.local_envir = env)
   wrapper <- file.path(dir, "python")
   libs <- paste(.libPaths(), collapse = ":")

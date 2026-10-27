@@ -16,6 +16,16 @@ skip_if_no_geo <- function() {
   if (!isTRUE(caps$extras$geo$available)) skip("the geo extra is not installed")
 }
 
+# Windows is not a supported platform (DESCRIPTION: macOS 14 or later on Apple
+# silicon). Fixtures that need a POSIX shell, and tests of 0700 permissions or
+# POSIX paths, skip there so that R CMD check still reports on the rest.
+skip_if_windows <- function() {
+  if (.Platform$OS.type == "windows") {
+    skip("Windows is not a supported platform (needs a POSIX shell, permissions or paths)")
+  }
+  invisible()
+}
+
 reset_spacescans_state <- function() {
   st <- spacescans:::.ss_state
   rm(list = ls(st, all.names = TRUE), envir = st)
@@ -29,6 +39,7 @@ local_clean_state <- function(env = parent.frame()) {
 # A shell script that acts as "python" but runs the bridge with the geo, rda,
 # hdf4 and nc stacks hidden, i.e. like a base-only install.
 base_only_python <- function(dir = withr::local_tempdir(.local_envir = parent.frame())) {
+  skip_if_windows()     # the wrapper is a POSIX shell script
   runner <- file.path(dir, "base_only_bridge.py")
   writeLines(c(
     "import sys, importlib.util",
