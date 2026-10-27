@@ -17,7 +17,7 @@ keyed by census geography, rasters, and point, line or polygon features. The sam
 behind the Python API, the command line, the R package in [`r/`](https://github.com/IU-Ultraman/spacescans/tree/main/r)
 and the SPACESCANS web application.
 
-[![Python 3.10–3.13](https://img.shields.io/badge/python-3.10--3.13-blue.svg)](https://www.python.org/)
+[![Python 3.10–3.14](https://img.shields.io/badge/python-3.10--3.14-blue.svg)](https://www.python.org/)
 [![Website](https://img.shields.io/badge/website-spacescans.com-1f6feb.svg)](https://www.spacescans.com)
 
 ## Install
@@ -33,7 +33,7 @@ pip install "spacescans[geo] @ git+https://github.com/IU-Ultraman/spacescans.git
 ```
 
 You install and import `spacescans`. (Before 0.3.0 the distribution was called
-`spacescans-pipeline`; it was never on PyPI.) It needs Python 3.10 to 3.13 on Linux or macOS. The base install is light; the extras add what each kind of
+`spacescans-pipeline`; it was never on PyPI.) It needs Python 3.10 to 3.14 on Linux or macOS. The base install is light; the extras add what each kind of
 source needs:
 
 | Extra | Needed for | Adds |

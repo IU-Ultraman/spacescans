@@ -105,7 +105,7 @@ workflow run.
   workflow:
   1. `version-tag`: stops unless the ref is a `v*` tag equal to the three declared versions
      (started from a branch or a mismatched tag, it fails before anything else runs);
-  2. the test gates: `test.yml` (Linux and macOS, Python 3.10–3.13), `test-extras.yml`, and
+  2. the test gates: `test.yml` (Linux and macOS, Python 3.10–3.14), `test-extras.yml`, and
      `r-check.yml` (R CMD check on macOS 14 arm64);
   3. `build-and-publish`, in the environment `pypi` (it waits for a reviewer if one is set):
      `python -m build` with `SOURCE_DATE_EPOCH` = the tag commit's time, `twine check --strict`,
