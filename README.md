@@ -326,9 +326,11 @@ same exact nearest-feature distance:
 The R package in [`r/`](https://github.com/IU-Ultraman/spacescans/tree/main/r) (`ss_link()`,
 `ss_fetch()`, `ss_register_dataset()` and friends) runs this package in a separate Python
 process through a JSON-file bridge ([docs/bridge-protocol.md](https://github.com/IU-Ultraman/spacescans/blob/main/docs/bridge-protocol.md)).
-It is released with the same version as the Python package. Install it with
-`remotes::install_github("IU-Ultraman/spacescans", subdir = "r")`, then run `ss_install()`
-once; see its [README](https://github.com/IU-Ultraman/spacescans/blob/main/r/README.md).
+It is released with the same version as the Python package. Install the release from
+[R-universe](https://iu-ultraman.r-universe.dev/spacescans) with
+`install.packages("spacescans", repos = c("https://iu-ultraman.r-universe.dev", "https://cloud.r-project.org"))`
+(the development version: `remotes::install_github("IU-Ultraman/spacescans", subdir = "r")`),
+then run `ss_install()` once; see its [README](https://github.com/IU-Ultraman/spacescans/blob/main/r/README.md).
 
 ## Project layout
 

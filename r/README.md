@@ -10,8 +10,10 @@ separate process.
 ## Quick start
 
 ```r
-# install.packages("remotes")
-remotes::install_github("IU-Ultraman/spacescans", subdir = "r")
+install.packages("spacescans",
+                 repos = c("https://iu-ultraman.r-universe.dev", "https://cloud.r-project.org"))
+# the development version, from the repository:
+# remotes::install_github("IU-Ultraman/spacescans", subdir = "r")
 ```
 
 ```r
