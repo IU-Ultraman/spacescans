@@ -1,4 +1,5 @@
 test_that("ss_data_dir() reads and sets the data directory, with no implicit default", {
+  skip_if_windows()     # .ss_absolute() knows POSIX paths only
   withr::local_options(spacescans.data_dir = NULL)
   withr::local_envvar(SPACESCANS_DATA_DIR = NA)
   expect_error(ss_data_dir(), class = "spacescans_error_config")

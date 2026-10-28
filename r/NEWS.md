@@ -1,3 +1,10 @@
+# spacescans (development version)
+
+* Tests only; nothing in the package changed. The test of `ss_data_dir()` is
+  skipped on Windows, like the other tests of POSIX paths: the package treats
+  only paths that begin with `/` as absolute. (Seen in the R-universe checks
+  of 0.3.4, where Linux and macOS passed.)
+
 # spacescans 0.3.4
 
 * Tests only; nothing in the package changed. One test expected `/bin/sh` back

@@ -4,6 +4,16 @@ The Python package (`spacescans` on PyPI) and the R package in `r/` share versio
 release tags. R-specific changes are listed in more detail in `r/NEWS.md`. Versions before 0.3.0
 have no changelog; see the git tags `v0.2.0` to `v0.2.7`.
 
+## Unreleased
+
+### Fixed
+
+- R package tests (the package is unchanged): the test of `ss_data_dir()` is skipped on Windows,
+  like the other tests of POSIX paths, because the package's path helper treats only paths that
+  begin with `/` as absolute. In the R-universe checks of 0.3.4 Linux and macOS passed and
+  Windows failed this one test. (The 0.3.3 log showed only the last 1,000 lines of test output,
+  so this failure was not visible among its 103.)
+
 ## 0.3.4 (2026-10-27)
 
 ### Changed
