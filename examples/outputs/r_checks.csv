@@ -1,0 +1,14 @@
+"check","passed","max_abs_diff","tolerance","values"
+"noise participant l50dba_exi = day-weighted mean of location-episode values",TRUE,0,5.58105838853475e-08,3
+"noise participant l50dba_imp = day-weighted mean of location-episode values",TRUE,0,2.0919844308179e-08,3
+"noise participant l50dba_nat = day-weighted mean of location-episode values",TRUE,0,3.48907401649353e-08,3
+"county table, location-episode heat_days = day-weighted county values",TRUE,0,1e-06,5
+"features, location-episode clinics_dist_m = nearest distance in EPSG:5070 (m)",TRUE,5.02188868267694e-09,1,5
+"registered link participant l50dba_exi = day-weighted mean of location-episode values",TRUE,0,5.58105838853475e-08,3
+"registered link participant l50dba_imp = day-weighted mean of location-episode values",TRUE,0,2.0919844308179e-08,3
+"registered link participant l50dba_nat = day-weighted mean of location-episode values",TRUE,0,3.48907401649353e-08,3
+"registered link participant heat_days = day-weighted mean of location-episode values",TRUE,0,1.194641782059e-08,3
+"registered link participant clinics_dist_m = day-weighted mean of location-episode values",TRUE,0,1.39337710303914e-06,3
+"noise l50dba_exi unchanged when registered datasets are linked too",TRUE,0,5.58105838853475e-08,3
+"noise l50dba_imp unchanged when registered datasets are linked too",TRUE,0,2.0919844308179e-08,3
+"noise l50dba_nat unchanged when registered datasets are linked too",TRUE,0,3.48907401649353e-08,3

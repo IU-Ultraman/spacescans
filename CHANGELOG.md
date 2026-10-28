@@ -6,6 +6,17 @@ have no changelog; see the git tags `v0.2.0` to `v0.2.7`.
 
 ## Unreleased
 
+### Added
+
+- `examples/`: a worked example in Python and in R (`link_example.py`, `link_example.R`) that
+  links a synthetic cohort to a catalog source at both output levels, registers a county table
+  and a set of point features and links them by name, then checks every result independently;
+  `examples/outputs/` holds what the last run wrote.
+- `benchmarks/`: the synthetic cohort of 100,000 location episodes and its seeded generator, the
+  script that times each catalog source in the spacescans-web backend container, the runs on a
+  server node with four worker processes, and the scripts that summarise them into a
+  per-source table. Neither folder is part of the installed package.
+
 ### Fixed
 
 - R package tests (the package is unchanged): the test of `ss_data_dir()` is skipped on Windows,

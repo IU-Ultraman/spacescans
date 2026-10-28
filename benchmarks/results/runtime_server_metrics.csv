@@ -1,0 +1,37 @@
+model,metric,value
+100k,n_episodes,100000
+100k,n_sources,11
+100k,cold_min_s,59.0
+100k,cold_min_source,noise
+100k,cold_max_s,3486.56
+100k,cold_max_source,faqsd
+100k,cold_max_min,58
+100k,overhead_min_s,1.6
+100k,overhead_max_s,7.0
+100k,cold_total_s,8320.6
+100k,warm_total_s,6601.1
+100k,saving_median_pct,81.6
+100k,saving_min_pct,4.8
+100k,saving_min_source,acag
+100k,saving_max_pct,97.9
+100k,saving_max_source,walkability
+100k,peak_rss_max_gb,91.71
+100k,peak_rss_max_source,temis
+100k,n_failed_sources,0
+100k,failed_sources,
+100k,peak_rss_min_gb,0.96
+100k,peak_rss_min_source,nhd_bluespace
+100k,warm_min_s,3.71
+100k,warm_min_source,walkability
+100k,warm_max_s,3317.23
+100k,warm_max_source,faqsd
+100k,cold_min_label,NPS Soundscape Noise
+100k,cold_max_label,EPA FAQSD Air Quality
+100k,saving_min_label,ACAG PM~2.5~ Composition
+100k,saving_max_label,EPA Walkability Index
+100k,peak_rss_max_label,TEMIS UV Exposure
+100k,failed_labels,
+100k,peak_rss_min_label,NHD Bluespace
+100k,warm_min_label,EPA Walkability Index
+100k,warm_max_label,EPA FAQSD Air Quality
+100k,workers,4

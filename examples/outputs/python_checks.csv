@@ -1,0 +1,14 @@
+check,passed,max_abs_diff,tolerance,values
+noise participant l50dba_exi = day-weighted mean of location-episode values,True,0.0,5.581058388534747e-08,3
+noise participant l50dba_imp = day-weighted mean of location-episode values,True,0.0,2.091984430817905e-08,3
+noise participant l50dba_nat = day-weighted mean of location-episode values,True,0.0,3.489074016493529e-08,3
+"county table, location-episode heat_days = day-weighted county values",True,0.0,1e-06,5
+"features, location-episode clinics_dist_m = nearest distance in EPSG:5070 (m)",True,1.1368683772161603e-13,1.0,5
+registered link participant l50dba_exi = day-weighted mean of location-episode values,True,0.0,5.581058388534747e-08,3
+registered link participant l50dba_imp = day-weighted mean of location-episode values,True,0.0,2.091984430817905e-08,3
+registered link participant l50dba_nat = day-weighted mean of location-episode values,True,0.0,3.489074016493529e-08,3
+registered link participant heat_days = day-weighted mean of location-episode values,True,0.0,1.1946417820590007e-08,3
+registered link participant clinics_dist_m = day-weighted mean of location-episode values,True,0.0,1.393377103039138e-06,3
+noise l50dba_exi unchanged when registered datasets are linked too,True,0.0,5.581058388534747e-08,3
+noise l50dba_imp unchanged when registered datasets are linked too,True,0.0,2.091984430817905e-08,3
+noise l50dba_nat unchanged when registered datasets are linked too,True,0.0,3.489074016493529e-08,3

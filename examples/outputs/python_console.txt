@@ -1,0 +1,20 @@
+NPS Soundscape Noise (L50 dBA) | static | l50dba_exi, l50dba_imp, l50dba_nat
+location episodes covered: 100.0 %
+  pid  l50dba_exi  l50dba_imp  l50dba_nat
+0  P1   55.810584   20.919844   34.890740
+1  P2   50.991331   16.871906   34.119426
+2  P3   54.530981   19.656426   34.874555
+  variable experiment  participants  with_value    pct  episodes
+0    noise      noise             3           3  100.0         5
+   episode_id  l50dba_exi  l50dba_imp  l50dba_nat
+0           0   55.918069   21.047578   34.870493
+1           1   55.751058   20.849106   34.901953
+2           2   50.991331   16.871906   34.119426
+3           3   57.904147   23.093657   34.810490
+4           4   52.919681   18.014523   34.905158
+clinics | features | static | private | clinics_dist_m
+county_heat | polygon_table | yearly | private | heat_days
+  pid  l50dba_exi  l50dba_imp  l50dba_nat  heat_days  clinics_dist_m
+0  P1   55.810584   20.919844   34.890740   7.641628     1085.935008
+1  P2   50.991331   16.871906   34.119426  11.946418      905.246519
+2  P3   54.530981   19.656426   34.874555  10.291998     1393.377103

@@ -1,0 +1,9 @@
+metric,value
+host_cpu,AMD EPYC 7742 64-Core Processor
+host_memory_gb,504
+container_cpus,128
+container_memory_gb,504
+container_memory_available_gb,503.7
+container_kernel,Linux 4.18.0-553.172.1.el8_10.x86_64
+pipeline_version,0.3.2
+measured_utc,2026-10-27T04:51:39+00:00

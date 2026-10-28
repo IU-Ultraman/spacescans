@@ -1,0 +1,12 @@
+key,label,spatial,temporal,domain,n_value_cols,example
+walkability,EPA Walkability Index,Polygon,Time-invariant,Built,1,National Walkability Index
+cbp_zcta5,Community Organization Density,Polygon,Yearly,Social,10,"Religious, civic, and social organizations"
+fara_tract,FARA Food Access,Polygon,Yearly,Built,4,"Low-income, low-access tract flag"
+ndi,Neighborhood Deprivation Index,Polygon,Yearly,Social,1,Neighborhood deprivation index
+faqsd,EPA FAQSD Air Quality,Polygon,Daily,Natural,2,"PM~2.5~, O~3~"
+noise,NPS Soundscape Noise,Raster,Time-invariant,Natural,3,Existing-conditions L50 sound level
+vnl,VIIRS Nighttime Lights,Raster,Yearly,Natural,1,Nighttime light radiance
+acag,ACAG PM2.5 Composition,Raster,Biweekly,Natural,24,"PM~2.5~, black carbon, sulfate"
+temis,TEMIS UV Exposure,Raster,Daily,Natural,4,Clear-sky DNA-damage UV dose
+nhd_bluespace,NHD Bluespace,Line,Time-invariant,Natural,5,Distance to nearest coastline
+tiger_proximity,TIGER Road Distance,Line,Yearly,Built,3,Distance to nearest primary road

@@ -1,0 +1,12 @@
+spatial,domain,source,n_vars,example,cold_1k_s,cold_10k_s,cold_100k_s,c3_100k_s,c4_100k_s,warm_1k_s,warm_10k_s,warm_100k_s,peak_10k_gb,peak_100k_gb
+Polygon,Built,EPA Walkability Index,1,National Walkability Index,NT,NT,175,171,2.2,NT,NT,3.7,NT,9.5
+Polygon,Social,Community Organization Density,10,"Religious, civic, and social organizations",NT,NT,341,320,18,NT,NT,20,NT,7.4
+Polygon,Built,FARA Food Access,4,"Low-income, low-access tract flag",NT,NT,845,157,687,NT,NT,689,NT,8.0
+Polygon,Social,Neighborhood Deprivation Index,1,Neighborhood deprivation index,NT,NT,370,344,24,NT,NT,26,NT,9.7
+Polygon,Natural,EPA FAQSD Air Quality,2,"PM~2.5~, O~3~",NT,NT,"3,487",158,"3,327",NT,NT,"3,317",NT,74.7
+Raster,Natural,NPS Soundscape Noise,3,Existing-conditions L50 sound level,NT,NT,59,47,9.6,NT,NT,12,NT,5.0
+Raster,Natural,VIIRS Nighttime Lights,1,Nighttime light radiance,NT,NT,73,44,27,NT,NT,13,NT,4.2
+Raster,Natural,ACAG PM~2.5~ Composition,24,"PM~2.5~, black carbon, sulfate",NT,NT,"2,003",40,"1,957",NT,NT,"1,906",NT,20.7
+Raster,Natural,TEMIS UV Exposure,4,Clear-sky DNA-damage UV dose,NT,NT,632,40,590,NT,NT,576,NT,91.7
+Line,Natural,NHD Bluespace,5,Distance to nearest coastline,NT,NT,171,142,26,NT,NT,29,NT,1.0
+Line,Built,TIGER Road Distance,3,Distance to nearest primary road,NT,NT,164,156,5.9,NT,NT,8.0,NT,1.5

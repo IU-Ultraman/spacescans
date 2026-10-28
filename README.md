@@ -357,6 +357,12 @@ src/spacescans/
 
 `import spacescans` loads only the base dependencies.
 
+Outside the package: `examples/` holds a worked example in Python and in R (a synthetic cohort
+linked to a catalog source and to two registered datasets, with independent checks), and
+`benchmarks/` the synthetic 100,000-episode cohort, its generator, and the scripts and results
+of the runtime and memory measurements per catalog source. Neither folder is part of the
+installed package.
+
 ## Development
 
 ```bash
