@@ -193,6 +193,13 @@ is [docs/custom-datasets.md](https://github.com/IU-Ultraman/spacescans/blob/main
 `custom` also accepts in-memory definitions made with `custom.define_polygon()` and
 `custom.define_raster()`, as a mapping of variable key to definition.
 
+An agent skill, [skills/spacescans-custom-datasets/SKILL.md](skills/spacescans-custom-datasets/SKILL.md),
+walks an AI coding agent through preparing a dataset for registration: choosing the shape,
+reshaping tables and aligning rasters, writing the metadata, reading the validation messages, and
+checking coverage and a few values after the first linkage. Copy the folder into the agent's
+skills directory (`~/.claude/skills/` for Claude Code, `~/.agents/skills/` for Codex, or the same
+folders inside a project).
+
 ## Getting the exposure data
 
 No exposure data comes with spacescans. `spacescans data` knows where each catalog variable's

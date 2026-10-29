@@ -16,6 +16,11 @@ have no changelog; see the git tags `v0.2.0` to `v0.2.7`.
   script that times each catalog source in the spacescans-web backend container, the runs on a
   server node with four worker processes, and the scripts that summarise them into a
   per-source table. Neither folder is part of the installed package.
+- `skills/spacescans-custom-datasets/SKILL.md`: an agent skill (Agent Skills format, usable from
+  Claude Code, Codex and other agents) that prepares a user's own exposure dataset for
+  `custom.register()`: shapes, metadata, validation messages, coverage and spot checks, and why
+  prepared files rather than linkage outputs are what to compare. Not part of the installed
+  package.
 
 ### Fixed
 
