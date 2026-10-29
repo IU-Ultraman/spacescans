@@ -83,7 +83,11 @@ long.to_csv("heat_long.csv", index=False)
 ### Rasters
 
 - GeoTIFF, with a coordinate reference system, north-up and not rotated, touching the
-  continental US.
+  continental US. Other gridded formats (NetCDF, HDF, BIL) are converted first, one GeoTIFF
+  per period on the source's own grid (`rioxarray`'s `rio.to_raster` or `gdal_translate`):
+  flip the array when latitude ascends so the file is north-up, write the CRS and the nodata
+  value, and leave values and units unchanged. Check the first converted file against the
+  source (same finite values, same missing mask) before converting the rest.
 - **All files on one grid** (same CRS, transform and size): the spatial weights are computed
   once and serve every period. Warp the others onto the first file's grid (`gdalwarp -t_srs
   <crs> -te <bounds> -tr <xres> <yres>` or `rasterio.warp.reproject`) and check with rasterio
@@ -92,8 +96,12 @@ long.to_csv("heat_long.csv", index=False)
 - The **period** of each file comes from its name (`ndvi_2016.tif`; `t_20160101.tif`,
   `t_2016-01-01.tif`, `A2016001`; biweekly `pm_20160101_20160115.tif`), from a manifest CSV
   passed with the rasters (columns `file` and `year`, `date`, or `start` and optionally
-  `end`), or from a `{path: period}` mapping in Python. Biweekly periods may not overlap; a
-  period without an end runs to the day before the next start, at most 16 days.
+  `end`), or from a mapping passed as `paths` in Python: `{path: year}`, `{path: date}` or,
+  for biweekly files, `{path: (start, end)}`. Only the forms above are read from a name; a
+  day-of-year range without the `A` prefix (`2013001-2013014`) is not, so derive the dates
+  yourself and pass the mapping or a manifest rather than renaming the source files.
+  Biweekly periods may not overlap; a period without an end runs to the day before the next
+  start, at most 16 days.
 - The linked band must exist in every file (band 1 by default; name others in `variables`).
   At most 10,000 files per dataset. A daily raster at fine resolution over a large cohort
   makes large intermediate tables; say so to the user.
@@ -179,7 +187,13 @@ for key, v in report["variables"].items():
     print(key, v["coverage_pct"], v["coverage_years"], v["warnings"])
 ```
 
-Then link a small cohort (a few episodes with known locations) and read three things:
+Then link a small cohort (a few episodes with known locations) and read three things.
+`link()` needs a data directory even when no catalog variable is named, because tables are
+linked through the boundary files kept there: set `SPACESCANS_DATA_DIR` (or pass
+`data_dir=`) and fetch the boundary a table is keyed to once, for example
+`data.fetch(datasets=["county_boundaries"])`. A warning with code `run_dir` only reports
+that the run directory moved to a temporary folder (the per-user folder was not writable);
+it does not concern the data.
 
 ```python
 from spacescans.orchestrate import link

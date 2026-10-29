@@ -30,6 +30,10 @@ have no changelog; see the git tags `v0.2.0` to `v0.2.7`.
   Windows failed this one test. (The 0.3.3 log showed only the last 1,000 lines of test output,
   so this failure was not visible among its 103.)
 
+### Changed
+
+- The `spacescans-custom-datasets` skill documents three things a feasibility check on held-out datasets (ACAG biweekly NetCDF, County Health Rankings county tables, EPA TRI facility points; 2026-10-29) showed it lacked: converting NetCDF/HDF/BIL rasters to GeoTIFF, passing biweekly periods as `{path: (start, end)}` when file names carry day-of-year ranges, and the data directory `link()` needs even for custom-only runs.
+
 ## 0.3.4 (2026-10-27)
 
 ### Changed
