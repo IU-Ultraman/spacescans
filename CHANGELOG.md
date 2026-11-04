@@ -53,6 +53,10 @@ have no changelog; see the git tags `v0.2.0` to `v0.2.7`.
   one question at a time with a recommended answer; and it chooses the ontology concepts of the
   dataset and its variables by stated rules (the most specific concept that describes the
   measure, the nearest broader concept when the ontology has none, never an invented id).
+- The `spacescans-custom-datasets` skill says that `catalog.concepts()` is a mapping from id to
+  concept, that a registered record keeps its metadata as attributes, and how `link()` reaches a
+  registry other than the default: the second feasibility check (2026-11-04) saw agents trip on all
+  three.
 - The `spacescans-custom-datasets` skill documents three things a feasibility check on held-out datasets (ACAG biweekly NetCDF, County Health Rankings county tables, EPA TRI facility points; 2026-10-29) showed it lacked: converting NetCDF/HDF/BIL rasters to GeoTIFF, passing biweekly periods as `{path: (start, end)}` when file names carry day-of-year ranges, and the data directory `link()` needs even for custom-only runs.
 
 ## 0.3.4 (2026-10-27)

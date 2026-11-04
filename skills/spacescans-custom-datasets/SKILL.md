@@ -165,7 +165,8 @@ for c in catalog.search_concepts("pm2.5"):
     print(c.id, " > ".join(c.path))
 # 000102_2 Spatial_and_Contextual_Exposome > Natural_Environment_Exposome > Air_Pollutant > Criteria_Air_Pollutant > Particulate_Matter_PM2.5
 {k: v.ontology_id for k, v in catalog.variables().items()}   # the concepts the catalog uses
-catalog.concepts()                                            # every concept, root first
+for c in catalog.concepts().values():                         # {id: concept}, root first
+    print(c.id, " > ".join(c.path))
 ```
 
 In R: `ss_concepts("pm2.5")`, and `ss_concepts()` for all of them. Rules:
@@ -222,8 +223,10 @@ custom.register("clinics.geojson", name="clinics", kind="features", temporal="st
 - `metadata`: `source`, `version`, `description`, `license_note`, `visibility` (`private`, the
   default; `deployment` is enforced only by the web application), `owner` and `ontology_id`.
   `name` is at most 80 characters and unique in the registry; `overwrite=True` replaces a
-  dataset of the same name. `custom.update_dataset()` changes the metadata and the variables'
-  units, descriptions and concepts later without touching the data.
+  dataset of the same name. The record returned (and `custom.get_dataset(name)`) has these as
+  attributes: `rec.source`, `rec.ontology_id`, each variable's `ontology_id` in
+  `rec.variables`. `custom.update_dataset()` changes the metadata and the variables' units,
+  descriptions and concepts later without touching the data.
 - The registry lives in `root=`, else `$SPACESCANS_DATASETS_DIR`, else the per-user data
   directory. The record (`dataset.json`) keeps the checksum of the originals, counts, spans and
   extents, never a data value.
@@ -271,7 +274,9 @@ Then link a small cohort (a few episodes with known locations) and read three th
 `link()` needs a data directory even when no catalog variable is named, because tables are
 linked through the boundary files kept there: set `SPACESCANS_DATA_DIR` (or pass
 `data_dir=`) and fetch the boundary a table is keyed to once, for example
-`data.fetch(datasets=["county_boundaries"])`. A warning with code `run_dir` only reports
+`data.fetch(datasets=["county_boundaries"])`. `link()` finds a dataset by name in the default
+registry (`$SPACESCANS_DATASETS_DIR`, else the per-user folder); for another registry pass the
+records, `custom=[custom.get_dataset("county_heat", root=...)]`. A warning with code `run_dir` only reports
 that the run directory moved to a temporary folder (the per-user folder was not writable);
 it does not concern the data.
 
