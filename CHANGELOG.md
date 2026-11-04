@@ -4,6 +4,16 @@ The Python package (`spacescans` on PyPI) and the R package in `r/` share versio
 release tags. R-specific changes are listed in more detail in `r/NEWS.md`. Versions before 0.3.0
 have no changelog; see the git tags `v0.2.0` to `v0.2.7`.
 
+## Unreleased
+
+### Changed
+
+- The `spacescans-custom-datasets` skill (not part of the installed package) runs the checks of a
+  first linkage on a synthetic or test cohort, never on the participants' real locations, because an
+  agent backed by a remote model sends what it reads to that model; the user links the real cohort
+  afterwards. Its text no longer says that a dataset's ontology concept places or files the dataset
+  in the catalog: the concept is kept in the dataset's record and shown on its detail page.
+
 ## 0.3.5 (2026-11-04)
 
 ### Added

@@ -1,6 +1,6 @@
 ---
 name: spacescans-custom-datasets
-description: Prepare a user's own exposure dataset for SPACESCANS and register it with spacescans.custom.register() in Python, ss_register_dataset() in R, or the web application's Add dataset form. Covers the three shapes SPACESCANS links, a table keyed by 2010 Census tracts, block groups, ZCTAs or counties, GeoTIFF rasters on one grid, and point, line or polygon features; the metadata the catalog needs, gathered from the files, the provider's documentation and the user, including the ontology concepts that place the dataset in the catalog's ontology; the validation messages; and the checks to run before and after a first linkage. Use when someone wants to link their own, proprietary or restricted exposure data with SPACESCANS, asks what format or metadata SPACESCANS expects, or gets a registration error or a low linkage rate for a custom dataset. Not for cohort files (the five cohort columns are in the README) and not for changing the built-in catalog.
+description: Prepare a user's own exposure dataset for SPACESCANS and register it with spacescans.custom.register() in Python, ss_register_dataset() in R, or the web application's Add dataset form. Covers the three shapes SPACESCANS links, a table keyed by 2010 Census tracts, block groups, ZCTAs or counties, GeoTIFF rasters on one grid, and point, line or polygon features; the metadata the catalog needs, gathered from the files, the provider's documentation and the user, including the ontology concepts that describe the dataset in the catalog's terms; the validation messages; and the checks to run before and after a first linkage. Use when someone wants to link their own, proprietary or restricted exposure data with SPACESCANS, asks what format or metadata SPACESCANS expects, or gets a registration error or a low linkage rate for a custom dataset. Not for cohort files (the five cohort columns are in the README) and not for changing the built-in catalog.
 license: MIT
 metadata:
   project: spacescans
@@ -333,6 +333,9 @@ file comparison does not already show.
   records and messages never contain data values.
 - If the skill runs in an agent backed by a remote model, reason from schemas, counts and the
   validation messages; do not paste rows of a restricted dataset into the conversation.
+- Run the checks of section 8 on a synthetic or test cohort, never on the participants' real
+  locations: an agent backed by a remote model sends what it reads to that model. The user
+  links the real cohort afterwards, by name, in Python, R or the web application.
 - Record the provider's terms in `license_note`, keep `visibility` private unless the data may be
   shared with every user of a web deployment, and do not redistribute data whose license forbids
   it (the catalog's own TEMIS source is such a case).
