@@ -30,8 +30,9 @@ exposure columns added); with \code{wait = FALSE} it returns a job
 (\code{\link[=ss_job_status]{ss_job_status()}}).
 \item \code{\link[=ss_register_dataset]{ss_register_dataset()}}, \code{\link[=ss_datasets]{ss_datasets()}}, \code{\link[=ss_dataset]{ss_dataset()}} and
 \code{\link[=ss_remove_dataset]{ss_remove_dataset()}} keep your own data in a registry, linked by name;
-\code{\link[=ss_custom_polygon]{ss_custom_polygon()}} and \code{\link[=ss_custom_raster]{ss_custom_raster()}} build one-off
-definitions.
+\code{\link[=ss_concepts]{ss_concepts()}} finds the ontology concepts that place a dataset, or its
+variables, in the catalog's ontology; \code{\link[=ss_custom_polygon]{ss_custom_polygon()}} and
+\code{\link[=ss_custom_raster]{ss_custom_raster()}} build one-off definitions.
 \item \code{\link[=ss_cache_info]{ss_cache_info()}} and \code{\link[=ss_cache_clear]{ss_cache_clear()}} manage the C3 weight cache.
 \item \code{\link[=ss_run]{ss_run()}} runs one pipeline config (a YAML file or an R list);
 \code{\link[=ss_quickstart]{ss_quickstart()}} runs the bundled demo; \code{\link[=ss_config_schema]{ss_config_schema()}},

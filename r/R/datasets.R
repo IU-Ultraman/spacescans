@@ -56,6 +56,14 @@
 #' record it; a web app deployment enforces it (a `"deployment"` dataset is
 #' offered to every user of that deployment).
 #'
+#' **Ontology concepts.** `ontology_id` places the dataset in the exposure
+#' catalog's ontology, as a catalog variable's `ontology_id` does: the id of a
+#' concept of the Spatial and Contextual Exposome Ontology, found with
+#' [ss_concepts()] (for example `"000102_2"`, Particulate_Matter_PM2.5). A
+#' variable may carry its own concept (an `ontology_id` column in
+#' `variables`) when the variables measure different things; a variable
+#' without one takes the dataset's. Registration refuses an unknown id.
+#'
 #' @param paths The data files: one CSV for a table; GeoTIFF files for a
 #'   raster; a GeoPackage, GeoJSON or zipped Shapefile per year (or one file)
 #'   for features. For a polygon table, a data frame is also accepted
@@ -70,12 +78,13 @@
 #'   geography name or a named list (see Details); optional for features
 #'   (`list(year_column = , layer = )`); unused for rasters.
 #' @param variables The variables: a character vector of names, or a data
-#'   frame with a `name` column and optionally `unit`, `description`, and
-#'   `column` (a table's column, when it differs from the name) or `band` (a
-#'   raster band). `NULL` takes the defaults: every numeric column of a
-#'   table; band 1 of a raster, named after the dataset; `<name>_dist_m` for
-#'   features. For `ss_update_dataset()`, a data frame with `name` and the
-#'   new `unit` and/or `description` of existing variables.
+#'   frame with a `name` column and optionally `unit`, `description`,
+#'   `ontology_id`, and `column` (a table's column, when it differs from the
+#'   name) or `band` (a raster band). `NULL` takes the defaults: every numeric
+#'   column of a table; band 1 of a raster, named after the dataset;
+#'   `<name>_dist_m` for features. For `ss_update_dataset()`, a data frame
+#'   with `name` and the new `unit`, `description` and/or `ontology_id` of
+#'   existing variables.
 #' @param periods For rasters and yearly features: the year (a number) or the
 #'   start date (a `Date` or `"2016-01-01"`) of each file, in the order of
 #'   `paths`, when the file names do not carry them.
@@ -86,14 +95,17 @@
 #' @param owner Optional owner (any text, for example your name).
 #' @param root The registry directory (see Details).
 #' @param overwrite Replace a dataset of the same name (it gets a new id).
+#' @param ontology_id Optional ontology concept of the dataset (see
+#'   Details and [ss_concepts()]).
 #' @param name_or_id A dataset's name, id or variable key, or the record
 #'   from `ss_register_dataset()` or `ss_dataset()`.
 #' @return `ss_register_dataset()`, `ss_dataset()` and
 #'   `ss_update_dataset()`: the dataset's record, a list of class
 #'   `ss_dataset` (`id`, `name`, `kind`, `temporal`, `key`, `variables` (a
-#'   data frame: `name`, `unit`, `description`), `source`, `version`,
-#'   `description`, `license_note`, `visibility`, `owner`, `created_utc`,
-#'   `files`, `checksum`, `spacescans_version`, `details`, `path` (its
+#'   data frame: `name`, `unit`, `description`, and `ontology_id` when a
+#'   variable has one), `source`, `version`, `description`, `license_note`,
+#'   `visibility`, `owner`, `created_utc`, `files`, `checksum`,
+#'   `spacescans_version`, `ontology_id`, `details`, `path` (its
 #'   directory) and `variable_key`), with the registry directory as
 #'   attribute `root`. `ss_datasets()`: a data frame with one row per dataset
 #'   (variables as their names), attribute `root`. `ss_remove_dataset()`:
@@ -119,14 +131,14 @@ NULL
   raster = c("static", "yearly", "biweekly", "daily"),
   features = c("static", "yearly")
 )
-.ss_variable_fields <- c("name", "unit", "description", "column", "band")
+.ss_variable_fields <- c("name", "unit", "description", "column", "band", "ontology_id")
 
 #' @rdname ss_datasets
 #' @export
 ss_register_dataset <- function(paths, name, kind, temporal, key = NULL, variables = NULL,
                                 periods = NULL, description = NULL, source = NULL, version = NULL,
                                 license_note = NULL, visibility = c("private", "deployment"),
-                                owner = NULL, root = NULL, overwrite = FALSE) {
+                                owner = NULL, root = NULL, overwrite = FALSE, ontology_id = NULL) {
   name <- .ss_string_arg(name, "name")
   if (missing(kind)) .ss_abort("config", sprintf("`kind` is required: one of %s.", .ss_quote(.ss_dataset_kinds)))
   kind <- .ss_choice(kind, .ss_dataset_kinds, "kind")
@@ -147,7 +159,8 @@ ss_register_dataset <- function(paths, name, kind, temporal, key = NULL, variabl
   files <- .ss_dataset_files(paths, kind, name)
   periods <- .ss_periods_arg(periods, length(files))
   metadata <- .ss_metadata_arg(description = description, source = source, version = version,
-                               license_note = license_note, visibility = visibility, owner = owner)
+                               license_note = license_note, visibility = visibility, owner = owner,
+                               ontology_id = ontology_id)
   args <- list(files = I(files), periods = periods, name = name, kind = kind, temporal = temporal,
                key = key, variables = .ss_dataset_variables(variables), metadata = metadata,
                root = .ss_datasets_root(root), overwrite = isTRUE(overwrite))
@@ -162,7 +175,8 @@ ss_datasets <- function(root = NULL) {
   value <- .ss_bridge("datasets-list", args)
   rows <- value$datasets %||% list()
   df <- .ss_records_df(lapply(rows, .ss_dataset_row),
-                       first = c("name", "id", "kind", "temporal", "variables", "visibility", "owner",
+                       first = c("name", "id", "kind", "temporal", "variables", "visibility",
+                                 "ontology_id", "owner",
                                  "version", "source", "description", "created_utc", "variable_key"))
   if (!nrow(df)) {
     df <- data.frame(name = character(), id = character(), kind = character(), temporal = character(),
@@ -184,15 +198,17 @@ ss_dataset <- function(name_or_id, root = NULL) {
 #' @export
 ss_update_dataset <- function(name_or_id, name = NULL, description = NULL, source = NULL,
                               version = NULL, license_note = NULL, visibility = NULL, owner = NULL,
-                              variables = NULL, root = NULL) {
+                              variables = NULL, root = NULL, ontology_id = NULL) {
   ref <- .ss_dataset_ref(name_or_id)
   if (!is.null(visibility)) visibility <- .ss_choice(visibility, c("private", "deployment"), "visibility")
   metadata <- .ss_metadata_arg(description = description, source = source, version = version,
-                               license_note = license_note, visibility = visibility, owner = owner)
+                               license_note = license_note, visibility = visibility, owner = owner,
+                               ontology_id = ontology_id)
   if (!is.null(variables)) {
     if (!is.data.frame(variables) || !"name" %in% names(variables) ||
-        length(setdiff(names(variables), c("name", "unit", "description")))) {
-      .ss_abort("config", "`variables` must be a data frame with `name` and the new `unit` and/or `description`.")
+        length(setdiff(names(variables), c("name", "unit", "description", "ontology_id")))) {
+      .ss_abort("config", paste0("`variables` must be a data frame with `name` and the new `unit`, ",
+                                 "`description` and/or `ontology_id`."))
     }
   }
   args <- list(name = ref, new_name = .ss_string_arg(name, "name", null_ok = TRUE), metadata = metadata,
@@ -236,6 +252,7 @@ print.ss_dataset <- function(x, ...) {
   line("source", x$source)
   line("version", x$version)
   line("license", x$license_note)
+  line("concept", x$ontology_id)
   line("owner", x$owner)
   line("id", x$id)
   line("created", x$created_utc)

@@ -267,8 +267,32 @@ def cmd_custom_validate(args: dict, ctx) -> Outcome:
     return {"kind": kind, "definition": d, "key": d["variable_key"]}, []
 
 
+def cmd_concepts(args: dict, ctx) -> Outcome:
+    """Ontology concepts (``spacescans.catalog``): ``id`` gives one concept, ``query``
+    searches labels and definitions (best first, at most ``limit``, default 20), neither
+    gives every concept, root first. The value also names the index's source."""
+    from spacescans import catalog
+
+    concept_id = str_arg(args, "id")
+    query = args.get("query")
+    if query is not None and not isinstance(query, str):
+        raise BridgeError("config", "argument 'query' must be a string")
+    limit = int_arg(args, "limit", minimum=1, default=20)
+    if concept_id is not None:
+        try:
+            found = [catalog.concept(concept_id)]
+        except catalog.CatalogError as exc:
+            raise BridgeError("config", str(exc)) from None
+    elif query is not None:
+        found = catalog.search_concepts(query, limit=limit)
+    else:
+        found = list(catalog.concepts().values())
+    return {"concepts": [c.to_dict() for c in found], **catalog.ontology_source()}, []
+
+
 COMMANDS = {
     "catalog": cmd_catalog,
+    "concepts": cmd_concepts,
     "coverage": cmd_coverage,
     "custom-validate": cmd_custom_validate,
 }

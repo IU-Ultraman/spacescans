@@ -99,3 +99,48 @@ ss_features <- function(variables = NULL) {
                                              init = rep(FALSE, nrow(df)))
   df[keep, , drop = FALSE]
 }
+
+#' Ontology concepts for annotating datasets
+#'
+#' Lists or searches the concepts of the Spatial and Contextual Exposome
+#' Ontology that a registered dataset, or one of its variables, can carry as
+#' `ontology_id` (see [ss_register_dataset()]). The catalog's own variables
+#' carry one too (`ontology_id` in [ss_catalog()]). The concepts come with
+#' the Python package, so no network is needed.
+#'
+#' A search compares the words of `query` with the beginnings of the words in
+#' each concept's label (first) and definition, ignoring case, underscores
+#' and dots (`"pm25"` finds Particulate_Matter_PM2.5).
+#'
+#' @param query Words to look for, or `NULL` (default) for every concept,
+#'   root first.
+#' @param limit Most concepts a search returns.
+#' @return A data frame with `id`, `label`, `path` (the labels from the
+#'   exposome root down to the concept, joined with " > ") and
+#'   `definition`, best match first; attributes `ontology` and `root`.
+#' @examples
+#' \dontrun{
+#' ss_concepts("pm2.5")
+#' ss_register_dataset(tifs, name = "PM2.5 biweekly", kind = "raster", temporal = "biweekly",
+#'                     ontology_id = "000102_2")
+#' }
+#' @export
+ss_concepts <- function(query = NULL, limit = 20) {
+  if (!is.null(query) && (!is.character(query) || length(query) != 1L || is.na(query))) {
+    .ss_abort("config", "`query` must be a single string, or NULL for every concept.")
+  }
+  if (!is.numeric(limit) || length(limit) != 1L || is.na(limit) || limit < 1 || limit != round(limit)) {
+    .ss_abort("config", "`limit` must be a whole number of at least 1.")
+  }
+  args <- if (is.null(query)) list() else list(query = query, limit = as.integer(limit))
+  value <- .ss_bridge("concepts", .ss_compact(args))
+  rows <- value$concepts %||% list()
+  text <- function(f, sep = "") {
+    vapply(rows, function(r) paste(as.character(unlist(r[[f]])), collapse = sep), character(1))
+  }
+  df <- data.frame(id = text("id"), label = text("label"), path = text("path", " > "),
+                   definition = text("definition"), stringsAsFactors = FALSE)
+  attr(df, "ontology") <- value$ontology
+  attr(df, "root") <- value$root
+  df
+}

@@ -241,7 +241,7 @@ def test_update_changes_metadata_name_and_variable_text_but_not_the_data(static_
     assert custom.get_dataset(rec.id, root) == new
     with pytest.raises(custom.DatasetError, match="has no variable"):
         custom.update_dataset(rec.id, variables=[{"name": "o3", "unit": "ppb"}], root=root)
-    with pytest.raises(custom.DatasetError, match="only unit and description"):
+    with pytest.raises(custom.DatasetError, match="only the unit, description and ontology_id"):
         custom.update_dataset(rec.id, variables=[{"name": "pm25", "band": 2}], root=root)
     assert custom.get_dataset(other.id, root).name == "Other"
 

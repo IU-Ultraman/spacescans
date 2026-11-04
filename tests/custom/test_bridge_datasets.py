@@ -30,6 +30,41 @@ def call(tmp: Path, command: str, args: dict | None = None):
     return p.returncode, json.loads(res.read_text()) if res.exists() else None
 
 
+def test_ontology_concepts_through_the_bridge(tmp_path):
+    rc, res = call(tmp_path, "concepts", {"query": "pm2.5", "limit": 3})
+    assert rc == 0 and res["ok"], res
+    found = res["value"]["concepts"]
+    assert found[0]["id"] == "000102_2" and found[0]["label"] == "Particulate_Matter_PM2.5"
+    assert found[0]["path"][0] == "Spatial_and_Contextual_Exposome" and len(found) <= 3
+    assert res["value"]["root"] == "000093_2"
+    rc, res = call(tmp_path, "concepts", {"id": "000289"})
+    assert rc == 0 and [c["label"] for c in res["value"]["concepts"]] == ["Noise"]
+    rc, res = call(tmp_path, "concepts", {})
+    assert rc == 0 and res["value"]["concepts"][0]["id"] == "000093_2"
+    assert len(res["value"]["concepts"]) > 100
+    rc, res = call(tmp_path, "concepts", {"id": "PM2.5"})
+    assert rc != 0 and res["error"]["kind"] == "config"
+    assert "000102_2" in res["error"]["message"]
+
+
+def test_register_with_ontology_concepts_through_the_bridge(tmp_path):
+    csv = tmp_path / "pm.csv"
+    csv.write_text("GEOID,pm25,unemployment\n18097000100,1.5,4.0\n")
+    rc, res = call(tmp_path, "datasets-register", {
+        "files": str(csv), "name": "County", "kind": "polygon_table", "temporal": "static",
+        "key": {"boundary": "tract", "column": "GEOID"},
+        "variables": [{"name": "pm25", "ontology_id": "000102_2"}, {"name": "unemployment"}],
+        "metadata": {"ontology_id": "000093_2", "owner": {}}, "root": str(tmp_path / "ds")})
+    assert rc == 0 and res["ok"], res
+    ds = res["value"]["dataset"]
+    assert ds["ontology_id"] == "000093_2"
+    assert ds["variables"][0]["ontology_id"] == "000102_2"
+    assert "ontology_id" not in ds["variables"][1]
+    rc, res = call(tmp_path, "datasets-update", {"name": "County", "root": str(tmp_path / "ds"),
+                                                 "metadata": {"ontology_id": "000094_2"}})
+    assert rc == 0 and res["value"]["dataset"]["ontology_id"] == "000094_2"
+
+
 def test_register_list_get_update_and_remove_through_the_bridge(tmp_path):
     csv = tmp_path / "pm.csv"
     csv.write_text("GEOID,date,pm25\n18097000100,2016-01-01,1.5\n18097000100,2016-01-02,NA\n")

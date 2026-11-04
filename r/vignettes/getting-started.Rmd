@@ -204,7 +204,10 @@ feature. This example needs no catalog data:
 `ss_remove_dataset()` deletes one, and `ss_link(custom = )` takes names,
 ids or records, alone or with catalog variables. A table names its Census
 geography in `key`, with the key column when it is not called `GEOID10`,
-`GEOID` or the like:
+`GEOID` or the like. `ontology_id` places a dataset in the catalog's
+ontology, as the catalog's own variables are placed; `ss_concepts()` finds
+the concept (a variable can carry its own in an `ontology_id` column of
+`variables`):
 
 ```{r}
 svi <- ss_register_dataset("~/data/svi_2020_tract.csv", name = "SVI 2020",
@@ -216,9 +219,11 @@ svi <- ss_register_dataset("~/data/svi_2020_tract.csv", name = "SVI 2020",
 res <- ss_link(cohort, "ndi", custom = "SVI 2020", cols = cols)
 
 # Rasters: one GeoTIFF per period; the period comes from the file name or `periods`.
+ss_concepts("pm2.5")[, c("id", "label", "path")]
 pm <- ss_register_dataset(c("pm_2016a.tif", "pm_2016b.tif"), name = "PM2.5 biweekly",
                           kind = "raster", temporal = "biweekly",
-                          periods = as.Date(c("2016-01-01", "2016-01-15")))
+                          periods = as.Date(c("2016-01-01", "2016-01-15")),
+                          ontology_id = "000102_2")
 ```
 
 For a one-off dataset that you do not want to register,

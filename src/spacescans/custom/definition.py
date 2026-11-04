@@ -202,8 +202,9 @@ def define_polygon(
         "coverage_region": "CONUS",
         "experiment": EXPERIMENT_KEY,
         # No ontology_id key at all: the catalog schema requires a non-empty
-        # string when the key is present. Uploaded datasets have no ontology
-        # node, which is why the web renders them in their own block.
+        # string when the key is present. A dataset defined here (the upload
+        # path) has no ontology concept; a registered one may carry one
+        # (spacescans.custom.register, metadata ontology_id).
         "data_source": f"Uploaded by user: {uploaded_filename}",
         "temporal": "yearly" if year_col else "static",
         "variable_type": "continuous",
@@ -522,6 +523,8 @@ def raster_bands(definition: Mapping[str, Any]) -> tuple[list[str], list[int], l
 # or NULL. check_definition undoes both.
 _LIST_FIELDS = ("value_cols", "bands", "band_nodata", "coverage_years", "coverage_dates")
 _MAP_FIELDS = ("value_labels", "value_units")
+# Maps only registered datasets' definitions have; normalised when present.
+_OPTIONAL_MAP_FIELDS = ("value_ontology_ids",)
 _NULLABLE_FIELDS = ("year_col", "values_path", "owner_uid", "date_col")
 #: Geometries of a definition: the upload path's two, and registered features.
 GEOMETRIES = ("polygon", "raster", "features")
@@ -561,6 +564,9 @@ def check_definition(definition: Mapping[str, Any], *, key: str | None = None,
             d[f] = list(d[f])
     for f in _MAP_FIELDS:
         if d.get(f) in (None, [], ()):
+            d[f] = {}
+    for f in _OPTIONAL_MAP_FIELDS:
+        if f in d and d[f] in (None, [], ()):
             d[f] = {}
     for f in _NULLABLE_FIELDS:
         if f in d and d[f] in ({}, [], ""):

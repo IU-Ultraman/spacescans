@@ -43,6 +43,13 @@ computed when platformdirs is not installed).
 
 ``visibility`` (``"private"`` or ``"deployment"``) and ``owner`` are recorded
 for the web app, which enforces them; the package itself does not.
+
+``ontology_id`` places the dataset in the exposure catalog's ontology, as a
+catalog variable's ``ontology_id`` does: the id of a concept of the Spatial and
+Contextual Exposome Ontology (``spacescans.catalog.concept``; find one with
+``spacescans.catalog.search_concepts``). Each variable may carry its own
+``ontology_id`` when the variables measure different things; a variable
+without one takes the dataset's. Both are checked at registration.
 """
 from __future__ import annotations
 
@@ -83,7 +90,7 @@ TEMPORAL: Mapping[str, tuple[str, ...]] = {
 VISIBILITY: tuple[str, ...] = ("private", "deployment")
 #: The metadata a dataset carries besides its data (``register(metadata=...)``).
 METADATA_FIELDS: tuple[str, ...] = ("source", "version", "description", "license_note",
-                                    "visibility", "owner")
+                                    "visibility", "owner", "ontology_id")
 _METADATA_LIMITS = {"source": 400, "version": 100, "description": 2000, "license_note": 2000,
                     "owner": 200}
 RECORD_FILE = "dataset.json"
@@ -132,14 +139,16 @@ class DatasetRecord:
     ``key``: how places and times are read from the files (tables: the
     boundary, the key column and the year or date column; rasters and
     features: ``None`` or the options given at registration); ``variables``:
-    the linked columns, ``[{name, unit, description}]``; ``source``,
+    the linked columns, ``[{name, unit, description, ontology_id?}]``; ``source``,
     ``version``, ``description``, ``license_note``: free text;
     ``visibility``: ``"private"`` or ``"deployment"`` (enforced by the web
     app); ``owner``: an optional string; ``created_utc``: ISO 8601;
     ``files``: the prepared files, relative to the dataset directory;
     ``checksum``: sha256 of the original files' bytes, in the order of
     ``details["originals"]`` (for one file, that file's sha256);
-    ``spacescans_version``: the package version that prepared it.
+    ``spacescans_version``: the package version that prepared it;
+    ``ontology_id``: the dataset's ontology concept, or ``None`` (a variable
+    may carry its own as ``ontology_id`` in ``variables``).
 
     ``details`` holds kind-specific facts the steps and a user interface need
     (grid, bands, periods, geometry family, row and feature counts, time span,
@@ -164,6 +173,7 @@ class DatasetRecord:
     files: list[str]
     checksum: str
     spacescans_version: str
+    ontology_id: str | None = None
     details: dict = field(default_factory=dict)
     root: Path | None = field(default=None, repr=False)
 
@@ -212,6 +222,7 @@ class DatasetRecord:
             "owner": self.owner, "created_utc": self.created_utc,
             "files": list(self.files), "checksum": self.checksum,
             "spacescans_version": self.spacescans_version,
+            "ontology_id": self.ontology_id,
             "details": _jsonable(self.details),
         }
 
@@ -233,6 +244,7 @@ class DatasetRecord:
                 files=[str(f) for f in data.get("files") or []],
                 checksum=str(data.get("checksum") or ""),
                 spacescans_version=str(data.get("spacescans_version") or ""),
+                ontology_id=None if not data.get("ontology_id") else str(data["ontology_id"]),
                 details=dict(data.get("details") or {}),
                 root=None if root is None else Path(root),
             )
@@ -321,6 +333,26 @@ def _choice(what: str, value: Any, allowed: Sequence[str], *, context: str = "")
                        f"not {shown}")
 
 
+def check_concept(value: Any, where: str) -> str | None:
+    """An ontology concept id, trimmed and known to the bundled index; blank is ``None``.
+
+    ``where`` names what carries it in the message ("the dataset", "variable 'pm25'").
+    """
+    if value is None:
+        return None
+    if not isinstance(value, str):
+        raise DatasetError(f"{where}: ontology_id must be a string (a concept id such as "
+                           "'000102_2')")
+    value = value.strip()
+    if not value:
+        return None
+    from spacescans.catalog import CatalogError, concept
+    try:
+        return concept(value).id
+    except CatalogError as exc:
+        raise DatasetError(f"{where}: {exc}") from None
+
+
 def _metadata(metadata: Mapping[str, Any] | None) -> dict[str, Any]:
     """Checked metadata: known fields only, strings within limits, visibility checked."""
     if metadata is None:
@@ -339,6 +371,9 @@ def _metadata(metadata: Mapping[str, Any] | None) -> dict[str, Any]:
         value = metadata[field_name]
         if value is None:
             out[field_name] = None
+            continue
+        if field_name == "ontology_id":
+            out[field_name] = check_concept(value, "the dataset")
             continue
         if field_name == "owner" and isinstance(value, int) and not isinstance(value, bool):
             value = str(value)
@@ -586,15 +621,17 @@ def register(paths: Any, *, name: str, kind: str, temporal: str,
     ``{"year_column": ..., "layer": ...}``; for a ``raster``: unused.
 
     ``variables``: the linked columns, a list of names or of
-    ``{"name", "unit", "description"}`` (tables may add ``"column"``, the
-    file's column, when the name differs; rasters may add ``"band"``).
+    ``{"name", "unit", "description", "ontology_id"}`` (tables may add
+    ``"column"``, the file's column, when the name differs; rasters may add
+    ``"band"``).
     Defaults: every numeric column of a table; band 1 of a raster, named after
     the dataset; for features one distance column ``<name>_dist_m`` (meters).
 
     ``metadata``: ``source``, ``version``, ``description``, ``license_note``,
-    ``visibility`` (``"private"``, the default, or ``"deployment"``) and
-    ``owner``. ``overwrite=True`` replaces a dataset of the same name (the
-    new one gets a new id).
+    ``visibility`` (``"private"``, the default, or ``"deployment"``),
+    ``owner`` and ``ontology_id`` (a concept of the catalog's ontology, see the
+    module docstring). ``overwrite=True`` replaces a dataset of the same name
+    (the new one gets a new id).
 
     ``dataset_id`` (8 lowercase hex characters) keeps an existing variable
     key ``custom_<dataset_id>``: the record's id then starts with it. Meant
@@ -644,6 +681,7 @@ def register(paths: Any, *, name: str, kind: str, temporal: str,
             created_utc=_now_utc(), files=prepared.files,
             checksum=combined_checksum(prepared.originals),
             spacescans_version=_package_version(),
+            ontology_id=meta.get("ontology_id"),
             details={**prepared.details,
                      "originals": [{k: v for k, v in o.items() if k != "path"}
                                    for o in prepared.originals]},
@@ -733,11 +771,13 @@ def update_dataset(name_or_id: str | DatasetRecord, *, name: str | None = None,
                    metadata: Mapping[str, Any] | None = None,
                    variables: Sequence[Mapping[str, Any]] | None = None,
                    root: str | os.PathLike | None = None) -> DatasetRecord:
-    """Change a dataset's name, metadata (including ``visibility``) or the units and
-    descriptions of its variables; the data and the id stay. Returns the new record.
+    """Change a dataset's name, metadata (including ``visibility`` and
+    ``ontology_id``) or the units, descriptions and ontology concepts of its
+    variables; the data and the id stay. Returns the new record.
 
-    ``variables`` lists ``{"name", "unit"?, "description"?}`` for existing
-    variables only (names cannot change: they are result columns).
+    ``variables`` lists ``{"name", "unit"?, "description"?, "ontology_id"?}``
+    for existing variables only (names cannot change: they are result columns);
+    ``None`` clears a field.
     """
     record = get_dataset(name_or_id, root)
     root_dir = Path(record.root)
@@ -752,14 +792,20 @@ def update_dataset(name_or_id: str | DatasetRecord, *, name: str | None = None,
             target = by_name.get(item["name"])
             if target is None:
                 raise DatasetError(f"{record.name!r} has no variable {item['name']!r}")
-            extra = sorted(set(item) - {"name", "unit", "description"})
+            extra = sorted(set(item) - {"name", "unit", "description", "ontology_id"})
             if extra:
-                raise DatasetError(f"only unit and description of a variable can change "
-                                   f"(got {', '.join(extra)})")
+                raise DatasetError(f"only the unit, description and ontology_id of a variable "
+                                   f"can change (got {', '.join(extra)})")
             unit, description = check_variable_text(item.get("unit", target.get("unit")),
                                                      item.get("description",
                                                               target.get("description")))
             target["unit"], target["description"] = unit, description
+            if "ontology_id" in item:
+                concept_id = check_concept(item["ontology_id"], f"variable {item['name']!r}")
+                if concept_id is None:
+                    target.pop("ontology_id", None)
+                else:
+                    target["ontology_id"] = concept_id
     with _locked(root_dir):
         current = _read_record(record.directory, root_dir)
         if current is None:

@@ -6,6 +6,9 @@ What is in it (all package data; no exposure data):
   :func:`variables`, :func:`variable`, :func:`group`, :func:`experiments`.
 * ``features.json``: the per-column feature dictionary; :func:`features`,
   :func:`feature_rows`, :func:`write_feature_csv`.
+* ``ontology.json``: the exposome concepts of the Spatial and Contextual
+  Exposome Ontology that variables and registered datasets are annotated
+  with; :func:`concepts`, :func:`concept`, :func:`search_concepts`.
 * ``templates/{c3,c4}``: the 25 pipeline YAML templates the runners render;
   :func:`templates`, :func:`template`.
 * :mod:`spacescans.catalog.recipes`: each experiment's steps, cache tags,
@@ -27,6 +30,14 @@ from spacescans.catalog._features import (
     feature_rows,
     features,
     write_feature_csv,
+)
+from spacescans.catalog._ontology import (
+    ROOT_CONCEPT,
+    Concept,
+    concept,
+    concepts,
+    ontology_source,
+    search_concepts,
 )
 from spacescans.catalog._registry import (
     CatalogError,
@@ -58,22 +69,28 @@ from spacescans.catalog.recipes import (
 
 __all__ = [
     "FEATURE_FIELDNAMES",
+    "ROOT_CONCEPT",
     "CatalogError",
+    "Concept",
     "Feature",
     "Recipe",
     "Step",
     "Variable",
     "all_recipes",
+    "concept",
+    "concepts",
     "coverage",
     "experiments",
     "feature_rows",
     "features",
     "group",
     "legacy_cache_key",
+    "ontology_source",
     "payload",
     "plan",
     "recipe",
     "schema",
+    "search_concepts",
     "template",
     "template_bytes",
     "template_hashes",

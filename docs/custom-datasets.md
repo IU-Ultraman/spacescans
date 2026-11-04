@@ -65,14 +65,16 @@ custom.register(paths, *, name, kind, temporal, key=None, variables=None, metada
     column has a usual name (`GEOID10`, `GEOID`, `ZCTA5CE10`, ...).
   * `features`: optional `{"year_column": ..., "layer": ...}` (the layer of a multi-layer file).
   * `raster`: not used.
-* `variables`: the linked columns, a list of names or of `{"name", "unit", "description"}`;
-  a table entry may add `"column"` (the file's column, when the name differs), a raster entry
-  `"band"`. Names become result columns: a letter first, then letters, digits and underscores.
-  Defaults: every numeric column of a table; band 1 of a raster, named after the dataset; for
-  features one column `<name>_dist_m` (unit `m`).
+* `variables`: the linked columns, a list of names or of
+  `{"name", "unit", "description", "ontology_id"}`; a table entry may add `"column"` (the
+  file's column, when the name differs), a raster entry `"band"`. Names become result columns:
+  a letter first, then letters, digits and underscores. Defaults: every numeric column of a
+  table; band 1 of a raster, named after the dataset; for features one column `<name>_dist_m`
+  (unit `m`).
 * `metadata`: `source`, `version`, `description`, `license_note`, `visibility` (`"private"`,
-  the default, or `"deployment"`) and `owner`. `visibility` and `owner` are recorded for the
-  web app, which enforces them; the package does not.
+  the default, or `"deployment"`), `owner` and `ontology_id` (see
+  [Ontology concepts](#ontology-concepts)). `visibility` and `owner` are recorded for the web
+  app, which enforces them; the package does not.
 * `overwrite=True` replaces a dataset of the same name; the new one gets a new id.
 * `dataset_id` (8 lowercase hex characters) keeps the variable key `custom_<dataset_id>` of a
   dataset defined earlier with `define_polygon` / `define_raster` (the web app's uploads): the
@@ -90,8 +92,51 @@ custom.resolve_custom(items, root=None) -> {variable_key: definition}
 custom.datasets_root(root=None) -> Path
 ```
 
-`update_dataset` changes the name, the metadata (including `visibility`) and the units and
-descriptions of the variables; the data, the id and the variable names stay.
+`update_dataset` changes the name, the metadata (including `visibility` and `ontology_id`) and
+the units, descriptions and ontology concepts of the variables (`None` clears one); the data,
+the id and the variable names stay.
+
+### Ontology concepts
+
+The catalog is organized by the Spatial and Contextual Exposome Ontology: every catalog variable
+carries the id of an ontology concept as `ontology_id` (Particulate_Matter_PM2.5 is
+`000102_2`), and the web app places it in its ontology tree by that id. A registered dataset
+can carry one the same way, `metadata={"ontology_id": ...}`, and so can each of its variables,
+`{"name": ..., "ontology_id": ...}`, when the variables measure different things. A variable
+without its own concept takes the dataset's. Both are checked at registration (and at
+`update_dataset`): an id the ontology does not have is refused, and the message names the
+closest concepts.
+
+```python
+from spacescans import catalog, custom
+
+catalog.search_concepts("pm2.5")[0]        # Concept(id='000102_2', label='Particulate_Matter_PM2.5', ...)
+catalog.concept("000289").path             # ('Spatial_and_Contextual_Exposome', 'Natural_Environment_Exposome', 'Noise')
+
+custom.register(files, name="PM2.5 biweekly", kind="raster", temporal="biweekly",
+                metadata={"ontology_id": "000102_2"})
+custom.register("county_measures.csv", name="County measures", kind="polygon_table",
+                temporal="yearly", key="county",
+                metadata={"ontology_id": "000093_2"},          # the variables span domains
+                variables=[{"name": "pm25", "ontology_id": "000102_2"},
+                           {"name": "unemployment", "ontology_id": "000295"}])
+```
+
+The concepts come with the package (`spacescans/catalog/ontology.json`, generated from
+spacescans-web's ontology files by `tools/build_ontology_index.py`): the 208 concepts under
+the exposome root `000093_2` (Spatial_and_Contextual_Exposome) with their labels, definitions
+and parents, the subtree the web's catalog shows. Two kinds of node are left out: the web's
+`SPACESCANS_VC_*` nodes, which stand for the catalog's own result columns, and the ontology's
+statistic branch (`000296`), whose nodes describe particular source variables (mostly American
+Community Survey estimates with their own source and years). Choose the most specific concept
+that describes what the variable measures; when the ontology has none, use the broader concept
+that contains it (often the natural, built or social environment domain) rather than a
+narrower one that does not fit. `catalog.concepts()` lists all of them, root first, with each
+concept's `path` from the root.
+
+A dataset's concept is written into its definition as `ontology_id` (a catalog field:
+`custom.catalog_entry()` keeps it) and each variable's effective concept into
+`value_ontology_ids`.
 
 ### Root
 
@@ -118,10 +163,11 @@ always complete.
 ### The record
 
 `DatasetRecord` (`dataset.json`) fields: `id` (uuid4 hex), `name`, `kind`, `temporal`, `key`,
-`variables` (`[{name, unit, description}]`), `source`, `version`, `description`,
-`license_note`, `visibility`, `owner`, `created_utc`, `files` (relative paths of the prepared
-files), `checksum` (sha256 of the original files' bytes in the order of `details.originals`;
-for one file, that file's sha256), `spacescans_version`, and `details`: kind-specific facts
+`variables` (`[{name, unit, description, ontology_id?}]`), `source`, `version`,
+`description`, `license_note`, `visibility`, `owner`, `created_utc`, `files` (relative paths
+of the prepared files), `checksum` (sha256 of the original files' bytes in the order of
+`details.originals`; for one file, that file's sha256), `spacescans_version`, `ontology_id`
+(the dataset's concept, or null), and `details`: kind-specific facts
 (grid, bands and periods of a raster; geometry family, feature counts and extent of features;
 row and key counts and the time span of a table; each prepared file's sha256): counts, time
 spans and extents, never an individual value from the data.
@@ -209,6 +255,7 @@ The R package reaches the registry through these bridge commands (all take an op
 | `datasets-get` | `name` (name, id or variable key) | `{dataset, key, definition}` |
 | `datasets-update` | `name`, `new_name`?, `metadata`?, `variables`? | `{dataset, key}` |
 | `datasets-remove` | `name` | `{removed}` |
+| `concepts` | `id`?, or `query`? and `limit`? | `{concepts, ontology, root, source}` |
 
 A `dataset` is the record plus `path` and `variable_key`. To link a registered dataset through
 the bridge, pass `variables + key` and `custom = {key: definition}` to `link`.

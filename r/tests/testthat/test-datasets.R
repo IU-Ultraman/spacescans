@@ -186,6 +186,31 @@ test_that("ss_update_dataset() changes the name, metadata or variable units, and
   expect_equal(up$id, rec$id)
 })
 
+test_that("ontology concepts are sent with the metadata and the variables", {
+  dir <- local_fake_bridge()
+  vars <- data.frame(name = c("pm25", "unemployment"), ontology_id = c("000102_2", NA),
+                     stringsAsFactors = FALSE)
+  rec <- ss_register_dataset(csv_file(), name = "county", kind = "polygon_table", temporal = "static",
+                             key = "tract", variables = vars, ontology_id = "000093_2")
+  a <- last_request(dir, "datasets-register")$args
+  expect_equal(a$metadata, list(visibility = "private", ontology_id = "000093_2"))
+  expect_equal(a$variables, list(list(name = "pm25", ontology_id = "000102_2"),
+                                 list(name = "unemployment")))
+  expect_equal(rec$ontology_id, "000093_2")
+  expect_equal(rec$variables$ontology_id, c("000102_2", NA))
+  expect_output(print(rec), "concept +000093_2")
+  expect_true("ontology_id" %in% names(ss_datasets()))
+  up <- ss_update_dataset("county", ontology_id = "000094_2",
+                          variables = data.frame(name = "unemployment", ontology_id = "000295"))
+  a <- last_request(dir, "datasets-update")$args
+  expect_equal(a$metadata, list(ontology_id = "000094_2"))
+  expect_equal(a$variables, list(list(name = "unemployment", ontology_id = "000295")))
+  expect_equal(up$ontology_id, "000094_2")
+  expect_equal(up$variables$ontology_id, c("000102_2", "000295"))
+  expect_error(ss_register_dataset(csv_file(), name = "x", kind = "polygon_table", temporal = "static",
+                                   ontology_id = 102), class = "spacescans_error_config")
+})
+
 test_that("a name is registered once unless overwrite = TRUE", {
   dir <- local_fake_bridge()
   csv <- csv_file()

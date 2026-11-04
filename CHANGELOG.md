@@ -8,6 +8,21 @@ have no changelog; see the git tags `v0.2.0` to `v0.2.7`.
 
 ### Added
 
+- Ontology concepts for registered datasets. `custom.register()` and `custom.update_dataset()`
+  accept `metadata={"ontology_id": ...}`, the concept of the Spatial and Contextual Exposome
+  Ontology that places the dataset in the catalog's ontology as catalog variables are placed,
+  and an `ontology_id` per variable for datasets whose variables measure different things (a
+  variable without one takes the dataset's). Unknown ids are refused with the closest concepts
+  named. The record gains `ontology_id`; a registered dataset's definition carries it as the
+  catalog field `ontology_id` (kept by `custom.catalog_entry()`) and each variable's concept
+  in `value_ontology_ids`. Datasets registered without concepts are unchanged.
+- `spacescans.catalog.concepts()`, `concept()`, `search_concepts()` and `ontology_source()`:
+  the 208 concepts of the ontology's exposome branch, bundled as `catalog/ontology.json`
+  (generated from spacescans-web's ontology files by `tools/build_ontology_index.py`), so
+  that concepts can be found and checked offline. Bridge command `concepts`; R
+  `ss_concepts()`, and `ontology_id` in `ss_register_dataset()`, `ss_update_dataset()` and
+  the `variables` data frame.
+
 - `examples/`: a worked example in Python and in R (`link_example.py`, `link_example.R`) that
   links a synthetic cohort to a catalog source at both output levels, registers a county table
   and a set of point features and links them by name, then checks every result independently;

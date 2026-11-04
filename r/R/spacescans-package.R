@@ -22,8 +22,9 @@
 #'   ([ss_job_status()]).
 #' * [ss_register_dataset()], [ss_datasets()], [ss_dataset()] and
 #'   [ss_remove_dataset()] keep your own data in a registry, linked by name;
-#'   [ss_custom_polygon()] and [ss_custom_raster()] build one-off
-#'   definitions.
+#'   [ss_concepts()] finds the ontology concepts that place a dataset, or its
+#'   variables, in the catalog's ontology; [ss_custom_polygon()] and
+#'   [ss_custom_raster()] build one-off definitions.
 #' * [ss_cache_info()] and [ss_cache_clear()] manage the C3 weight cache.
 #' * [ss_run()] runs one pipeline config (a YAML file or an R list);
 #'   [ss_quickstart()] runs the bundled demo; [ss_config_schema()],

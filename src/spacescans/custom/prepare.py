@@ -8,9 +8,9 @@ definition dict the steps read (a superset of a catalog entry, like
 ``define_polygon`` / ``define_raster`` output).
 
 The variable helpers here are shared by the three kinds: a variable is
-``{"name", "unit", "description"}``; its name becomes a result column and a
-SQL identifier in the steps, so it must start with a letter and use only
-letters, digits and underscores.
+``{"name", "unit", "description", "ontology_id"?}``; its name becomes a result
+column and a SQL identifier in the steps, so it must start with a letter and use
+only letters, digits and underscores.
 """
 from __future__ import annotations
 
@@ -20,7 +20,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from spacescans.custom.registry import DatasetError
+from spacescans.custom.registry import DatasetError, check_concept
 
 if TYPE_CHECKING:  # pragma: no cover
     from spacescans.custom.registry import DatasetRecord, Input
@@ -161,7 +161,7 @@ def normalise_variables(variables: Any, *, extra: Sequence[str] = ()) -> list[di
     if len(variables) > MAX_VARIABLES:
         raise DatasetError(f"{len(variables)} variables exceed the limit of {MAX_VARIABLES}")
     out: list[dict] = []
-    allowed = {"name", "unit", "description", *extra}
+    allowed = {"name", "unit", "description", "ontology_id", *extra}
     for item in variables:
         if isinstance(item, str):
             item = {"name": item}
@@ -174,6 +174,9 @@ def normalise_variables(variables: Any, *, extra: Sequence[str] = ()) -> list[di
         entry: dict[str, Any] = {"name": check_variable_name(item.get("name"))}
         entry["unit"], entry["description"] = check_variable_text(item.get("unit"),
                                                                   item.get("description"))
+        concept_id = check_concept(item.get("ontology_id"), f"variable {entry['name']!r}")
+        if concept_id is not None:
+            entry["ontology_id"] = concept_id
         for key in extra:
             if key in item:
                 entry[key] = item[key]
@@ -187,9 +190,15 @@ def normalise_variables(variables: Any, *, extra: Sequence[str] = ()) -> list[di
 
 
 def public_variables(variables: Sequence[Mapping[str, Any]]) -> list[dict]:
-    """The record's form of the variables: ``{name, unit, description}`` only."""
-    return [{"name": v["name"], "unit": v.get("unit"), "description": v.get("description")}
-            for v in variables]
+    """The record's form of the variables: ``{name, unit, description}``, and
+    ``ontology_id`` when the variable has one."""
+    out = []
+    for v in variables:
+        entry = {"name": v["name"], "unit": v.get("unit"), "description": v.get("description")}
+        if v.get("ontology_id"):
+            entry["ontology_id"] = v["ontology_id"]
+        out.append(entry)
+    return out
 
 
 def labels_and_units(record: DatasetRecord) -> tuple[dict[str, str], dict[str, str]]:
@@ -197,6 +206,16 @@ def labels_and_units(record: DatasetRecord) -> tuple[dict[str, str], dict[str, s
     labels = {v["name"]: v["description"] for v in record.variables if v.get("description")}
     units = {v["name"]: v["unit"] for v in record.variables if v.get("unit")}
     return labels, units
+
+
+def variable_concepts(record: DatasetRecord) -> dict[str, str]:
+    """Each variable's ontology concept: its own, else the dataset's (none: left out)."""
+    out = {}
+    for v in record.variables:
+        concept_id = v.get("ontology_id") or record.ontology_id
+        if concept_id:
+            out[v["name"]] = concept_id
+    return out
 
 
 def common_definition(record: DatasetRecord, *, geometry: str, boundary: str,
@@ -210,7 +229,7 @@ def common_definition(record: DatasetRecord, *, geometry: str, boundary: str,
     labels, units = labels_and_units(record)
     originals = record.details.get("originals") or []
     filenames = ", ".join(str(o.get("name")) for o in originals)
-    return {
+    head: dict[str, Any] = {
         # --- catalog-shaped ---
         "label": record.name,
         "description": (record.description or f"Registered dataset {record.name}.")[
@@ -220,6 +239,12 @@ def common_definition(record: DatasetRecord, *, geometry: str, boundary: str,
         "coverage_years": [int(coverage_years[0]), int(coverage_years[1])],
         "coverage_region": "CONUS",
         "experiment": EXPERIMENT_KEY,
+    }
+    # The catalog schema wants a non-empty ontology_id or none at all.
+    if record.ontology_id:
+        head["ontology_id"] = record.ontology_id
+    return {
+        **head,
         "data_source": (record.source or f"Registered by user: {filenames}")[:200],
         "temporal": record.temporal,
         "variable_type": "continuous",
@@ -232,6 +257,7 @@ def common_definition(record: DatasetRecord, *, geometry: str, boundary: str,
         "owner_uid": record.owner,
         "value_labels": labels,
         "value_units": units,
+        "value_ontology_ids": variable_concepts(record),
         "registered": {"id": record.id, "name": record.name, "version": record.version,
                        "root": str(record.root), "checksum": record.checksum},
         "uploaded_filename": filenames[:200] or record.name,

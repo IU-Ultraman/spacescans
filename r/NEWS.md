@@ -1,6 +1,19 @@
 # spacescans (development version)
 
-* Tests only; nothing in the package changed. The test of `ss_data_dir()` is
+## New features
+
+* Registered datasets can carry ontology concepts. `ss_register_dataset()`
+  and `ss_update_dataset()` take `ontology_id`, the concept of the Spatial
+  and Contextual Exposome Ontology that places the dataset in the catalog's
+  ontology, as the catalog's variables are placed; a variable can carry its
+  own concept in an `ontology_id` column of `variables`. Registration
+  refuses an id the ontology does not have. `ss_concepts()` lists and
+  searches the concepts, offline. The record, `ss_datasets()` and
+  `print()` show them.
+
+## Tests
+
+* The test of `ss_data_dir()` is
   skipped on Windows, like the other tests of POSIX paths: the package treats
   only paths that begin with `/` as absolute. (Seen in the R-universe checks
   of 0.3.4, where Linux and macOS passed.)

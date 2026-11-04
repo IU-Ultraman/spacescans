@@ -23,7 +23,8 @@ ss_register_dataset(
   visibility = c("private", "deployment"),
   owner = NULL,
   root = NULL,
-  overwrite = FALSE
+  overwrite = FALSE,
+  ontology_id = NULL
 )
 
 ss_datasets(root = NULL)
@@ -40,7 +41,8 @@ ss_update_dataset(
   visibility = NULL,
   owner = NULL,
   variables = NULL,
-  root = NULL
+  root = NULL,
+  ontology_id = NULL
 )
 
 ss_remove_dataset(name_or_id, root = NULL)
@@ -65,12 +67,13 @@ geography name or a named list (see Details); optional for features
 (\code{list(year_column = , layer = )}); unused for rasters.}
 
 \item{variables}{The variables: a character vector of names, or a data
-frame with a \code{name} column and optionally \code{unit}, \code{description}, and
-\code{column} (a table's column, when it differs from the name) or \code{band} (a
-raster band). \code{NULL} takes the defaults: every numeric column of a
-table; band 1 of a raster, named after the dataset; \verb{<name>_dist_m} for
-features. For \code{ss_update_dataset()}, a data frame with \code{name} and the
-new \code{unit} and/or \code{description} of existing variables.}
+frame with a \code{name} column and optionally \code{unit}, \code{description},
+\code{ontology_id}, and \code{column} (a table's column, when it differs from the
+name) or \code{band} (a raster band). \code{NULL} takes the defaults: every numeric
+column of a table; band 1 of a raster, named after the dataset;
+\verb{<name>_dist_m} for features. For \code{ss_update_dataset()}, a data frame
+with \code{name} and the new \code{unit}, \code{description} and/or \code{ontology_id} of
+existing variables.}
 
 \item{periods}{For rasters and yearly features: the year (a number) or the
 start date (a \code{Date} or \code{"2016-01-01"}) of each file, in the order of
@@ -88,6 +91,9 @@ terms under which it may be used.}
 
 \item{overwrite}{Replace a dataset of the same name (it gets a new id).}
 
+\item{ontology_id}{Optional ontology concept of the dataset (see
+Details and \code{\link[=ss_concepts]{ss_concepts()}}).}
+
 \item{name_or_id}{A dataset's name, id or variable key, or the record
 from \code{ss_register_dataset()} or \code{ss_dataset()}.}
 }
@@ -95,9 +101,10 @@ from \code{ss_register_dataset()} or \code{ss_dataset()}.}
 \code{ss_register_dataset()}, \code{ss_dataset()} and
 \code{ss_update_dataset()}: the dataset's record, a list of class
 \code{ss_dataset} (\code{id}, \code{name}, \code{kind}, \code{temporal}, \code{key}, \code{variables} (a
-data frame: \code{name}, \code{unit}, \code{description}), \code{source}, \code{version},
-\code{description}, \code{license_note}, \code{visibility}, \code{owner}, \code{created_utc},
-\code{files}, \code{checksum}, \code{spacescans_version}, \code{details}, \code{path} (its
+data frame: \code{name}, \code{unit}, \code{description}, and \code{ontology_id} when a
+variable has one), \code{source}, \code{version}, \code{description}, \code{license_note},
+\code{visibility}, \code{owner}, \code{created_utc}, \code{files}, \code{checksum},
+\code{spacescans_version}, \code{ontology_id}, \code{details}, \code{path} (its
 directory) and \code{variable_key}), with the registry directory as
 attribute \code{root}. \code{ss_datasets()}: a data frame with one row per dataset
 (variables as their names), attribute \code{root}. \code{ss_remove_dataset()}:
@@ -162,6 +169,14 @@ elsewhere.
 \strong{Visibility.} \code{"private"} (default) or \code{"deployment"}. The packages only
 record it; a web app deployment enforces it (a \code{"deployment"} dataset is
 offered to every user of that deployment).
+
+\strong{Ontology concepts.} \code{ontology_id} places the dataset in the exposure
+catalog's ontology, as a catalog variable's \code{ontology_id} does: the id of a
+concept of the Spatial and Contextual Exposome Ontology, found with
+\code{\link[=ss_concepts]{ss_concepts()}} (for example \code{"000102_2"}, Particulate_Matter_PM2.5). A
+variable may carry its own concept (an \code{ontology_id} column in
+\code{variables}) when the variables measure different things; a variable
+without one takes the dataset's. Registration refuses an unknown id.
 }
 \examples{
 \dontrun{

@@ -418,6 +418,39 @@ test_that("live: registered datasets: register, list, get, update and remove (po
   expect_error(ss_dataset("County scores"), class = "spacescans_error_config")
 })
 
+test_that("live: ss_concepts() and ontology concepts on a registered dataset", {
+  skip_if_not_live()
+  skip_if_no_command("concepts")
+  local_clean_state()
+  root <- local_live_registry()
+  pm <- ss_concepts("pm2.5")
+  expect_equal(pm$id[1], "000102_2")
+  expect_equal(pm$label[1], "Particulate_Matter_PM2.5")
+  expect_match(pm$path[1], "^Spatial_and_Contextual_Exposome > Natural_Environment_Exposome")
+  all <- ss_concepts()
+  expect_equal(all$id[1], attr(all, "root"))
+  expect_true(all(ss_catalog()$ontology_id %in% all$id))
+  csv <- file.path(withr::local_tempdir(), "county_measures.csv")
+  writeLines(c("GEOID,pm25,unemployment", "18097,8.1,4.0", "18057,7.2,3.1"), csv)
+  rec <- ss_register_dataset(csv, name = "County measures", kind = "polygon_table", temporal = "static",
+                             key = list(boundary = "county", column = "GEOID"),
+                             variables = data.frame(name = c("pm25", "unemployment"),
+                                                    ontology_id = c("000102_2", "000295")),
+                             ontology_id = "000093_2")
+  expect_equal(rec$ontology_id, "000093_2")
+  expect_equal(rec$variables$ontology_id, c("000102_2", "000295"))
+  expect_equal(ss_datasets()$ontology_id, "000093_2")
+  up <- ss_update_dataset(rec, ontology_id = "000094_2")
+  expect_equal(up$ontology_id, "000094_2")
+  e <- tryCatch(ss_update_dataset(rec, ontology_id = "PM2.5"), error = identity)
+  expect_s3_class(e, "spacescans_error_config")
+  expect_match(conditionMessage(e), "000102_2")
+  e <- tryCatch(ss_register_dataset(csv, name = "x", kind = "polygon_table", temporal = "static",
+                                    key = "county", ontology_id = "nope"), error = identity)
+  expect_s3_class(e, "spacescans_error_config")
+  expect_equal(nrow(ss_datasets()), 1L)                      # nothing was stored
+})
+
 test_that("live: a registered county table links by name at participant level", {
   skip_if_not_live()
   skip_if_not_live_link()

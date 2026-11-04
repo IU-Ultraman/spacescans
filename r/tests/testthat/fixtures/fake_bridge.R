@@ -145,7 +145,7 @@ commands <- c("capabilities", "hello", "catalog", "coverage", "data-status", "da
               "data-verify", "data-fetch", "data-import", "data-terms", "custom-validate", "link",
               "cache-info", "cache-clear", "runs-sweep", "run", "schema", "quickstart", "resolve",
               "templates", "yaml-load", "yaml-dump", "ping", "datasets-register", "datasets-list",
-              "datasets-get", "datasets-update", "datasets-remove")
+              "datasets-get", "datasets-update", "datasets-remove", "concepts")
 
 catalog_vars <- list(
   list(key = "ndi", label = "Neighborhood Deprivation Index (NDI)", experiment = "bg_ndi_wi",
@@ -473,6 +473,7 @@ if (is.null(value)) {
                   created_utc = "2026-10-16T20:00:00Z",
                   files = as.list(sprintf("prepared/part-%d.parquet", seq_along(files))),
                   checksum = "sha256:fake", spacescans_version = version,
+                  ontology_id = md$ontology_id,
                   details = list(periods = args$periods),
                   path = file.path(registry_root(), id), variable_key = paste0("custom_", substr(id, 1, 8)))
       if (!is.na(i)) reg[[i]] <- rec else reg[[length(reg) + 1L]] <- rec
@@ -480,6 +481,28 @@ if (is.null(value)) {
       list(dataset = rec, key = rec$variable_key)
     },
     `datasets-list` = list(root = registry_root(), datasets = read_registry()),
+    concepts = {
+      root_path <- list("Spatial_and_Contextual_Exposome")
+      all <- list(
+        list(id = "000093_2", label = "Spatial_and_Contextual_Exposome",
+             name = "Spatial and Contextual Exposome", definition = "", parents = list(),
+             path = root_path),
+        list(id = "000094_2", label = "Natural_Environment_Exposome",
+             name = "Natural Environment Exposome", definition = "", parents = list("000093_2"),
+             path = c(root_path, list("Natural_Environment_Exposome"))),
+        list(id = "000102_2", label = "Particulate_Matter_PM2.5", name = "Particulate Matter PM2.5",
+             definition = "Fine particles.", parents = list("000096_2"),
+             path = c(root_path, list("Natural_Environment_Exposome", "Air_Pollutant",
+                                      "Criteria_Air_Pollutant", "Particulate_Matter_PM2.5"))))
+      pick <- if (!is.null(args$id)) {
+        Filter(function(x) identical(x$id, args$id), all)
+      } else if (!is.null(args$query)) {
+        Filter(function(x) grepl(tolower(args$query), tolower(x$label), fixed = TRUE), all)
+      } else all
+      if (!is.null(args$id) && !length(pick)) fail("config", sprintf("unknown ontology concept '%s'", args$id))
+      list(concepts = pick, ontology = "Spatial and Contextual Exposome Ontology (SPACEO)",
+           root = "000093_2", source = list(repository = "spacescans-web"))
+    },
     `datasets-get` = {
       reg <- read_registry()
       r <- reg[[dataset_or_fail(reg, args$name)]]
