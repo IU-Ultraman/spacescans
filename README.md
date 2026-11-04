@@ -180,8 +180,11 @@ custom.remove_dataset("pm_biweekly")
 
 `register()` also takes `key` (a table's geography and key column, such as
 `{"boundary": "tract", "column": "GEOID"}`; for features optionally a year column or a layer),
-`variables` (name, unit and description of each value), `metadata` (source, version,
-description, license note, visibility, owner) and `overwrite`. A record has
+`variables` (name, unit, description and ontology concept of each value), `metadata` (source,
+version, description, license note, visibility, owner, and `ontology_id`, the concept of the
+Spatial and Contextual Exposome Ontology that places the dataset in the catalog, as catalog
+variables are placed; `spacescans.catalog.search_concepts("pm2.5")` finds one) and
+`overwrite`. A record has
 an `id`, a `name` unique in its library, the checksum of the original files and the spacescans
 version that prepared it. The library lives in `root=`, else
 `$SPACESCANS_DATASETS_DIR`, else the user data directory (`platformdirs.user_data_dir("spacescans")`
@@ -195,8 +198,9 @@ is [docs/custom-datasets.md](https://github.com/IU-Ultraman/spacescans/blob/main
 
 An agent skill, [skills/spacescans-custom-datasets/SKILL.md](skills/spacescans-custom-datasets/SKILL.md),
 walks an AI coding agent through preparing a dataset for registration: choosing the shape,
-reshaping tables and aligning rasters, writing the metadata, reading the validation messages, and
-checking coverage and a few values after the first linkage. Copy the folder into the agent's
+reshaping tables and aligning rasters, gathering the metadata (from the files, the provider's
+documentation and the user) and choosing the ontology concepts, reading the validation messages,
+and checking coverage and a few values after the first linkage. Copy the folder into the agent's
 skills directory (`~/.claude/skills/` for Claude Code, `~/.agents/skills/` for Codex, or the same
 folders inside a project).
 
