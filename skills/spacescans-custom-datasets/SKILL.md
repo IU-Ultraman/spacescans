@@ -1,6 +1,6 @@
 ---
 name: spacescans-custom-datasets
-description: Prepare a user's own exposure dataset for SPACESCANS and register it with spacescans.custom.register() in Python, ss_register_dataset() in R, or the web application's Add dataset form. Covers the three shapes SPACESCANS links, a table keyed by 2010 Census tracts, block groups, ZCTAs or counties, GeoTIFF rasters on one grid, and point, line or polygon features, with their metadata, the validation messages and the checks to run before and after a first linkage. Use when someone wants to link their own, proprietary or restricted exposure data with SPACESCANS, asks what format SPACESCANS expects, or gets a registration error or a low linkage rate for a custom dataset. Not for cohort files (the five cohort columns are in the README) and not for changing the built-in catalog.
+description: Prepare a user's own exposure dataset for SPACESCANS and register it with spacescans.custom.register() in Python, ss_register_dataset() in R, or the web application's Add dataset form. Covers the three shapes SPACESCANS links, a table keyed by 2010 Census tracts, block groups, ZCTAs or counties, GeoTIFF rasters on one grid, and point, line or polygon features; the metadata the catalog needs, gathered from the files, the provider's documentation and the user, including the ontology concepts that place the dataset in the catalog's ontology; the validation messages; and the checks to run before and after a first linkage. Use when someone wants to link their own, proprietary or restricted exposure data with SPACESCANS, asks what format or metadata SPACESCANS expects, or gets a registration error or a low linkage rate for a custom dataset. Not for cohort files (the five cohort columns are in the README) and not for changing the built-in catalog.
 license: MIT
 metadata:
   project: spacescans
@@ -16,9 +16,10 @@ once into prepared files (Parquet for tables, checked copies for rasters, GeoPar
 EPSG:5070 for features), stores them with a metadata record, and every later `link()` uses the
 dataset by name. The original files are not changed.
 
-Your job in this skill is to get the user's data into one of the three accepted shapes, write
-honest metadata, register it, read the validation messages, and check the first linkage. Work on
-copies; never rename, move or delete the user's originals.
+Your job in this skill is to get the user's data into one of the three accepted shapes, gather
+honest metadata (including the ontology concepts that place the dataset in the catalog),
+register it, read the validation messages, and check the first linkage. Work on copies; never
+rename, move or delete the user's originals.
 
 ## 1. Decide the shape
 
@@ -52,10 +53,42 @@ Read the data documentation first. Establish, and write down in a short processi
 - for features: CRS, geometry type, and which features belong in the dataset (attribute columns
   are not stored, so a subset such as "clinics of one type" must be filtered before registering).
 
-Ask the user for anything the files and their documentation do not settle, in particular units,
-vintage and the license. Never invent units or a vintage.
+## 3. Gather the metadata
 
-## 3. Convert to what `register()` accepts
+The record is what other users, the web catalog and the feature dictionary of every result know
+about the dataset, so each field needs a source. Work through this list:
+
+| item | goes into | usually found in |
+|---|---|---|
+| a short, unique name | `name` | the user |
+| what the dataset measures, in one or two sentences | `metadata["description"]` | the provider's documentation |
+| the provider and product, with the documentation URL | `metadata["source"]` | the documentation, its citation |
+| the version or release, and the download date | `metadata["version"]` | the documentation, file names |
+| the terms of use and any required citation | `metadata["license_note"]` | the provider's license or terms page |
+| the spatial representation and, for tables, the geography and its vintage | `kind`, `key` | the documentation, the files |
+| the time structure and the period of each file or row | `temporal`, periods | the files, the documentation |
+| each variable's name, unit and definition | `variables` (`name`, `unit`, `description`) | the data dictionary, file attributes |
+| the missing-value codes | the conversion (they become missing values or nodata) | the data dictionary |
+| the ontology concept of the dataset, and of each variable when they differ | `metadata["ontology_id"]`, `variables[...]["ontology_id"]` | section 5 |
+| who may see the dataset | `metadata["visibility"]` | the user, within the license |
+
+Fill the list in this order, and note where each value came from:
+
+1. **The files and the documentation you were given**: README files, data dictionaries, column
+   headers, raster tags and NetCDF attributes (`units`, `long_name`).
+2. **The provider's documentation online, if you can reach the web**: look up what is still
+   missing (units, definitions, version, terms) on the provider's own pages, not on secondary
+   sources, and put the URL of the page you used in `source` or `license_note`.
+3. **The user, for whatever remains**: ask one question at a time, each with your recommended
+   answer and the evidence for it, and move to the next item only when the answer is settled,
+   as an interview ("grill me") skill does. The user may reply "accept the rest of your
+   recommendations". When nobody can answer, leave the field empty and say so in the report.
+
+Never invent a unit, a vintage, a version or license terms: a wrong unit or vintage silently
+corrupts every linked value, and a guessed license misinforms everyone the dataset is shared
+with. Show the user the completed list, value and source per item, before registering.
+
+## 4. Convert to what `register()` accepts
 
 ### Tables
 
@@ -118,7 +151,45 @@ long.to_csv("heat_long.csv", index=False)
   with a year column named in `key={"year_column": ...}`. Days in years without a file get no
   value.
 
-## 4. Register
+## 5. Choose the ontology concepts
+
+The catalog is organized by the Spatial and Contextual Exposome Ontology. Every catalog variable
+carries a concept id as `ontology_id`, and the web application places it in its ontology tree by
+that id. A registered dataset carries one the same way, and each of its variables may carry its
+own when the variables measure different things; a variable without one takes the dataset's.
+The concepts come with the package, so no network is needed:
+
+```python
+from spacescans import catalog
+for c in catalog.search_concepts("pm2.5"):
+    print(c.id, " > ".join(c.path))
+# 000102_2 Spatial_and_Contextual_Exposome > Natural_Environment_Exposome > Air_Pollutant > Criteria_Air_Pollutant > Particulate_Matter_PM2.5
+{k: v.ontology_id for k, v in catalog.variables().items()}   # the concepts the catalog uses
+catalog.concepts()                                            # every concept, root first
+```
+
+In R: `ss_concepts("pm2.5")`, and `ss_concepts()` for all of them. Rules:
+
+- **A variable's concept** is the most specific concept that describes what the variable
+  measures: a PM2.5 mass concentration is Particulate_Matter_PM2.5 (`000102_2`), not
+  Air_Pollutant. A dataset measuring what a catalog variable measures takes that variable's
+  concept.
+- **When the ontology has no concept that specific**, use the nearest broader concept that
+  contains the measure, often one of the domains: Natural_Environment_Exposome (`000094_2`),
+  Built_Environment_Exposome (`000292`) or Social_Environment_Exposome (`000295`). Say in the
+  report that the ontology lacks a specific concept. Never choose a narrower or neighbouring
+  concept that does not describe the measure, and never make up an id: a wrong concept files
+  the dataset under the wrong exposure for everyone who browses the catalog.
+- **The dataset's concept** is the most specific concept that covers all its variables; when
+  they span domains, the root Spatial_and_Contextual_Exposome (`000093_2`). Give a variable its
+  own concept only when it differs from the dataset's.
+- Search with several words (the measure, the agent, the domain). The search compares word
+  beginnings, so "pollut" finds Air_Pollutant where "pollution" does not; when nothing fits,
+  read the whole list with `catalog.concepts()`, about 200 concepts with their paths.
+- Present each choice to the user with its path and one line of reasoning. When two concepts
+  are equally defensible, recommend one and ask.
+
+## 6. Register
 
 ```python
 from spacescans import custom
@@ -127,39 +198,47 @@ custom.register("heat_long.csv", name="county_heat", kind="polygon_table", tempo
                 key={"boundary": "county", "column": "fips", "year_column": "year"},
                 variables=[{"name": "heat_days", "unit": "days",
                             "description": "Days above the local 95th-percentile maximum temperature"}],
-                metadata={"source": "<provider or lab>", "version": "<release or date>",
+                metadata={"source": "<provider or lab, documentation URL>",
+                          "version": "<release or date>",
                           "description": "<one or two sentences>",
-                          "license_note": "<terms the provider attaches>"})
+                          "license_note": "<terms the provider attaches>",
+                          "ontology_id": "000291"})       # Meteorological_Factor
 
 custom.register(["ndvi_2015.tif", "ndvi_2016.tif"], name="ndvi", kind="raster", temporal="yearly",
-                variables=[{"name": "ndvi", "unit": "index", "description": "Annual mean NDVI"}])
+                variables=[{"name": "ndvi", "unit": "index", "description": "Annual mean NDVI"}],
+                metadata={"ontology_id": "000094_2"})     # no greenness concept: its domain
 
-custom.register("clinics.geojson", name="clinics", kind="features", temporal="static")
+custom.register("clinics.geojson", name="clinics", kind="features", temporal="static",
+                metadata={"ontology_id": "000292"})       # Built_Environment_Exposome
 ```
 
 - `key` for a table: `boundary` is `tract`, `block_group`, `zcta` or `county`; `column` is the
   key column; `year_column` / `date_column` default to `year` / `date`. A bare boundary name
   (`key="tract"`) works when the key column has a usual name such as `GEOID10` or `GEOID`.
-- `variables`: a list of names, or of `{"name", "unit", "description"}`; a table entry may add
-  `"column"` when the file's column has another name, a raster entry `"band"`. Defaults: every
-  numeric column of a table; band 1 of a raster named after the dataset; `<name>_dist_m` for
-  features. Names become result columns.
+- `variables`: a list of names, or of `{"name", "unit", "description", "ontology_id"}`; a
+  table entry may add `"column"` when the file's column has another name, a raster entry
+  `"band"`. Defaults: every numeric column of a table; band 1 of a raster named after the
+  dataset; `<name>_dist_m` for features. Names become result columns.
 - `metadata`: `source`, `version`, `description`, `license_note`, `visibility` (`private`, the
-  default; `deployment` is enforced only by the web application) and `owner`. `name` is at most
-  80 characters and unique in the registry; `overwrite=True` replaces a dataset of the same name.
+  default; `deployment` is enforced only by the web application), `owner` and `ontology_id`.
+  `name` is at most 80 characters and unique in the registry; `overwrite=True` replaces a
+  dataset of the same name. `custom.update_dataset()` changes the metadata and the variables'
+  units, descriptions and concepts later without touching the data.
 - The registry lives in `root=`, else `$SPACESCANS_DATASETS_DIR`, else the per-user data
   directory. The record (`dataset.json`) keeps the checksum of the originals, counts, spans and
   extents, never a data value.
 
 In R the same call is `ss_register_dataset(paths, name, kind, temporal, key = list(boundary =
 "county", column = "fips", year_column = "year"), variables = data.frame(name = "heat_days",
-unit = "days", description = "..."), source = "...", version = "...", license_note = "...")`;
-`ss_datasets()`, `ss_dataset()`, `ss_update_dataset()` and `ss_remove_dataset()` manage the
-registry, and `ss_link(cohort, custom = "county_heat")` links by name. In the web application
-the Datasets page's **Add dataset** form takes the same files and metadata, and registered
-datasets appear under **Your datasets** in the Select Exposures step.
+unit = "days", description = "..."), source = "...", version = "...", license_note = "...",
+ontology_id = "000291")`; a variable's concept goes in an `ontology_id` column of
+`variables`. `ss_datasets()`, `ss_dataset()`, `ss_update_dataset()` and `ss_remove_dataset()`
+manage the registry, and `ss_link(cohort, custom = "county_heat")` links by name. In the web
+application the Datasets page's **Add dataset** form takes the same files and metadata except
+the ontology concepts, which only the Python and R packages set so far; registered datasets
+appear under **Your datasets** in the Select Exposures step.
 
-## 5. Read the messages, then fix the file
+## 7. Read the messages, then fix the file
 
 Registration either stores a complete dataset or stores nothing and raises `DatasetError`
 with a message that names files, columns and counts (never values). Fix the input it points at;
@@ -172,10 +251,11 @@ do not work around the check.
 | `1 duplicate rows: each geography and year must appear once` | a reshape or merge doubled rows, or two vintages are mixed | deduplicate or aggregate before registering |
 | `value column(s) mostly non-numeric` | wrong delimiter, decimal comma, units inside cells | clean the column; keep units in `variables` |
 | `ndvi_2017.tif is on a different grid from ndvi_2015.tif ...; every file must share one grid` | files with different resolution, extent or CRS | warp onto one grid |
+| `the dataset: unknown ontology concept 'PM2.5'; closest: 000102_2 (Particulate_Matter_PM2.5)` | a label or a guess instead of a concept id | pass the id; search with `catalog.search_concepts()` |
 | `a dataset named '...' already exists ...` | name taken | choose another name or pass `overwrite=True` |
 | `MissingExtraError` | rasters or features without the `geo` extra | `pip install "spacescans[geo]"` |
 
-## 6. Check before and after the first linkage
+## 8. Check before and after the first linkage
 
 Before linking, compare the cohort's dates with the dataset's periods:
 
@@ -221,7 +301,7 @@ from 2014-03-15 to 2018-09-30 in a county with values for 2014 and 2015 only get
 `(292 * z_2014 + 365 * z_2015) / 657`. `examples/link_example.py` shows such independent checks
 for a county table and point features.
 
-## 7. The engine is deterministic: evaluate the prepared files, not the linkage
+## 9. The engine is deterministic: evaluate the prepared files, not the linkage
 
 The linkage engine has no model, no sampling and no learned component. The same cohort, the same
 registered dataset and the same settings (buffer radius, rasterization resolution) give the same
@@ -240,7 +320,7 @@ span and extent, and the prepared table is readable with pandas or DuckDB from
 `<root>/<id>/values.parquet`. Linking both versions and comparing exposures adds nothing the
 file comparison does not already show.
 
-## 8. Privacy and licensing
+## 10. Privacy and licensing
 
 - Register exposure files only. Cohort rows never belong in the registry, and the registry's
   records and messages never contain data values.
@@ -250,17 +330,21 @@ file comparison does not already show.
   shared with every user of a web deployment, and do not redistribute data whose license forbids
   it (the catalog's own TEMIS source is such a case).
 
-## 9. Report back
+## 11. Report back
 
 Tell the user: the dataset name, kind, temporal structure and variables with units; the record id
-(`custom.get_dataset(name).id`); the coverage before linking and the linkage rate after; the
-spot checks with their numbers; where the conversion script and the processing note are; and
-anything you had to assume. Keep the script: it is the reproducible record of the preparation.
+(`custom.get_dataset(name).id`); the metadata list of section 3 with the source of each value
+and the fields left empty; the ontology concepts with their paths and the reason for each,
+including where the ontology had no specific concept; the coverage before linking and the
+linkage rate after; the spot checks with their numbers; where the conversion script and the
+processing note are; and anything you had to assume. Keep the script: it is the reproducible
+record of the preparation.
 
 ## References
 
-- `docs/custom-datasets.md`: the authoritative description of kinds, periods, checks and storage.
+- `docs/custom-datasets.md`: the authoritative description of kinds, periods, metadata,
+  ontology concepts, checks and storage.
 - README, "Register your own datasets" and "Getting the exposure data".
 - `examples/link_example.py`, `examples/link_example.R`: registration of a county table and point
   features, linkage by name and independent checks of every result.
-- `docs/workers.md`, `tests/golden/README.md`: the run-to-run comparisons behind section 7.
+- `docs/workers.md`, `tests/golden/README.md`: the run-to-run comparisons behind section 9.
