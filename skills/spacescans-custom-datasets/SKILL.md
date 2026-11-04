@@ -17,7 +17,8 @@ EPSG:5070 for features), stores them with a metadata record, and every later `li
 dataset by name. The original files are not changed.
 
 Your job in this skill is to get the user's data into one of the three accepted shapes, gather
-honest metadata (including the ontology concepts that place the dataset in the catalog),
+honest metadata (including the ontology concepts that describe the dataset in the catalog's
+terms),
 register it, read the validation messages, and check the first linkage. Work on copies; never
 rename, move or delete the user's originals.
 

@@ -44,8 +44,8 @@ computed when platformdirs is not installed).
 ``visibility`` (``"private"`` or ``"deployment"``) and ``owner`` are recorded
 for the web app, which enforces them; the package itself does not.
 
-``ontology_id`` places the dataset in the exposure catalog's ontology, as a
-catalog variable's ``ontology_id`` does: the id of a concept of the Spatial and
+``ontology_id`` records where the dataset belongs in the exposure catalog's
+ontology, as a catalog variable's ``ontology_id`` does: the id of a concept of the Spatial and
 Contextual Exposome Ontology (``spacescans.catalog.concept``; find one with
 ``spacescans.catalog.search_concepts``). Each variable may carry its own
 ``ontology_id`` when the variables measure different things; a variable

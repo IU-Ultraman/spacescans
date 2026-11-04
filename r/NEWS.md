@@ -4,8 +4,8 @@
 
 * Registered datasets can carry ontology concepts. `ss_register_dataset()`
   and `ss_update_dataset()` take `ontology_id`, the concept of the Spatial
-  and Contextual Exposome Ontology that places the dataset in the catalog's
-  ontology, as the catalog's variables are placed; a variable can carry its
+  and Contextual Exposome Ontology the dataset belongs to, recorded as the
+  catalog's variables record theirs; a variable can carry its
   own concept in an `ontology_id` column of `variables`. Registration
   refuses an id the ontology does not have. `ss_concepts()` lists and
   searches the concepts, offline. The record, `ss_datasets()` and

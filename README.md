@@ -182,8 +182,8 @@ custom.remove_dataset("pm_biweekly")
 `{"boundary": "tract", "column": "GEOID"}`; for features optionally a year column or a layer),
 `variables` (name, unit, description and ontology concept of each value), `metadata` (source,
 version, description, license note, visibility, owner, and `ontology_id`, the concept of the
-Spatial and Contextual Exposome Ontology that places the dataset in the catalog, as catalog
-variables are placed; `spacescans.catalog.search_concepts("pm2.5")` finds one) and
+Spatial and Contextual Exposome Ontology the dataset belongs to, recorded as catalog variables
+record theirs; `spacescans.catalog.search_concepts("pm2.5")` finds one) and
 `overwrite`. A record has
 an `id`, a `name` unique in its library, the checksum of the original files and the spacescans
 version that prepared it. The library lives in `root=`, else

@@ -170,8 +170,9 @@ elsewhere.
 record it; a web app deployment enforces it (a \code{"deployment"} dataset is
 offered to every user of that deployment).
 
-\strong{Ontology concepts.} \code{ontology_id} places the dataset in the exposure
-catalog's ontology, as a catalog variable's \code{ontology_id} does: the id of a
+\strong{Ontology concepts.} \code{ontology_id} records where the dataset belongs in
+the exposure catalog's ontology, as a catalog variable's \code{ontology_id}
+does: the id of a
 concept of the Spatial and Contextual Exposome Ontology, found with
 \code{\link[=ss_concepts]{ss_concepts()}} (for example \code{"000102_2"}, Particulate_Matter_PM2.5). A
 variable may carry its own concept (an \code{ontology_id} column in

@@ -10,7 +10,7 @@ have no changelog; see the git tags `v0.2.0` to `v0.2.7`.
 
 - Ontology concepts for registered datasets. `custom.register()` and `custom.update_dataset()`
   accept `metadata={"ontology_id": ...}`, the concept of the Spatial and Contextual Exposome
-  Ontology that places the dataset in the catalog's ontology as catalog variables are placed,
+  Ontology the dataset belongs to, recorded as catalog variables record theirs,
   and an `ontology_id` per variable for datasets whose variables measure different things (a
   variable without one takes the dataset's). Unknown ids are refused with the closest concepts
   named. The record gains `ontology_id`; a registered dataset's definition carries it as the

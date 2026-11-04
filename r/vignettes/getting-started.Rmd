@@ -204,8 +204,8 @@ feature. This example needs no catalog data:
 `ss_remove_dataset()` deletes one, and `ss_link(custom = )` takes names,
 ids or records, alone or with catalog variables. A table names its Census
 geography in `key`, with the key column when it is not called `GEOID10`,
-`GEOID` or the like. `ontology_id` places a dataset in the catalog's
-ontology, as the catalog's own variables are placed; `ss_concepts()` finds
+`GEOID` or the like. `ontology_id` records where a dataset belongs in the
+catalog's ontology, as the catalog's own variables do; `ss_concepts()` finds
 the concept (a variable can carry its own in an `ontology_id` column of
 `variables`):
 

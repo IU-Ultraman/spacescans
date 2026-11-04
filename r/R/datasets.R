@@ -56,8 +56,9 @@
 #' record it; a web app deployment enforces it (a `"deployment"` dataset is
 #' offered to every user of that deployment).
 #'
-#' **Ontology concepts.** `ontology_id` places the dataset in the exposure
-#' catalog's ontology, as a catalog variable's `ontology_id` does: the id of a
+#' **Ontology concepts.** `ontology_id` records where the dataset belongs in
+#' the exposure catalog's ontology, as a catalog variable's `ontology_id`
+#' does: the id of a
 #' concept of the Spatial and Contextual Exposome Ontology, found with
 #' [ss_concepts()] (for example `"000102_2"`, Particulate_Matter_PM2.5). A
 #' variable may carry its own concept (an `ontology_id` column in
