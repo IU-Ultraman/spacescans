@@ -180,8 +180,9 @@ In R: `ss_concepts("pm2.5")`, and `ss_concepts()` for all of them. Rules:
   contains the measure, often one of the domains: Natural_Environment_Exposome (`000094_2`),
   Built_Environment_Exposome (`000292`) or Social_Environment_Exposome (`000295`). Say in the
   report that the ontology lacks a specific concept. Never choose a narrower or neighbouring
-  concept that does not describe the measure, and never make up an id: a wrong concept files
-  the dataset under the wrong exposure for everyone who browses the catalog.
+  concept that does not describe the measure, and never make up an id: a wrong concept labels
+  the dataset as the wrong exposure in its record and in its detail page, for everyone it is
+  shared with.
 - **The dataset's concept** is the most specific concept that covers all its variables; when
   they span domains, the root Spatial_and_Contextual_Exposome (`000093_2`). Give a variable its
   own concept only when it differs from the dataset's.
